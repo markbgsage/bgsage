@@ -247,7 +247,7 @@ cache, incremental delta evaluation, transposed weight matrix.
 
 ## Rollout
 
-Monte Carlo evaluation with XG-style variance reduction. Stratified first roll
+Monte Carlo evaluation with variance reduction. Stratified first roll
 (36 dice pairs). Parallelized trial execution.
 
 ## Doubling Cube
@@ -303,6 +303,7 @@ We (and GNUbg) call raw NN evaluation "0-ply". XG calls it "1-ply". So XG's 2-pl
 ## Glossary
 
 - **ER**: Error Rate — mean equity loss per decision vs GNUbg best, millipips (x1000)
+- **PR**: Performance Rating - equal to ER / 2 (total error / # of decisions * 500)
 - **ppg**: Points per game
 - **PubEval**: Tesauro's linear evaluator, standard weak opponent
 - **TD(0)**: Temporal Difference learning (no eligibility trace)
