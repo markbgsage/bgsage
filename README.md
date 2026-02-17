@@ -11,6 +11,7 @@ It is a joint Python/C++ library that includes:
 * Neural network training framework using both self play and supervised learning, including training code, benchmark scoring, with customizable inputs. Uses your NVIDIA GPU (via CUDA) if you have one.
 * The post-training weights for several different versions of the bot engine.
 * Multi-ply and rollout calculations that efficiently parallelize on the CPU.
+* Test framework.
 * Instructions on how to use Claude Code-style tools to interact with and change it
 * How to submit changes back to us (the maintainers)
 
