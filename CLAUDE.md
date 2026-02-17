@@ -253,7 +253,7 @@ Monte Carlo evaluation with XG-style variance reduction. Stratified first roll
 ## Doubling Cube
 
 Janowski interpolation for money games. Cube efficiency: 0.68 contact,
-pip-dependent for race. Checker play stays cubeless.
+pip-dependent for race.
 
 ## Current Best Scores (Production Model: stage5)
 
