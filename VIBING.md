@@ -20,10 +20,18 @@ I am most familiar with how Claude Code works, as a desktop application and not 
 
 First, download the Claude desktop application to your computer. This application lets Claude access your file system and run commands as you, with various limits. It can read all the files inside a directory that you point it at.
 
-Next, check out the markbgsage/bgsage git repository from github.com. If you do not know how to do this (like I do not), create a new folder (called bgsage) wherever you like on your computer, then run Claude Code and connect to that folder. Choose the Code tab at the top, then ask Claude Code to check out that repository.
+Next, download git to your computer, if you have not already. Ask an AI how to do it if you're not sure. git is a tool to manage different versions of code, so you can always walk back and attribute changes. We'll use it to download the code.
+
+Next, check out the markbgsage/bgsage git repository from github.com. If you do not know how to do this (like I do not), create a new folder (called bgsage) wherever you like on your computer, then run Claude Code and connect to that folder. Choose the Code tab at the top, then ask Claude Code to check out that repository, just like "check out the repository markbgsage/bgsage from github.com". It'll walk you through how to do it.
 
 Now you've got all the files you need on your computer. There's a file called CLAUDE.md that has the context that Claude Code uses each time it starts a session - that acts like a memory for the project. It also has all the source code in various subdirectories.
 
-How do you do stuff with it? You just ask Claude Code to do stuff. Like "run a contact benchmark on the best cubeless strategy so far", and it'll generate the code to run that benchmark calculation, then run it. Or, "I want to try out a different algorithm for game plan classification [describe it], then train a new strategy that has one neural network per each category in my new classification, and see if it performs better than the current best strategy." Or, "I've found a new best strategy - change the library so that evaluations use it."
+How do you do stuff with it? You just ask at the chat prompt (in the Code tab of the Claude app), in regular English. Like "run a contact benchmark on the best cubeless strategy so far", and it'll generate the code to run that benchmark calculation, then run it. Or, "I want to try out a different algorithm for game plan classification [describe it], then train a new strategy that has one neural network per each category in my new classification, and see if it performs better than the current best strategy." Or, "I've found a new best strategy - change the library so that evaluations use it."
 
-You can also write your own code that uses it - ask Claude Code what the specific interfaces are for things like checker play and cube action analytics. Then ask it to write whatever other code you want that ends up calling those interfaces.
+You can also write your own code that uses the library as a component - ask Claude Code what the specific interfaces are for things like checker play and cube action analytics. Then ask it to write whatever other code you want that ends up calling those interfaces. 
+
+This library is released under an open source license, the AGPL (see the LICENSE file for details). You can use it for commercial use, but if you use a modified version, you need to make the source code for it available under the same license terms. If you're not worried about commercial use, and you're just using it youself, generally don't worry: make whatever changes you like!
+
+## Submitting Changes
+
+Let's say you play around with this and train a better model. You can change the library to use it, then ask Claude Code to submit a PR (a "pull request") that has the changes in it. Claude Code will wrap that up for you and send it to us, the maintainers, and we'll take a look. If we like it, we'll merge it in with the main branch of the library that everyone sees.
