@@ -15,12 +15,12 @@ python/bgsage/               # Python package
   analyzer.py               # Public API: checker + cube analysis
   types.py                  # Dataclasses (Probabilities, MoveAnalysis, etc.)
   board.py                  # Board utilities (flip, possible_moves, etc.)
-  weights.py                # WeightConfig, model discovery
+  weights.py                # Production model registry, WeightConfig, model discovery
   data.py                   # .bm file loading, training data parsing
   gnubg.py                  # GNUbg CLI wrapper for reference evaluation
 scripts/                     # Training & benchmarking scripts
 tests/                       # Python tests
-models/                      # Stage 5 production weights (5 files)
+models/                      # Production weights (5 files per model stage)
 data/                        # GNUbg benchmark + training data
 ```
 
@@ -82,6 +82,77 @@ by one tempo. Being on roll is an advantage.
 | `cube.h/cpp` | Doubling cube (Janowski method) |
 | `pubeval.h/cpp` | PubEval linear evaluator (reference opponent) |
 | `cuda_nn.h/cu` | GPU training (CUDA/cuBLAS) |
+
+## Production Model
+
+The **production model** is the single source of truth for which trained weights
+all scripts and the analyzer use by default. It is defined in one place:
+
+```python
+# python/bgsage/weights.py
+PRODUCTION_MODEL: str = "stage5"   # ← change this line to promote a new model
+```
+
+The `MODELS` registry maps model names to their hidden sizes and weight file patterns:
+
+```python
+MODELS = {
+    "stage5": {"hidden": (200, 400, 400, 400, 400), "pattern": "sl_s5_{plan}.weights.best"},
+    "stage4": {"hidden": (120, 250, 250, 250, 250), "pattern": "sl_s4_{plan}.weights.best"},
+    "stage3": {"hidden": (120, 250, 250, 250, 250), "pattern": "sl_{plan}.weights.best"},
+}
+```
+
+**To promote a new model:**
+1. Add an entry to `MODELS` in `weights.py` with its hidden sizes and weight file pattern
+2. Change `PRODUCTION_MODEL` to the new model name
+3. That's it — all scripts and `BgBotAnalyzer` will use the new model automatically
+
+**To benchmark an experimental model:**
+All benchmark scripts accept `--model <name>` to override the production default:
+```bash
+python scripts/run_full_benchmark.py --model stage3
+```
+
+**Key API:**
+- `WeightConfig.default()` → production model config
+- `WeightConfig.from_model("stage3")` → specific model config
+- `WeightConfig.add_model_arg(parser)` → adds `--model` to argparse
+- `WeightConfig.from_args(args)` → resolves `--model` from parsed args
+- `w.weight_args` → 10-tuple for C++ factory functions
+- `w.hidden_sizes` → 5-tuple of hidden layer sizes
+- `w.weight_paths` → dict of plan name → file path
+- `w.validate()` → raises FileNotFoundError if any weight file missing
+
+## Benchmark Scripts
+
+All benchmark scripts default to the production model and accept `--model <name>`
+to override. Scripts live in `scripts/`.
+
+| Script | What it measures | Key args |
+|--------|-----------------|----------|
+| `run_full_benchmark.py` | Full suite: per-plan ER + contact/crashed/race ER + vs PubEval ppg + self-play distribution. Supports 0-ply through N-ply. | `--model`, `--ply N`, `--scenarios N`, `--threads N`, `--games N` |
+| `run_rollout_benchmark.py` | Top-N worst 0-ply errors compared at 1-ply, 2-ply, 3-ply, rollout | `--model`, `--top N`, `--threads N` |
+| `score_benchmark_pr.py` | Benchmark PR (equity error vs rollout reference, 103k decisions) | `--model`, `--plies N`, `--all-models`, `--all-plies` |
+| `score_benchmark_pr_gnubg.py` | GNUbg's Benchmark PR (parallel GNUbg CLI subprocesses) | `--plies N` |
+| `test_evaluate_probs.py` | Single position eval at 0-3 ply + GNUbg + rollouts | `--model`, `--checkers`, `--ply N` |
+| `test_cube_decision.py` | Cube decisions vs 3 reference positions at 0-3 ply + rollout | `--model` |
+
+```bash
+# Full benchmark with production model (0-ply)
+python scripts/run_full_benchmark.py
+
+# Compare two models
+python scripts/run_full_benchmark.py --model stage5
+python scripts/run_full_benchmark.py --model stage3
+
+# Multi-ply benchmark
+python scripts/run_full_benchmark.py --ply 1
+python scripts/run_full_benchmark.py --ply 2 --scenarios 500
+
+# Score all registered models on Benchmark PR
+python scripts/score_benchmark_pr.py --all-models
+```
 
 ## Building
 
@@ -150,7 +221,7 @@ unnatural minima. TD gives realistic probability distributions that SL refines.
 - Narrow subsets cause catastrophic regression
 - Game plan weight (`--gameplan-weight`) specializes each NN during SL
 
-### Key Scripts
+### Key Training Scripts
 
 ```bash
 # TD self-play (5-NN)
@@ -158,19 +229,9 @@ python scripts/run_td_gameplan_training.py --games 200000 --alpha 0.1
 
 # GPU supervised learning
 python scripts/run_gpu_sl_training.py --type racing --epochs 500 --alpha 2.0
-
-# Quick benchmark
-python scripts/run_benchmark_5nn.py
-
-# Multi-ply benchmark
-python scripts/run_multipy_benchmark.py
-
-# Per-position evaluation
-python scripts/test_evaluate_probs.py --stage 5 --skip-rollout --checkers "..."
-
-# Cube decision tests
-python scripts/test_cube_decision.py --stage 5
 ```
+
+See "Benchmark Scripts" section above for all benchmarking commands.
 
 ## Multi-Ply Search
 
@@ -194,7 +255,7 @@ Monte Carlo evaluation with XG-style variance reduction. Stratified first roll
 Janowski interpolation for money games. Cube efficiency: 0.68 contact,
 pip-dependent for race. Checker play stays cubeless.
 
-## Current Best Scores (Stage 5)
+## Current Best Scores (Production Model: stage5)
 
 | Metric | 0-ply | Target |
 |--------|-------|--------|
@@ -203,6 +264,9 @@ pip-dependent for race. Checker play stays cubeless.
 | vs PubEval | +0.633 | > +0.63 |
 
 Benchmark PR (103k decisions): 0-ply=2.47, 1-ply=1.85, 2-ply=1.53.
+
+The production model is defined in `python/bgsage/weights.py` — see "Production Model"
+section above. See `MODEL_BENCHMARKS.md` for full comparison of all trained models.
 
 ## Benchmark Data Format
 
