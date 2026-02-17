@@ -1,0 +1,365 @@
+"""
+Stage 4 Training: Optimal per-NN game plan weights with extended schedule.
+
+Uses gpw=5.0 for racing/attacking/priming, gpw=1.5 for anchoring.
+All start from TD weights (td_gp_244_1200k_*.weights).
+PureRace is reused from existing sl_purerace.weights.best (not retrained).
+
+Schedule:
+  Racing/Attacking/Priming: 100ep@a=20 -> 200ep@a=10 -> 200ep@a=3.1 -> 2000ep@a=1.0
+  Anchoring:                200ep@a=20 -> 200ep@a=6.3 -> 1000ep@a=2.0
+
+Usage:
+    python python/run_stage4_training.py
+    python python/run_stage4_training.py --score-only
+"""
+
+import os
+import sys
+import json
+import time
+import numpy as np
+from datetime import datetime
+
+script_dir = os.path.dirname(os.path.abspath(__file__))
+project_dir = os.path.dirname(os.path.dirname(script_dir))
+
+# Use isolated copy of .pyd so the main build/ is not locked by this process.
+isolated_build_dir = os.path.join(project_dir, 'experiments', 'gpw_sensitivity', 'isolated_build')
+build_dir = isolated_build_dir if os.path.isdir(isolated_build_dir) else os.path.join(project_dir, 'build')
+
+if sys.platform == 'win32':
+    cuda_bin = r'C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v13.1\bin\x64'
+    if os.path.isdir(cuda_bin):
+        os.add_dll_directory(cuda_bin)
+    if os.path.isdir(build_dir):
+        os.add_dll_directory(build_dir)
+
+sys.path.insert(0, build_dir)
+sys.path.insert(0, os.path.join(project_dir, 'bgsage', 'python'))
+
+import bgbot_cpp
+from bgsage.data import load_benchmark_file, load_gnubg_training_data
+
+DATA_DIR = os.path.join(project_dir, 'data')
+MODELS_DIR = os.path.join(project_dir, 'models')
+
+# Network config
+N_INPUTS = 244
+N_HIDDEN = 250
+N_HIDDEN_PURERACE = 120
+GAMEPLAN_IDS = {'racing': 1, 'attacking': 2, 'priming': 3, 'anchoring': 4}
+
+# Per-NN training configs
+CONFIGS = {
+    'racing': {
+        'gpw': 5.0,
+        'phases': [(100, 20.0), (200, 10.0), (200, 3.1), (2000, 1.0)],
+    },
+    'attacking': {
+        'gpw': 5.0,
+        'phases': [(100, 20.0), (200, 10.0), (200, 3.1), (2000, 1.0)],
+    },
+    'priming': {
+        'gpw': 5.0,
+        'phases': [(100, 20.0), (200, 10.0), (200, 3.1), (2000, 1.0)],
+    },
+    'anchoring': {
+        'gpw': 1.5,
+        'phases': [(200, 20.0), (200, 6.3), (1000, 2.0)],
+    },
+}
+
+MODEL_PREFIX = 'sl_s4'  # Stage 4
+
+
+def load_training_data():
+    """Load contact+crashed training data."""
+    print('Loading training data...')
+    t0 = time.time()
+    boards_c, targets_c = load_gnubg_training_data(os.path.join(DATA_DIR, 'contact-train-data'))
+    print(f'  contact-train-data: {len(boards_c)} positions ({time.time()-t0:.1f}s)')
+    t0 = time.time()
+    boards_r, targets_r = load_gnubg_training_data(os.path.join(DATA_DIR, 'crashed-train-data'))
+    print(f'  crashed-train-data: {len(boards_r)} positions ({time.time()-t0:.1f}s)')
+    boards = np.concatenate([boards_c, boards_r], axis=0)
+    targets = np.concatenate([targets_c, targets_r], axis=0)
+    print(f'  Total: {len(boards)} positions')
+    return boards, targets
+
+
+def load_benchmarks():
+    """Load per-plan benchmarks (step=10 for training progress)."""
+    benchmarks = {}
+    for bm_type in ['racing', 'attacking', 'priming', 'anchoring']:
+        bm_path = os.path.join(DATA_DIR, f'{bm_type}.bm')
+        if os.path.exists(bm_path):
+            benchmarks[bm_type] = load_benchmark_file(bm_path, step=10)
+    return benchmarks
+
+
+def classify_game_plans(boards):
+    """Classify all boards by game plan."""
+    print('Classifying game plans...')
+    t0 = time.time()
+    gp_ids = bgbot_cpp.classify_game_plans_batch(boards)
+    for nn_type, gp_id in GAMEPLAN_IDS.items():
+        n_match = int(np.sum(gp_ids == gp_id))
+        print(f'  {nn_type}: {n_match}/{len(boards)} ({100*n_match/len(boards):.1f}%)')
+    print(f'  Classified in {time.time()-t0:.1f}s')
+    return gp_ids
+
+
+def train_one_nn(nn_type, config, boards, targets, gp_ids, benchmark_scenarios):
+    """Train a single NN through all SL phases."""
+    gpw = config['gpw']
+    phases = config['phases']
+    td_weights = os.path.join(MODELS_DIR, f'td_gp_244_1200k_{nn_type}.weights')
+    save_path = os.path.join(MODELS_DIR, f'{MODEL_PREFIX}_{nn_type}.weights')
+
+    if not os.path.exists(td_weights):
+        print(f'  ERROR: TD weights not found: {td_weights}')
+        return None
+
+    # Build sample weights
+    target_gp = GAMEPLAN_IDS[nn_type]
+    sample_weights = np.ones(len(boards), dtype=np.float32)
+    if gpw != 1.0:
+        sample_weights[gp_ids == target_gp] = gpw
+    n_match = int(np.sum(gp_ids == target_gp))
+
+    total_epochs = sum(ep for ep, _ in phases)
+    phase_desc = ' -> '.join(f'{ep}ep@a={a}' for ep, a in phases)
+    print(f'\n{"="*60}')
+    print(f'  {nn_type.upper()} (gpw={gpw}, {total_epochs} total epochs)')
+    print(f'  Schedule: {phase_desc}')
+    print(f'  TD weights: {td_weights}')
+    print(f'  Save path:  {save_path}')
+    print(f'  Matching positions: {n_match}/{len(boards)} ({100*n_match/len(boards):.1f}%)')
+    print(f'{"="*60}')
+
+    current_weights = td_weights
+    best_score = float('inf')
+    best_epoch_total = 0
+    total_time = 0.0
+    epoch_offset = 0
+    phase_results = []
+
+    for phase_idx, (epochs, alpha) in enumerate(phases):
+        phase_label = f'Phase {phase_idx+1}/{len(phases)}'
+        print(f'\n  {phase_label}: {epochs} epochs @ alpha={alpha}')
+
+        # Use shorter print interval for long phases
+        print_interval = max(1, epochs // 20)  # ~20 prints per phase
+
+        result = bgbot_cpp.cuda_supervised_train(
+            boards=boards,
+            targets=targets,
+            weights_path=current_weights,
+            n_hidden=N_HIDDEN,
+            n_inputs=N_INPUTS,
+            alpha=alpha,
+            epochs=epochs,
+            batch_size=128,
+            seed=42,
+            print_interval=print_interval,
+            save_path=save_path,
+            benchmark_scenarios=benchmark_scenarios,
+            sample_weights=sample_weights if gpw != 1.0 else None,
+        )
+
+        phase_best = result['best_score']
+        phase_best_epoch = result['best_epoch']
+        phase_time = result['total_seconds']
+        total_time += phase_time
+
+        if phase_best < best_score:
+            best_score = phase_best
+            best_epoch_total = epoch_offset + phase_best_epoch
+
+        phase_results.append({
+            'phase': phase_idx + 1,
+            'epochs': epochs,
+            'alpha': alpha,
+            'best_score': phase_best,
+            'best_epoch': phase_best_epoch,
+            'time': phase_time,
+        })
+        print(f'  {phase_label} done: best={phase_best:.2f} (epoch {phase_best_epoch}), time={phase_time:.1f}s')
+
+        # Next phase resumes from best of this phase
+        current_weights = save_path + '.best'
+        epoch_offset += epochs
+
+    print(f'\n  FINAL: {nn_type} gpw={gpw} -> best={best_score:.2f} (epoch {best_epoch_total}), total time={total_time:.1f}s')
+    return {
+        'best_score': best_score,
+        'best_epoch': best_epoch_total,
+        'total_time': total_time,
+        'phases': phase_results,
+    }
+
+
+def score_stage4():
+    """Score the Stage 4 trained models."""
+    purerace_w = os.path.join(MODELS_DIR, 'sl_purerace.weights.best')
+    racing_w = os.path.join(MODELS_DIR, f'{MODEL_PREFIX}_racing.weights.best')
+    attacking_w = os.path.join(MODELS_DIR, f'{MODEL_PREFIX}_attacking.weights.best')
+    priming_w = os.path.join(MODELS_DIR, f'{MODEL_PREFIX}_priming.weights.best')
+    anchoring_w = os.path.join(MODELS_DIR, f'{MODEL_PREFIX}_anchoring.weights.best')
+
+    for label, path in [('purerace', purerace_w), ('racing', racing_w),
+                         ('attacking', attacking_w), ('priming', priming_w),
+                         ('anchoring', anchoring_w)]:
+        if not os.path.exists(path):
+            print(f'  Missing: {path}')
+            return None
+
+    scores = {}
+
+    print(f'\n{"="*60}')
+    print(f'  STAGE 4 BENCHMARKS')
+    print(f'{"="*60}\n')
+    print(f'  PureRace:  {purerace_w} ({N_HIDDEN_PURERACE}h)')
+    print(f'  Racing:    {racing_w} ({N_HIDDEN}h)')
+    print(f'  Attacking: {attacking_w} ({N_HIDDEN}h)')
+    print(f'  Priming:   {priming_w} ({N_HIDDEN}h)')
+    print(f'  Anchoring: {anchoring_w} ({N_HIDDEN}h)')
+    print()
+
+    # Per-plan benchmarks
+    print('--- Game Plan benchmarks (full) ---')
+    for bm_type in ['purerace', 'racing', 'attacking', 'priming', 'anchoring']:
+        bm_path = os.path.join(DATA_DIR, f'{bm_type}.bm')
+        if not os.path.exists(bm_path):
+            continue
+        t0 = time.time()
+        scenarios = load_benchmark_file(bm_path)
+        result = bgbot_cpp.score_benchmarks_5nn(
+            scenarios, purerace_w, racing_w, attacking_w, priming_w, anchoring_w,
+            N_HIDDEN_PURERACE, N_HIDDEN, N_HIDDEN, N_HIDDEN, N_HIDDEN)
+        t_score = time.time() - t0
+        scores[bm_type] = result.score()
+        print(f'  {bm_type:10s}: {result.score():8.2f}  ({result.count} scenarios, {t_score:.1f}s)')
+
+    # Old-style benchmarks
+    print()
+    print('--- Old-style benchmarks (for comparison) ---')
+    for bm_name in ['contact', 'crashed', 'race']:
+        bm_path = os.path.join(DATA_DIR, f'{bm_name}.bm')
+        if not os.path.exists(bm_path):
+            continue
+        t0 = time.time()
+        scenarios = load_benchmark_file(bm_path)
+        result = bgbot_cpp.score_benchmarks_5nn(
+            scenarios, purerace_w, racing_w, attacking_w, priming_w, anchoring_w,
+            N_HIDDEN_PURERACE, N_HIDDEN, N_HIDDEN, N_HIDDEN, N_HIDDEN)
+        t_score = time.time() - t0
+        scores[bm_name] = result.score()
+        print(f'  {bm_name:10s}: {result.score():8.2f}  ({result.count} scenarios, {t_score:.1f}s)')
+
+    # vs PubEval
+    print()
+    print('=== vs PubEval (10k games) ===')
+    t0 = time.time()
+    stats = bgbot_cpp.play_games_5nn_vs_pubeval(
+        purerace_w, racing_w, attacking_w, priming_w, anchoring_w,
+        N_HIDDEN_PURERACE, N_HIDDEN, N_HIDDEN, N_HIDDEN, N_HIDDEN,
+        n_games=10000, seed=42)
+    t_games = time.time() - t0
+    scores['vs_pubeval'] = stats.avg_ppg()
+    print(f'  PPG: {stats.avg_ppg():+.3f}  ({stats.n_games} games in {t_games:.1f}s)')
+    print(f'  P1: {stats.p1_wins}W {stats.p1_gammons}G {stats.p1_backgammons}B')
+    print(f'  P2: {stats.p2_wins}W {stats.p2_gammons}G {stats.p2_backgammons}B')
+
+    # Self-play
+    print()
+    print('=== Self-play outcome distribution (10k games) ===')
+    t0 = time.time()
+    ss = bgbot_cpp.play_games_5nn_vs_self(
+        purerace_w, racing_w, attacking_w, priming_w, anchoring_w,
+        N_HIDDEN_PURERACE, N_HIDDEN, N_HIDDEN, N_HIDDEN, N_HIDDEN,
+        n_games=10000, seed=42)
+    t_sp = time.time() - t0
+    total = ss.n_games
+    singles = ss.p1_wins + ss.p2_wins
+    gammons = ss.p1_gammons + ss.p2_gammons
+    backgammons = ss.p1_backgammons + ss.p2_backgammons
+    print(f'  Single: {singles:4d} ({100*singles/total:.1f}%)  '
+          f'Gammon: {gammons:4d} ({100*gammons/total:.1f}%)  '
+          f'Backgammon: {backgammons:3d} ({100*backgammons/total:.1f}%)  '
+          f'({total} games in {t_sp:.1f}s)')
+
+    return scores
+
+
+def main():
+    import argparse
+    parser = argparse.ArgumentParser(description='Stage 4 Training')
+    parser.add_argument('--score-only', action='store_true',
+                        help='Skip training, just score existing weight files')
+    parser.add_argument('--nn', type=str, nargs='+', default=None,
+                        help='Train only specific NNs (e.g., --nn racing anchoring)')
+    args = parser.parse_args()
+
+    os.makedirs(MODELS_DIR, exist_ok=True)
+
+    if not args.score_only:
+        if not bgbot_cpp.cuda_available():
+            print('ERROR: CUDA not available')
+            sys.exit(1)
+        print('CUDA GPU detected')
+        print()
+
+        # Copy purerace weights
+        purerace_src = os.path.join(MODELS_DIR, 'sl_purerace.weights.best')
+        purerace_dst = os.path.join(MODELS_DIR, f'{MODEL_PREFIX}_purerace.weights.best')
+        if os.path.exists(purerace_src) and not os.path.exists(purerace_dst):
+            import shutil
+            shutil.copy2(purerace_src, purerace_dst)
+            print(f'Copied purerace weights: {purerace_dst}')
+
+        # Load data once
+        boards, targets = load_training_data()
+        gp_ids = classify_game_plans(boards)
+        benchmarks = load_benchmarks()
+
+        # Train each NN
+        nn_types = args.nn if args.nn else ['racing', 'attacking', 'priming', 'anchoring']
+        all_results = {}
+        for nn_type in nn_types:
+            if nn_type not in CONFIGS:
+                print(f'Unknown NN type: {nn_type}')
+                continue
+            config = CONFIGS[nn_type]
+            bm_scenarios = benchmarks.get(nn_type)
+            result = train_one_nn(nn_type, config, boards, targets, gp_ids, bm_scenarios)
+            if result:
+                all_results[nn_type] = result
+
+        # Print training summary
+        print(f'\n{"="*60}')
+        print(f'  TRAINING SUMMARY')
+        print(f'{"="*60}\n')
+        for nn_type, result in all_results.items():
+            config = CONFIGS[nn_type]
+            print(f'  {nn_type:10s}: best={result["best_score"]:.2f} (epoch {result["best_epoch"]}), '
+                  f'gpw={config["gpw"]}, time={result["total_time"]:.0f}s')
+        total_time = sum(r['total_time'] for r in all_results.values())
+        print(f'\n  Total training time: {total_time:.0f}s ({total_time/60:.1f}m)')
+
+    # Score
+    scores = score_stage4()
+    if scores:
+        # Save results
+        results_dir = os.path.join(project_dir, 'experiments', 'stage4')
+        os.makedirs(results_dir, exist_ok=True)
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        results_path = os.path.join(results_dir, f'results_{timestamp}.json')
+        with open(results_path, 'w') as f:
+            json.dump(scores, f, indent=2)
+        print(f'\nResults saved to: {results_path}')
+
+
+if __name__ == '__main__':
+    main()

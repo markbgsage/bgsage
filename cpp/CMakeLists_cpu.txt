@@ -1,0 +1,51 @@
+cmake_minimum_required(VERSION 3.18)
+project(bgbot LANGUAGES CXX)
+
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+
+# Optimization flags — compiler-specific
+if(MSVC)
+    set(BGBOT_OPT_FLAGS /O2 /fp:fast /GL /arch:AVX2)
+    set(BGBOT_SAFE_OPT_FLAGS /O2)
+elseif(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+    if(CMAKE_SYSTEM_PROCESSOR MATCHES "arm64|aarch64")
+        set(BGBOT_OPT_FLAGS -O3 -funsafe-math-optimizations -fno-math-errno -funroll-loops)
+    else()
+        set(BGBOT_OPT_FLAGS -O3 -ffast-math -funroll-loops -mavx2 -mfma)
+    endif()
+    set(BGBOT_SAFE_OPT_FLAGS -O3 -funroll-loops)
+endif()
+
+# Core library (CPU only)
+add_library(bgbot_lib STATIC
+    src/board.cpp
+    src/moves.cpp
+    src/strategy.cpp
+    src/pubeval.cpp
+    src/game.cpp
+    src/benchmark.cpp
+    src/encoding.cpp
+    src/neural_net.cpp
+    src/training.cpp
+    src/multipy.cpp
+    src/rollout.cpp
+    src/cube.cpp
+)
+target_include_directories(bgbot_lib PUBLIC include)
+target_compile_options(bgbot_lib PRIVATE ${BGBOT_OPT_FLAGS})
+
+# Threading support
+find_package(Threads REQUIRED)
+target_link_libraries(bgbot_lib PUBLIC Threads::Threads)
+
+# CUDA stub (provides cuda_available() = false, no-op cuda_supervised_train)
+add_library(bgbot_cuda_stub STATIC src/cuda_nn_stub.cpp)
+target_include_directories(bgbot_cuda_stub PUBLIC include)
+target_link_libraries(bgbot_cuda_stub PUBLIC bgbot_lib)
+
+# pybind11 Python module
+find_package(pybind11 CONFIG REQUIRED)
+pybind11_add_module(bgbot_cpp pybind/bindings.cpp)
+target_link_libraries(bgbot_cpp PRIVATE bgbot_lib bgbot_cuda_stub)
