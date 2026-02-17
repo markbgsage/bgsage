@@ -12,7 +12,7 @@ It is a joint Python/C++ library that includes:
 * The post-training weights for several different versions of the bot engine.
 * Multi-ply and rollout calculations that efficiently parallelize on the CPU.
 * Test framework.
-* Instructions on how to use Claude Code-style tools to interact with and change it. Most of this code was written by Claude Code (Opus 4.6) and OpenAI Codex (GPT 5.3-Codex-Spark).
+* VIBING.md: information on how to use Claude Code-style tools to interact with and change it. Most of this code was written by Anthropic's Claude Code and OpenAI's Codex.
 * How to submit changes back to us (the maintainers)
 
 ## What Evaluation Levels Does It Support?
