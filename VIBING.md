@@ -1,6 +1,6 @@
 # Working with AI Agent Coding Tools
 
-## MY EXPERIENCE (February 2026)
+## My Experience (February 2026)
 
 I used Claude Code, mostly with Opus 4.6, to write almost all the code in this project. It was a startling experience, and the first time that I built something really without much looking at the code. I gave it example code from an earlier personal bot project (that did not work very well!), a link to my old blog from when I tried to learn about neural networks by building a bot (compgammon.blotspot.com), and asked it to build an optimzed C++-based backgammon bot with a Python interface.
 
