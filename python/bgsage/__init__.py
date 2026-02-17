@@ -32,12 +32,14 @@ from .types import (
     MoveAnalysis,
     Probabilities,
 )
-from .weights import WeightConfig
+from .weights import MODELS, PRODUCTION_MODEL, WeightConfig
 
 __all__ = [
     "BgBotAnalyzer",
     "create_analyzer",
     "WeightConfig",
+    "PRODUCTION_MODEL",
+    "MODELS",
     "Probabilities",
     "MoveAnalysis",
     "CheckerPlayResult",

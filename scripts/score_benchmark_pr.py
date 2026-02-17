@@ -8,10 +8,10 @@ measuring the equity error against the rollout-determined best move.
 Benchmark PR = mean(error) * 500
 
 Usage:
-  python python/score_benchmark_pr.py                      # Score Stage 5 at 0-ply
-  python python/score_benchmark_pr.py --plies 1            # Score Stage 5 at 1-ply
-  python python/score_benchmark_pr.py --stage 3            # Score Stage 3
-  python python/score_benchmark_pr.py --stage 5 --plies 2  # Score Stage 5 at 2-ply
+  python bgsage/scripts/score_benchmark_pr.py                      # production model at 0-ply
+  python bgsage/scripts/score_benchmark_pr.py --plies 1            # production model at 1-ply
+  python bgsage/scripts/score_benchmark_pr.py --model stage3       # specific model
+  python bgsage/scripts/score_benchmark_pr.py --all-models         # all registered models
 """
 
 import os
@@ -36,44 +36,15 @@ sys.path.insert(0, build_dir)
 sys.path.insert(0, os.path.join(project_dir, 'bgsage', 'python'))
 
 import bgbot_cpp
+from bgsage.weights import MODELS, WeightConfig
 
-MODELS_DIR = os.path.join(project_dir, 'models')
 DATA_DIR = os.path.join(project_dir, 'data')
 BENCHMARK_DIR = os.path.join(DATA_DIR, 'benchmark_pr')
 
-# Stage configs: (purerace_h, racing_h, attacking_h, priming_h, anchoring_h, weight_prefix)
-STAGES = {
-    3: {
-        'hidden': (120, 250, 250, 250, 250),
-        'weights': {
-            'purerace': 'sl_purerace.weights.best',
-            'racing': 'sl_racing.weights.best',
-            'attacking': 'sl_attacking.weights.best',
-            'priming': 'sl_priming.weights.best',
-            'anchoring': 'sl_anchoring.weights.best',
-        },
-    },
-    4: {
-        'hidden': (120, 250, 250, 250, 250),
-        'weights': {
-            'purerace': 'sl_s4_purerace.weights.best',
-            'racing': 'sl_s4_racing.weights.best',
-            'attacking': 'sl_s4_attacking.weights.best',
-            'priming': 'sl_s4_priming.weights.best',
-            'anchoring': 'sl_s4_anchoring.weights.best',
-        },
-    },
-    5: {
-        'hidden': (200, 400, 400, 400, 400),
-        'weights': {
-            'purerace': 'sl_s5_purerace.weights.best',
-            'racing': 'sl_s5_racing.weights.best',
-            'attacking': 'sl_s5_attacking.weights.best',
-            'priming': 'sl_s5_priming.weights.best',
-            'anchoring': 'sl_s5_anchoring.weights.best',
-        },
-    },
-}
+GAME_PLANS = ['purerace', 'racing', 'attacking', 'priming', 'anchoring']
+
+FILTER_MAX_MOVES = 5
+FILTER_THRESHOLD = 0.08
 
 
 def load_benchmark_data():
@@ -132,25 +103,6 @@ def load_benchmark_data():
     return prepared, saved
 
 
-def get_stage_weights(stage):
-    """Get weight paths and hidden sizes for a stage."""
-    cfg = STAGES[stage]
-    paths = {}
-    for t in ['purerace', 'racing', 'attacking', 'priming', 'anchoring']:
-        path = os.path.join(MODELS_DIR, cfg['weights'][t])
-        if not os.path.exists(path):
-            print(f"WARNING: {path} not found")
-            return None, None
-        paths[t] = path
-    return paths, cfg['hidden']
-
-
-GAME_PLANS = ['purerace', 'racing', 'attacking', 'priming', 'anchoring']
-
-FILTER_MAX_MOVES = 5
-FILTER_THRESHOLD = 0.08
-
-
 def print_result(label, result):
     """Print PR scoring result from C++ dict."""
     total = result['total_decisions']
@@ -188,12 +140,11 @@ def print_result(label, result):
 
 def main():
     parser = argparse.ArgumentParser(description='Score strategies on Benchmark PR')
-    parser.add_argument('--stage', type=int, default=5,
-                        choices=[3, 4, 5], help='Model stage (default: 5)')
+    WeightConfig.add_model_arg(parser)
     parser.add_argument('--plies', type=int, default=0,
                         help='Ply depth (default: 0)')
-    parser.add_argument('--all-stages', action='store_true',
-                        help='Score all stages at the given ply depth')
+    parser.add_argument('--all-models', action='store_true',
+                        help='Score all registered models at the given ply depth')
     parser.add_argument('--all-plies', action='store_true',
                         help='Score at 0-ply and 1-ply')
     parser.add_argument('--threads', type=int, default=0,
@@ -208,11 +159,11 @@ def main():
     print(f"  Data from {meta['n_games']} games, {meta['n_turns']} turns")
     print()
 
-    # Determine which stages and plies to score
-    if args.all_stages:
-        stages = [3, 4, 5]
+    # Determine which models and plies to score
+    if args.all_models:
+        model_names = sorted(MODELS.keys())
     else:
-        stages = [args.stage]
+        model_names = [args.model]
 
     if args.all_plies:
         plies_list = [0, 1]
@@ -221,18 +172,19 @@ def main():
 
     results = {}
 
-    for stage in stages:
-        weights, hidden = get_stage_weights(stage)
-        if weights is None:
-            print(f"Stage {stage}: weight files not found, skipping.")
+    for model_name in model_names:
+        try:
+            w = WeightConfig.from_model(model_name)
+            w.validate()
+        except (KeyError, FileNotFoundError) as e:
+            print(f"Model {model_name}: {e}, skipping.")
             continue
 
-        wt = (weights['purerace'], weights['racing'], weights['attacking'],
-              weights['priming'], weights['anchoring'])
-        ht = hidden
+        wt = (w.purerace, w.racing, w.attacking, w.priming, w.anchoring)
+        ht = w.hidden_sizes
 
         for plies in plies_list:
-            label = f"Stage {stage} ({plies}-ply)"
+            label = f"{model_name} ({plies}-ply)"
             t0 = time.perf_counter()
 
             if plies == 0:
@@ -275,7 +227,7 @@ def main():
                 if pr is not None:
                     row += f"  {pr:>9.2f}"
                 else:
-                    row += f"  {'—':>9}"
+                    row += f"  {'---':>9}"
             print(row)
 
         # Print decision counts

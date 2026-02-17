@@ -106,26 +106,58 @@ static void extract_opponent_half(const Board& board, int hb[25]) {
     hb[24] = board[0];  // opponent's bar
 }
 
+namespace {
+// Point encoding is: [n>=1, n>=2, n>=3, (n-3)/2] with hard cap at 15.
+// Precomputing avoids hot-path branches in input encoding loops.
+static constexpr float k_point_features[16][4] = {
+    {0.0f, 0.0f, 0.0f, 0.0f},
+    {1.0f, 0.0f, 0.0f, 0.0f},
+    {1.0f, 1.0f, 0.0f, 0.0f},
+    {1.0f, 1.0f, 1.0f, 0.0f},
+    {1.0f, 1.0f, 1.0f, 0.5f},
+    {1.0f, 1.0f, 1.0f, 1.0f},
+    {1.0f, 1.0f, 1.0f, 1.5f},
+    {1.0f, 1.0f, 1.0f, 2.0f},
+    {1.0f, 1.0f, 1.0f, 2.5f},
+    {1.0f, 1.0f, 1.0f, 3.0f},
+    {1.0f, 1.0f, 1.0f, 3.5f},
+    {1.0f, 1.0f, 1.0f, 4.0f},
+    {1.0f, 1.0f, 1.0f, 4.5f},
+    {1.0f, 1.0f, 1.0f, 5.0f},
+    {1.0f, 1.0f, 1.0f, 5.5f},
+    {1.0f, 1.0f, 1.0f, 6.0f},
+};
+
+static inline const float* point_feature_row(int n) {
+    if (n < 0) return k_point_features[0];
+    if (n > 15) return k_point_features[15];
+    return k_point_features[n];
+}
+} // namespace
+
 // ======================== Tesauro 196-input encoding ========================
 
 std::array<float, TESAURO_INPUTS> compute_tesauro_inputs(const Board& board) {
-    std::array<float, TESAURO_INPUTS> inputs = {};  // zero-initialized
+    std::array<float, TESAURO_INPUTS> inputs;
 
     for (int i = 0; i < 24; ++i) {
         int n = board[i + 1];  // point i+1; positive = player 1, negative = player 2
 
-        // Player 1 checkers (positive n)
-        if (n >= 1) inputs[4 * i + 0] = 1.0f;
-        if (n >= 2) inputs[4 * i + 1] = 1.0f;
-        if (n >= 3) inputs[4 * i + 2] = 1.0f;
-        if (n >= 4) inputs[4 * i + 3] = (n - 3) / 2.0f;
+        const float* p_feat = point_feature_row(n);
+        const int p0 = 4 * i;
+        inputs[p0 + 0] = p_feat[0];
+        inputs[p0 + 1] = p_feat[1];
+        inputs[p0 + 2] = p_feat[2];
+        inputs[p0 + 3] = p_feat[3];
 
         // Player 2 checkers (negative n, use absolute value)
         int m = -n;  // m > 0 when player 2 has checkers here
-        if (m >= 1) inputs[4 * i + 0 + 98] = 1.0f;
-        if (m >= 2) inputs[4 * i + 1 + 98] = 1.0f;
-        if (m >= 3) inputs[4 * i + 2 + 98] = 1.0f;
-        if (m >= 4) inputs[4 * i + 3 + 98] = (m - 3) / 2.0f;
+        const float* m_feat = point_feature_row(m);
+        const int p1 = p0 + 98;
+        inputs[p1 + 0] = m_feat[0];
+        inputs[p1 + 1] = m_feat[1];
+        inputs[p1 + 2] = m_feat[2];
+        inputs[p1 + 3] = m_feat[3];
     }
 
     // Bar inputs
@@ -1437,7 +1469,7 @@ static void compute_side_features(
 
 std::array<float, EXTENDED_CONTACT_INPUTS> compute_extended_contact_inputs(const Board& board) {
     static_assert(EXTENDED_CONTACT_INPUTS == 244, "Expected 244 inputs");
-    std::array<float, EXTENDED_CONTACT_INPUTS> inputs = {};  // zero-initialized
+    std::array<float, EXTENDED_CONTACT_INPUTS> inputs;  // all entries assigned below
 
     constexpr int P2_OFFSET = 122;  // Player 2 block starts at index 122
 
@@ -1445,36 +1477,48 @@ std::array<float, EXTENDED_CONTACT_INPUTS> compute_extended_contact_inputs(const
     for (int i = 0; i < 24; ++i) {
         int n = board[i + 1];
 
-        // Player 1 (positive)
-        if (n > 0) inputs[4 * i + 0] = 1.0f;
-        if (n > 1) inputs[4 * i + 1] = 1.0f;
-        if (n > 2) inputs[4 * i + 2] = 1.0f;
-        if (n > 3) inputs[4 * i + 3] = (n - 3) / 2.0f;
+        const float* p_feat = point_feature_row(n);
+        const int p0 = 4 * i;
+        inputs[p0 + 0] = p_feat[0];
+        inputs[p0 + 1] = p_feat[1];
+        inputs[p0 + 2] = p_feat[2];
+        inputs[p0 + 3] = p_feat[3];
 
-        // Player 2 (negative)
         int m = -n;
-        if (m > 0) inputs[4 * i + 0 + P2_OFFSET] = 1.0f;
-        if (m > 1) inputs[4 * i + 1 + P2_OFFSET] = 1.0f;
-        if (m > 2) inputs[4 * i + 2 + P2_OFFSET] = 1.0f;
-        if (m > 3) inputs[4 * i + 3 + P2_OFFSET] = (m - 3) / 2.0f;
+        const float* m_feat = point_feature_row(m);
+        const int p1 = 4 * i + P2_OFFSET;
+        inputs[p1 + 0] = m_feat[0];
+        inputs[p1 + 1] = m_feat[1];
+        inputs[p1 + 2] = m_feat[2];
+        inputs[p1 + 3] = m_feat[3];
     }
 
     // Precompute shared data once
-    Board flipped = flip(board);
-
-    // Extract half-boards once (used by containment, acontainment, mobility, backrescapes)
+    // Extract half-boards once (used by containment, acontainment, mobility, backrescapes).
     int player_hb[25], opp_hb[25];
     extract_player_half(board, player_hb);
     extract_opponent_half(board, opp_hb);
 
-    // Flipped half-boards (player of flipped = opponent, etc.)
+    // Flipped half-boards are a permutation of the same arrays:
+    // player of flipped == opponent half-board of original, and vice versa.
     int flipped_player_hb[25], flipped_opp_hb[25];
-    extract_player_half(flipped, flipped_player_hb);
-    extract_opponent_half(flipped, flipped_opp_hb);
+    std::copy(std::begin(opp_hb), std::end(opp_hb), std::begin(flipped_player_hb));
+    std::copy(std::begin(player_hb), std::end(player_hb), std::begin(flipped_opp_hb));
 
-    // Find opponent's back checker once (used by break_contact, free_pip, timing, etc.)
-    int p_opp_back = find_opp_back_checker(board);
-    int o_opp_back = find_opp_back_checker(flipped);
+    // Compute both back-checker values in one pass:
+    // p_opp_back: highest point with opponent checkers (board perspective).
+    // o_opp_back: highest point with opponent checkers in flipped board
+    //             => lowest positive point for the original player.
+    int p_opp_back = 0;
+    int o_opp_back = 0;
+    for (int i = 1; i <= 24; ++i) {
+        const int fwd_pt = i;
+        const int rev_pt = 25 - i;
+        if (p_opp_back == 0 && board[rev_pt] < 0) p_opp_back = rev_pt;
+        if (o_opp_back == 0 && board[fwd_pt] > 0) o_opp_back = 25 - fwd_pt;
+    }
+
+    const Board flipped = flip(board);
 
     // Initialize escape tables once
     init_escape_tables();

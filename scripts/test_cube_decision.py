@@ -7,7 +7,7 @@ positions covering all three cube decision types:
   3. Double/Pass (player owns cube)
 
 Usage:
-    python python/test_cube_decision.py [--build-dir build_msvc] [--stage 5]
+    python bgsage/scripts/test_cube_decision.py [--build-dir build_msvc] [--model stage5]
 """
 
 import sys
@@ -19,10 +19,14 @@ import time
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--build-dir', type=str, default='build_msvc')
-    parser.add_argument('--stage', type=int, default=5)
-    args = parser.parse_args()
 
     project_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    sys.path.insert(0, os.path.join(project_dir, 'bgsage', 'python'))
+
+    from bgsage.weights import WeightConfig
+    WeightConfig.add_model_arg(parser)
+    args = parser.parse_args()
+
     build_dir = os.path.join(project_dir, args.build_dir)
     build_dir_std = os.path.join(project_dir, 'build')
     sys.path.insert(0, build_dir)
@@ -38,25 +42,8 @@ def main():
 
     import bgbot_cpp
 
-    # Model paths
-    models_dir = os.path.join(project_dir, 'models')
-    stage = args.stage
-    prefix = f'sl_s{stage}_'
-    pr_w = os.path.join(models_dir, f'{prefix}purerace.weights.best')
-    rc_w = os.path.join(models_dir, f'{prefix}racing.weights.best')
-    at_w = os.path.join(models_dir, f'{prefix}attacking.weights.best')
-    pm_w = os.path.join(models_dir, f'{prefix}priming.weights.best')
-    an_w = os.path.join(models_dir, f'{prefix}anchoring.weights.best')
-
-    if stage == 5:
-        nh_pr, nh_rc, nh_at, nh_pm, nh_an = 200, 400, 400, 400, 400
-    else:
-        nh_pr, nh_rc, nh_at, nh_pm, nh_an = 120, 250, 250, 250, 250
-
-    for path in [pr_w, rc_w, at_w, pm_w, an_w]:
-        if not os.path.exists(path):
-            print(f"ERROR: {path} not found")
-            sys.exit(1)
+    w = WeightConfig.from_args(args)
+    w.validate()
 
     # =====================================================================
     # Reference positions
@@ -107,7 +94,7 @@ def main():
         },
     ]
 
-    print(f"=== Doubling Cube Decision Test (Stage {stage}) ===\n")
+    print(f"=== Doubling Cube Decision Test ({args.model}) ===\n")
 
     # First, test with the REFERENCE probs to validate formulas
     print("--- Formula Validation (using reference cubeless probs) ---\n")
@@ -157,13 +144,12 @@ def main():
         print()
 
     # Now test with our NN's own probs
-    print("--- Full Evaluation (using our NN probs, Stage {}) ---\n".format(stage))
+    print(f"--- Full Evaluation (using our NN probs, {args.model}) ---\n")
 
     for pos in positions:
         result = bgbot_cpp.evaluate_cube_decision(
             pos['checkers'], pos['cube_value'], pos['cube_owner'],
-            pr_w, rc_w, at_w, pm_w, an_w,
-            nh_pr, nh_rc, nh_at, nh_pm, nh_an)
+            *w.weight_args)
 
         probs = result['probs']
         gp = bgbot_cpp.classify_game_plan(pos['checkers'])
@@ -211,12 +197,12 @@ def main():
         result = bgbot_cpp.cube_decision_nply(
             pos['checkers'], pos['cube_value'], pos['cube_owner'],
             n_plies=1,
-            purerace_weights=pr_w, racing_weights=rc_w,
-            attacking_weights=at_w, priming_weights=pm_w,
-            anchoring_weights=an_w,
-            n_hidden_purerace=nh_pr, n_hidden_racing=nh_rc,
-            n_hidden_attacking=nh_at, n_hidden_priming=nh_pm,
-            n_hidden_anchoring=nh_an)
+            purerace_weights=w.purerace, racing_weights=w.racing,
+            attacking_weights=w.attacking, priming_weights=w.priming,
+            anchoring_weights=w.anchoring,
+            n_hidden_purerace=w.n_hidden_purerace, n_hidden_racing=w.n_hidden_racing,
+            n_hidden_attacking=w.n_hidden_attacking, n_hidden_priming=w.n_hidden_priming,
+            n_hidden_anchoring=w.n_hidden_anchoring)
         dt = time.time() - t0
 
         print(f"  {pos['name']}  ({dt:.1f}s)")
@@ -251,12 +237,12 @@ def main():
             result = bgbot_cpp.cube_decision_nply(
                 pos['checkers'], pos['cube_value'], pos['cube_owner'],
                 n_plies=n_ply,
-                purerace_weights=pr_w, racing_weights=rc_w,
-                attacking_weights=at_w, priming_weights=pm_w,
-                anchoring_weights=an_w,
-                n_hidden_purerace=nh_pr, n_hidden_racing=nh_rc,
-                n_hidden_attacking=nh_at, n_hidden_priming=nh_pm,
-                n_hidden_anchoring=nh_an)
+                purerace_weights=w.purerace, racing_weights=w.racing,
+                attacking_weights=w.attacking, priming_weights=w.priming,
+                anchoring_weights=w.anchoring,
+                n_hidden_purerace=w.n_hidden_purerace, n_hidden_racing=w.n_hidden_racing,
+                n_hidden_attacking=w.n_hidden_attacking, n_hidden_priming=w.n_hidden_priming,
+                n_hidden_anchoring=w.n_hidden_anchoring)
             dt = time.time() - t0
 
             print(f"  {pos['name']}  ({dt:.1f}s)")
@@ -289,12 +275,12 @@ def main():
         t0 = time.time()
         result = bgbot_cpp.cube_decision_rollout(
             pos['checkers'], pos['cube_value'], pos['cube_owner'],
-            purerace_weights=pr_w, racing_weights=rc_w,
-            attacking_weights=at_w, priming_weights=pm_w,
-            anchoring_weights=an_w,
-            n_hidden_purerace=nh_pr, n_hidden_racing=nh_rc,
-            n_hidden_attacking=nh_at, n_hidden_priming=nh_pm,
-            n_hidden_anchoring=nh_an,
+            purerace_weights=w.purerace, racing_weights=w.racing,
+            attacking_weights=w.attacking, priming_weights=w.priming,
+            anchoring_weights=w.anchoring,
+            n_hidden_purerace=w.n_hidden_purerace, n_hidden_racing=w.n_hidden_racing,
+            n_hidden_attacking=w.n_hidden_attacking, n_hidden_priming=w.n_hidden_priming,
+            n_hidden_anchoring=w.n_hidden_anchoring,
             n_trials=1296, truncation_depth=0, decision_ply=0, vr_ply=0,
             n_threads=0, seed=42)
         dt = time.time() - t0
@@ -337,7 +323,7 @@ def main():
     print(f"  x=0 test: cubeless={cl_eq:+.4f}  cl2cf(x=0)={cf_eq_x0:+.4f}  "
           f"match={'OK' if abs(cl_eq - cf_eq_x0) < 0.001 else 'FAIL'}")
 
-    # P(win)=0.5 no gammons → equity ≈ 0
+    # P(win)=0.5 no gammons → equity ~ 0
     sym_probs = [0.5, 0.0, 0.0, 0.0, 0.0]
     sym_cl = bgbot_cpp.cubeless_equity(sym_probs)
     sym_cf = bgbot_cpp.cl2cf_money(sym_probs, bgbot_cpp.CubeOwner.CENTERED, 0.68)

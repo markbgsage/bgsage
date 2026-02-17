@@ -3,14 +3,15 @@
 Displays a table of the 5 probabilities, equity, and computation time for each.
 
 Usage:
-    python python/test_evaluate_probs.py [--checkers 0,0,0,...] [--build-dir build_msvc]
-    python python/test_evaluate_probs.py --ply 3 --stage 4  # 3-ply only benchmark
+    python bgsage/scripts/test_evaluate_probs.py [--checkers 0,0,0,...] [--build-dir build_msvc]
+    python bgsage/scripts/test_evaluate_probs.py --ply 3 --model stage3
 """
 
 import sys
 import os
 import time
 import argparse
+
 
 def main():
     parser = argparse.ArgumentParser()
@@ -20,21 +21,23 @@ def main():
                         help='Directory containing bgbot_cpp .pyd')
     parser.add_argument('--skip-rollout', action='store_true',
                         help='Skip rollout evaluations')
-    parser.add_argument('--stage', type=int, default=5,
-                        help='Model stage (4 or 5, default: 5)')
     parser.add_argument('--ply', type=int, default=None,
                         help='Run only this ply depth (and GNUbg at same depth)')
     parser.add_argument('--skip-gnubg', action='store_true',
                         help='Skip GNUbg evaluations')
+
+    # Add the build dir and python dir to sys.path (before importing bgsage)
+    project_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    sys.path.insert(0, os.path.join(project_dir, 'bgsage', 'python'))
+
+    from bgsage.weights import WeightConfig
+    WeightConfig.add_model_arg(parser)
     args = parser.parse_args()
 
-    # Add the build dir and python dir to sys.path
-    project_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     build_dir = os.path.join(project_dir, args.build_dir)
     build_dir_std = os.path.join(project_dir, 'build')
     sys.path.insert(0, build_dir)
     sys.path.insert(0, build_dir_std)
-    sys.path.insert(0, os.path.join(project_dir, 'bgsage', 'python'))
 
     # Add CUDA bin and build dir to DLL search path
     cuda_x64 = r'C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v13.1\bin\x64'
@@ -55,25 +58,9 @@ def main():
 
     assert len(checkers) == 26, f"Need 26 elements, got {len(checkers)}"
 
-    # Model paths and hidden sizes by stage
-    models_dir = os.path.join(project_dir, 'models')
-    stage = args.stage
-    prefix = f'sl_s{stage}_'
-    pr_w = os.path.join(models_dir, f'{prefix}purerace.weights.best')
-    rc_w = os.path.join(models_dir, f'{prefix}racing.weights.best')
-    at_w = os.path.join(models_dir, f'{prefix}attacking.weights.best')
-    pm_w = os.path.join(models_dir, f'{prefix}priming.weights.best')
-    an_w = os.path.join(models_dir, f'{prefix}anchoring.weights.best')
-
-    if stage == 5:
-        nh_pr, nh_rc, nh_at, nh_pm, nh_an = 200, 400, 400, 400, 400
-    else:
-        nh_pr, nh_rc, nh_at, nh_pm, nh_an = 120, 250, 250, 250, 250
-
-    for path in [pr_w, rc_w, at_w, pm_w, an_w]:
-        if not os.path.exists(path):
-            print(f"ERROR: {path} not found")
-            sys.exit(1)
+    w = WeightConfig.from_args(args)
+    w.validate()
+    w.print_summary(f'Model: {args.model}')
 
     # Classify the position
     gp = bgbot_cpp.classify_game_plan(checkers)
@@ -83,8 +70,7 @@ def main():
 
     # Build strategies
     # 0-ply: GamePlanStrategy (5-NN)
-    gps = bgbot_cpp.GamePlanStrategy(pr_w, rc_w, at_w, pm_w, an_w,
-                                      nh_pr, nh_rc, nh_at, nh_pm, nh_an)
+    gps = bgbot_cpp.GamePlanStrategy(*w.weight_args)
 
     results = []
 
@@ -103,9 +89,7 @@ def main():
             results.append({'name': '0-ply', 'probs': r0['probs'], 'equity': r0['equity'],
                             'time': t0_elapsed})
         else:
-            mp = bgbot_cpp.create_multipy_5nn(pr_w, rc_w, at_w, pm_w, an_w,
-                                               nh_pr, nh_rc, nh_at, nh_pm, nh_an,
-                                               n_plies=depth)
+            mp = bgbot_cpp.create_multipy_5nn(*w.weight_args, n_plies=depth)
             t0 = time.perf_counter()
             r = mp.evaluate_board(checkers, checkers)
             t_elapsed = time.perf_counter() - t0
@@ -135,8 +119,7 @@ def main():
         for trunc, label in [(7, 'RO t=7'), (8, 'RO t=8'), (11, 'RO t=11'),
                               (14, 'RO t=14'), (15, 'RO t=15'), (16, 'RO t=16'),
                               (20, 'RO t=20'), (50, 'RO t=50'), (0, 'RO full')]:
-            ro = bgbot_cpp.create_rollout_5nn(pr_w, rc_w, at_w, pm_w, an_w,
-                                               nh_pr, nh_rc, nh_at, nh_pm, nh_an,
+            ro = bgbot_cpp.create_rollout_5nn(*w.weight_args,
                                                n_trials=360,
                                                truncation_depth=trunc,
                                                decision_ply=1,
@@ -154,8 +137,7 @@ def main():
         # ---- Same rollouts but with VR disabled to see raw odd/even pattern ----
         for trunc, label in [(7, 'noVR t=7'), (8, 'noVR t=8'), (15, 'noVR t=15'),
                               (16, 'noVR t=16'), (0, 'noVR full')]:
-            ro = bgbot_cpp.create_rollout_5nn(pr_w, rc_w, at_w, pm_w, an_w,
-                                               nh_pr, nh_rc, nh_at, nh_pm, nh_an,
+            ro = bgbot_cpp.create_rollout_5nn(*w.weight_args,
                                                n_trials=360,
                                                truncation_depth=trunc,
                                                decision_ply=1,

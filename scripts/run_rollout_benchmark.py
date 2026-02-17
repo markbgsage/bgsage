@@ -2,7 +2,8 @@
 Rollout benchmark: find top-100 worst 0-ply errors, compare with 1-ply, 2-ply, and rollout.
 
 Usage:
-  python python/run_rollout_benchmark.py [--top N] [--threads N] [--skip-2ply]
+  python bgsage/scripts/run_rollout_benchmark.py [--top N] [--threads N] [--skip-2ply]
+  python bgsage/scripts/run_rollout_benchmark.py --model stage3  # specific model
 """
 
 import os
@@ -27,33 +28,14 @@ sys.path.insert(0, os.path.join(project_dir, 'bgsage', 'python'))
 
 import bgbot_cpp
 from bgsage.data import load_benchmark_file, load_benchmark_scenarios_by_indices
+from bgsage.weights import WeightConfig
 
 DATA_DIR = os.path.join(project_dir, 'data')
-MODELS_DIR = os.path.join(project_dir, 'models')
-
-# Stage 5 hidden sizes
-NH_PR, NH_RC, NH_AT, NH_PM, NH_AN = 200, 400, 400, 400, 400
-
-
-def get_best_weights():
-    types = ['purerace', 'racing', 'attacking', 'priming', 'anchoring']
-    paths = {}
-    for t in types:
-        path = os.path.join(MODELS_DIR, f'sl_s5_{t}.weights.best')
-        if os.path.exists(path):
-            paths[t] = path
-        else:
-            print(f"WARNING: {path} not found")
-            return None
-    return paths
-
-
-def weight_args(w):
-    return (w['purerace'], w['racing'], w['attacking'], w['priming'], w['anchoring'])
 
 
 def main():
     parser = argparse.ArgumentParser(description='Rollout benchmark: top-N worst 0-ply errors')
+    WeightConfig.add_model_arg(parser)
     parser.add_argument('--top', type=int, default=100, help='Number of worst scenarios (default: 100)')
     parser.add_argument('--threads', type=int, default=0, help='CPU threads (0=auto)')
     parser.add_argument('--skip-2ply', action='store_true', help='Skip 2-ply and 3-ply')
@@ -61,10 +43,9 @@ def main():
     parser.add_argument('--skip-rollout-2p', action='store_true', help='Skip 2-ply rollout')
     args = parser.parse_args()
 
-    weights = get_best_weights()
-    if weights is None:
-        print("Cannot find all weight files. Exiting.")
-        sys.exit(1)
+    w = WeightConfig.from_args(args)
+    w.validate()
+    w.print_summary(f'Model: {args.model}')
 
     bgbot_cpp.init_escape_tables()
 
@@ -81,14 +62,16 @@ def main():
     print(f"  contact: {n_contact}, crashed: {n_crashed}, total: {total}")
     print()
 
+    # Helper to get weight paths as a tuple (for functions needing positional args)
+    wt = (w.purerace, w.racing, w.attacking, w.priming, w.anchoring)
+    ht = w.hidden_sizes
+
     print("Scoring all scenarios at 0-ply...")
     t0 = time.perf_counter()
     errors_contact = bgbot_cpp.score_benchmarks_per_scenario_5nn(
-        scenarios_contact, *weight_args(weights),
-        NH_PR, NH_RC, NH_AT, NH_PM, NH_AN)
+        scenarios_contact, *wt, *ht)
     errors_crashed = bgbot_cpp.score_benchmarks_per_scenario_5nn(
-        scenarios_crashed, *weight_args(weights),
-        NH_PR, NH_RC, NH_AT, NH_PM, NH_AN)
+        scenarios_crashed, *wt, *ht)
     t_0ply_full = time.perf_counter() - t0
     print(f"  Done in {t_0ply_full:.1f}s")
 
@@ -149,14 +132,12 @@ def main():
 
     # 0-ply (subset verification)
     def score_0ply(ss):
-        return bgbot_cpp.score_benchmarks_5nn(
-            ss, *weight_args(weights), NH_PR, NH_RC, NH_AT, NH_PM, NH_AN)
+        return bgbot_cpp.score_benchmarks_5nn(ss, *w.weight_args)
     er_0ply, t_0ply = score_subset('0-ply', score_0ply)
     results.append(('0-ply', er_0ply, t_0ply))
 
     # 1-ply
-    multipy_1 = bgbot_cpp.create_multipy_5nn(
-        *weight_args(weights), NH_PR, NH_RC, NH_AT, NH_PM, NH_AN, n_plies=1)
+    multipy_1 = bgbot_cpp.create_multipy_5nn(*w.weight_args, n_plies=1)
 
     def score_1ply(ss):
         multipy_1.clear_cache()
@@ -166,8 +147,7 @@ def main():
 
     # 2-ply
     if not args.skip_2ply:
-        multipy_2 = bgbot_cpp.create_multipy_5nn(
-            *weight_args(weights), NH_PR, NH_RC, NH_AT, NH_PM, NH_AN, n_plies=2)
+        multipy_2 = bgbot_cpp.create_multipy_5nn(*w.weight_args, n_plies=2)
 
         def score_2ply(ss):
             multipy_2.clear_cache()
@@ -177,8 +157,7 @@ def main():
 
     # 3-ply
     if not args.skip_2ply:
-        multipy_3 = bgbot_cpp.create_multipy_5nn(
-            *weight_args(weights), NH_PR, NH_RC, NH_AT, NH_PM, NH_AN, n_plies=3)
+        multipy_3 = bgbot_cpp.create_multipy_5nn(*w.weight_args, n_plies=3)
 
         def score_3ply(ss):
             multipy_3.clear_cache()
@@ -189,7 +168,7 @@ def main():
     # Rollout: 1-ply decisions, 1296 trials, no trunc, VR at 0-ply, late=0@3
     if not args.skip_rollout_1p:
         rollout_1p_1296 = bgbot_cpp.create_rollout_5nn(
-            *weight_args(weights), NH_PR, NH_RC, NH_AT, NH_PM, NH_AN,
+            *w.weight_args,
             n_trials=1296, truncation_depth=0,
             decision_ply=1, vr_ply=0,
             n_threads=args.threads,
@@ -203,7 +182,7 @@ def main():
     # Rollout: 2-ply decisions, 1296 trials, no trunc, VR at 0-ply, late=0@3
     if not args.skip_rollout_2p:
         rollout_2p_1296 = bgbot_cpp.create_rollout_5nn(
-            *weight_args(weights), NH_PR, NH_RC, NH_AT, NH_PM, NH_AN,
+            *w.weight_args,
             n_trials=1296, truncation_depth=0,
             decision_ply=2, vr_ply=0,
             n_threads=args.threads,
