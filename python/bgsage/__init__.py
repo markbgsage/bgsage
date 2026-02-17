@@ -14,10 +14,12 @@ Quick start::
 """
 
 from .analyzer import BgBotAnalyzer, create_analyzer
+from .batch import PositionEval, batch_evaluate, batch_post_move_evaluate
 from .board import (
     STARTING_BOARD,
     check_game_over,
     classify_game_plan,
+    classify_game_plans,
     flip_board,
     invert_probs,
     is_crashed,
@@ -28,29 +30,37 @@ from .board import (
 from .types import (
     CheckerPlayResult,
     CubeActionResult,
+    GamePlanResult,
     GameStats,
     MoveAnalysis,
+    PostMoveAnalysis,
     Probabilities,
 )
 from .weights import MODELS, PRODUCTION_MODEL, WeightConfig
 
 __all__ = [
     "BgBotAnalyzer",
+    "batch_evaluate",
+    "batch_post_move_evaluate",
     "create_analyzer",
     "WeightConfig",
     "PRODUCTION_MODEL",
     "MODELS",
     "Probabilities",
     "MoveAnalysis",
+    "PostMoveAnalysis",
     "CheckerPlayResult",
     "CubeActionResult",
+    "GamePlanResult",
     "GameStats",
+    "PositionEval",
     "STARTING_BOARD",
     "flip_board",
     "possible_moves",
     "possible_single_die_moves",
     "check_game_over",
     "classify_game_plan",
+    "classify_game_plans",
     "is_race",
     "is_crashed",
     "invert_probs",

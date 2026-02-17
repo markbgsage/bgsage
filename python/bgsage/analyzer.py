@@ -27,6 +27,7 @@ from .types import (
     CheckerPlayResult,
     CubeActionResult,
     MoveAnalysis,
+    PostMoveAnalysis,
     Probabilities,
 )
 from .weights import WeightConfig
@@ -603,6 +604,52 @@ class BgBotAnalyzer:
         eval_level = moves[0].eval_level if moves else self._eval_level
         return CheckerPlayResult(
             moves=moves, board=board, die1=die1, die2=die2,
+            eval_level=eval_level,
+        )
+
+    def post_move_analytics(
+        self,
+        board: list[int],
+        cube_owner: str = "centered",
+    ) -> PostMoveAnalysis:
+        """Evaluate a post-move position (right before the opponent's turn).
+
+        Returns cubeless probabilities, cubeless equity, and cubeful equity
+        from the perspective of the player who just moved.
+
+        Args:
+            board: 26-element post-move board array (player who moved's perspective).
+            cube_owner: ``'centered'``, ``'player'``, or ``'opponent'``.
+        """
+        inner = self._analyzer
+        if isinstance(inner, _CubefulAnalyzer):
+            inner = inner._inner
+
+        # Evaluate the post-move board (NN outputs from mover's perspective)
+        if isinstance(inner, _MultiPlyAnalyzer):
+            r = inner._strategy_nply.evaluate_board(board, board)
+            eval_level = f"{inner._n_plies}-ply"
+            inner._strategy_nply.clear_cache()
+        elif isinstance(inner, _RolloutAnalyzer):
+            r = inner._rollout_strategy.evaluate_board(board, board)
+            eval_level = "Rollout"
+        else:
+            r = inner._strategy_0ply.evaluate_board(board, board)
+            eval_level = "0-ply"
+
+        probs_list = list(r["probs"])
+        cl_eq = r["equity"]
+
+        # Cubeful equity via Janowski
+        owner = resolve_owner(cube_owner)
+        race = bgbot_cpp.is_race(board)
+        x = bgbot_cpp.cube_efficiency(board, race)
+        cf_eq = bgbot_cpp.cl2cf_money(probs_list, owner, x)
+
+        return PostMoveAnalysis(
+            probs=Probabilities.from_list(probs_list),
+            cubeless_equity=cl_eq,
+            cubeful_equity=cf_eq,
             eval_level=eval_level,
         )
 

@@ -80,6 +80,27 @@ class CubeActionResult:
 
 
 @dataclass
+class PostMoveAnalysis:
+    """Result of evaluating a post-move position (right before the opponent's turn).
+
+    Probabilities are from the perspective of the player who just moved.
+    """
+
+    probs: Probabilities        # Post-move cubeless probabilities
+    cubeless_equity: float      # Cubeless equity
+    cubeful_equity: float       # Cubeful equity (Janowski), or same as cubeless if cubeful=False
+    eval_level: str             # "0-ply", "1-ply", "2-ply", ..., "Rollout"
+
+
+@dataclass
+class GamePlanResult:
+    """Game plan classification for a position."""
+
+    player: str     # "purerace", "racing", "attacking", "priming", "anchoring"
+    opponent: str   # Same values, from the opponent's perspective
+
+
+@dataclass
 class GameStats:
     """Statistics from simulated games."""
 

@@ -25,8 +25,9 @@ variance reduction and efficiently parallelizes on your CPUs.
 
 ## What are Its Interfaces?
 
-It offers interfaces for:
+It offers both Python and C++ interfaces for:
 * Checker play analytics: given a list of checker positions, the two dice, and cube information, it returns you a list of information about the top possible moves, sorted in descending order of equity; for each it gives you equity and cubeless post-move probabilities. You can specify the evaluation level.
-* Cube action analytics: given a list of checker positions and the cube information, it returns you cubeful equity information about the three states (ND, D/T, and D/P) and the pre-roll cubeless probabilities.
+* Post-move position analytics: given a list of checker positions and the cube information, it returns you cubeful equity, cubeless equity, and the cubeless probabilities - for a post-move position (right before the opponent's turn).
+* Cube action analytics: given a list of checker positions and the cube information, it returns you cubeful equity information about the three states (ND, D/T, and D/P), cubeless equity, and the cubeless probabilities - for a pre-roll position.
 * Game plan classification: given a list of checkers, it returns the optimal game plans of the player and the opponent.
 * Game utilities (flip a board, etc).

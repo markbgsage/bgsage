@@ -4,11 +4,11 @@
 
 I used Claude Code, mostly with Opus 4.6, to write almost all the code in this project. It was a startling experience, and the first time that I built something really without much looking at the code. I gave it example code from an earlier personal bot project (that did not work very well!), a link to my old blog from when I tried to learn about neural networks by building a bot (compgammon.blotspot.com), and asked it to build an optimzed C++-based backgammon bot with a Python interface.
 
-I gave it clear benchmarks for training the cubeless bot: the GNUBG Contact and Race benchmark scores, which I knew from my earlier project were well correlated with playing performance. And I gave it specific examples where I knew what the bot outputs should be, so it could regression test against those. Just four or five, though.
+I gave it clear benchmarks for training the cubeless bot: the GNUBG Contact and Race benchmark scores, which I knew from my earlier project were well correlated with playing performance. And I gave it specific examples where I knew what the bot outputs should be, so it could test against those. Just four or five, though.
 
 It definitely did not one-shot this. But it did put together a credible plan - which we evolved over time - and we incrementally built out the pieces. Big pieces at a time - for example, implementing a hand-rolled neural network class in C++ because it convinced me that this would be more efficient than using an existing library like PyTorch or Tensorflow, since the use case is so simple; or implementing a parallelized version of the multi-ply evaluation. 
 
-I rarely looked at the actual code during this process - I just told it what specific types of interface it should create, and how to test those interfaces.
+I rarely looked at the actual code during this process - I just told it what specific types of interface it should create, and how to test those interfaces. I tested whatever new feature we were working on, gave it feedback, and iterated until it was done.
 
 After Claude Code put together a first version, I asked it to profile and optimize its code, and it did significantly improve its performance. Then I pointed OpenAI's Codex at the same code, using GPT 5.3-Codex-Spark, and asked it to also profile and optimize, and that second round also resulted in significant performance improvements.
 

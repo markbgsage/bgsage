@@ -6,7 +6,12 @@ move generation, and position classification.
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import bgbot_cpp
+
+if TYPE_CHECKING:
+    from .types import GamePlanResult
 
 #: Standard backgammon starting position.
 STARTING_BOARD: list[int] = [
@@ -57,6 +62,21 @@ def classify_game_plan(board: list[int]) -> str:
     """
     gp = bgbot_cpp.classify_game_plan(board)
     return gp.name.lower() if hasattr(gp, "name") else str(gp).lower()
+
+
+def classify_game_plans(board: list[int]) -> GamePlanResult:
+    """Classify game plans for both the player on roll and the opponent.
+
+    Returns a :class:`~bgsage.types.GamePlanResult` with ``player`` and
+    ``opponent`` fields, each one of: ``"purerace"``, ``"racing"``,
+    ``"attacking"``, ``"priming"``, ``"anchoring"``.
+    """
+    from .types import GamePlanResult
+
+    player_gp = classify_game_plan(board)
+    flipped = bgbot_cpp.flip_board(board)
+    opponent_gp = classify_game_plan(flipped)
+    return GamePlanResult(player=player_gp, opponent=opponent_gp)
 
 
 def is_race(board: list[int]) -> bool:

@@ -124,6 +124,210 @@ python scripts/run_full_benchmark.py --model stage3
 - `w.weight_paths` → dict of plan name → file path
 - `w.validate()` → raises FileNotFoundError if any weight file missing
 
+## Interfaces
+
+The library provides both **Python** and **C++** interfaces for five categories
+of functionality. All Python functions default to the production model; pass
+`weights=WeightConfig.from_model("stage3")` (or `model="stage3"` where
+applicable) to use a different model.
+
+### 1. Checker Play Analytics
+
+Given a board position, two dice, and cube information, return all legal moves
+ranked by equity, with cubeless post-move probabilities for each.
+
+**Python** — `BgBotAnalyzer.checker_play()` (`python/bgsage/analyzer.py`):
+```python
+from bgsage import BgBotAnalyzer, STARTING_BOARD
+
+analyzer = BgBotAnalyzer(eval_level="2ply", cubeful=True)
+result = analyzer.checker_play(STARTING_BOARD, 3, 1, cube_value=1, cube_owner="centered")
+# result: CheckerPlayResult with .moves (list[MoveAnalysis], best first)
+for m in result.moves[:3]:
+    print(f"{m.equity:+.3f}  {m.probs.win:.1%}  diff={m.equity_diff:+.4f}")
+```
+
+**C++** — Compose `possible_boards()` + `GamePlanStrategy::evaluate_probs()` + sort:
+```cpp
+#include "bgbot/moves.h"
+#include "bgbot/strategy.h"
+std::vector<Board> candidates;
+possible_boards(board, die1, die2, candidates);
+GamePlanStrategy strat(pr_w, rc_w, at_w, pm_w, an_w, ...);
+for (auto& c : candidates) {
+    auto probs = strat.evaluate_probs(c, board);
+    double eq = NeuralNetwork::compute_equity(probs);
+}
+// Sort by equity descending.
+```
+
+### 2. Post-Move Position Analytics
+
+Given a post-move board (right before the opponent's turn) and cube information,
+return cubeful equity, cubeless equity, and cubeless probabilities.
+
+**Python (single)** — `BgBotAnalyzer.post_move_analytics()` (`python/bgsage/analyzer.py`):
+```python
+from bgsage import BgBotAnalyzer
+
+analyzer = BgBotAnalyzer(eval_level="1ply")
+result = analyzer.post_move_analytics(post_move_board, cube_owner="centered")
+# result: PostMoveAnalysis with .probs, .cubeless_equity, .cubeful_equity, .eval_level
+```
+
+**Python (batch, parallelized)** — `batch_post_move_evaluate()` (`python/bgsage/batch.py`):
+```python
+from bgsage import batch_post_move_evaluate
+
+positions = [
+    {"board": board1, "cube_owner": "centered"},
+    {"board": board2, "cube_owner": "player"},
+]
+results = batch_post_move_evaluate(positions, eval_level="0ply", n_threads=0)
+# results: list[PostMoveAnalysis]
+for r in results:
+    print(f"CL={r.cubeless_equity:+.3f}  CF={r.cubeful_equity:+.3f}")
+```
+
+**C++** — `GamePlanStrategy::evaluate_probs()` + `cl2cf_money()`:
+```cpp
+GamePlanStrategy strat(...);
+bool race = is_race(board);
+auto probs = strat.evaluate_probs(board, race);
+float cl_eq = NeuralNetwork::compute_equity(probs);
+float x = cube_efficiency(board, race);
+float cf_eq = cl2cf_money(probs, owner, x);
+```
+
+C++ batch: `bgbot_cpp.batch_evaluate_post_move(positions, strategy, n_threads)` via
+pybind11; takes `list[(board, CubeOwner)]`, returns `list[dict]` with `probs`,
+`cubeless_equity`, `cubeful_equity`.
+
+### 3. Cube Action Analytics
+
+Given a pre-roll board position and cube information, return cubeful equity
+information for the three cube states (No Double, Double/Take, Double/Pass),
+cubeless equity, and cubeless probabilities.
+
+**Python** — `BgBotAnalyzer.cube_action()` (`python/bgsage/analyzer.py`):
+```python
+from bgsage import BgBotAnalyzer
+
+analyzer = BgBotAnalyzer(eval_level="2ply", cubeful=True)
+cube = analyzer.cube_action(board, cube_value=1, cube_owner="centered")
+# cube: CubeActionResult with .equity_nd, .equity_dt, .equity_dp,
+#   .should_double, .should_take, .optimal_action, .probs, .cubeless_equity
+```
+
+**Python (batch, pre-roll)** — `batch_evaluate()` (`python/bgsage/batch.py`):
+```python
+from bgsage import batch_evaluate
+
+positions = [{"board": b, "cube_value": 1, "cube_owner": "centered"} for b in boards]
+results = batch_evaluate(positions, eval_level="2ply", n_threads=0)
+# results: list[PositionEval] — includes probs, cubeless/cubeful equity, cube decision
+```
+
+**C++** — `evaluate_cube_decision()` (0-ply), `cube_decision_nply()` (N-ply),
+`cube_decision_rollout()`:
+```cpp
+// 0-ply: evaluate_cube_decision(checkers, cube_value, owner, weight_args...)
+// N-ply: cube_decision_nply(checkers, cube_value, owner, n_plies, weight_args...)
+// Rollout: cube_decision_rollout(checkers, cube_value, owner, weight_args..., config...)
+```
+
+C++ batch pre-roll: `bgbot_cpp.batch_evaluate_positions(positions, strategy, n_threads)`
+via pybind11; takes `list[(board, cube_value, CubeOwner)]`, returns `list[dict]`.
+
+### 4. Game Plan Classification
+
+Given a board position, return the game plan for the player on roll and the
+opponent. Plans: `"purerace"`, `"racing"`, `"attacking"`, `"priming"`, `"anchoring"`.
+
+**Python (both plans)** — `classify_game_plans()` (`python/bgsage/board.py`):
+```python
+from bgsage import classify_game_plans
+
+result = classify_game_plans(board)
+# result: GamePlanResult with .player and .opponent
+print(f"Player: {result.player}, Opponent: {result.opponent}")
+```
+
+**Python (player only)** — `classify_game_plan()` (`python/bgsage/board.py`):
+```python
+from bgsage import classify_game_plan
+plan = classify_game_plan(board)  # -> str: "purerace", "racing", etc.
+```
+
+**C++** — `classify_game_plan()` (`encoding.h`):
+```cpp
+GamePlan gp = classify_game_plan(board);          // player on roll
+GamePlan opp_gp = classify_game_plan(flip(board)); // opponent
+```
+
+C++ batch: `bgbot_cpp.classify_game_plans_batch(boards_np)` via pybind11;
+takes `numpy array [N, 26]`, returns `int32 array` (0=purerace, 1=racing, etc.).
+
+### 5. Game Utilities
+
+Board manipulation, move generation, and game state queries.
+
+**Python** — `python/bgsage/board.py` (all importable from `bgsage`):
+
+| Function | Purpose |
+|----------|---------|
+| `flip_board(board)` | Flip to opponent's perspective |
+| `possible_moves(board, die1, die2)` | All legal resulting positions |
+| `possible_single_die_moves(board, die)` | Single-die moves with from/to (for UI) |
+| `check_game_over(board)` | 0=not over, ±1/±2/±3 = single/gammon/backgammon |
+| `is_race(board)` | True if contact is broken |
+| `is_crashed(board)` | True if position is crashed |
+| `invert_probs(probs)` | Swap player/opponent probabilities |
+| `STARTING_BOARD` | Standard 26-element starting position |
+
+**C++** — `board.h`, `moves.h`:
+
+| Function | Purpose |
+|----------|---------|
+| `flip(board)` | Flip perspective |
+| `possible_boards(board, d1, d2, results)` | Legal move generation |
+| `check_game_over(board)` | Terminal detection |
+| `is_race(board)` | Contact check |
+| `is_crashed(board)` | Crashed position check |
+| `invert_probs(probs)` | Invert 5-probability array |
+
+### Model Selection
+
+All interfaces default to the production model. To use a specific model:
+
+```python
+from bgsage import BgBotAnalyzer, batch_evaluate, batch_post_move_evaluate
+from bgsage.weights import WeightConfig
+
+weights = WeightConfig.from_model("stage3")
+
+# Single-position
+analyzer = BgBotAnalyzer(weights=weights, eval_level="1ply")
+
+# Batch pre-roll
+results = batch_evaluate(positions, eval_level="0ply", weights=weights)
+
+# Batch post-move
+results = batch_post_move_evaluate(positions, eval_level="0ply", weights=weights)
+```
+
+### Return Types
+
+| Type | Used by | Key fields |
+|------|---------|------------|
+| `CheckerPlayResult` | `checker_play()` | `.moves` (list[MoveAnalysis]), `.board`, `.die1`, `.die2` |
+| `MoveAnalysis` | In CheckerPlayResult | `.board`, `.equity`, `.cubeless_equity`, `.probs`, `.equity_diff` |
+| `PostMoveAnalysis` | `post_move_analytics()`, `batch_post_move_evaluate()` | `.probs`, `.cubeless_equity`, `.cubeful_equity` |
+| `CubeActionResult` | `cube_action()` | `.equity_nd/dt/dp`, `.should_double`, `.should_take`, `.optimal_action`, `.probs` |
+| `PositionEval` | `batch_evaluate()` | `.probs`, `.cubeless_equity`, `.cubeful_equity`, `.equity_nd/dt/dp`, `.optimal_action` |
+| `GamePlanResult` | `classify_game_plans()` | `.player`, `.opponent` |
+| `Probabilities` | In all analysis types | `.win`, `.gammon_win`, `.backgammon_win`, `.gammon_loss`, `.backgammon_loss`, `.equity` |
+
 ## Benchmark Scripts
 
 All benchmark scripts default to the production model and accept `--model <name>`
