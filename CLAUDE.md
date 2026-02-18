@@ -239,6 +239,23 @@ results = batch_evaluate(positions, eval_level="2ply", n_threads=0)
 C++ batch pre-roll: `bgbot_cpp.batch_evaluate_positions(positions, strategy, n_threads)`
 via pybind11; takes `list[(board, cube_value, CubeOwner)]`, returns `list[dict]`.
 
+C++ batch checker play: `bgbot_cpp.batch_checker_play(inputs, strategy_0ply, [strategy_nply,]
+filter_max_moves, filter_threshold, n_threads)` via pybind11; takes `list[dict]` with
+`{board, die1, die2, cube_value, cube_owner}`, returns `list[dict]` each with `moves` list
+sorted by cubeful equity desc. Two overloads: 0-ply (GamePlanStrategy only) and N-ply
+(GamePlanStrategy + MultiPlyStrategy). Survivors evaluated at N-ply, rest at 0-ply.
+
+**Python batch wrapper** — `batch_checker_play()` (`python/bgsage/batch.py`):
+```python
+from bgsage import batch_checker_play
+positions = [
+    {"board": b, "die1": 3, "die2": 1, "cube_value": 1, "cube_owner": "centered"}
+    for b in boards
+]
+results = batch_checker_play(positions, eval_level="2ply", n_threads=0)
+# results: list[CheckerPlayResult], each with .moves sorted best-first
+```
+
 ### 4. Game Plan Classification
 
 Given a board position, return the game plan for the player on roll and the

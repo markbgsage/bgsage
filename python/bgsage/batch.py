@@ -37,7 +37,7 @@ from dataclasses import dataclass
 import bgbot_cpp
 
 from .analyzer import resolve_owner
-from .types import PostMoveAnalysis, Probabilities
+from .types import CheckerPlayResult, CubeActionResult, MoveAnalysis, PostMoveAnalysis, Probabilities
 from .weights import WeightConfig
 
 
@@ -213,3 +213,177 @@ def batch_post_move_evaluate(
         )
         for r in raw_results
     ]
+
+
+def batch_cube_action(
+    positions: list[dict],
+    eval_level: str = "0ply",
+    weights: WeightConfig | None = None,
+    *,
+    n_threads: int = 0,
+    filter_max_moves: int = 5,
+    filter_threshold: float = 0.08,
+) -> list[CubeActionResult]:
+    """Evaluate cube decisions for a batch of pre-roll positions in parallel.
+
+    This is a convenience wrapper around :func:`batch_evaluate` that returns
+    :class:`~bgsage.types.CubeActionResult` objects (the same type returned by
+    ``BgBotAnalyzer.cube_action()``).
+
+    Cube decisions use Janowski interpolation on the N-ply cubeless probs
+    (same approach as ``batch_evaluate``), **not** the expensive recursive
+    N-ply cubeful search from ``cube_decision_nply``.  This is much faster
+    and adequate for most use cases.
+
+    Each position dict must contain:
+        board: list[int]  — 26-element board from mover's perspective
+        cube_value: int   — current cube value (1, 2, 4, ...)
+        cube_owner: str   — "centered", "player", or "opponent"
+
+    Args:
+        positions: List of position dicts.
+        eval_level: ``"0ply"``, ``"1ply"``, ``"2ply"``, or ``"3ply"``.
+        weights: Weight configuration (defaults to production model).
+        n_threads: Number of threads for position-level parallelism
+            (0 = auto-detect all cores).
+        filter_max_moves: Max moves for N-ply move filter.
+        filter_threshold: Equity threshold for N-ply move filter.
+
+    Returns:
+        List of :class:`~bgsage.types.CubeActionResult`, one per input position.
+    """
+    evals = batch_evaluate(
+        positions,
+        eval_level=eval_level,
+        weights=weights,
+        n_threads=n_threads,
+        filter_max_moves=filter_max_moves,
+        filter_threshold=filter_threshold,
+    )
+
+    n_plies = 0 if eval_level == "0ply" else int(eval_level[0])
+    level_label = "0-ply" if n_plies == 0 else f"{n_plies}-ply"
+
+    return [
+        CubeActionResult(
+            probs=e.probs,
+            cubeless_equity=e.cubeless_equity,
+            equity_nd=e.equity_nd,
+            equity_dt=e.equity_dt,
+            equity_dp=e.equity_dp,
+            should_double=e.should_double,
+            should_take=e.should_take,
+            optimal_equity=(
+                e.equity_nd if not e.should_double
+                else e.equity_dt if e.should_take
+                else e.equity_dp
+            ),
+            optimal_action=e.optimal_action,
+            eval_level=level_label,
+        )
+        for e in evals
+    ]
+
+
+def batch_checker_play(
+    positions: list[dict],
+    eval_level: str = "0ply",
+    weights: WeightConfig | None = None,
+    *,
+    n_threads: int = 0,
+    filter_max_moves: int = 5,
+    filter_threshold: float = 0.08,
+) -> list[CheckerPlayResult]:
+    """Evaluate checker play for a batch of positions in parallel.
+
+    For each input position (board + dice + cube), generates all legal moves,
+    scores them, applies filtering, and optionally re-scores survivors at
+    N-ply.  Returns the full ranked move list for each position.
+
+    Each position dict must contain:
+        board: list[int]    — 26-element pre-move board (mover's perspective)
+        die1: int           — first die value (1-6)
+        die2: int           — second die value (1-6)
+        cube_value: int     — current cube value (1, 2, 4, ...)
+        cube_owner: str     — "centered", "player", or "opponent"
+
+    Args:
+        positions: List of position dicts.
+        eval_level: ``"0ply"``, ``"1ply"``, ``"2ply"``, or ``"3ply"``.
+        weights: Weight configuration (defaults to production model).
+        n_threads: Number of threads for position-level parallelism
+            (0 = auto-detect all cores).
+        filter_max_moves: Max moves for N-ply move filter.
+        filter_threshold: Equity threshold for N-ply move filter.
+
+    Returns:
+        List of :class:`~bgsage.types.CheckerPlayResult`, one per input
+        position.  Each contains a ``moves`` list sorted best-first by
+        cubeful equity, with survivors evaluated at the requested ply and
+        the rest at 0-ply.
+    """
+    if weights is None:
+        weights = WeightConfig.default()
+
+    # Build input dicts with CubeOwner enum for C++
+    cpp_inputs = []
+    for p in positions:
+        cpp_inputs.append({
+            "board": list(p["board"]),
+            "die1": p["die1"],
+            "die2": p["die2"],
+            "cube_value": p.get("cube_value", 1),
+            "cube_owner": resolve_owner(p.get("cube_owner", "centered")),
+        })
+
+    strategy_0ply = bgbot_cpp.GamePlanStrategy(*weights.weight_args)
+
+    if eval_level == "0ply":
+        raw_results = bgbot_cpp.batch_checker_play(
+            cpp_inputs, strategy_0ply,
+            filter_max_moves, filter_threshold, n_threads,
+        )
+        level_label = "0-ply"
+    elif eval_level in ("1ply", "2ply", "3ply"):
+        n_plies = int(eval_level[0])
+        strategy_nply = bgbot_cpp.create_multipy_5nn(
+            *weights.weight_args,
+            n_plies=n_plies,
+            filter_max_moves=filter_max_moves,
+            filter_threshold=filter_threshold,
+            parallel_evaluate=False,
+            parallel_threads=0,
+        )
+        raw_results = bgbot_cpp.batch_checker_play(
+            cpp_inputs, strategy_0ply, strategy_nply,
+            filter_max_moves, filter_threshold, n_threads,
+        )
+        level_label = f"{n_plies}-ply"
+    else:
+        raise ValueError(
+            f"Unsupported eval_level: {eval_level!r}. "
+            f"Use '0ply', '1ply', '2ply', or '3ply'."
+        )
+
+    results = []
+    for i, raw in enumerate(raw_results):
+        p = positions[i]
+        moves = [
+            MoveAnalysis(
+                board=list(m["board"]),
+                equity=m["equity"],
+                cubeless_equity=m["cubeless_equity"],
+                probs=Probabilities.from_list(list(m["probs"])),
+                equity_diff=m["equity_diff"],
+                eval_level=m["eval_level"],
+            )
+            for m in raw["moves"]
+        ]
+        results.append(CheckerPlayResult(
+            moves=moves,
+            board=list(p["board"]),
+            die1=p["die1"],
+            die2=p["die2"],
+            eval_level=level_label,
+        ))
+    return results

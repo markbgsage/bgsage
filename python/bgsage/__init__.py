@@ -14,7 +14,7 @@ Quick start::
 """
 
 from .analyzer import BgBotAnalyzer, create_analyzer
-from .batch import PositionEval, batch_evaluate, batch_post_move_evaluate
+from .batch import PositionEval, batch_checker_play, batch_cube_action, batch_evaluate, batch_post_move_evaluate
 from .board import (
     STARTING_BOARD,
     check_game_over,
@@ -40,6 +40,8 @@ from .weights import MODELS, PRODUCTION_MODEL, WeightConfig
 
 __all__ = [
     "BgBotAnalyzer",
+    "batch_checker_play",
+    "batch_cube_action",
     "batch_evaluate",
     "batch_post_move_evaluate",
     "create_analyzer",

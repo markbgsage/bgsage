@@ -45,6 +45,11 @@ static Board list_to_board(const std::vector<int>& v) {
     return b;
 }
 
+// Convert a Board to a Python-friendly vector
+static std::vector<int> board_to_list(const Board& b) {
+    return std::vector<int>(b.begin(), b.end());
+}
+
 // C++ container for benchmark scenarios — avoids pybind11 vector copy issues
 // with large datasets. Scenarios are built and stored entirely in C++.
 struct ScenarioSet {
@@ -2380,5 +2385,376 @@ PYBIND11_MODULE(bgbot_cpp, m) {
        "Returns list of dicts with probs, cubeless_equity, cubeful_equity.",
        py::arg("positions"),
        py::arg("strategy"),
+       py::arg("n_threads") = 0);
+
+    // ======================== Batch checker play ========================
+
+    // Batch checker play: for each (board, die1, die2, cube_value, cube_owner),
+    // generate legal moves, score at 0-ply, filter, compute cubeful equity,
+    // return sorted moves.  Parallelized across positions.
+    //
+    // Each input is a dict: {board, die1, die2, cube_value, cube_owner}.
+    // Returns a list of dicts, one per input position:
+    //   {moves: [{board, equity, cubeless_equity, probs, equity_diff, eval_level}, ...]}
+    // Moves sorted by equity descending (best first).
+
+    // 0-ply overload: GamePlanStrategy only
+    m.def("batch_checker_play", [](
+            py::list inputs,
+            GamePlanStrategy& strategy_0ply,
+            int filter_max_moves,
+            float filter_threshold,
+            int n_threads) {
+
+        struct CPInput {
+            Board board;
+            int die1, die2;
+            int cube_value;
+            CubeOwner owner;
+        };
+        const int n = static_cast<int>(py::len(inputs));
+        std::vector<CPInput> parsed(n);
+        for (int i = 0; i < n; ++i) {
+            py::dict inp = inputs[i].cast<py::dict>();
+            auto checkers = inp["board"].cast<std::vector<int>>();
+            parsed[i].board = list_to_board(checkers);
+            parsed[i].die1 = inp["die1"].cast<int>();
+            parsed[i].die2 = inp["die2"].cast<int>();
+            parsed[i].cube_value = inp["cube_value"].cast<int>();
+            parsed[i].owner = inp["cube_owner"].cast<CubeOwner>();
+        }
+
+        struct MoveResult {
+            Board board;
+            std::array<float, NUM_OUTPUTS> probs;
+            float cubeless_equity;
+            float cubeful_equity;
+        };
+        struct CPResult {
+            std::vector<MoveResult> moves;
+        };
+        std::vector<CPResult> results(n);
+
+        MoveFilter filter{filter_max_moves, filter_threshold};
+
+        {
+            py::gil_scoped_release release;
+
+            if (n_threads <= 0) {
+                n_threads = static_cast<int>(std::thread::hardware_concurrency());
+                if (n_threads <= 0) n_threads = 1;
+            }
+            n_threads = std::min(n_threads, n);
+
+            auto process_position = [&](int i) {
+                const auto& inp = parsed[i];
+                auto& out = results[i];
+
+                auto candidates = possible_boards(inp.board, inp.die1, inp.die2);
+                if (candidates.empty()) return;
+
+                struct Scored {
+                    Board board;
+                    std::array<float, NUM_OUTPUTS> probs;
+                    float cubeless_equity;
+                    float cubeful_equity;
+                };
+                std::vector<Scored> scored(candidates.size());
+                for (size_t j = 0; j < candidates.size(); ++j) {
+                    auto post_probs = strategy_0ply.evaluate_probs(
+                        candidates[j], inp.board);
+                    float cl_eq = NeuralNetwork::compute_equity(post_probs);
+                    bool race = is_race(candidates[j]);
+                    float x = cube_efficiency(candidates[j], race);
+                    float cf_eq = cl2cf_money(post_probs, inp.owner, x);
+                    scored[j] = {candidates[j], post_probs, cl_eq, cf_eq};
+                }
+
+                // Sort by cubeful equity desc
+                std::sort(scored.begin(), scored.end(),
+                    [](const Scored& a, const Scored& b) {
+                        return a.cubeful_equity > b.cubeful_equity;
+                    });
+
+                // Filter
+                float best_eq = scored[0].cubeful_equity;
+                int keep = 0;
+                for (size_t j = 0; j < scored.size() && keep < filter.max_moves; ++j) {
+                    if ((best_eq - scored[j].cubeful_equity) < filter.threshold) {
+                        ++keep;
+                    } else {
+                        break;
+                    }
+                }
+                if (keep == 0) keep = 1;
+
+                // All moves at 0-ply
+                out.moves.resize(scored.size());
+                for (size_t j = 0; j < scored.size(); ++j) {
+                    out.moves[j] = {
+                        scored[j].board, scored[j].probs,
+                        scored[j].cubeless_equity, scored[j].cubeful_equity,
+                    };
+                }
+            };
+
+            if (n_threads <= 1) {
+                for (int i = 0; i < n; ++i) process_position(i);
+            } else {
+                std::vector<std::thread> threads;
+                threads.reserve(n_threads);
+                std::atomic<int> next_pos{0};
+                for (int t = 0; t < n_threads; ++t) {
+                    threads.emplace_back([&]() {
+                        while (true) {
+                            int i = next_pos.fetch_add(1);
+                            if (i >= n) break;
+                            process_position(i);
+                        }
+                    });
+                }
+                for (auto& th : threads) th.join();
+            }
+        }
+
+        // Convert to Python
+        py::list out;
+        for (int i = 0; i < n; ++i) {
+            auto& res = results[i];
+            float best_eq = res.moves.empty() ? 0.0f : res.moves[0].cubeful_equity;
+            py::list moves_list;
+            for (auto& m : res.moves) {
+                py::dict d;
+                d["board"] = board_to_list(m.board);
+                d["equity"] = m.cubeful_equity;
+                d["cubeless_equity"] = m.cubeless_equity;
+                d["probs"] = m.probs;
+                d["equity_diff"] = m.cubeful_equity - best_eq;
+                d["eval_level"] = "0-ply";
+                moves_list.append(d);
+            }
+            py::dict pos_result;
+            pos_result["moves"] = moves_list;
+            out.append(pos_result);
+        }
+        return out;
+    }, "Batch checker play at 0-ply.\n"
+       "inputs: list of dicts {board, die1, die2, cube_value, cube_owner}.\n"
+       "Returns list of dicts, each with 'moves' list sorted by equity desc.",
+       py::arg("inputs"),
+       py::arg("strategy_0ply"),
+       py::arg("filter_max_moves") = 5,
+       py::arg("filter_threshold") = 0.08f,
+       py::arg("n_threads") = 0);
+
+    // N-ply overload: 0-ply filter + N-ply rescore of survivors
+    m.def("batch_checker_play", [](
+            py::list inputs,
+            GamePlanStrategy& strategy_0ply,
+            std::shared_ptr<MultiPlyStrategy> strategy_nply,
+            int filter_max_moves,
+            float filter_threshold,
+            int n_threads) {
+
+        struct CPInput {
+            Board board;
+            int die1, die2;
+            int cube_value;
+            CubeOwner owner;
+        };
+        const int n = static_cast<int>(py::len(inputs));
+        std::vector<CPInput> parsed(n);
+        for (int i = 0; i < n; ++i) {
+            py::dict inp = inputs[i].cast<py::dict>();
+            auto checkers = inp["board"].cast<std::vector<int>>();
+            parsed[i].board = list_to_board(checkers);
+            parsed[i].die1 = inp["die1"].cast<int>();
+            parsed[i].die2 = inp["die2"].cast<int>();
+            parsed[i].cube_value = inp["cube_value"].cast<int>();
+            parsed[i].owner = inp["cube_owner"].cast<CubeOwner>();
+        }
+
+        int n_plies = strategy_nply->n_plies();
+
+        struct MoveResult {
+            Board board;
+            std::array<float, NUM_OUTPUTS> probs;
+            float cubeless_equity;
+            float cubeful_equity;
+            bool is_survivor;
+        };
+        struct CPResult {
+            std::vector<MoveResult> moves;
+        };
+        std::vector<CPResult> results(n);
+
+        MoveFilter filter{filter_max_moves, filter_threshold};
+
+        // Helper: compute cubeful equity for a post-move board.
+        // Matches Python _CubefulAnalyzer._cubeful_equity exactly:
+        // flip board to opponent's pre-roll, evaluate cubeful at N-ply
+        // using the 0-ply strategy, negate.
+        auto compute_cubeful = [&](const Board& post_move_board,
+                                   CubeOwner owner) -> float {
+            Board opp_pre_roll = flip(post_move_board);
+            CubeOwner opp_owner;
+            switch (owner) {
+                case CubeOwner::PLAYER:   opp_owner = CubeOwner::OPPONENT; break;
+                case CubeOwner::OPPONENT: opp_owner = CubeOwner::PLAYER;   break;
+                default:                  opp_owner = CubeOwner::CENTERED;  break;
+            }
+            float opp_eq = cubeful_equity_nply(
+                opp_pre_roll, opp_owner, strategy_0ply,
+                n_plies, filter, /*n_threads=*/1);
+            return -opp_eq;
+        };
+
+        {
+            py::gil_scoped_release release;
+
+            if (n_threads <= 0) {
+                n_threads = static_cast<int>(std::thread::hardware_concurrency());
+                if (n_threads <= 0) n_threads = 1;
+            }
+            n_threads = std::min(n_threads, n);
+
+            auto process_position = [&](int i) {
+                const auto& inp = parsed[i];
+                auto& out = results[i];
+
+                auto candidates = possible_boards(inp.board, inp.die1, inp.die2);
+                if (candidates.empty()) return;
+
+                // Score all at 0-ply for filtering
+                struct Scored0 {
+                    Board board;
+                    std::array<float, NUM_OUTPUTS> probs;
+                    float cubeless_equity;
+                    float cubeful_equity;
+                };
+                std::vector<Scored0> scored(candidates.size());
+                for (size_t j = 0; j < candidates.size(); ++j) {
+                    auto post_probs = strategy_0ply.evaluate_probs(
+                        candidates[j], inp.board);
+                    float cl_eq = NeuralNetwork::compute_equity(post_probs);
+                    bool race = is_race(candidates[j]);
+                    float x = cube_efficiency(candidates[j], race);
+                    float cf_eq = cl2cf_money(post_probs, inp.owner, x);
+                    scored[j] = {candidates[j], post_probs, cl_eq, cf_eq};
+                }
+
+                // Sort by cubeful equity desc
+                std::sort(scored.begin(), scored.end(),
+                    [](const Scored0& a, const Scored0& b) {
+                        return a.cubeful_equity > b.cubeful_equity;
+                    });
+
+                // Filter
+                float best_eq = scored[0].cubeful_equity;
+                int keep = 0;
+                for (size_t j = 0; j < scored.size() && keep < filter.max_moves; ++j) {
+                    if ((best_eq - scored[j].cubeful_equity) < filter.threshold) {
+                        ++keep;
+                    } else {
+                        break;
+                    }
+                }
+                if (keep == 0) keep = 1;
+
+                // Re-score survivors at N-ply, compute cubeful for all
+                out.moves.resize(scored.size());
+                for (size_t j = 0; j < scored.size(); ++j) {
+                    bool survivor = (int)j < keep;
+                    if (survivor) {
+                        auto nply_probs = strategy_nply->evaluate_probs(
+                            scored[j].board, inp.board);
+                        float cl_eq = NeuralNetwork::compute_equity(nply_probs);
+                        float cf_eq = compute_cubeful(scored[j].board, inp.owner);
+                        out.moves[j] = {scored[j].board, nply_probs, cl_eq, cf_eq, true};
+                    } else {
+                        float cf_eq = compute_cubeful(scored[j].board, inp.owner);
+                        out.moves[j] = {
+                            scored[j].board, scored[j].probs,
+                            scored[j].cubeless_equity, cf_eq, false
+                        };
+                    }
+                }
+
+                // Sort by cubeful equity desc
+                std::sort(out.moves.begin(), out.moves.end(),
+                    [](const MoveResult& a, const MoveResult& b) {
+                        return a.cubeful_equity > b.cubeful_equity;
+                    });
+
+                // Promote-second-best: if #2 is 0-ply-only, promote to N-ply
+                // and re-sort. Repeat until #2 is a survivor.
+                while (out.moves.size() >= 2 && !out.moves[1].is_survivor) {
+                    auto& m = out.moves[1];
+                    auto nply_probs = strategy_nply->evaluate_probs(
+                        m.board, inp.board);
+                    m.probs = nply_probs;
+                    m.cubeless_equity = NeuralNetwork::compute_equity(nply_probs);
+                    m.cubeful_equity = compute_cubeful(m.board, inp.owner);
+                    m.is_survivor = true;
+                    std::sort(out.moves.begin(), out.moves.end(),
+                        [](const MoveResult& a, const MoveResult& b) {
+                            return a.cubeful_equity > b.cubeful_equity;
+                        });
+                }
+            };
+
+            if (n_threads <= 1) {
+                for (int i = 0; i < n; ++i) process_position(i);
+            } else {
+                std::vector<std::thread> threads;
+                threads.reserve(n_threads);
+                std::atomic<int> next_pos{0};
+                for (int t = 0; t < n_threads; ++t) {
+                    threads.emplace_back([&]() {
+                        while (true) {
+                            int i = next_pos.fetch_add(1);
+                            if (i >= n) break;
+                            process_position(i);
+                        }
+                    });
+                }
+                for (auto& th : threads) th.join();
+            }
+
+            strategy_nply->clear_cache();
+        }
+
+        // Convert to Python
+        std::string nply_label = std::to_string(n_plies) + "-ply";
+        py::list out;
+        for (int i = 0; i < n; ++i) {
+            auto& res = results[i];
+            float best_eq = res.moves.empty() ? 0.0f : res.moves[0].cubeful_equity;
+            py::list moves_list;
+            for (auto& m : res.moves) {
+                py::dict d;
+                d["board"] = board_to_list(m.board);
+                d["equity"] = m.cubeful_equity;
+                d["cubeless_equity"] = m.cubeless_equity;
+                d["probs"] = m.probs;
+                d["equity_diff"] = m.cubeful_equity - best_eq;
+                d["eval_level"] = m.is_survivor ? nply_label : std::string("0-ply");
+                moves_list.append(d);
+            }
+            py::dict pos_result;
+            pos_result["moves"] = moves_list;
+            out.append(pos_result);
+        }
+        return out;
+    }, "Batch checker play at N-ply: 0-ply filter + N-ply rescore.\n"
+       "inputs: list of dicts {board, die1, die2, cube_value, cube_owner}.\n"
+       "strategy_0ply: GamePlanStrategy for filtering.\n"
+       "strategy_nply: MultiPlyStrategy for N-ply rescore of survivors.\n"
+       "Returns list of dicts, each with 'moves' list sorted by equity desc.",
+       py::arg("inputs"),
+       py::arg("strategy_0ply"),
+       py::arg("strategy_nply"),
+       py::arg("filter_max_moves") = 5,
+       py::arg("filter_threshold") = 0.08f,
        py::arg("n_threads") = 0);
 }
