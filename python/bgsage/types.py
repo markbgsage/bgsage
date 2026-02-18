@@ -6,6 +6,26 @@ from dataclasses import dataclass, field
 
 
 @dataclass
+class MatchInfo:
+    """Match state from the player on roll's perspective.
+
+    When away1=0 and away2=0, the game is a money (unlimited) game.
+    """
+
+    away1: int = 0           # Points player needs to win (0 = money game)
+    away2: int = 0           # Points opponent needs to win (0 = money game)
+    is_crawford: bool = False
+
+    @property
+    def is_money(self) -> bool:
+        return self.away1 == 0 and self.away2 == 0
+
+    @property
+    def is_post_crawford(self) -> bool:
+        return not self.is_crawford and (self.away1 == 1 or self.away2 == 1)
+
+
+@dataclass
 class Probabilities:
     """Five probability outputs from the neural network.
 
@@ -70,7 +90,7 @@ class CubeActionResult:
     cubeless_equity: float
     equity_nd: float            # No Double / Take equity
     equity_dt: float            # Double / Take equity
-    equity_dp: float            # Double / Pass equity (always +1.0 money game)
+    equity_dp: float            # Double / Pass equity (+1.0 money game, MET-based for match)
     should_double: bool
     should_take: bool
     optimal_equity: float

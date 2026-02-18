@@ -145,6 +145,10 @@ result = analyzer.checker_play(STARTING_BOARD, 3, 1, cube_value=1, cube_owner="c
 # result: CheckerPlayResult with .moves (list[MoveAnalysis], best first)
 for m in result.moves[:3]:
     print(f"{m.equity:+.3f}  {m.probs.win:.1%}  diff={m.equity_diff:+.4f}")
+
+# Match play: add away1, away2, is_crawford keyword args
+result = analyzer.checker_play(STARTING_BOARD, 3, 1, cube_value=1, cube_owner="centered",
+                                away1=5, away2=3, is_crawford=False)
 ```
 
 **C++** — Compose `possible_boards()` + `GamePlanStrategy::evaluate_probs()` + sort:
@@ -173,6 +177,10 @@ from bgsage import BgBotAnalyzer
 analyzer = BgBotAnalyzer(eval_level="1ply")
 result = analyzer.post_move_analytics(post_move_board, cube_owner="centered")
 # result: PostMoveAnalysis with .probs, .cubeless_equity, .cubeful_equity, .eval_level
+
+# Match play:
+result = analyzer.post_move_analytics(board, cube_owner="centered",
+                                       away1=5, away2=3, is_crawford=False)
 ```
 
 **Python (batch, parallelized)** — `batch_post_move_evaluate()` (`python/bgsage/batch.py`):
@@ -217,6 +225,10 @@ analyzer = BgBotAnalyzer(eval_level="2ply", cubeful=True)
 cube = analyzer.cube_action(board, cube_value=1, cube_owner="centered")
 # cube: CubeActionResult with .equity_nd, .equity_dt, .equity_dp,
 #   .should_double, .should_take, .optimal_action, .probs, .cubeless_equity
+
+# Match play:
+cube = analyzer.cube_action(board, cube_value=1, cube_owner="centered",
+                             away1=5, away2=3, is_crawford=False)
 ```
 
 **Python (batch, pre-roll)** — `batch_evaluate()` (`python/bgsage/batch.py`):
@@ -226,6 +238,10 @@ from bgsage import batch_evaluate
 positions = [{"board": b, "cube_value": 1, "cube_owner": "centered"} for b in boards]
 results = batch_evaluate(positions, eval_level="2ply", n_threads=0)
 # results: list[PositionEval] — includes probs, cubeless/cubeful equity, cube decision
+
+# Match play: add optional away1, away2, is_crawford to position dicts
+positions = [{"board": b, "cube_value": 1, "cube_owner": "centered",
+              "away1": 5, "away2": 3} for b in boards]
 ```
 
 **C++** — `evaluate_cube_decision()` (0-ply), `cube_decision_nply()` (N-ply),
@@ -237,7 +253,8 @@ results = batch_evaluate(positions, eval_level="2ply", n_threads=0)
 ```
 
 C++ batch pre-roll: `bgbot_cpp.batch_evaluate_positions(positions, strategy, n_threads)`
-via pybind11; takes `list[(board, cube_value, CubeOwner)]`, returns `list[dict]`.
+via pybind11; takes `list[(board, cube_value, CubeOwner[, away1, away2, is_crawford])]`,
+returns `list[dict]`.
 
 C++ batch checker play: `bgbot_cpp.batch_checker_play(inputs, strategy_0ply, [strategy_nply,]
 filter_max_moves, filter_threshold, n_threads)` via pybind11; takes `list[dict]` with
@@ -473,8 +490,43 @@ Monte Carlo evaluation with variance reduction. Stratified first roll
 
 ## Doubling Cube
 
-Janowski interpolation for money games. Cube efficiency: 0.68 contact,
-pip-dependent for race.
+Janowski interpolation for both money games and match play. Cube efficiency:
+0.68 contact, pip-dependent for race (unchanged for match play).
+
+### Money Game
+
+Three equities compared: ND (no double), DT (double/take), DP (double/pass = +1.0).
+Double if `min(DT, DP) > ND`. Opponent takes if `DT <= DP`. N-ply cubeful recursion
+tracks cube states through the tree; Janowski `x` only at 0-ply leaves.
+
+### Match Play
+
+Match state: `MatchInfo{away1, away2, is_crawford}`. When `away1=0, away2=0`, falls
+back to money game behavior (all existing callers unchanged).
+
+**Key files:**
+- `cpp/include/bgbot/match_equity.h` / `cpp/src/match_equity.cpp` — MET data + utilities
+- `cube.h` / `cube.cpp` — `cl2cf_match()`, `cube_decision_0ply_match()`, `cubeful_mwc_recursive()`
+
+**Hardcoded Kazaross-XG2 MET** (from GNUbg): 25x25 pre-Crawford + 25 post-Crawford values.
+- `get_met(away1, away2, is_crawford)` → MWC for the player needing `away1` points
+- `cubeless_mwc(probs, away1, away2, cv, is_crawford)` → weighted MWC from 6 outcomes
+- `eq2mwc()` / `mwc2eq()` — linear conversion anchored at win/lose cv points
+- `dp_mwc()` → MWC when opponent passes (player wins cv points)
+- `can_double_match()` → Crawford/post-Crawford/dead cube rules
+
+**Janowski in MWC space:** `MWC_cf = MWC_dead * (1-x) + MWC_live * x`
+Three ownership variants: centered (3-region piecewise linear), owned (2-region),
+unavailable (2-region). Unified dispatcher: `cl2cf()` → money or match.
+
+**N-ply match recursion** works entirely in MWC space. Opponent decisions use MWC
+maximization. Final results converted to equity via `mwc2eq()`.
+
+**Crawford rule:** No doubling allowed. **Post-Crawford:** Leader at 1-away can't
+double; trailer should double immediately.
+
+**Equities are always normalized:** DP = +1.0 in equity space for both money and match
+(by definition of the `mwc2eq` linear normalization). ND and DT vary by score.
 
 ## Current Best Scores (Production Model: stage5)
 
@@ -533,3 +585,7 @@ We (and GNUbg) call raw NN evaluation "0-ply". XG calls it "1-ply". So XG's 2-pl
 - **VR**: Variance Reduction — luck-tracking for rollout noise reduction
 - **Janowski**: Cubeless-to-cubeful equity interpolation
 - **ND/DT/DP**: No Double / Double-Take / Double-Pass
+- **MET**: Match Equity Table — lookup table of match-winning probabilities at each score
+- **MWC**: Match Winning Chance — probability of winning the match from a given score
+- **Crawford**: First game after a player reaches 1-away; no doubling allowed
+- **MatchInfo**: `{away1, away2, is_crawford}` — match state; `{0,0,false}` = money game

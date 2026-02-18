@@ -33,6 +33,7 @@ add_library(bgbot_lib STATIC
     src/multipy.cpp
     src/rollout.cpp
     src/cube.cpp
+    src/match_equity.cpp
 )
 target_include_directories(bgbot_lib PUBLIC include)
 target_compile_options(bgbot_lib PRIVATE ${BGBOT_OPT_FLAGS})

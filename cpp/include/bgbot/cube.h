@@ -2,6 +2,7 @@
 
 #include "strategy.h"
 #include "multipy.h"
+#include "match_equity.h"
 #include "types.h"
 #include <array>
 #include <memory>
@@ -14,14 +15,21 @@ namespace bgbot {
 // OPPONENT: the opponent owns the cube.
 enum class CubeOwner { CENTERED, PLAYER, OPPONENT };
 
-// Current state of the doubling cube.
+// Current state of the doubling cube (money game or match play).
 struct CubeInfo {
     int cube_value = 1;                      // 1, 2, 4, 8, ...
     CubeOwner owner = CubeOwner::CENTERED;
+    MatchInfo match;                         // Default: {0,0,false} = money game
+
+    bool is_money() const { return match.is_money(); }
 };
 
 // Can the player on roll legally double?
 inline bool can_double(const CubeInfo& ci) {
+    if (!ci.is_money()) {
+        return can_double_match(ci.match.away1, ci.match.away2,
+                                ci.cube_value, ci.owner, ci.match.is_crawford);
+    }
     return ci.owner == CubeOwner::CENTERED || ci.owner == CubeOwner::PLAYER;
 }
 
@@ -52,11 +60,27 @@ float cl2cf_money(const std::array<float, NUM_OUTPUTS>& probs,
 // Race: 0.55 + 0.00125 * roller_pip_count, clamped to [0.6, 0.7]
 float cube_efficiency(const Board& board, bool is_race_pos);
 
+// ---------------------------------------------------------------------------
+// Match play cubeful evaluation (Janowski in MWC space)
+// ---------------------------------------------------------------------------
+
+// Cubeless-to-cubeful for match play (returns MWC).
+// Uses Janowski interpolation in MWC space with MET-based anchor points.
+// Three internal variants by ownership (centered/owned/unavailable).
+float cl2cf_match(const std::array<float, NUM_OUTPUTS>& probs,
+                  const CubeInfo& cube, float cube_x);
+
+// Unified cubeless-to-cubeful: dispatches to cl2cf_money() or cl2cf_match().
+// For money game: returns cubeful equity.
+// For match play: returns cubeful equity (MWC converted to equity via mwc2eq).
+float cl2cf(const std::array<float, NUM_OUTPUTS>& probs,
+            const CubeInfo& cube, float cube_x);
+
 // Result of a cube decision analysis.
 struct CubeDecision {
     float equity_nd;      // No Double equity (normalized to cube=1)
     float equity_dt;      // Double/Take equity (normalized to cube=1)
-    float equity_dp;      // Double/Pass equity (+1.0 for money)
+    float equity_dp;      // Double/Pass equity (+1.0 for money, MET-based for match)
     bool should_double;   // True if doubling is correct
     bool should_take;     // True if opponent should take (vs pass)
     float optimal_equity; // Cubeful equity after optimal play by both sides
@@ -81,7 +105,7 @@ CubeDecision cube_decision_0ply(
 // N-ply cubeful evaluation
 // ---------------------------------------------------------------------------
 
-// Compute cubeful equity for a pre-roll position at N-ply depth.
+// Compute cubeful equity for a pre-roll position at N-ply depth (money game).
 // The position is from the player-on-roll's perspective (before rolling).
 // Cube efficiency x is only used at 0-ply leaves (Janowski).
 // At internal nodes, cube decisions emerge naturally from recursion.
@@ -98,6 +122,18 @@ float cubeful_equity_nply(
     const Board& board,           // pre-roll, player's perspective
     CubeOwner owner,              // cube ownership from player's perspective
     const Strategy& strategy,     // cubeless base strategy
+    int n_plies,
+    const MoveFilter& filter = MoveFilters::TINY,
+    int n_threads = 1);
+
+// Compute cubeful equity for a pre-roll position at N-ply depth (money or match).
+// Uses full CubeInfo including match state. For money game, dispatches to
+// the CubeOwner overload. For match play, works in MWC space internally
+// and returns cubeful equity (MWC converted via mwc2eq).
+float cubeful_equity_nply(
+    const Board& board,
+    const CubeInfo& cube,
+    const Strategy& strategy,
     int n_plies,
     const MoveFilter& filter = MoveFilters::TINY,
     int n_threads = 1);

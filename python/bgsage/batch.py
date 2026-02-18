@@ -72,6 +72,11 @@ def batch_evaluate(
         cube_value: int   — current cube value (1, 2, 4, ...)
         cube_owner: str   — "centered", "player", or "opponent"
 
+    Optional match play fields:
+        away1: int        — points player needs (0 = money game)
+        away2: int        — points opponent needs (0 = money game)
+        is_crawford: bool — True if Crawford game
+
     Args:
         positions: List of position dicts.
         eval_level: ``"0ply"``, ``"1ply"``, ``"2ply"``, or ``"3ply"``.
@@ -87,13 +92,20 @@ def batch_evaluate(
     if weights is None:
         weights = WeightConfig.default()
 
-    # Build (board, cube_value, CubeOwner) tuples for C++
+    # Build (board, cube_value, CubeOwner[, away1, away2, is_crawford]) tuples for C++
     cpp_positions = []
     for p in positions:
         board = list(p["board"])
         cube_value = p.get("cube_value", 1)
         cube_owner = resolve_owner(p.get("cube_owner", "centered"))
-        cpp_positions.append((board, cube_value, cube_owner))
+        away1 = p.get("away1", 0)
+        away2 = p.get("away2", 0)
+        is_crawford = p.get("is_crawford", False)
+        if away1 > 0 or away2 > 0:
+            cpp_positions.append((board, cube_value, cube_owner,
+                                  away1, away2, is_crawford))
+        else:
+            cpp_positions.append((board, cube_value, cube_owner))
 
     if eval_level == "0ply":
         strategy = bgbot_cpp.GamePlanStrategy(*weights.weight_args)
@@ -156,6 +168,12 @@ def batch_post_move_evaluate(
         board: list[int]   — 26-element post-move board (mover's perspective)
         cube_owner: str    — "centered", "player", or "opponent"
 
+    Optional match play fields:
+        cube_value: int    — current cube value (default 1)
+        away1: int         — points player needs (0 = money game)
+        away2: int         — points opponent needs (0 = money game)
+        is_crawford: bool  — True if Crawford game
+
     Args:
         positions: List of position dicts.
         eval_level: ``"0ply"``, ``"1ply"``, ``"2ply"``, or ``"3ply"``.
@@ -171,12 +189,20 @@ def batch_post_move_evaluate(
     if weights is None:
         weights = WeightConfig.default()
 
-    # Build (board, CubeOwner) tuples for C++
+    # Build (board, CubeOwner[, cube_value, away1, away2, is_crawford]) tuples for C++
     cpp_positions = []
     for p in positions:
         board = list(p["board"])
         cube_owner = resolve_owner(p.get("cube_owner", "centered"))
-        cpp_positions.append((board, cube_owner))
+        away1 = p.get("away1", 0)
+        away2 = p.get("away2", 0)
+        is_crawford = p.get("is_crawford", False)
+        cube_value = p.get("cube_value", 1)
+        if away1 > 0 or away2 > 0:
+            cpp_positions.append((board, cube_owner, cube_value,
+                                  away1, away2, is_crawford))
+        else:
+            cpp_positions.append((board, cube_owner))
 
     if eval_level == "0ply":
         strategy = bgbot_cpp.GamePlanStrategy(*weights.weight_args)
@@ -239,6 +265,11 @@ def batch_cube_action(
         board: list[int]  — 26-element board from mover's perspective
         cube_value: int   — current cube value (1, 2, 4, ...)
         cube_owner: str   — "centered", "player", or "opponent"
+
+    Optional match play fields:
+        away1: int        — points player needs (0 = money game)
+        away2: int        — points opponent needs (0 = money game)
+        is_crawford: bool — True if Crawford game
 
     Args:
         positions: List of position dicts.
@@ -307,6 +338,11 @@ def batch_checker_play(
         cube_value: int     — current cube value (1, 2, 4, ...)
         cube_owner: str     — "centered", "player", or "opponent"
 
+    Optional match play fields:
+        away1: int          — points player needs (0 = money game)
+        away2: int          — points opponent needs (0 = money game)
+        is_crawford: bool   — True if Crawford game
+
     Args:
         positions: List of position dicts.
         eval_level: ``"0ply"``, ``"1ply"``, ``"2ply"``, or ``"3ply"``.
@@ -328,13 +364,21 @@ def batch_checker_play(
     # Build input dicts with CubeOwner enum for C++
     cpp_inputs = []
     for p in positions:
-        cpp_inputs.append({
+        d = {
             "board": list(p["board"]),
             "die1": p["die1"],
             "die2": p["die2"],
             "cube_value": p.get("cube_value", 1),
             "cube_owner": resolve_owner(p.get("cube_owner", "centered")),
-        })
+        }
+        away1 = p.get("away1", 0)
+        away2 = p.get("away2", 0)
+        is_crawford = p.get("is_crawford", False)
+        if away1 > 0 or away2 > 0:
+            d["away1"] = away1
+            d["away2"] = away2
+            d["is_crawford"] = is_crawford
+        cpp_inputs.append(d)
 
     strategy_0ply = bgbot_cpp.GamePlanStrategy(*weights.weight_args)
 

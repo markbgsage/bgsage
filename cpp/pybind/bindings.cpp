@@ -1694,11 +1694,53 @@ PYBIND11_MODULE(bgbot_cpp, m) {
     }, "Compute cubeless equity from 5 probabilities",
        py::arg("probs"));
 
+    // --- Match equity utilities ---
+    m.def("get_met", [](int away1, int away2, bool is_crawford) {
+        return get_met(away1, away2, is_crawford);
+    }, "MET lookup: MWC for player needing away1 points vs opponent needing away2.",
+       py::arg("away1"), py::arg("away2"), py::arg("is_crawford") = false);
+
+    m.def("can_double_match", [](int away1, int away2, int cube_value,
+                                  CubeOwner owner, bool is_crawford) {
+        return can_double_match(away1, away2, cube_value, owner, is_crawford);
+    }, "Can the player on roll legally double in match play?",
+       py::arg("away1"), py::arg("away2"), py::arg("cube_value"),
+       py::arg("owner"), py::arg("is_crawford"));
+
+    m.def("cubeless_mwc", [](const std::array<float, 5>& probs,
+                              int away1, int away2, int cube_value, bool is_crawford) {
+        return cubeless_mwc(probs, away1, away2, cube_value, is_crawford);
+    }, "Cubeless MWC from NN probs and match state.",
+       py::arg("probs"), py::arg("away1"), py::arg("away2"),
+       py::arg("cube_value") = 1, py::arg("is_crawford") = false);
+
+    m.def("eq2mwc", [](float equity, int away1, int away2, int cube_value, bool is_crawford) {
+        return eq2mwc(equity, away1, away2, cube_value, is_crawford);
+    }, "Convert cubeless equity to MWC.",
+       py::arg("equity"), py::arg("away1"), py::arg("away2"),
+       py::arg("cube_value") = 1, py::arg("is_crawford") = false);
+
+    m.def("mwc2eq", [](float mwc, int away1, int away2, int cube_value, bool is_crawford) {
+        return mwc2eq(mwc, away1, away2, cube_value, is_crawford);
+    }, "Convert MWC to cubeless equity.",
+       py::arg("mwc"), py::arg("away1"), py::arg("away2"),
+       py::arg("cube_value") = 1, py::arg("is_crawford") = false);
+
     m.def("cl2cf_money", [](const std::array<float, NUM_OUTPUTS>& probs,
                              CubeOwner owner, float cube_x) {
         return cl2cf_money(probs, owner, cube_x);
-    }, "Cubeless-to-cubeful conversion (Janowski). Returns cubeful equity normalized to cube=1.",
+    }, "Cubeless-to-cubeful conversion (Janowski, money game). Returns cubeful equity normalized to cube=1.",
        py::arg("probs"), py::arg("owner"), py::arg("cube_x"));
+
+    // Unified cl2cf: money or match play
+    m.def("cl2cf", [](const std::array<float, NUM_OUTPUTS>& probs,
+                       int cube_value, CubeOwner owner, float cube_x,
+                       int away1, int away2, bool is_crawford) {
+        CubeInfo ci{cube_value, owner, {away1, away2, is_crawford}};
+        return cl2cf(probs, ci, cube_x);
+    }, "Cubeless-to-cubeful conversion (money or match). Returns cubeful equity.",
+       py::arg("probs"), py::arg("cube_value"), py::arg("owner"), py::arg("cube_x"),
+       py::arg("away1") = 0, py::arg("away2") = 0, py::arg("is_crawford") = false);
 
     m.def("cubeful_equity_nply", [](const std::vector<int>& board_vec,
                                      CubeOwner owner,
@@ -1706,12 +1748,16 @@ PYBIND11_MODULE(bgbot_cpp, m) {
                                      int n_plies,
                                      int filter_max_moves,
                                      float filter_threshold,
-                                     int n_threads) {
+                                     int n_threads,
+                                     int away1, int away2, bool is_crawford) {
         Board board = list_to_board(board_vec);
         MoveFilter filter{filter_max_moves, filter_threshold};
         py::gil_scoped_release release;
-        float eq = cubeful_equity_nply(board, owner, strategy, n_plies, filter, n_threads);
-        return eq;
+        if (away1 > 0 && away2 > 0) {
+            CubeInfo ci{1, owner, {away1, away2, is_crawford}};
+            return cubeful_equity_nply(board, ci, strategy, n_plies, filter, n_threads);
+        }
+        return cubeful_equity_nply(board, owner, strategy, n_plies, filter, n_threads);
     }, "Compute cubeful equity for a pre-roll position at N-ply depth.\n"
        "Uses recursive cube decision modeling (Janowski only at 0-ply leaves).\n"
        "Returns cubeful equity normalized to cube value 1.",
@@ -1720,7 +1766,8 @@ PYBIND11_MODULE(bgbot_cpp, m) {
        py::arg("n_plies") = 1,
        py::arg("filter_max_moves") = 5,
        py::arg("filter_threshold") = 0.08f,
-       py::arg("n_threads") = 1);
+       py::arg("n_threads") = 1,
+       py::arg("away1") = 0, py::arg("away2") = 0, py::arg("is_crawford") = false);
 
     m.def("cube_efficiency", [](const std::vector<int>& board, bool is_race_pos) {
         return cube_efficiency(list_to_board(board), is_race_pos);
@@ -1728,13 +1775,15 @@ PYBIND11_MODULE(bgbot_cpp, m) {
        py::arg("board"), py::arg("is_race"));
 
     m.def("cube_decision_0ply", [](const std::array<float, NUM_OUTPUTS>& probs,
-                                    int cube_value, CubeOwner owner, float cube_x) {
-        CubeInfo ci{cube_value, owner};
+                                    int cube_value, CubeOwner owner, float cube_x,
+                                    int away1, int away2, bool is_crawford) {
+        CubeInfo ci{cube_value, owner, {away1, away2, is_crawford}};
         return cube_decision_0ply(probs, ci, cube_x);
     }, "Compute 0-ply cube decision from cubeless pre-roll probs (Janowski).\n"
        "Returns CubeDecision with equity_nd, equity_dt, equity_dp, should_double, should_take, optimal_equity.",
        py::arg("probs"), py::arg("cube_value") = 1,
-       py::arg("owner") = CubeOwner::CENTERED, py::arg("cube_x") = 0.68f);
+       py::arg("owner") = CubeOwner::CENTERED, py::arg("cube_x") = 0.68f,
+       py::arg("away1") = 0, py::arg("away2") = 0, py::arg("is_crawford") = false);
 
     // Convenience: evaluate pre-roll probs + cube decision in one call
     m.def("evaluate_cube_decision", [](const std::vector<int>& checkers,
@@ -1748,7 +1797,8 @@ PYBIND11_MODULE(bgbot_cpp, m) {
                                         int n_h_racing,
                                         int n_h_attacking,
                                         int n_h_priming,
-                                        int n_h_anchoring) {
+                                        int n_h_anchoring,
+                                        int away1, int away2, bool is_crawford) {
         Board board = list_to_board(checkers);
         GamePlanStrategy strat(purerace_w, racing_w, attacking_w, priming_w, anchoring_w,
                                n_h_purerace, n_h_racing, n_h_attacking, n_h_priming, n_h_anchoring);
@@ -1763,7 +1813,7 @@ PYBIND11_MODULE(bgbot_cpp, m) {
         float x = cube_efficiency(board, race);
 
         // Cube decision
-        CubeInfo ci{cube_value, owner};
+        CubeInfo ci{cube_value, owner, {away1, away2, is_crawford}};
         auto cd = cube_decision_0ply(pre_roll_probs, ci, x);
 
         // Cubeless equity
@@ -1795,7 +1845,8 @@ PYBIND11_MODULE(bgbot_cpp, m) {
        py::arg("n_hidden_racing") = 400,
        py::arg("n_hidden_attacking") = 400,
        py::arg("n_hidden_priming") = 400,
-       py::arg("n_hidden_anchoring") = 400);
+       py::arg("n_hidden_anchoring") = 400,
+       py::arg("away1") = 0, py::arg("away2") = 0, py::arg("is_crawford") = false);
 
     // N-ply cube decision (standalone — creates its own strategy, serial by default)
     m.def("cube_decision_nply", [](const std::vector<int>& checkers,
@@ -1813,11 +1864,12 @@ PYBIND11_MODULE(bgbot_cpp, m) {
                                     int n_h_anchoring,
                                     int filter_max_moves,
                                     float filter_threshold,
-                                    int n_threads) {
+                                    int n_threads,
+                                    int away1, int away2, bool is_crawford) {
         Board board = list_to_board(checkers);
         GamePlanStrategy strat(purerace_w, racing_w, attacking_w, priming_w, anchoring_w,
                                n_h_purerace, n_h_racing, n_h_attacking, n_h_priming, n_h_anchoring);
-        CubeInfo ci{cube_value, owner};
+        CubeInfo ci{cube_value, owner, {away1, away2, is_crawford}};
         MoveFilter filter{filter_max_moves, filter_threshold};
 
         CubeDecision cd;
@@ -1862,7 +1914,8 @@ PYBIND11_MODULE(bgbot_cpp, m) {
        py::arg("n_hidden_anchoring") = 400,
        py::arg("filter_max_moves") = 5,
        py::arg("filter_threshold") = 0.08f,
-       py::arg("n_threads") = 1);
+       py::arg("n_threads") = 1,
+       py::arg("away1") = 0, py::arg("away2") = 0, py::arg("is_crawford") = false);
 
     // Cubeful rollout: run cubeless rollout, then apply Janowski to the mean probs
     m.def("cube_decision_rollout", [](const std::vector<int>& checkers,
@@ -1886,7 +1939,8 @@ PYBIND11_MODULE(bgbot_cpp, m) {
                                        int n_threads,
                                        uint32_t seed,
                                        int late_ply,
-                                       int late_threshold) {
+                                       int late_threshold,
+                                       int away1, int away2, bool is_crawford) {
         Board board = list_to_board(checkers);
         bool race = is_race(board);
 
@@ -1919,7 +1973,7 @@ PYBIND11_MODULE(bgbot_cpp, m) {
         float cl_eq = cubeless_equity(pre_roll_probs);
 
         // Apply Janowski to get cubeful equities
-        CubeInfo ci{cube_value, owner};
+        CubeInfo ci{cube_value, owner, {away1, away2, is_crawford}};
         auto cd = cube_decision_from_probs(pre_roll_probs, ci, board, race);
 
         py::dict result;
@@ -1958,7 +2012,8 @@ PYBIND11_MODULE(bgbot_cpp, m) {
        py::arg("n_threads") = 0,
        py::arg("seed") = 42,
        py::arg("late_ply") = -1,
-       py::arg("late_threshold") = 20);
+       py::arg("late_threshold") = 20,
+       py::arg("away1") = 0, py::arg("away2") = 0, py::arg("is_crawford") = false);
 
     // ======================== Batch position evaluation ========================
 
@@ -1987,6 +2042,7 @@ PYBIND11_MODULE(bgbot_cpp, m) {
             Board board;
             int cube_value;
             CubeOwner owner;
+            MatchInfo match;
         };
         const int n = static_cast<int>(py::len(positions));
         std::vector<PosInput> inputs(n);
@@ -1996,6 +2052,11 @@ PYBIND11_MODULE(bgbot_cpp, m) {
             inputs[i].board = list_to_board(checkers);
             inputs[i].cube_value = pos[1].cast<int>();
             inputs[i].owner = pos[2].cast<CubeOwner>();
+            if (py::len(pos) >= 6) {
+                inputs[i].match.away1 = pos[3].cast<int>();
+                inputs[i].match.away2 = pos[4].cast<int>();
+                inputs[i].match.is_crawford = pos[5].cast<bool>();
+            }
         }
 
         // Result storage
@@ -2027,12 +2088,12 @@ PYBIND11_MODULE(bgbot_cpp, m) {
                 out.probs = invert_probs(post_probs);
                 out.cubeless_equity = cubeless_equity(out.probs);
 
-                // Cubeful equity via Janowski
+                // Cubeful equity via Janowski (unified money/match)
                 float x = cube_efficiency(inp.board, race);
-                out.cubeful_equity = cl2cf_money(out.probs, inp.owner, x);
+                CubeInfo ci{inp.cube_value, inp.owner, inp.match};
+                out.cubeful_equity = cl2cf(out.probs, ci, x);
 
                 // Cube decision
-                CubeInfo ci{inp.cube_value, inp.owner};
                 out.cube_decision = cube_decision_0ply(out.probs, ci, x);
             };
 
@@ -2103,6 +2164,7 @@ PYBIND11_MODULE(bgbot_cpp, m) {
             Board board;
             int cube_value;
             CubeOwner owner;
+            MatchInfo match;
         };
         const int n = static_cast<int>(py::len(positions));
         std::vector<PosInput> inputs(n);
@@ -2112,6 +2174,11 @@ PYBIND11_MODULE(bgbot_cpp, m) {
             inputs[i].board = list_to_board(checkers);
             inputs[i].cube_value = pos[1].cast<int>();
             inputs[i].owner = pos[2].cast<CubeOwner>();
+            if (py::len(pos) >= 6) {
+                inputs[i].match.away1 = pos[3].cast<int>();
+                inputs[i].match.away2 = pos[4].cast<int>();
+                inputs[i].match.is_crawford = pos[5].cast<bool>();
+            }
         }
 
         struct PosResult {
@@ -2142,9 +2209,9 @@ PYBIND11_MODULE(bgbot_cpp, m) {
                 out.cubeless_equity = cubeless_equity(out.probs);
 
                 float x = cube_efficiency(inp.board, race);
-                out.cubeful_equity = cl2cf_money(out.probs, inp.owner, x);
+                CubeInfo ci{inp.cube_value, inp.owner, inp.match};
+                out.cubeful_equity = cl2cf(out.probs, ci, x);
 
-                CubeInfo ci{inp.cube_value, inp.owner};
                 out.cube_decision = cube_decision_0ply(out.probs, ci, x);
             };
 
@@ -2214,6 +2281,8 @@ PYBIND11_MODULE(bgbot_cpp, m) {
         struct PosInput {
             Board board;
             CubeOwner owner;
+            int cube_value;
+            MatchInfo match;
         };
         const int n = static_cast<int>(py::len(positions));
         std::vector<PosInput> inputs(n);
@@ -2222,6 +2291,14 @@ PYBIND11_MODULE(bgbot_cpp, m) {
             auto checkers = pos[0].cast<std::vector<int>>();
             inputs[i].board = list_to_board(checkers);
             inputs[i].owner = pos[1].cast<CubeOwner>();
+            inputs[i].cube_value = 1;
+            if (py::len(pos) >= 5) {
+                inputs[i].cube_value = pos[2].cast<int>();
+                inputs[i].match.away1 = pos[3].cast<int>();
+                inputs[i].match.away2 = pos[4].cast<int>();
+                if (py::len(pos) >= 6)
+                    inputs[i].match.is_crawford = pos[5].cast<bool>();
+            }
         }
 
         struct PosResult {
@@ -2249,9 +2326,10 @@ PYBIND11_MODULE(bgbot_cpp, m) {
                 out.probs = strategy.evaluate_probs(inp.board, race);
                 out.cubeless_equity = NeuralNetwork::compute_equity(out.probs);
 
-                // Cubeful equity via Janowski
+                // Cubeful equity via Janowski (unified money/match)
                 float x = cube_efficiency(inp.board, race);
-                out.cubeful_equity = cl2cf_money(out.probs, inp.owner, x);
+                CubeInfo ci{inp.cube_value, inp.owner, inp.match};
+                out.cubeful_equity = cl2cf(out.probs, ci, x);
             };
 
             if (n_threads <= 1) {
@@ -2305,6 +2383,8 @@ PYBIND11_MODULE(bgbot_cpp, m) {
         struct PosInput {
             Board board;
             CubeOwner owner;
+            int cube_value;
+            MatchInfo match;
         };
         const int n = static_cast<int>(py::len(positions));
         std::vector<PosInput> inputs(n);
@@ -2313,6 +2393,14 @@ PYBIND11_MODULE(bgbot_cpp, m) {
             auto checkers = pos[0].cast<std::vector<int>>();
             inputs[i].board = list_to_board(checkers);
             inputs[i].owner = pos[1].cast<CubeOwner>();
+            inputs[i].cube_value = 1;
+            if (py::len(pos) >= 5) {
+                inputs[i].cube_value = pos[2].cast<int>();
+                inputs[i].match.away1 = pos[3].cast<int>();
+                inputs[i].match.away2 = pos[4].cast<int>();
+                if (py::len(pos) >= 6)
+                    inputs[i].match.is_crawford = pos[5].cast<bool>();
+            }
         }
 
         struct PosResult {
@@ -2340,7 +2428,8 @@ PYBIND11_MODULE(bgbot_cpp, m) {
                 out.cubeless_equity = NeuralNetwork::compute_equity(out.probs);
 
                 float x = cube_efficiency(inp.board, race);
-                out.cubeful_equity = cl2cf_money(out.probs, inp.owner, x);
+                CubeInfo ci{inp.cube_value, inp.owner, inp.match};
+                out.cubeful_equity = cl2cf(out.probs, ci, x);
             };
 
             if (n_threads <= 1) {
@@ -2411,6 +2500,7 @@ PYBIND11_MODULE(bgbot_cpp, m) {
             int die1, die2;
             int cube_value;
             CubeOwner owner;
+            MatchInfo match;
         };
         const int n = static_cast<int>(py::len(inputs));
         std::vector<CPInput> parsed(n);
@@ -2422,6 +2512,12 @@ PYBIND11_MODULE(bgbot_cpp, m) {
             parsed[i].die2 = inp["die2"].cast<int>();
             parsed[i].cube_value = inp["cube_value"].cast<int>();
             parsed[i].owner = inp["cube_owner"].cast<CubeOwner>();
+            if (inp.contains("away1")) {
+                parsed[i].match.away1 = inp["away1"].cast<int>();
+                parsed[i].match.away2 = inp["away2"].cast<int>();
+                if (inp.contains("is_crawford"))
+                    parsed[i].match.is_crawford = inp["is_crawford"].cast<bool>();
+            }
         }
 
         struct MoveResult {
@@ -2460,13 +2556,14 @@ PYBIND11_MODULE(bgbot_cpp, m) {
                     float cubeful_equity;
                 };
                 std::vector<Scored> scored(candidates.size());
+                CubeInfo ci{inp.cube_value, inp.owner, inp.match};
                 for (size_t j = 0; j < candidates.size(); ++j) {
                     auto post_probs = strategy_0ply.evaluate_probs(
                         candidates[j], inp.board);
                     float cl_eq = NeuralNetwork::compute_equity(post_probs);
                     bool race = is_race(candidates[j]);
                     float x = cube_efficiency(candidates[j], race);
-                    float cf_eq = cl2cf_money(post_probs, inp.owner, x);
+                    float cf_eq = cl2cf(post_probs, ci, x);
                     scored[j] = {candidates[j], post_probs, cl_eq, cf_eq};
                 }
 
@@ -2539,7 +2636,7 @@ PYBIND11_MODULE(bgbot_cpp, m) {
         }
         return out;
     }, "Batch checker play at 0-ply.\n"
-       "inputs: list of dicts {board, die1, die2, cube_value, cube_owner}.\n"
+       "inputs: list of dicts {board, die1, die2, cube_value, cube_owner[, away1, away2, is_crawford]}.\n"
        "Returns list of dicts, each with 'moves' list sorted by equity desc.",
        py::arg("inputs"),
        py::arg("strategy_0ply"),
@@ -2561,6 +2658,7 @@ PYBIND11_MODULE(bgbot_cpp, m) {
             int die1, die2;
             int cube_value;
             CubeOwner owner;
+            MatchInfo match;
         };
         const int n = static_cast<int>(py::len(inputs));
         std::vector<CPInput> parsed(n);
@@ -2572,6 +2670,12 @@ PYBIND11_MODULE(bgbot_cpp, m) {
             parsed[i].die2 = inp["die2"].cast<int>();
             parsed[i].cube_value = inp["cube_value"].cast<int>();
             parsed[i].owner = inp["cube_owner"].cast<CubeOwner>();
+            if (inp.contains("away1")) {
+                parsed[i].match.away1 = inp["away1"].cast<int>();
+                parsed[i].match.away2 = inp["away2"].cast<int>();
+                if (inp.contains("is_crawford"))
+                    parsed[i].match.is_crawford = inp["is_crawford"].cast<bool>();
+            }
         }
 
         int n_plies = strategy_nply->n_plies();
@@ -2595,7 +2699,8 @@ PYBIND11_MODULE(bgbot_cpp, m) {
         // flip board to opponent's pre-roll, evaluate cubeful at N-ply
         // using the 0-ply strategy, negate.
         auto compute_cubeful = [&](const Board& post_move_board,
-                                   CubeOwner owner) -> float {
+                                   CubeOwner owner,
+                                   const MatchInfo& match) -> float {
             Board opp_pre_roll = flip(post_move_board);
             CubeOwner opp_owner;
             switch (owner) {
@@ -2603,10 +2708,19 @@ PYBIND11_MODULE(bgbot_cpp, m) {
                 case CubeOwner::OPPONENT: opp_owner = CubeOwner::PLAYER;   break;
                 default:                  opp_owner = CubeOwner::CENTERED;  break;
             }
-            float opp_eq = cubeful_equity_nply(
-                opp_pre_roll, opp_owner, strategy_0ply,
-                n_plies, filter, /*n_threads=*/1);
-            return -opp_eq;
+            if (match.is_money()) {
+                float opp_eq = cubeful_equity_nply(
+                    opp_pre_roll, opp_owner, strategy_0ply,
+                    n_plies, filter, /*n_threads=*/1);
+                return -opp_eq;
+            } else {
+                // Match play: work in MWC space via CubeInfo overload
+                CubeInfo opp_ci{1, opp_owner, match.flip()};
+                float opp_eq = cubeful_equity_nply(
+                    opp_pre_roll, opp_ci, strategy_0ply,
+                    n_plies, filter, /*n_threads=*/1);
+                return -opp_eq;
+            }
         };
 
         {
@@ -2632,6 +2746,7 @@ PYBIND11_MODULE(bgbot_cpp, m) {
                     float cubeless_equity;
                     float cubeful_equity;
                 };
+                CubeInfo ci{inp.cube_value, inp.owner, inp.match};
                 std::vector<Scored0> scored(candidates.size());
                 for (size_t j = 0; j < candidates.size(); ++j) {
                     auto post_probs = strategy_0ply.evaluate_probs(
@@ -2639,7 +2754,7 @@ PYBIND11_MODULE(bgbot_cpp, m) {
                     float cl_eq = NeuralNetwork::compute_equity(post_probs);
                     bool race = is_race(candidates[j]);
                     float x = cube_efficiency(candidates[j], race);
-                    float cf_eq = cl2cf_money(post_probs, inp.owner, x);
+                    float cf_eq = cl2cf(post_probs, ci, x);
                     scored[j] = {candidates[j], post_probs, cl_eq, cf_eq};
                 }
 
@@ -2669,10 +2784,10 @@ PYBIND11_MODULE(bgbot_cpp, m) {
                         auto nply_probs = strategy_nply->evaluate_probs(
                             scored[j].board, inp.board);
                         float cl_eq = NeuralNetwork::compute_equity(nply_probs);
-                        float cf_eq = compute_cubeful(scored[j].board, inp.owner);
+                        float cf_eq = compute_cubeful(scored[j].board, inp.owner, inp.match);
                         out.moves[j] = {scored[j].board, nply_probs, cl_eq, cf_eq, true};
                     } else {
-                        float cf_eq = compute_cubeful(scored[j].board, inp.owner);
+                        float cf_eq = compute_cubeful(scored[j].board, inp.owner, inp.match);
                         out.moves[j] = {
                             scored[j].board, scored[j].probs,
                             scored[j].cubeless_equity, cf_eq, false
@@ -2694,7 +2809,7 @@ PYBIND11_MODULE(bgbot_cpp, m) {
                         m.board, inp.board);
                     m.probs = nply_probs;
                     m.cubeless_equity = NeuralNetwork::compute_equity(nply_probs);
-                    m.cubeful_equity = compute_cubeful(m.board, inp.owner);
+                    m.cubeful_equity = compute_cubeful(m.board, inp.owner, inp.match);
                     m.is_survivor = true;
                     std::sort(out.moves.begin(), out.moves.end(),
                         [](const MoveResult& a, const MoveResult& b) {

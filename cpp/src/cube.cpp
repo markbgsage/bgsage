@@ -90,6 +90,369 @@ float cl2cf_money(const std::array<float, NUM_OUTPUTS>& probs,
     return e_dead * (1.0f - cube_x) + e_live * cube_x;
 }
 
+// ---------------------------------------------------------------------------
+// Match play cubeful evaluation (Janowski in MWC space)
+// ---------------------------------------------------------------------------
+
+// Check if the cube is "dead" — no useful cube actions possible.
+// This happens when the cube value is enough for both players to win the match
+// on any win, or during Crawford game.
+static bool is_dead_cube(const CubeInfo& cube) {
+    if (cube.is_money()) return false;
+    if (cube.match.is_crawford) return true;
+    // If both players win the match with a normal win at current cube value
+    if (cube.match.away1 <= cube.cube_value && cube.match.away2 <= cube.cube_value)
+        return true;
+    // GNUbg also checks -2,-2 score (both 2-away) as dead
+    if (cube.match.away1 == 2 && cube.match.away2 == 2)
+        return true;
+    return false;
+}
+
+// Compute MWC-space take point and cash point for match play.
+// These are the P(win) thresholds analogous to money game TP/CP.
+//
+// For the player's perspective:
+// TP = opponent's take point (P(win) below which opponent should pass)
+//    = (MWC_lose_cube - MWC_dp) / (MWC_lose_cube - MWC_win_cube)
+// CP = player's cash point (P(win) above which player should play on for gammon)
+//    = (MWC_dp - MWC_win_cube_lose) / (MWC_win_cube_win - MWC_win_cube_lose)
+//
+// But we use the Janowski formulation which works in MWC space directly.
+// The take point and cash point in MWC space map to specific P(win) values.
+
+// Compute cubeful MWC for match play — centered cube.
+// Piecewise-linear interpolation with 3 regions:
+//   p < opponent's TG: opponent too good to double
+//   opponent's TG < p < player's TG: in doubling window
+//   p > player's TG: player too good to double
+static float cl2cf_match_centered(
+    const std::array<float, NUM_OUTPUTS>& probs,
+    const CubeInfo& cube,
+    float cube_x)
+{
+    int away1 = cube.match.away1;
+    int away2 = cube.match.away2;
+    int cv = cube.cube_value;
+    bool craw = cube.match.is_crawford;
+
+    float p_win = probs[0];
+
+    // Gammon/backgammon ratios (same decomposition as money game)
+    float rG0, rBG0, rG1, rBG1;
+    if (p_win > 1e-7f) {
+        rG0 = (probs[1] - probs[2]) / p_win;   // gammon ratio of wins
+        rBG0 = probs[2] / p_win;                // backgammon ratio of wins
+    } else {
+        rG0 = 0.0f;
+        rBG0 = 0.0f;
+    }
+    if (p_win < 1.0f - 1e-7f) {
+        rG1 = (probs[3] - probs[4]) / (1.0f - p_win);  // gammon ratio of losses
+        rBG1 = probs[4] / (1.0f - p_win);               // backgammon ratio of losses
+    } else {
+        rG1 = 0.0f;
+        rBG1 = 0.0f;
+    }
+
+    // Dead cube MWC
+    float eq_dead = cubeless_equity(probs);
+    float mwc_dead = eq2mwc(eq_dead, away1, away2, cv, craw);
+
+    // MET lookups for various outcomes at current cube value
+    // Win outcomes: single, gammon, backgammon (player wins cv, 2cv, 3cv points)
+    float mwc_win_s  = get_met_after(away1, away2, cv, true, craw);
+    float mwc_win_g  = get_met_after(away1, away2, 2*cv, true, craw);
+    float mwc_win_b  = get_met_after(away1, away2, 3*cv, true, craw);
+    // Loss outcomes
+    float mwc_lose_s = get_met_after(away1, away2, cv, false, craw);
+    float mwc_lose_g = get_met_after(away1, away2, 2*cv, false, craw);
+    float mwc_lose_b = get_met_after(away1, away2, 3*cv, false, craw);
+
+    // Player's cash point (MWC when player wins cv points = D/P from player's side)
+    float mwc_cash = mwc_win_s;
+
+    // Opponent's cash point (MWC when opponent wins cv points = D/P from opp's side)
+    float mwc_opp_cash = mwc_lose_s;
+
+    // MWC when player wins ALL types (weighted by gammon ratios)
+    float mwc_win_all = (1.0f - rG0 - rBG0) * mwc_win_s
+                      + rG0 * mwc_win_g + rBG0 * mwc_win_b;
+
+    // MWC when player loses ALL types (weighted)
+    float mwc_lose_all = (1.0f - rG1 - rBG1) * mwc_lose_s
+                       + rG1 * mwc_lose_g + rBG1 * mwc_lose_b;
+
+    // Compute take points in P(win) space using MWC anchor points:
+    // Opponent's take/too-good point: below this P(win), opponent should pass
+    // (same as money game TP, but in MWC-space terms)
+    float opp_tg, player_tg;
+
+    // Opponent's take point: from opponent's perspective, they pass when
+    // the doubler's equity is better than D/P. Using MWC:
+    // opp_tg = P(win) where opponent is indifferent between taking and passing
+    float denom_opp = mwc_cash - mwc_lose_all;
+    if (std::abs(denom_opp) > 1e-10f) {
+        opp_tg = (mwc_opp_cash - mwc_lose_all) / denom_opp;
+        // Clamp to sensible range
+        opp_tg = std::clamp(opp_tg, 0.0f, 1.0f);
+    } else {
+        opp_tg = 0.0f;
+    }
+
+    // Player's too-good point: above this P(win), player should play on for gammon
+    float denom_player = mwc_win_all - mwc_lose_all;
+    if (std::abs(denom_player) > 1e-10f) {
+        player_tg = (mwc_cash - mwc_lose_all) / denom_player;
+        player_tg = std::clamp(player_tg, 0.0f, 1.0f);
+    } else {
+        player_tg = 1.0f;
+    }
+
+    // Piecewise-linear live cube MWC (3 regions, same as GNUbg Cl2CfMatchCentered)
+    float mwc_live;
+
+    if (p_win <= opp_tg) {
+        // Region 1: Opponent too good to double
+        // Linear from (0, mwc_lose_all) to (opp_tg, mwc_opp_cash)
+        if (opp_tg > 1e-10f) {
+            mwc_live = mwc_lose_all + (mwc_opp_cash - mwc_lose_all) * p_win / opp_tg;
+        } else {
+            mwc_live = mwc_lose_all;
+        }
+    } else if (p_win < player_tg) {
+        // Region 2: In doubling window
+        // Linear from (opp_tg, mwc_opp_cash) to (player_tg, mwc_cash)
+        float range = player_tg - opp_tg;
+        if (range > 1e-10f) {
+            mwc_live = mwc_opp_cash + (mwc_cash - mwc_opp_cash) * (p_win - opp_tg) / range;
+        } else {
+            mwc_live = mwc_opp_cash;
+        }
+    } else {
+        // Region 3: Player too good to double (play on for gammon)
+        // Linear from (player_tg, mwc_cash) to (1, mwc_win_all)
+        float range = 1.0f - player_tg;
+        if (range > 1e-10f) {
+            mwc_live = mwc_cash + (mwc_win_all - mwc_cash) * (p_win - player_tg) / range;
+        } else {
+            mwc_live = mwc_win_all;
+        }
+    }
+
+    // Janowski interpolation in MWC space
+    return mwc_dead * (1.0f - cube_x) + mwc_live * cube_x;
+}
+
+// Compute cubeful MWC for match play — player owns cube.
+// Piecewise-linear interpolation with 2 regions:
+//   p < player's TG: below cash point (only player can double)
+//   p >= player's TG: above cash point (player plays on for gammon)
+static float cl2cf_match_owned(
+    const std::array<float, NUM_OUTPUTS>& probs,
+    const CubeInfo& cube,
+    float cube_x)
+{
+    int away1 = cube.match.away1;
+    int away2 = cube.match.away2;
+    int cv = cube.cube_value;
+    bool craw = cube.match.is_crawford;
+
+    float p_win = probs[0];
+
+    // Gammon/backgammon ratios
+    float rG0, rBG0, rG1, rBG1;
+    if (p_win > 1e-7f) {
+        rG0 = (probs[1] - probs[2]) / p_win;
+        rBG0 = probs[2] / p_win;
+    } else {
+        rG0 = 0.0f;
+        rBG0 = 0.0f;
+    }
+    if (p_win < 1.0f - 1e-7f) {
+        rG1 = (probs[3] - probs[4]) / (1.0f - p_win);
+        rBG1 = probs[4] / (1.0f - p_win);
+    } else {
+        rG1 = 0.0f;
+        rBG1 = 0.0f;
+    }
+
+    // Dead cube MWC
+    float eq_dead = cubeless_equity(probs);
+    float mwc_dead = eq2mwc(eq_dead, away1, away2, cv, craw);
+
+    // MET lookups
+    float mwc_win_s  = get_met_after(away1, away2, cv, true, craw);
+    float mwc_win_g  = get_met_after(away1, away2, 2*cv, true, craw);
+    float mwc_win_b  = get_met_after(away1, away2, 3*cv, true, craw);
+    float mwc_lose_s = get_met_after(away1, away2, cv, false, craw);
+    float mwc_lose_g = get_met_after(away1, away2, 2*cv, false, craw);
+    float mwc_lose_b = get_met_after(away1, away2, 3*cv, false, craw);
+
+    float mwc_cash = mwc_win_s;  // Player cashes = wins cv points
+
+    // Weighted MWCs
+    float mwc_win_all = (1.0f - rG0 - rBG0) * mwc_win_s
+                      + rG0 * mwc_win_g + rBG0 * mwc_win_b;
+    float mwc_lose_all = (1.0f - rG1 - rBG1) * mwc_lose_s
+                       + rG1 * mwc_lose_g + rBG1 * mwc_lose_b;
+
+    // Player's cash/too-good point
+    float denom = mwc_win_all - mwc_lose_all;
+    float player_tg;
+    if (std::abs(denom) > 1e-10f) {
+        player_tg = (mwc_cash - mwc_lose_all) / denom;
+        player_tg = std::clamp(player_tg, 0.0f, 1.0f);
+    } else {
+        player_tg = 1.0f;
+    }
+
+    float mwc_live;
+    if (p_win <= player_tg) {
+        // Region 1: Below cash point
+        // Linear from (0, mwc_lose_all) to (player_tg, mwc_cash)
+        if (player_tg > 1e-10f) {
+            mwc_live = mwc_lose_all + (mwc_cash - mwc_lose_all) * p_win / player_tg;
+        } else {
+            mwc_live = mwc_lose_all;
+        }
+    } else {
+        // Region 2: Player too good to double (play on for gammon)
+        // Linear from (player_tg, mwc_cash) to (1, mwc_win_all)
+        float range = 1.0f - player_tg;
+        if (range > 1e-10f) {
+            mwc_live = mwc_cash + (mwc_win_all - mwc_cash) * (p_win - player_tg) / range;
+        } else {
+            mwc_live = mwc_win_all;
+        }
+    }
+
+    return mwc_dead * (1.0f - cube_x) + mwc_live * cube_x;
+}
+
+// Compute cubeful MWC for match play — opponent owns cube (unavailable to player).
+// Piecewise-linear interpolation with 2 regions:
+//   p < opponent's TG: opponent too good to double
+//   p >= opponent's TG: above opponent's cash point
+static float cl2cf_match_unavailable(
+    const std::array<float, NUM_OUTPUTS>& probs,
+    const CubeInfo& cube,
+    float cube_x)
+{
+    int away1 = cube.match.away1;
+    int away2 = cube.match.away2;
+    int cv = cube.cube_value;
+    bool craw = cube.match.is_crawford;
+
+    float p_win = probs[0];
+
+    // Gammon/backgammon ratios
+    float rG0, rBG0, rG1, rBG1;
+    if (p_win > 1e-7f) {
+        rG0 = (probs[1] - probs[2]) / p_win;
+        rBG0 = probs[2] / p_win;
+    } else {
+        rG0 = 0.0f;
+        rBG0 = 0.0f;
+    }
+    if (p_win < 1.0f - 1e-7f) {
+        rG1 = (probs[3] - probs[4]) / (1.0f - p_win);
+        rBG1 = probs[4] / (1.0f - p_win);
+    } else {
+        rG1 = 0.0f;
+        rBG1 = 0.0f;
+    }
+
+    // Dead cube MWC
+    float eq_dead = cubeless_equity(probs);
+    float mwc_dead = eq2mwc(eq_dead, away1, away2, cv, craw);
+
+    // MET lookups
+    float mwc_win_s  = get_met_after(away1, away2, cv, true, craw);
+    float mwc_win_g  = get_met_after(away1, away2, 2*cv, true, craw);
+    float mwc_win_b  = get_met_after(away1, away2, 3*cv, true, craw);
+    float mwc_lose_s = get_met_after(away1, away2, cv, false, craw);
+    float mwc_lose_g = get_met_after(away1, away2, 2*cv, false, craw);
+    float mwc_lose_b = get_met_after(away1, away2, 3*cv, false, craw);
+
+    float mwc_opp_cash = mwc_lose_s;  // Opponent cashes = player loses cv points
+
+    // Weighted MWCs
+    float mwc_win_all = (1.0f - rG0 - rBG0) * mwc_win_s
+                      + rG0 * mwc_win_g + rBG0 * mwc_win_b;
+    float mwc_lose_all = (1.0f - rG1 - rBG1) * mwc_lose_s
+                       + rG1 * mwc_lose_g + rBG1 * mwc_lose_b;
+
+    // Opponent's take/too-good point (from player's perspective)
+    float denom = mwc_opp_cash - mwc_lose_all;
+    float opp_tg;
+    // opp_tg = P(win) below which opponent should cash (pass a double they would give)
+    // Using same formula as centered case for the opponent's region:
+    float denom2 = mwc_win_s - mwc_lose_all;  // cash - lose
+    if (std::abs(denom2) > 1e-10f) {
+        opp_tg = (mwc_opp_cash - mwc_lose_all) / denom2;
+        opp_tg = std::clamp(opp_tg, 0.0f, 1.0f);
+    } else {
+        opp_tg = 0.0f;
+    }
+
+    float mwc_live;
+    if (p_win <= opp_tg) {
+        // Region 1: Opponent too good to double
+        // Linear from (0, mwc_lose_all) to (opp_tg, mwc_opp_cash)
+        if (opp_tg > 1e-10f) {
+            mwc_live = mwc_lose_all + (mwc_opp_cash - mwc_lose_all) * p_win / opp_tg;
+        } else {
+            mwc_live = mwc_lose_all;
+        }
+    } else {
+        // Region 2: Above opponent's cash point
+        // Linear from (opp_tg, mwc_opp_cash) to (1, mwc_win_all)
+        float range = 1.0f - opp_tg;
+        if (range > 1e-10f) {
+            mwc_live = mwc_opp_cash + (mwc_win_all - mwc_opp_cash) * (p_win - opp_tg) / range;
+        } else {
+            mwc_live = mwc_win_all;
+        }
+    }
+
+    return mwc_dead * (1.0f - cube_x) + mwc_live * cube_x;
+}
+
+float cl2cf_match(const std::array<float, NUM_OUTPUTS>& probs,
+                  const CubeInfo& cube, float cube_x)
+{
+    // Dead cube: return cubeless MWC directly
+    if (is_dead_cube(cube)) {
+        float eq_dead = cubeless_equity(probs);
+        return eq2mwc(eq_dead, cube.match.away1, cube.match.away2,
+                      cube.cube_value, cube.match.is_crawford);
+    }
+
+    // Dispatch by cube ownership
+    switch (cube.owner) {
+        case CubeOwner::CENTERED:
+            return cl2cf_match_centered(probs, cube, cube_x);
+        case CubeOwner::PLAYER:
+            return cl2cf_match_owned(probs, cube, cube_x);
+        case CubeOwner::OPPONENT:
+            return cl2cf_match_unavailable(probs, cube, cube_x);
+    }
+    return 0.0f;  // unreachable
+}
+
+float cl2cf(const std::array<float, NUM_OUTPUTS>& probs,
+            const CubeInfo& cube, float cube_x)
+{
+    if (cube.is_money()) {
+        return cl2cf_money(probs, cube.owner, cube_x);
+    }
+    // Match play: cl2cf_match returns MWC, convert to equity
+    float mwc = cl2cf_match(probs, cube, cube_x);
+    return mwc2eq(mwc, cube.match.away1, cube.match.away2,
+                  cube.cube_value, cube.match.is_crawford);
+}
+
 float cube_efficiency(const Board& board, bool is_race_pos) {
     if (!is_race_pos) {
         return 0.68f;  // Contact/crashed
@@ -100,7 +463,8 @@ float cube_efficiency(const Board& board, bool is_race_pos) {
     return std::clamp(x, 0.6f, 0.7f);
 }
 
-CubeDecision cube_decision_0ply(
+// Money game cube decision (0-ply).
+static CubeDecision cube_decision_0ply_money(
     const std::array<float, NUM_OUTPUTS>& probs,
     const CubeInfo& cube,
     float cube_x)
@@ -140,6 +504,75 @@ CubeDecision cube_decision_0ply(
     return result;
 }
 
+// Match play cube decision (0-ply).
+// Computes ND/DT/DP in MWC space, then converts to equity at original cube value.
+static CubeDecision cube_decision_0ply_match(
+    const std::array<float, NUM_OUTPUTS>& probs,
+    const CubeInfo& cube,
+    float cube_x)
+{
+    int away1 = cube.match.away1;
+    int away2 = cube.match.away2;
+    int cv = cube.cube_value;
+    bool craw = cube.match.is_crawford;
+
+    CubeDecision result;
+
+    // DP MWC: opponent passes, player wins cv points
+    float dp_m = dp_mwc(away1, away2, cv, craw);
+
+    // ND MWC: cubeful MWC with current cube state
+    float nd_m = cl2cf_match(probs, cube, cube_x);
+
+    // DT MWC: cube is doubled and opponent takes.
+    // After doubling: cube_value = 2*cv, opponent owns the cube.
+    CubeInfo dt_cube;
+    dt_cube.cube_value = 2 * cv;
+    dt_cube.owner = CubeOwner::OPPONENT;
+    dt_cube.match = cube.match;
+    float dt_m = cl2cf_match(probs, dt_cube, cube_x);
+
+    // Convert all three MWC values to equity at the original cube value.
+    // This normalizes them to a common scale for comparison.
+    result.equity_nd = mwc2eq(nd_m, away1, away2, cv, craw);
+    result.equity_dt = mwc2eq(dt_m, away1, away2, cv, craw);
+    result.equity_dp = mwc2eq(dp_m, away1, away2, cv, craw);
+
+    // Decision logic (same structure as money, but can_double matters for match)
+    bool player_can_double = can_double(cube);
+
+    if (!player_can_double) {
+        // Player cannot double (Crawford, dead cube, etc.)
+        result.should_double = false;
+        result.should_take = true;  // Irrelevant since no double
+        result.optimal_equity = result.equity_nd;
+    } else {
+        // Standard cube decision logic
+        float best_double = std::min(result.equity_dt, result.equity_dp);
+        result.should_double = (best_double > result.equity_nd);
+        result.should_take = (result.equity_dt <= result.equity_dp);
+
+        if (result.should_double) {
+            result.optimal_equity = std::min(result.equity_dt, result.equity_dp);
+        } else {
+            result.optimal_equity = result.equity_nd;
+        }
+    }
+
+    return result;
+}
+
+CubeDecision cube_decision_0ply(
+    const std::array<float, NUM_OUTPUTS>& probs,
+    const CubeInfo& cube,
+    float cube_x)
+{
+    if (cube.is_money()) {
+        return cube_decision_0ply_money(probs, cube, cube_x);
+    }
+    return cube_decision_0ply_match(probs, cube, cube_x);
+}
+
 CubeDecision cube_decision_0ply(
     const std::array<float, NUM_OUTPUTS>& probs,
     const CubeInfo& cube,
@@ -175,7 +608,7 @@ static const DiceRoll ALL_ROLLS[21] = {
     {5,6,2}
 };
 
-// Internal recursive cubeful equity evaluation.
+// Internal recursive cubeful equity evaluation (MONEY GAME).
 //
 // Computes cubeful equity for a PRE-ROLL position from the roller's perspective.
 // `owner` is cube ownership from the roller's perspective.
@@ -321,6 +754,161 @@ static float cubeful_equity_recursive(
     return static_cast<float>(sum_equity / 36.0);
 }
 
+// Internal recursive cubeful evaluation (MATCH PLAY).
+//
+// Same structure as the money game version, but operates in MWC (Match Winning
+// Chance) space instead of equity space.
+//
+// `cube` has cube ownership from the roller's perspective and match state
+// (away1=roller's away, away2=opponent's away).
+//
+// Returns cubeful MWC from the roller's perspective.
+static float cubeful_mwc_recursive(
+    const Board& board,        // pre-roll, roller's perspective
+    const CubeInfo& cube,      // from roller's perspective
+    const Strategy& strategy,
+    int plies,
+    const MoveFilter& filter,
+    int n_threads,
+    bool allow_parallel)
+{
+    Board flipped = flip(board);
+    bool race = is_race(board);
+
+    int away1 = cube.match.away1;
+    int away2 = cube.match.away2;
+    int cv = cube.cube_value;
+    bool craw = cube.match.is_crawford;
+
+    // Terminal check
+    GameResult result = check_game_over(flipped);
+    if (result != GameResult::NOT_OVER) {
+        auto t_probs = invert_probs(terminal_probs(result));
+        // Terminal: compute MWC from terminal probs (cubeless, dead cube)
+        return cubeless_mwc(t_probs, away1, away2, cv, craw);
+    }
+
+    if (plies <= 0) {
+        // 0-ply: Janowski conversion in MWC space
+        auto post_probs = strategy.evaluate_probs(flipped, race);
+        auto pre_roll_probs = invert_probs(post_probs);
+        float x = cube_efficiency(board, race);
+        return cl2cf_match(pre_roll_probs, cube, x);
+    }
+
+    // Opponent's cube info (flipped perspective)
+    CubeInfo opp_cube;
+    opp_cube.cube_value = cv;
+    opp_cube.owner = flip_owner(cube.owner);
+    opp_cube.match = cube.match.flip();  // Swap away1/away2
+
+    // Lambda to evaluate a single roll. Returns weighted MWC contribution.
+    auto evaluate_roll = [&](int roll_idx) -> double {
+        const auto& roll = ALL_ROLLS[roll_idx];
+
+        thread_local std::vector<Board> candidates;
+        candidates.clear();
+        if (candidates.capacity() < 32) candidates.reserve(32);
+
+        // Generate the roller's legal moves
+        possible_boards(board, roll.d1, roll.d2, candidates);
+
+        // Find best move (cubeless)
+        int best_idx = 0;
+        if (candidates.size() > 1) {
+            double best_eq = -1e30;
+            for (int i = 0; i < static_cast<int>(candidates.size()); ++i) {
+                auto p = strategy.evaluate_probs(candidates[i], board);
+                double eq = NeuralNetwork::compute_equity(p);
+                if (eq > best_eq) {
+                    best_eq = eq;
+                    best_idx = i;
+                }
+            }
+        }
+
+        Board post_move = candidates[best_idx];
+
+        // Check if game is over
+        GameResult post_result = check_game_over(post_move);
+        if (post_result != GameResult::NOT_OVER) {
+            auto tp = terminal_probs(post_result);
+            // Terminal MWC from player's perspective
+            return roll.weight * static_cast<double>(
+                cubeless_mwc(tp, away1, away2, cv, craw));
+        }
+
+        // Opponent's turn
+        Board opp_pre_roll = flip(post_move);
+
+        // Can opponent double?
+        bool opp_can_double = can_double(opp_cube);
+
+        // Opponent's ND MWC (from opponent's perspective)
+        float opp_mwc_nd = cubeful_mwc_recursive(
+            opp_pre_roll, opp_cube, strategy, plies - 1, filter,
+            n_threads, /*allow_parallel=*/false);
+
+        // Player's MWC if opponent doesn't double
+        float player_mwc_nd = 1.0f - opp_mwc_nd;
+        float player_mwc_for_roll;
+
+        if (opp_can_double) {
+            // Opponent DT: doubled cube, opponent's opponent (= player) owns
+            CubeInfo opp_dt_cube;
+            opp_dt_cube.cube_value = 2 * cv;
+            opp_dt_cube.owner = CubeOwner::OPPONENT;  // Player owns from opp's perspective
+            opp_dt_cube.match = opp_cube.match;
+
+            float opp_mwc_dt = cubeful_mwc_recursive(
+                opp_pre_roll, opp_dt_cube, strategy, plies - 1, filter,
+                n_threads, /*allow_parallel=*/false);
+
+            // Opponent's DP MWC (opponent wins cv points)
+            float opp_mwc_dp = dp_mwc(opp_cube.match.away1, opp_cube.match.away2,
+                                       cv, craw);
+
+            // Opponent decides: double if max(dt, dp) > nd (maximizing MWC)
+            float opp_best_if_double = std::max(opp_mwc_dt, opp_mwc_dp);
+            bool opp_should_double = (opp_best_if_double > opp_mwc_nd);
+
+            if (opp_should_double) {
+                // Player's response to opponent's double:
+                // Player's MWC if taking = 1 - opp_mwc_dt
+                // Player's MWC if passing = 1 - opp_mwc_dp
+                float player_mwc_dt = 1.0f - opp_mwc_dt;
+                float player_mwc_dp = 1.0f - opp_mwc_dp;
+                // Player maximizes their MWC
+                player_mwc_for_roll = std::max(player_mwc_dt, player_mwc_dp);
+            } else {
+                player_mwc_for_roll = player_mwc_nd;
+            }
+        } else {
+            player_mwc_for_roll = player_mwc_nd;
+        }
+
+        return roll.weight * static_cast<double>(player_mwc_for_roll);
+    };
+
+    double sum_mwc = 0.0;
+
+    if (allow_parallel && n_threads > 1 && plies > 1) {
+        std::array<double, 21> roll_mwcs{};
+        multipy_parallel_for(21, n_threads, [&](int idx) {
+            roll_mwcs[idx] = evaluate_roll(idx);
+        });
+        for (int i = 0; i < 21; ++i) {
+            sum_mwc += roll_mwcs[i];
+        }
+    } else {
+        for (int i = 0; i < 21; ++i) {
+            sum_mwc += evaluate_roll(i);
+        }
+    }
+
+    return static_cast<float>(sum_mwc / 36.0);
+}
+
 float cubeful_equity_nply(
     const Board& board,
     CubeOwner owner,
@@ -332,6 +920,26 @@ float cubeful_equity_nply(
     bool allow_parallel = (n_threads > 1 && n_plies > 1);
     return cubeful_equity_recursive(board, owner, strategy, n_plies, filter,
                                     n_threads, allow_parallel);
+}
+
+// Match play overload: returns cubeful equity (NOT MWC).
+float cubeful_equity_nply(
+    const Board& board,
+    const CubeInfo& cube,
+    const Strategy& strategy,
+    int n_plies,
+    const MoveFilter& filter,
+    int n_threads)
+{
+    if (cube.is_money()) {
+        return cubeful_equity_nply(board, cube.owner, strategy, n_plies,
+                                   filter, n_threads);
+    }
+    bool allow_parallel = (n_threads > 1 && n_plies > 1);
+    float mwc = cubeful_mwc_recursive(board, cube, strategy, n_plies, filter,
+                                       n_threads, allow_parallel);
+    return mwc2eq(mwc, cube.match.away1, cube.match.away2,
+                  cube.cube_value, cube.match.is_crawford);
 }
 
 CubeDecision cube_decision_nply(
@@ -352,27 +960,76 @@ CubeDecision cube_decision_nply(
         return cube_decision_0ply(pre_roll_probs, cube, x);
     }
 
+    if (cube.is_money()) {
+        // Money game N-ply (existing logic)
+        CubeDecision result;
+        result.equity_dp = 1.0f;
+
+        result.equity_nd = cubeful_equity_nply(board, cube.owner, strategy,
+                                                n_plies, filter, n_threads);
+        result.equity_dt = 2.0f * cubeful_equity_nply(
+            board, CubeOwner::OPPONENT, strategy, n_plies, filter, n_threads);
+
+        float best_double = std::min(result.equity_dt, result.equity_dp);
+        result.should_double = (best_double > result.equity_nd);
+        result.should_take = (result.equity_dt <= result.equity_dp);
+
+        if (result.should_double) {
+            result.optimal_equity = std::min(result.equity_dt, result.equity_dp);
+        } else {
+            result.optimal_equity = result.equity_nd;
+        }
+
+        return result;
+    }
+
+    // Match play N-ply: work in MWC space, convert to equity at the end
+    int away1 = cube.match.away1;
+    int away2 = cube.match.away2;
+    int cv = cube.cube_value;
+    bool craw = cube.match.is_crawford;
+
+    bool allow_parallel = (n_threads > 1 && n_plies > 1);
+
     CubeDecision result;
-    result.equity_dp = 1.0f;
 
-    // No Double: cubeful equity with current cube state
-    result.equity_nd = cubeful_equity_nply(board, cube.owner, strategy, n_plies, filter, n_threads);
+    // DP MWC: opponent passes, player wins cv points
+    float dp_m = dp_mwc(away1, away2, cv, craw);
 
-    // Double/Take: cubeful equity with opponent owning cube at 2x value.
-    // After doubling, opponent owns cube → from player's perspective, OPPONENT owns.
-    // Equity at doubled stakes: multiply by 2.
-    result.equity_dt = 2.0f * cubeful_equity_nply(
-        board, CubeOwner::OPPONENT, strategy, n_plies, filter, n_threads);
+    // ND MWC: cubeful MWC with current cube state
+    float nd_m = cubeful_mwc_recursive(board, cube, strategy, n_plies, filter,
+                                        n_threads, allow_parallel);
 
-    // Decision logic (same as 0-ply)
-    float best_double = std::min(result.equity_dt, result.equity_dp);
-    result.should_double = (best_double > result.equity_nd);
-    result.should_take = (result.equity_dt <= result.equity_dp);
+    // DT MWC: cube is doubled and opponent takes
+    CubeInfo dt_cube;
+    dt_cube.cube_value = 2 * cv;
+    dt_cube.owner = CubeOwner::OPPONENT;
+    dt_cube.match = cube.match;
+    float dt_m = cubeful_mwc_recursive(board, dt_cube, strategy, n_plies, filter,
+                                        n_threads, allow_parallel);
 
-    if (result.should_double) {
-        result.optimal_equity = std::min(result.equity_dt, result.equity_dp);
-    } else {
+    // Convert all three MWC values to equity at the original cube value
+    result.equity_nd = mwc2eq(nd_m, away1, away2, cv, craw);
+    result.equity_dt = mwc2eq(dt_m, away1, away2, cv, craw);
+    result.equity_dp = mwc2eq(dp_m, away1, away2, cv, craw);
+
+    // Decision logic respecting can_double
+    bool player_can_double = can_double(cube);
+
+    if (!player_can_double) {
+        result.should_double = false;
+        result.should_take = true;
         result.optimal_equity = result.equity_nd;
+    } else {
+        float best_double = std::min(result.equity_dt, result.equity_dp);
+        result.should_double = (best_double > result.equity_nd);
+        result.should_take = (result.equity_dt <= result.equity_dp);
+
+        if (result.should_double) {
+            result.optimal_equity = std::min(result.equity_dt, result.equity_dp);
+        } else {
+            result.optimal_equity = result.equity_nd;
+        }
     }
 
     return result;
