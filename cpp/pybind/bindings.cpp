@@ -1749,12 +1749,13 @@ PYBIND11_MODULE(bgbot_cpp, m) {
                                      int filter_max_moves,
                                      float filter_threshold,
                                      int n_threads,
+                                     int cube_value,
                                      int away1, int away2, bool is_crawford) {
         Board board = list_to_board(board_vec);
         MoveFilter filter{filter_max_moves, filter_threshold};
         py::gil_scoped_release release;
         if (away1 > 0 && away2 > 0) {
-            CubeInfo ci{1, owner, {away1, away2, is_crawford}};
+            CubeInfo ci{cube_value, owner, {away1, away2, is_crawford}};
             return cubeful_equity_nply(board, ci, strategy, n_plies, filter, n_threads);
         }
         return cubeful_equity_nply(board, owner, strategy, n_plies, filter, n_threads);
@@ -1767,6 +1768,7 @@ PYBIND11_MODULE(bgbot_cpp, m) {
        py::arg("filter_max_moves") = 5,
        py::arg("filter_threshold") = 0.08f,
        py::arg("n_threads") = 1,
+       py::arg("cube_value") = 1,
        py::arg("away1") = 0, py::arg("away2") = 0, py::arg("is_crawford") = false);
 
     m.def("cube_efficiency", [](const std::vector<int>& board, bool is_race_pos) {

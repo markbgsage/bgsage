@@ -17,6 +17,7 @@ from .analyzer import BgBotAnalyzer, create_analyzer
 from .batch import PositionEval, batch_checker_play, batch_cube_action, batch_evaluate, batch_post_move_evaluate
 from .board import (
     STARTING_BOARD,
+    can_double_match,
     check_game_over,
     classify_game_plan,
     classify_game_plans,
@@ -68,4 +69,5 @@ __all__ = [
     "is_race",
     "is_crashed",
     "invert_probs",
+    "can_double_match",
 ]

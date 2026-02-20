@@ -89,6 +89,28 @@ def is_crashed(board: list[int]) -> bool:
     return bgbot_cpp.is_crashed(board)
 
 
+def can_double_match(
+    away1: int, away2: int, cube_value: int, owner: str,
+    is_crawford: bool = False,
+) -> bool:
+    """Check if the player on roll can legally double in match play.
+
+    Args:
+        away1: Points the roller needs to win.
+        away2: Points the opponent needs to win.
+        cube_value: Current cube value.
+        owner: Cube owner — ``"centered"``, ``"player"``, or ``"opponent"``.
+        is_crawford: Whether this is the Crawford game.
+
+    Returns ``False`` for Crawford game, dead cube (cube already covers
+    remaining points), or when the opponent owns the cube.  For unlimited
+    games (away1/away2 == 0), simply checks ownership.
+    """
+    owner_map = {"centered": 0, "player": 1, "opponent": 2}
+    cpp_owner = bgbot_cpp.CubeOwner(owner_map[owner])
+    return bgbot_cpp.can_double_match(away1, away2, cube_value, cpp_owner, is_crawford)
+
+
 def invert_probs(probs: list[float]) -> list[float]:
     """Invert probabilities from one player's perspective to the other.
 

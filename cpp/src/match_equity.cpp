@@ -81,7 +81,7 @@ const std::array<float, MAX_MATCH_LENGTH> MET_POST_CRAWFORD = {{
 // MET lookup functions
 // ---------------------------------------------------------------------------
 
-float get_met(int away1, int away2, bool is_crawford) {
+float get_met(int away1, int away2, bool is_post_crawford) {
     // Terminal conditions
     if (away1 <= 0) return 1.0f;  // Player already won
     if (away2 <= 0) return 0.0f;  // Opponent already won
@@ -90,11 +90,12 @@ float get_met(int away1, int away2, bool is_crawford) {
     int a1 = std::min(away1, MAX_MATCH_LENGTH);
     int a2 = std::min(away2, MAX_MATCH_LENGTH);
 
-    // Crawford/post-Crawford routing:
-    // If this IS the Crawford game, or if either player is 1-away (post-Crawford),
-    // use the post-Crawford table. This matches GNUbg's getME logic:
-    //   if (fCrawford || nMatchTo - nScore0 == 1 || nMatchTo - nScore1 == 1)
-    if (is_crawford || a1 == 1 || a2 == 1) {
+    // Post-Crawford routing:
+    // Only use the post-Crawford table when Crawford has already occurred
+    // (is_post_crawford=true) AND someone is at 1-away.
+    // The pre-Crawford table (MET_PRE) already has correct values for 1-away
+    // positions — those values account for the upcoming Crawford game.
+    if (is_post_crawford && (a1 == 1 || a2 == 1)) {
         if (a1 == 1) {
             // Player is 1-away (the leader). Opponent is the trailer.
             // MET_POST_CRAWFORD[a2-1] = trailer's MWC
@@ -113,10 +114,14 @@ float get_met_after(int away1, int away2, int nPoints,
                     bool player_wins, bool is_crawford) {
     int new_away1 = player_wins ? away1 - nPoints : away1;
     int new_away2 = player_wins ? away2 : away2 - nPoints;
-    // After a game ends, Crawford state resets for the new game.
-    // get_met() internally handles Crawford/post-Crawford detection based on
-    // whether either player is at 1-away.
-    return get_met(new_away1, new_away2, false);
+    // After a game ends, determine if the resulting state is post-Crawford.
+    // If the current game IS the Crawford game, then after it ends we're
+    // in the post-Crawford period (someone was already 1-away).
+    // If the current game is NOT Crawford, and someone reaches 1-away from
+    // this game's result, the Crawford game hasn't happened yet — use
+    // pre-Crawford table (is_post_crawford=false).
+    bool post_crawford = is_crawford;  // Crawford game just ended → post-Crawford
+    return get_met(new_away1, new_away2, post_crawford);
 }
 
 float cubeless_mwc(const std::array<float, 5>& probs,

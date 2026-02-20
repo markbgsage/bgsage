@@ -428,8 +428,9 @@ class _CubefulAnalyzer:
             opp_owner = _FLIP_OWNER[owner]
             if is_match:
                 opp_eq = bgbot_cpp.cubeful_equity_nply(
-                    opp_pre_roll, cube_value, opp_owner,
+                    opp_pre_roll, opp_owner,
                     self._inner._strategy_0ply, self._cubeful_ply,
+                    cube_value=cube_value,
                     away1=away2, away2=away1, is_crawford=is_crawford,
                 )
             else:

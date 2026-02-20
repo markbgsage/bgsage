@@ -43,8 +43,10 @@ extern const std::array<float, MAX_MATCH_LENGTH> MET_POST_CRAWFORD;
 
 // Core MET lookup: returns MWC for the player needing away1 points.
 // away1 <= 0 → 1.0 (player won); away2 <= 0 → 0.0 (opponent won).
-// Handles Crawford and post-Crawford routing internally.
-float get_met(int away1, int away2, bool is_crawford = false);
+// is_post_crawford: true only when the Crawford game has already been played
+// and someone is still 1-away. The pre-Crawford table (MET_PRE) has correct
+// values for 1-away positions before Crawford occurs.
+float get_met(int away1, int away2, bool is_post_crawford = false);
 
 // MWC after nPoints are scored.
 // player_wins=true: player wins nPoints (player's away decreases).
