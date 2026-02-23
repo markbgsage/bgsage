@@ -20,6 +20,7 @@ struct CubeInfo {
     int cube_value = 1;                      // 1, 2, 4, 8, ...
     CubeOwner owner = CubeOwner::CENTERED;
     MatchInfo match;                         // Default: {0,0,false} = money game
+    float cube_x_override = -1.0f;          // If >= 0, override auto-detected cube efficiency
 
     bool is_money() const { return match.is_money(); }
 };

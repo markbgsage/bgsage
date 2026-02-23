@@ -34,6 +34,7 @@ data/benchmark_pr/rollouts.jsonl
 # IDE
 .vscode/
 .idea/
+.claude/
 *.swp
 *.swo
 

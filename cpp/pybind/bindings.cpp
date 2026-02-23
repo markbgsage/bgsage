@@ -1800,7 +1800,8 @@ PYBIND11_MODULE(bgbot_cpp, m) {
                                         int n_h_attacking,
                                         int n_h_priming,
                                         int n_h_anchoring,
-                                        int away1, int away2, bool is_crawford) {
+                                        int away1, int away2, bool is_crawford,
+                                        float cube_x_override) {
         Board board = list_to_board(checkers);
         GamePlanStrategy strat(purerace_w, racing_w, attacking_w, priming_w, anchoring_w,
                                n_h_purerace, n_h_racing, n_h_attacking, n_h_priming, n_h_anchoring);
@@ -1811,11 +1812,11 @@ PYBIND11_MODULE(bgbot_cpp, m) {
         auto post_move_probs = strat.evaluate_probs(flipped, race);
         auto pre_roll_probs = invert_probs(post_move_probs);
 
-        // Cube efficiency
-        float x = cube_efficiency(board, race);
+        // Cube efficiency (use override if provided)
+        float x = (cube_x_override >= 0.0f) ? cube_x_override : cube_efficiency(board, race);
 
         // Cube decision
-        CubeInfo ci{cube_value, owner, {away1, away2, is_crawford}};
+        CubeInfo ci{cube_value, owner, {away1, away2, is_crawford}, cube_x_override};
         auto cd = cube_decision_0ply(pre_roll_probs, ci, x);
 
         // Cubeless equity
@@ -1848,7 +1849,8 @@ PYBIND11_MODULE(bgbot_cpp, m) {
        py::arg("n_hidden_attacking") = 400,
        py::arg("n_hidden_priming") = 400,
        py::arg("n_hidden_anchoring") = 400,
-       py::arg("away1") = 0, py::arg("away2") = 0, py::arg("is_crawford") = false);
+       py::arg("away1") = 0, py::arg("away2") = 0, py::arg("is_crawford") = false,
+       py::arg("cube_x_override") = -1.0f);
 
     // N-ply cube decision (standalone — creates its own strategy, serial by default)
     m.def("cube_decision_nply", [](const std::vector<int>& checkers,
@@ -1867,11 +1869,12 @@ PYBIND11_MODULE(bgbot_cpp, m) {
                                     int filter_max_moves,
                                     float filter_threshold,
                                     int n_threads,
-                                    int away1, int away2, bool is_crawford) {
+                                    int away1, int away2, bool is_crawford,
+                                    float cube_x_override) {
         Board board = list_to_board(checkers);
         GamePlanStrategy strat(purerace_w, racing_w, attacking_w, priming_w, anchoring_w,
                                n_h_purerace, n_h_racing, n_h_attacking, n_h_priming, n_h_anchoring);
-        CubeInfo ci{cube_value, owner, {away1, away2, is_crawford}};
+        CubeInfo ci{cube_value, owner, {away1, away2, is_crawford}, cube_x_override};
         MoveFilter filter{filter_max_moves, filter_threshold};
 
         CubeDecision cd;
@@ -1917,7 +1920,8 @@ PYBIND11_MODULE(bgbot_cpp, m) {
        py::arg("filter_max_moves") = 5,
        py::arg("filter_threshold") = 0.08f,
        py::arg("n_threads") = 1,
-       py::arg("away1") = 0, py::arg("away2") = 0, py::arg("is_crawford") = false);
+       py::arg("away1") = 0, py::arg("away2") = 0, py::arg("is_crawford") = false,
+       py::arg("cube_x_override") = -1.0f);
 
     // Cubeful rollout: run cubeless rollout, then apply Janowski to the mean probs
     m.def("cube_decision_rollout", [](const std::vector<int>& checkers,
@@ -1942,7 +1946,8 @@ PYBIND11_MODULE(bgbot_cpp, m) {
                                        uint32_t seed,
                                        int late_ply,
                                        int late_threshold,
-                                       int away1, int away2, bool is_crawford) {
+                                       int away1, int away2, bool is_crawford,
+                                       float cube_x_override) {
         Board board = list_to_board(checkers);
         bool race = is_race(board);
 
@@ -1975,7 +1980,7 @@ PYBIND11_MODULE(bgbot_cpp, m) {
         float cl_eq = cubeless_equity(pre_roll_probs);
 
         // Apply Janowski to get cubeful equities
-        CubeInfo ci{cube_value, owner, {away1, away2, is_crawford}};
+        CubeInfo ci{cube_value, owner, {away1, away2, is_crawford}, cube_x_override};
         auto cd = cube_decision_from_probs(pre_roll_probs, ci, board, race);
 
         py::dict result;
@@ -2015,7 +2020,8 @@ PYBIND11_MODULE(bgbot_cpp, m) {
        py::arg("seed") = 42,
        py::arg("late_ply") = -1,
        py::arg("late_threshold") = 20,
-       py::arg("away1") = 0, py::arg("away2") = 0, py::arg("is_crawford") = false);
+       py::arg("away1") = 0, py::arg("away2") = 0, py::arg("is_crawford") = false,
+       py::arg("cube_x_override") = -1.0f);
 
     // ======================== Batch position evaluation ========================
 

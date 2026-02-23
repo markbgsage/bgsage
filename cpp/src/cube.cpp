@@ -570,7 +570,8 @@ CubeDecision cube_decision_0ply(
     const Board& board,
     bool is_race_pos)
 {
-    float x = cube_efficiency(board, is_race_pos);
+    float x = (cube.cube_x_override >= 0.0f) ? cube.cube_x_override
+                                               : cube_efficiency(board, is_race_pos);
     return cube_decision_0ply(probs, cube, x);
 }
 
@@ -623,6 +624,12 @@ static const DiceRoll ALL_ROLLS[21] = {
 // For money: operates in equity space, returns cubeful equity (cube=1 normalized).
 // For match: operates in MWC space, returns MWC from roller's perspective.
 
+// Resolve cube efficiency: use override if set, otherwise auto-detect.
+static float resolve_cube_x(const CubeInfo& cube, const Board& board, bool race) {
+    if (cube.cube_x_override >= 0.0f) return cube.cube_x_override;
+    return cube_efficiency(board, race);
+}
+
 // Helper: evaluate a post-move board at 0-ply Janowski cubeful.
 // Returns value from the MOVER's perspective (the player who just moved).
 // For money: returns cubeful equity. For match: returns cubeful MWC.
@@ -635,7 +642,7 @@ static float eval_post_move_cubeful_0ply(
     bool race = is_race(post_move);
     auto probs = strategy.evaluate_probs(post_move, race);
     // probs are from mover's perspective (post-move semantics). Good.
-    float x = cube_efficiency(post_move, race);
+    float x = resolve_cube_x(cube, post_move, race);
 
     if (cube.is_money()) {
         return cl2cf_money(probs, cube.owner, x);
@@ -668,7 +675,7 @@ static float eval_pre_roll_cubeful_0ply(
 
     auto post_probs = strategy.evaluate_probs(flipped, race);
     auto pre_roll_probs = invert_probs(post_probs);
-    float x = cube_efficiency(board, race);
+    float x = resolve_cube_x(cube, board, race);
 
     if (cube.is_money()) {
         return cl2cf_money(pre_roll_probs, cube.owner, x);
@@ -701,6 +708,7 @@ static CubeInfo make_opp_cube(const CubeInfo& cube) {
     opp.cube_value = cube.cube_value;
     opp.owner = flip_owner(cube.owner);
     opp.match = cube.match.flip();
+    opp.cube_x_override = cube.cube_x_override;
     return opp;
 }
 
@@ -819,6 +827,7 @@ static float cubeful_recursive(
         opp_dt_cube.cube_value = 2 * opp_cube.cube_value;
         opp_dt_cube.owner = CubeOwner::OPPONENT;  // We own it (OPPONENT from opp's view)
         opp_dt_cube.match = opp_cube.match;
+        opp_dt_cube.cube_x_override = opp_cube.cube_x_override;
 
         bool opp_can_dbl = can_double(opp_cube);
 
@@ -946,7 +955,7 @@ CubeDecision cube_decision_nply(
         bool race = is_race(board);
         auto post_probs = strategy.evaluate_probs(flipped, race);
         auto pre_roll_probs = invert_probs(post_probs);
-        float x = cube_efficiency(board, race);
+        float x = resolve_cube_x(cube, board, race);
         return cube_decision_0ply(pre_roll_probs, cube, x);
     }
 
@@ -964,6 +973,7 @@ CubeDecision cube_decision_nply(
     dt_cube.cube_value = 2 * cube.cube_value;
     dt_cube.owner = CubeOwner::OPPONENT;
     dt_cube.match = cube.match;
+    dt_cube.cube_x_override = cube.cube_x_override;
     float dt_val = cubeful_recursive(board, dt_cube, strategy, n_plies, filter,
                                       n_threads, allow_parallel);
 
