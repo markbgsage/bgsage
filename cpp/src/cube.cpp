@@ -575,15 +575,7 @@ CubeDecision cube_decision_0ply(
 // N-ply cubeful evaluation
 // ---------------------------------------------------------------------------
 
-// Flip cube ownership when switching to opponent's perspective.
-// PLAYER ↔ OPPONENT, CENTERED stays CENTERED.
-static CubeOwner flip_owner(CubeOwner owner) {
-    switch (owner) {
-        case CubeOwner::PLAYER:   return CubeOwner::OPPONENT;
-        case CubeOwner::OPPONENT: return CubeOwner::PLAYER;
-        default:                  return CubeOwner::CENTERED;
-    }
-}
+// flip_owner() is now an inline function in cube.h.
 
 // The 21 unique dice rolls with weights (same as MultiPlyStrategy::ALL_ROLLS).
 struct DiceRoll { int d1, d2, weight; };

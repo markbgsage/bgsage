@@ -44,9 +44,9 @@ def main():
     print(f"Runs per ply: {N_RUNS} (median time)")
     print()
 
-    for ply_str in ['1ply', '2ply', '3ply']:
+    for ply_str in ['1ply', '2ply', '3ply', 'rollout']:
         print(f"--- {ply_str} ---")
-        median_time, r = benchmark_ply(ply_str)
+        median_time, r = benchmark_ply(ply_str, n_runs=2 if ply_str == 'rollout' else N_RUNS)
 
         print(f"  Probs: win={r.probs.win:.5f} gw={r.probs.gammon_win:.5f} "
               f"bw={r.probs.backgammon_win:.5f} gl={r.probs.gammon_loss:.5f} "

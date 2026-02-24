@@ -25,6 +25,14 @@ struct CubeInfo {
     bool is_money() const { return match.is_money(); }
 };
 
+// Flip cube ownership (PLAYER <-> OPPONENT, CENTERED stays).
+// Used when flipping the board perspective after a half-move.
+inline CubeOwner flip_owner(CubeOwner o) {
+    if (o == CubeOwner::PLAYER) return CubeOwner::OPPONENT;
+    if (o == CubeOwner::OPPONENT) return CubeOwner::PLAYER;
+    return CubeOwner::CENTERED;
+}
+
 // Can the player on roll legally double?
 inline bool can_double(const CubeInfo& ci) {
     if (!ci.is_money()) {

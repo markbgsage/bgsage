@@ -664,6 +664,353 @@ RolloutResult RolloutStrategy::run_trials_parallel(
     return result;
 }
 
+// ======================== Cubeful Rollout Trial ========================
+
+void RolloutStrategy::run_cubeful_trial(
+    const Board& pre_roll_board,
+    CubefulBranch branches[], int n_branches,
+    const std::pair<int,int>* dice_seq,
+    int max_moves) const
+{
+    thread_local std::array<std::vector<Board>, ALL_ROLLS.size()> move_candidates;
+    thread_local bool candidates_initialized = false;
+    if (!candidates_initialized) {
+        for (auto& c : move_candidates) c.reserve(24);
+        candidates_initialized = true;
+    }
+
+    Board board = pre_roll_board;  // Mover's perspective (pre-roll)
+    bool vr_enabled = (vr_strat_ != nullptr);
+    int truncation = (config_.truncation_depth > 0) ? config_.truncation_depth : 9999;
+
+    for (int move_num = 0; move_num < truncation && move_num < max_moves; ++move_num) {
+        // move_num 0 = starting player's (SP) turn, 1 = opponent, 2 = SP, ...
+        bool is_sp_turn = (move_num % 2 == 0);
+        bool use_base = (move_num >= config_.late_threshold) || is_race(board);
+        bool race = is_race(board);
+
+        // Phase 1: Cube check (skip on move 0 — top-level decision already made)
+        if (move_num > 0) {
+            // Pre-roll probs from mover's perspective: flip, evaluate, invert
+            Board opp_board = flip(board);
+            auto opp_probs = base_->evaluate_probs(opp_board, opp_board);
+            auto mover_probs = invert_probs(opp_probs);
+            float x = cube_efficiency(board, race);
+
+            for (int b = 0; b < n_branches; ++b) {
+                if (branches[b].finished) continue;
+                if (!can_double(branches[b].cube)) continue;
+
+                CubeDecision cd = cube_decision_0ply(mover_probs, branches[b].cube, x);
+                if (cd.should_double) {
+                    if (cd.should_take) {
+                        // Double/Take: update cube state
+                        branches[b].cube.cube_value *= 2;
+                        branches[b].cube.owner = CubeOwner::OPPONENT;
+                    } else {
+                        // Double/Pass: mover wins current stake
+                        double dp_eq = static_cast<double>(branches[b].cube.cube_value)
+                                       / branches[b].basis_cube;
+                        if (!is_sp_turn) dp_eq = -dp_eq;
+                        branches[b].final_equity = dp_eq - branches[b].vr_luck;
+                        branches[b].finished = true;
+                    }
+                }
+            }
+
+            // Check if all branches finished
+            bool all_done = true;
+            for (int b = 0; b < n_branches; ++b) {
+                if (!branches[b].finished) { all_done = false; break; }
+            }
+            if (all_done) return;
+        }
+
+        // Phase 2: Generate moves for all 21 rolls + get actual dice
+        int d1 = dice_seq[move_num].first;
+        int d2 = dice_seq[move_num].second;
+
+        for (size_t i = 0; i < ALL_ROLLS.size(); ++i) {
+            move_candidates[i].clear();
+            possible_boards(board, ALL_ROLLS[i].d1, ALL_ROLLS[i].d2, move_candidates[i]);
+        }
+
+        // Phase 3: VR — evaluate all 21 best-move probs (shared NN work)
+        std::array<std::array<float, NUM_OUTPUTS>, 21> roll_best_probs;
+        std::array<int, 21> best_candidate_idx{};
+        bool race_for_x = is_race(board);
+        float x = cube_efficiency(board, race_for_x);
+
+        if (vr_enabled) {
+            bool reuse_idx = (config_.vr_ply == 0) && base_gps_ &&
+                             (config_.decision_ply == 0 || use_base);
+
+            for (size_t i = 0; i < ALL_ROLLS.size(); ++i) {
+                int idx = -1;
+                roll_best_probs[i] = best_move_probs_for_candidates(
+                    board, move_candidates[i],
+                    reuse_idx ? &idx : nullptr);
+                if (reuse_idx) best_candidate_idx[i] = idx;
+            }
+
+            // Per-branch cubeful equity VR
+            int a = d1, b_die = d2;
+            if (a > b_die) std::swap(a, b_die);
+            int actual_idx = kOrderedRollToIndex[a][b_die];
+
+            for (int b = 0; b < n_branches; ++b) {
+                if (branches[b].finished) continue;
+
+                double mean_cf = 0.0;
+                for (size_t i = 0; i < ALL_ROLLS.size(); ++i) {
+                    float cf = cl2cf_money(roll_best_probs[i], branches[b].cube.owner, x);
+                    double cf_basis = cf * branches[b].cube.cube_value
+                                        / branches[b].basis_cube;
+                    mean_cf += ALL_ROLLS[i].weight * cf_basis;
+                }
+                mean_cf /= 36.0;
+
+                float actual_cf = cl2cf_money(
+                    roll_best_probs[actual_idx], branches[b].cube.owner, x);
+                double actual_cf_basis = actual_cf * branches[b].cube.cube_value
+                                                   / branches[b].basis_cube;
+
+                double luck = actual_cf_basis - mean_cf;
+                if (is_sp_turn) {
+                    branches[b].vr_luck += luck;
+                } else {
+                    branches[b].vr_luck -= luck;
+                }
+            }
+        }
+
+        // Phase 4: Pick best move for actual roll (cubeless, shared)
+        int a = d1, b_die = d2;
+        if (a > b_die) std::swap(a, b_die);
+        int actual_idx = kOrderedRollToIndex[a][b_die];
+        if (actual_idx < 0) actual_idx = 0;
+
+        const auto& candidates = move_candidates[actual_idx];
+        const bool can_reuse = vr_enabled && (config_.decision_ply == 0 || use_base);
+        const int cached_idx = best_candidate_idx[actual_idx];
+
+        Board chosen;
+        if (candidates.empty()) {
+            chosen = board;
+        } else if (candidates.size() == 1) {
+            chosen = candidates[0];
+        } else {
+            int idx;
+            if (can_reuse && cached_idx >= 0 &&
+                cached_idx < static_cast<int>(candidates.size())) {
+                idx = cached_idx;
+            } else {
+                const auto& strat = use_base ? *base_ : *decision_strat_;
+                idx = strat.best_move_index(candidates, board);
+            }
+            chosen = candidates[idx];
+        }
+
+        // Phase 5: Terminal check
+        GameResult result = check_game_over(chosen);
+        if (result != GameResult::NOT_OVER) {
+            auto t_probs = terminal_probs(result);
+            double mover_eq = NeuralNetwork::compute_equity(t_probs);
+
+            for (int b = 0; b < n_branches; ++b) {
+                if (branches[b].finished) continue;
+
+                double points = mover_eq * branches[b].cube.cube_value;
+                double basis_eq = points / branches[b].basis_cube;
+                if (!is_sp_turn) basis_eq = -basis_eq;
+
+                branches[b].final_equity = basis_eq - branches[b].vr_luck;
+                branches[b].finished = true;
+            }
+            return;
+        }
+
+        // Phase 6: Flip board and cube ownership
+        board = flip(chosen);
+        for (int b = 0; b < n_branches; ++b) {
+            if (!branches[b].finished) {
+                branches[b].cube.owner = flip_owner(branches[b].cube.owner);
+            }
+        }
+    }
+
+    // Truncation: evaluate from last mover's perspective
+    Board last_mover_board = flip(board);
+    int trunc_move = std::min(truncation, max_moves);
+    bool trunc_race = is_race(last_mover_board);
+    bool trunc_use_base = (trunc_move > config_.late_threshold) || trunc_race;
+    const auto& trunc_strat = trunc_use_base ? *base_ : *decision_strat_;
+    auto last_mover_probs = trunc_strat.evaluate_probs(last_mover_board, last_mover_board);
+    float trunc_x = cube_efficiency(last_mover_board, trunc_race);
+
+    // Last mover moved at move_num = trunc_move - 1.
+    // is_sp = ((trunc_move - 1) % 2 == 0) = (trunc_move is odd)
+    bool last_mover_is_sp = ((trunc_move % 2) == 1);
+
+    for (int b = 0; b < n_branches; ++b) {
+        if (branches[b].finished) continue;
+
+        // Cube is from next mover's perspective; flip to last mover's
+        CubeInfo last_cube = branches[b].cube;
+        last_cube.owner = flip_owner(last_cube.owner);
+
+        float cf = cl2cf_money(last_mover_probs, last_cube.owner, trunc_x);
+        double points = cf * last_cube.cube_value;
+        double basis_eq = points / branches[b].basis_cube;
+        if (!last_mover_is_sp) basis_eq = -basis_eq;
+
+        branches[b].final_equity = basis_eq - branches[b].vr_luck;
+        branches[b].finished = true;
+    }
+}
+
+// ======================== Cubeful Cube Decision ========================
+
+RolloutStrategy::CubefulRolloutResult RolloutStrategy::cubeful_cube_decision(
+    const Board& pre_roll_board,
+    const CubeInfo& cube) const
+{
+    const int n_trials = config_.n_trials;
+    const int max_moves = (config_.truncation_depth > 0)
+        ? config_.truncation_depth + 10 : 200;
+
+    // Ensure stratified dice are generated
+    if (cached_dice_.empty() || cached_max_moves_ != max_moves) {
+        cached_dice_.clear();
+        cached_max_moves_ = max_moves;
+        generate_stratified_dice(n_trials, max_moves, config_.seed, cached_dice_);
+    }
+    const auto& all_dice = cached_dice_;
+
+    // Branch templates
+    CubefulBranch nd_template{};
+    nd_template.cube = cube;
+    nd_template.basis_cube = cube.cube_value;
+
+    CubefulBranch dt_template{};
+    dt_template.cube = cube;
+    dt_template.cube.cube_value = 2 * cube.cube_value;
+    dt_template.cube.owner = CubeOwner::OPPONENT;
+    dt_template.basis_cube = cube.cube_value;
+
+    // Per-trial results
+    struct CubefulTrialResult {
+        double nd_equity;
+        double dt_equity;
+    };
+    std::vector<CubefulTrialResult> trial_results(n_trials);
+
+    // Determine thread count
+    int n_threads = config_.n_threads;
+    if (n_threads <= 0) {
+        n_threads = static_cast<int>(std::thread::hardware_concurrency());
+        if (n_threads <= 0) n_threads = 1;
+    }
+    n_threads = std::min(n_threads, n_trials);
+    if (n_threads <= 0) n_threads = 1;
+
+    if (n_threads == 1) {
+        for (int t = 0; t < n_trials; ++t) {
+            CubefulBranch branches[2] = {nd_template, dt_template};
+            run_cubeful_trial(pre_roll_board, branches, 2,
+                              all_dice[t].data(), max_moves);
+            trial_results[t] = {branches[0].final_equity, branches[1].final_equity};
+        }
+    } else {
+        // Work-stealing parallel dispatch
+        std::atomic<int> next_trial{0};
+
+#ifdef _WIN32
+        struct ThreadArg {
+            const RolloutStrategy* self;
+            const Board* board;
+            const CubefulBranch* nd_tmpl;
+            const CubefulBranch* dt_tmpl;
+            const std::vector<std::vector<std::pair<int,int>>>* all_dice;
+            CubefulTrialResult* results;
+            std::atomic<int>* next_trial;
+            int n_trials;
+            int max_moves;
+        };
+
+        ThreadArg arg = {this, &pre_roll_board, &nd_template, &dt_template,
+                          &all_dice, trial_results.data(), &next_trial,
+                          n_trials, max_moves};
+
+        std::vector<HANDLE> handles(n_threads);
+        for (int th = 0; th < n_threads; ++th) {
+            handles[th] = CreateThread(
+                nullptr, 4 * 1024 * 1024,
+                [](LPVOID param) -> DWORD {
+                    auto* a = static_cast<ThreadArg*>(param);
+                    int t;
+                    while ((t = a->next_trial->fetch_add(1, std::memory_order_relaxed))
+                           < a->n_trials) {
+                        CubefulBranch branches[2] = {*a->nd_tmpl, *a->dt_tmpl};
+                        a->self->run_cubeful_trial(
+                            *a->board, branches, 2,
+                            (*a->all_dice)[t].data(), a->max_moves);
+                        a->results[t] = {branches[0].final_equity,
+                                         branches[1].final_equity};
+                    }
+                    return 0;
+                },
+                &arg, 0, nullptr);
+        }
+        WaitForMultipleObjects(n_threads, handles.data(), TRUE, INFINITE);
+        for (int th = 0; th < n_threads; ++th) CloseHandle(handles[th]);
+#else
+        std::vector<std::thread> threads;
+        threads.reserve(n_threads);
+
+        for (int th = 0; th < n_threads; ++th) {
+            threads.emplace_back([this, &pre_roll_board, &nd_template, &dt_template,
+                                  &all_dice, &trial_results, &next_trial,
+                                  n_trials, max_moves]() {
+                int t;
+                while ((t = next_trial.fetch_add(1, std::memory_order_relaxed))
+                       < n_trials) {
+                    CubefulBranch branches[2] = {nd_template, dt_template};
+                    run_cubeful_trial(pre_roll_board, branches, 2,
+                                      all_dice[t].data(), max_moves);
+                    trial_results[t] = {branches[0].final_equity,
+                                        branches[1].final_equity};
+                }
+            });
+        }
+        for (auto& t : threads) t.join();
+#endif
+    }
+
+    // Aggregate results
+    double sum_nd = 0, sum_nd_sq = 0;
+    double sum_dt = 0, sum_dt_sq = 0;
+    for (int t = 0; t < n_trials; ++t) {
+        double nd = trial_results[t].nd_equity;
+        double dt = trial_results[t].dt_equity;
+        sum_nd += nd; sum_nd_sq += nd * nd;
+        sum_dt += dt; sum_dt_sq += dt * dt;
+    }
+
+    CubefulRolloutResult result;
+    result.nd_equity = sum_nd / n_trials;
+    double var_nd = (sum_nd_sq / n_trials) - (result.nd_equity * result.nd_equity);
+    if (var_nd < 0) var_nd = 0;
+    result.nd_se = std::sqrt(var_nd / n_trials);
+
+    result.dt_equity = sum_dt / n_trials;
+    double var_dt = (sum_dt_sq / n_trials) - (result.dt_equity * result.dt_equity);
+    if (var_dt < 0) var_dt = 0;
+    result.dt_se = std::sqrt(var_dt / n_trials);
+
+    return result;
+}
+
 // ======================== Public Interface ========================
 
 double RolloutStrategy::evaluate(const Board& board, bool pre_move_is_race) const {

@@ -2,6 +2,7 @@
 
 #include "strategy.h"
 #include "multipy.h"
+#include "cube.h"
 #include "types.h"
 #include <memory>
 #include <array>
@@ -63,6 +64,22 @@ public:
     // Rollout a single post-move position.
     RolloutResult rollout_position(const Board& board,
                                    const Board& pre_move_board) const;
+
+    // Result of a cubeful cube decision rollout.
+    struct CubefulRolloutResult {
+        double nd_equity = 0.0;     // ND cubeful equity (basis cube units)
+        double nd_se = 0.0;         // Standard error of ND
+        double dt_equity = 0.0;     // DT cubeful equity (basis cube units)
+        double dt_se = 0.0;         // Standard error of DT
+    };
+
+    // Cubeful rollout for cube decisions. Rolls out two branches (ND and DT)
+    // simultaneously with the same dice sequences. Cube decisions (double/take/pass)
+    // are simulated at each half-move using 0-ply Janowski evaluation.
+    // `pre_roll_board` is from the player-on-roll's perspective (before rolling).
+    CubefulRolloutResult cubeful_cube_decision(
+        const Board& pre_roll_board,
+        const CubeInfo& cube) const;
 
     const RolloutConfig& config() const { return config_; }
 
@@ -137,6 +154,25 @@ private:
     std::array<float, NUM_OUTPUTS> best_move_probs_for_candidates(
         const Board& board, const std::vector<Board>& candidates,
         int* best_index = nullptr) const;
+
+    // --- Cubeful rollout internals ---
+
+    // Per-branch state during a cubeful trial.
+    struct CubefulBranch {
+        CubeInfo cube;           // Current cube state (mover's perspective)
+        int basis_cube;          // For normalization (same for all branches)
+        double vr_luck;          // Accumulated VR luck (basis cube units, SP perspective)
+        bool finished;
+        double final_equity;     // Result (basis cube units, SP perspective)
+    };
+
+    // Run a single cubeful trial with multiple branches sharing the same
+    // board evolution and dice. Sets final_equity on each branch.
+    void run_cubeful_trial(
+        const Board& pre_roll_board,
+        CubefulBranch branches[], int n_branches,
+        const std::pair<int,int>* dice_seq,
+        int max_moves) const;
 };
 
 } // namespace bgbot

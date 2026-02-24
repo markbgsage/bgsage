@@ -1923,7 +1923,9 @@ PYBIND11_MODULE(bgbot_cpp, m) {
        py::arg("away1") = 0, py::arg("away2") = 0, py::arg("is_crawford") = false,
        py::arg("cube_x_override") = -1.0f);
 
-    // Cubeful rollout: run cubeless rollout, then apply Janowski to the mean probs
+    // Cubeful rollout: simulates cube decisions during trial games.
+    // Two branches (ND and DT) share the same board evolution and dice sequences.
+    // Cube decisions (double/take/pass) evaluated at 0-ply Janowski at each half-move.
     m.def("cube_decision_rollout", [](const std::vector<int>& checkers,
                                        int cube_value, CubeOwner owner,
                                        const std::string& purerace_w,
@@ -1966,37 +1968,47 @@ PYBIND11_MODULE(bgbot_cpp, m) {
         config.late_threshold = late_threshold;
         auto rollout = std::make_shared<RolloutStrategy>(base, config);
 
-        // Run cubeless rollout on the flipped board (post-move semantics)
-        // to get pre-roll cubeless probs
-        Board flipped = flip(board);
-        RolloutResult rr;
+        CubeInfo ci{cube_value, owner, {away1, away2, is_crawford}, cube_x_override};
+
+        RolloutStrategy::CubefulRolloutResult cfr;
         {
             py::gil_scoped_release release;
-            rr = rollout->rollout_position(flipped, flipped);
+            cfr = rollout->cubeful_cube_decision(board, ci);
         }
-        // The rollout gives us post-move probs from flipped perspective.
-        // Invert to get pre-roll probs from player's perspective.
-        auto pre_roll_probs = invert_probs(rr.mean_probs);
+
+        // Get cubeless probabilities from 0-ply (cheap — cubeful rollout is
+        // the expensive part, and we don't need rollout-quality probs here)
+        Board flipped = flip(board);
+        auto opp_probs = base->evaluate_probs(flipped, flipped);
+        auto pre_roll_probs = invert_probs(opp_probs);
         float cl_eq = cubeless_equity(pre_roll_probs);
 
-        // Apply Janowski to get cubeful equities
-        CubeInfo ci{cube_value, owner, {away1, away2, is_crawford}, cube_x_override};
-        auto cd = cube_decision_from_probs(pre_roll_probs, ci, board, race);
+        // DP equity: +1.0 for money, MET-based for match
+        float equity_dp = 1.0f;  // money game default
+
+        // Decision logic (same as cube_decision_0ply_money)
+        float best_double = std::min(static_cast<float>(cfr.dt_equity), equity_dp);
+        bool should_double = (best_double > static_cast<float>(cfr.nd_equity));
+        bool should_take = (static_cast<float>(cfr.dt_equity) <= equity_dp);
+        float optimal_equity = should_double ? best_double
+                                             : static_cast<float>(cfr.nd_equity);
 
         py::dict result;
         result["probs"] = pre_roll_probs;
         result["cubeless_equity"] = cl_eq;
-        result["cubeless_se"] = rr.std_error;
-        result["equity_nd"] = cd.equity_nd;
-        result["equity_dt"] = cd.equity_dt;
-        result["equity_dp"] = cd.equity_dp;
-        result["should_double"] = cd.should_double;
-        result["should_take"] = cd.should_take;
-        result["optimal_equity"] = cd.optimal_equity;
+        result["cubeless_se"] = 0.0;  // 0-ply probs, no SE
+        result["equity_nd"] = cfr.nd_equity;
+        result["equity_nd_se"] = cfr.nd_se;
+        result["equity_dt"] = cfr.dt_equity;
+        result["equity_dt_se"] = cfr.dt_se;
+        result["equity_dp"] = equity_dp;
+        result["should_double"] = should_double;
+        result["should_take"] = should_take;
+        result["optimal_equity"] = optimal_equity;
         result["is_race"] = race;
         return result;
-    }, "Cubeful rollout: cubeless rollout + Janowski conversion.\n"
-       "Runs cubeless rollout to get mean probs, then applies Janowski for cube decision.",
+    }, "Cubeful rollout: simulates cube decisions during trial games.\n"
+       "Two branches (ND and DT) share same board/dice. 0-ply cube checks at each turn.",
        py::arg("checkers"),
        py::arg("cube_value") = 1,
        py::arg("owner") = CubeOwner::CENTERED,
