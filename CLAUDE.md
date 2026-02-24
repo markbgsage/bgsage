@@ -496,8 +496,56 @@ Janowski interpolation for both money games and match play. Cube efficiency:
 ### Money Game
 
 Three equities compared: ND (no double), DT (double/take), DP (double/pass = +1.0).
-Double if `min(DT, DP) > ND`. Opponent takes if `DT <= DP`. N-ply cubeful recursion
-tracks cube states through the tree; Janowski `x` only at 0-ply leaves.
+Double if `min(DT, DP) > ND`. Opponent takes if `DT <= DP`.
+
+### N-Ply Cubeful Algorithm (Evaluate-All-and-Decide)
+
+The N-ply cubeful evaluation carries an **array of cube states** through the entire
+recursion tree, rather than predicting cube actions at intermediate nodes. This
+eliminates the need for heuristic cube-action predictions and produces accurate
+cubeful equities at any depth.
+
+**Core concept — cube count index (cci):** At each recursion level, the algorithm
+tracks `cci` cube states simultaneously. Two helper operations expand and collapse
+this array:
+
+1. **make_cube_pos** (expand: cci -> 2*cci): For each input cube state, create two
+   branches — a No-Double branch (same state) and a Double/Take branch (doubled cube,
+   opponent owns). The DT branch is skipped when the player can't legally double.
+   The `fInvert` flag flips cube perspective (PLAYER <-> OPPONENT) when entering the
+   opponent's turn.
+
+2. **get_ecf3** (collapse: 2*cci -> cci): For each ND/DT pair, compute the optimal
+   cube decision using full recursive values: `rND` = recursive ND equity,
+   `rDT` = 2 * recursive DT equity (money), `rDP` = +1.0 (money). If doubling
+   improves equity (`min(rDT, rDP) > rND`), the result is `min(rDT, rDP)`;
+   otherwise the result is `rND`.
+
+**Recursion (`cubeful_recursive_multi`):**
+
+- **Leaf (plies=0):** Single NN eval -> cubeless probs. Expand via make_cube_pos,
+  apply Janowski (`cl2cf`) to each expanded state, collapse via get_ecf3.
+
+- **Internal (plies>0):** Expand via make_cube_pos (with fInvert=true for opponent's
+  perspective). For each of 21 dice rolls: generate moves, pick best by cubeless
+  0-ply equity (shared across all cube states), flip to opponent perspective, recurse
+  at plies-1. Average over 36 total weight, flip perspective back, collapse via
+  get_ecf3.
+
+**Top-level entry points:**
+
+- `cube_decision_nply`: Starts with cci=2 (ND state + DT state), fTop=true. Returns
+  both ND and DT equities from a single tree traversal.
+- `cubeful_equity_nply`: Starts with cci=1, fTop=false. The internal expansion/collapse
+  handles all cube branching automatically.
+
+**Key properties:**
+- Cube decisions at every level use full recursive values (not heuristic predictions)
+- Move selection is cubeless (negligible impact, much cheaper than per-state cubeful)
+- Janowski `x` is only applied at 0-ply leaf nodes
+- The cci array grows and shrinks at each level (1->2->4->...->collapse back)
+- Both money game and match play use the same recursion; only the leaf conversion
+  (`cl2cf_money` vs `cl2cf_match`) and get_ecf3 scaling differ
 
 ### Match Play
 
