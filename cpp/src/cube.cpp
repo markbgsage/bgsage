@@ -183,9 +183,8 @@ static float cl2cf_match_centered(
         rBG1 = 0.0f;
     }
 
-    // Dead cube MWC
-    float eq_dead = cubeless_equity(probs);
-    float mwc_dead = eq2mwc(eq_dead, away1, away2, cv, craw);
+    // Dead cube MWC (uses MET-weighted outcome values, not linear approximation)
+    float mwc_dead = cubeless_mwc(probs, away1, away2, cv, craw);
 
     // MET lookups at current cube value (for no-double outcomes)
     float mwc_win_s  = get_met_after(away1, away2, cv, true, craw);
@@ -284,9 +283,8 @@ static float cl2cf_match_owned(
         rBG1 = 0.0f;
     }
 
-    // Dead cube MWC
-    float eq_dead = cubeless_equity(probs);
-    float mwc_dead = eq2mwc(eq_dead, away1, away2, cv, craw);
+    // Dead cube MWC (uses MET-weighted outcome values, not linear approximation)
+    float mwc_dead = cubeless_mwc(probs, away1, away2, cv, craw);
 
     // MET lookups at current cube value
     float mwc_win_s  = get_met_after(away1, away2, cv, true, craw);
@@ -363,9 +361,8 @@ static float cl2cf_match_unavailable(
         rBG1 = 0.0f;
     }
 
-    // Dead cube MWC
-    float eq_dead = cubeless_equity(probs);
-    float mwc_dead = eq2mwc(eq_dead, away1, away2, cv, craw);
+    // Dead cube MWC (uses MET-weighted outcome values, not linear approximation)
+    float mwc_dead = cubeless_mwc(probs, away1, away2, cv, craw);
 
     // MET lookups at current cube value
     float mwc_win_s  = get_met_after(away1, away2, cv, true, craw);
@@ -415,9 +412,8 @@ float cl2cf_match(const std::array<float, NUM_OUTPUTS>& probs,
 {
     // Dead cube: return cubeless MWC directly
     if (is_dead_cube(cube)) {
-        float eq_dead = cubeless_equity(probs);
-        return eq2mwc(eq_dead, cube.match.away1, cube.match.away2,
-                      cube.cube_value, cube.match.is_crawford);
+        return cubeless_mwc(probs, cube.match.away1, cube.match.away2,
+                            cube.cube_value, cube.match.is_crawford);
     }
 
     // Dispatch by cube ownership
