@@ -1,25 +1,39 @@
 """
 Interface to GNUbg CLI for position evaluation.
 
-Provides post_move_analytics() which evaluates a post-move board position
-and returns the five cubeless probabilities matching our NN output format:
-  [P(win), P(gammon_win), P(backgammon_win), P(gammon_loss), P(backgammon_loss)]
+Provides:
+  - Module-level functions (backward-compatible):
+      post_move_analytics()     — cubeless post-move evaluation
+      post_move_analytics_many() — parallel batch version
 
-All evaluations are cubeless (cube locked at 1).
-
-Approach: the post-move probabilities for the player who just moved are the
-pre-roll probabilities for the opponent, with win/loss swapped. We flip the
-board to the opponent's perspective, ask gnubg for cube analytics (which gives
-pre-roll cubeless probabilities), then invert back to the mover's perspective.
+  - GnuBgAnalyzer class (same interface as BgBotAnalyzer):
+      cube_action()        — cubeful ND/DT/DP equities + cubeless probs
+      post_move_analytics() — cubeless probs + cubeful equity
+      checker_play()       — ranked legal moves with equities and probs
 """
 
 import os
+import re
 import subprocess
 import tempfile
+
+from .types import (
+    CheckerPlayResult,
+    CubeActionResult,
+    MoveAnalysis,
+    PostMoveAnalysis,
+    Probabilities,
+)
 
 
 GNUBG_CLI = r'C:\Program Files (x86)\gnubg\gnubg-cli.exe'
 
+_EVAL_LEVELS = {'0ply': 0, '1ply': 1, '2ply': 2, '3ply': 3}
+
+
+# ---------------------------------------------------------------------------
+# Low-level helpers
+# ---------------------------------------------------------------------------
 
 def _flip_board(checkers):
     """Flip a board to the other player's perspective."""
@@ -29,39 +43,6 @@ def _flip_board(checkers):
     for i in range(1, 25):
         flipped[i] = -checkers[25 - i]
     return flipped
-
-
-def _build_cube_analytics_command(checkers, n_plies=0):
-    """Build a gnubg command file to get pre-roll cube analytics for a position.
-
-    The checkers represent the board from the perspective of the player on roll
-    (pre-roll). gnubg's 'hint' with 'set turn 1' will give cube analytics
-    including cubeless probabilities.
-
-    Args:
-        checkers: 26-element list (player on roll's perspective)
-        n_plies: evaluation depth (0, 1, 2, or 3)
-
-    Returns:
-        Command string for gnubg.
-    """
-    cmd = 'new session\n'
-    cmd += f'set evaluation chequer eval plies {n_plies}\n'
-    cmd += f'set evaluation cubedecision eval plies {n_plies}\n'
-    # Lock cube at 1 for cubeless evaluation
-    cmd += 'set cube value 1\n'
-
-    # set board simple format: player_bar pt1..pt24 opponent_bar
-    cmd += 'set board simple '
-    cmd += str(checkers[25]) + ' '
-    for n in checkers[1:25]:
-        cmd += str(n) + ' '
-    cmd += str(checkers[0]) + '\n'
-
-    # Ensure it's the player's turn (player = "mghig" = X in gnubg)
-    cmd += 'set turn 1\n'
-    cmd += 'hint\n'
-    return cmd
 
 
 def _run_gnubg(cmd, timeout=60):
@@ -84,6 +65,47 @@ def _run_gnubg(cmd, timeout=60):
     finally:
         os.remove(cmd_file)
 
+
+def _board_simple_str(checkers):
+    """Format a board as 'set board simple ...' argument string."""
+    parts = [str(checkers[25])]
+    for n in checkers[1:25]:
+        parts.append(str(n))
+    parts.append(str(checkers[0]))
+    return ' '.join(parts)
+
+
+def _build_cube_analytics_command(checkers, n_plies=0):
+    """Build a gnubg command file to get pre-roll cube analytics for a position.
+
+    The checkers represent the board from the perspective of the player on roll
+    (pre-roll). gnubg's 'hint' with 'set turn 1' will give cube analytics
+    including cubeless probabilities.
+
+    Args:
+        checkers: 26-element list (player on roll's perspective)
+        n_plies: evaluation depth (0, 1, 2, or 3)
+
+    Returns:
+        Command string for gnubg.
+    """
+    cmd = 'new session\n'
+    cmd += f'set evaluation chequer eval plies {n_plies}\n'
+    cmd += f'set evaluation cubedecision eval plies {n_plies}\n'
+    # Lock cube at 1 for cubeless evaluation
+    cmd += 'set cube value 1\n'
+
+    cmd += f'set board simple {_board_simple_str(checkers)}\n'
+
+    # Ensure it's the player's turn (player = "mghig" = X in gnubg)
+    cmd += 'set turn 1\n'
+    cmd += 'hint\n'
+    return cmd
+
+
+# ---------------------------------------------------------------------------
+# Parsing
+# ---------------------------------------------------------------------------
 
 def _parse_cube_analytics(output, n_plies=0):
     """Parse gnubg cube analytics output and return the 5 probabilities.
@@ -142,6 +164,95 @@ def _parse_cube_analytics(output, n_plies=0):
         'equity_cubeless': eq_cubeless,
     }
 
+
+def _parse_cube_section_full(lines):
+    """Parse a single 'Cube analysis' section including cubeful equities.
+
+    Args:
+        lines: list of strings starting from the 'Cube analysis' header line.
+
+    Returns:
+        dict with cubeless probs/equity + cubeful ND/DT/DP + action info.
+    """
+    # Line 0: "Cube analysis"
+    # Line 1: "N-ply cubeless equity +X.XXX"
+    eq_line = lines[1].strip()
+    eq_cubeless = float(eq_line.split()[-1])
+
+    # Line 2: "  0.527 0.148 0.008 - 0.473 0.128 0.005"
+    prob_line = lines[2].strip()
+    bits = prob_line.split()
+    p_win = float(bits[0])
+    p_gw = float(bits[1])
+    p_bw = float(bits[2])
+    p_gl = float(bits[5])
+    p_bl = float(bits[6])
+
+    # Parse cubeful equities from numbered lines:
+    # "1. No double           +0.465"
+    # "2. Double, pass        +1.000  (+0.535)"
+    # "3. Double, take        +0.394  (-0.071)"
+    nd = dt = dp = None
+    optimal_action = ""
+    for line in lines[3:]:
+        line = line.strip()
+        m = re.match(r'^\d+\.\s+(.+?)\s+([+-]?\d+\.\d+)', line)
+        if m:
+            act_name = m.group(1).strip()
+            val = float(m.group(2))
+            if 'No double' in act_name or 'No dbl' in act_name:
+                nd = val
+            elif 'Double, take' in act_name:
+                dt = val
+            elif 'Double, pass' in act_name:
+                dp = val
+        elif 'Proper cube action' in line:
+            if ':' in line:
+                optimal_action = line.split(':', 1)[1].strip()
+            break
+
+    return {
+        'p_win': p_win,
+        'p_gw': p_gw,
+        'p_bw': p_bw,
+        'p_gl': p_gl,
+        'p_bl': p_bl,
+        'equity_cubeless': eq_cubeless,
+        'equity_nd': nd,
+        'equity_dt': dt,
+        'equity_dp': dp,
+        'optimal_action': optimal_action,
+    }
+
+
+def _parse_cube_analytics_full(output, search_start=0):
+    """Parse a full cube analytics section including cubeful equities.
+
+    Args:
+        output: full gnubg stdout string.
+        search_start: character offset to start searching from.
+
+    Returns:
+        (result_dict, next_offset) where result_dict has cubeless probs/equity
+        plus cubeful ND/DT/DP, and next_offset is the position after this section.
+    """
+    idx = output.find('Cube analysis', search_start)
+    if idx == -1:
+        raise ValueError(
+            f"No cube analysis found in gnubg output (from offset {search_start})")
+
+    section = output[idx:]
+    lines = section.split('\n')
+    result = _parse_cube_section_full(lines)
+
+    # Find next offset past this section
+    next_offset = idx + len('Cube analysis') + 1
+    return result, next_offset
+
+
+# ---------------------------------------------------------------------------
+# Module-level functions (backward-compatible)
+# ---------------------------------------------------------------------------
 
 def post_move_analytics(checkers, n_plies=0, timeout=60):
     """Evaluate a post-move board position using gnubg.
@@ -268,3 +379,231 @@ def post_move_analytics_many(checkers_list, n_plies=0, max_workers=None, timeout
             results[idx] = future.result()
 
     return results
+
+
+# ---------------------------------------------------------------------------
+# GnuBgAnalyzer class
+# ---------------------------------------------------------------------------
+
+class GnuBgAnalyzer:
+    """GNUbg-backed analyzer with the same interface as BgBotAnalyzer.
+
+    Usage::
+
+        from bgsage import GnuBgAnalyzer
+        analyzer = GnuBgAnalyzer(eval_level="2ply")
+        cube = analyzer.cube_action(board, cube_value=1, cube_owner="centered")
+        print(cube.equity_nd, cube.equity_dt, cube.optimal_action)
+    """
+
+    def __init__(self, eval_level="0ply", timeout=120):
+        if eval_level not in _EVAL_LEVELS:
+            raise ValueError(
+                f"eval_level must be one of {list(_EVAL_LEVELS)}, got {eval_level!r}")
+        self.n_plies = _EVAL_LEVELS[eval_level]
+        self.eval_level_str = f"{self.n_plies}-ply"
+        self.timeout = timeout
+
+    # -- cube_action --------------------------------------------------------
+
+    def cube_action(self, board, cube_value=1, cube_owner="centered",
+                    *, away1=0, away2=0, is_crawford=False):
+        """Evaluate cube decision for a pre-roll position.
+
+        Returns CubeActionResult with cubeful ND/DT/DP equities and cubeless
+        probabilities, all from the current player's perspective.
+        """
+        cmd = self._build_preroll_command(board, cube_value, cube_owner)
+        output = _run_gnubg(cmd, timeout=self.timeout)
+        r, _ = _parse_cube_analytics_full(output)
+
+        probs = Probabilities(r['p_win'], r['p_gw'], r['p_bw'],
+                              r['p_gl'], r['p_bl'])
+
+        nd = r['equity_nd'] if r['equity_nd'] is not None else 0.0
+        dt = r['equity_dt'] if r['equity_dt'] is not None else 0.0
+        dp = r['equity_dp'] if r['equity_dp'] is not None else 1.0
+
+        should_double = min(dt, dp) > nd
+        should_take = dt <= dp
+        if should_double:
+            optimal_action = "Double/Take" if should_take else "Double/Pass"
+            optimal_equity = dt if should_take else dp
+        else:
+            optimal_action = "No Double"
+            optimal_equity = nd
+
+        return CubeActionResult(
+            probs=probs,
+            cubeless_equity=r['equity_cubeless'],
+            equity_nd=nd,
+            equity_dt=dt,
+            equity_dp=dp,
+            should_double=should_double,
+            should_take=should_take,
+            optimal_equity=optimal_equity,
+            optimal_action=optimal_action,
+            eval_level=self.eval_level_str,
+        )
+
+    # -- post_move_analytics ------------------------------------------------
+
+    def post_move_analytics(self, board, cube_owner="centered", cube_value=1,
+                            *, away1=0, away2=0, is_crawford=False):
+        """Evaluate a post-move position (after move, before opponent rolls).
+
+        Returns PostMoveAnalysis with cubeless probs/equity and cubeful equity.
+        The cubeful equity is the ND cubeful equity from GNUbg (the value of
+        the position without any doubling action).
+        """
+        if len(board) != 26:
+            raise ValueError(f"board must have 26 elements, got {len(board)}")
+
+        # Flip to opponent's perspective (they are about to roll)
+        opp_board = _flip_board(board)
+
+        cmd = self._build_preroll_command(opp_board, cube_value, cube_owner)
+        output = _run_gnubg(cmd, timeout=self.timeout)
+        r, _ = _parse_cube_analytics_full(output)
+
+        # Invert to mover's perspective
+        probs = Probabilities(
+            win=1.0 - r['p_win'],
+            gammon_win=r['p_gl'],
+            backgammon_win=r['p_bl'],
+            gammon_loss=r['p_gw'],
+            backgammon_loss=r['p_bw'],
+        )
+        cubeless_eq = -r['equity_cubeless']
+        cubeful_eq = -r['equity_nd'] if r['equity_nd'] is not None else cubeless_eq
+
+        return PostMoveAnalysis(
+            probs=probs,
+            cubeless_equity=cubeless_eq,
+            cubeful_equity=cubeful_eq,
+            eval_level=self.eval_level_str,
+        )
+
+    # -- checker_play -------------------------------------------------------
+
+    def checker_play(self, board, die1, die2, cube_value=1, cube_owner="centered",
+                     *, away1=0, away2=0, is_crawford=False):
+        """Evaluate all legal moves for a position + dice.
+
+        Returns CheckerPlayResult with moves sorted best-first by cubeless equity.
+        Uses batch evaluation: generates all legal boards, evaluates each in a
+        single GNUbg subprocess (one hint per board from the opponent's perspective).
+        """
+        from .board import possible_moves
+
+        candidates = possible_moves(board, die1, die2)
+
+        if len(candidates) == 0:
+            return CheckerPlayResult(
+                moves=[], board=list(board), die1=die1, die2=die2,
+                eval_level=self.eval_level_str)
+
+        if len(candidates) == 1:
+            # Single legal move — still evaluate it
+            b = candidates[0]
+            opp_board = _flip_board(b)
+            cmd = self._build_preroll_command(opp_board, cube_value, cube_owner)
+            output = _run_gnubg(cmd, timeout=self.timeout)
+            r, _ = _parse_cube_analytics_full(output)
+            probs = Probabilities(
+                win=1.0 - r['p_win'], gammon_win=r['p_gl'],
+                backgammon_win=r['p_bl'], gammon_loss=r['p_gw'],
+                backgammon_loss=r['p_bw'])
+            eq = -r['equity_cubeless']
+            move = MoveAnalysis(
+                board=list(b), equity=eq, cubeless_equity=eq,
+                probs=probs, equity_diff=0.0, eval_level=self.eval_level_str)
+            return CheckerPlayResult(
+                moves=[move], board=list(board), die1=die1, die2=die2,
+                eval_level=self.eval_level_str)
+
+        # Batch: evaluate all candidate boards in one GNUbg subprocess
+        cmd = self._build_batch_postmove_command(
+            candidates, cube_value, cube_owner)
+        output = _run_gnubg(cmd, timeout=self.timeout)
+
+        move_analyses = []
+        search_start = 0
+        for cand_board in candidates:
+            idx = output.find('Cube analysis', search_start)
+            if idx == -1:
+                continue
+            section_lines = output[idx:].split('\n')
+            r = _parse_cube_section_full(section_lines)
+            search_start = idx + len('Cube analysis') + 1
+
+            # Invert to mover's perspective
+            probs = Probabilities(
+                win=1.0 - r['p_win'], gammon_win=r['p_gl'],
+                backgammon_win=r['p_bl'], gammon_loss=r['p_gw'],
+                backgammon_loss=r['p_bw'])
+            eq = -r['equity_cubeless']
+
+            move_analyses.append(MoveAnalysis(
+                board=list(cand_board), equity=eq, cubeless_equity=eq,
+                probs=probs, equity_diff=0.0,
+                eval_level=self.eval_level_str))
+
+        # Sort best-first by equity
+        move_analyses.sort(key=lambda m: m.equity, reverse=True)
+
+        # Compute equity_diff relative to best
+        if move_analyses:
+            best_eq = move_analyses[0].equity
+            for m in move_analyses:
+                m.equity_diff = m.equity - best_eq
+
+        return CheckerPlayResult(
+            moves=move_analyses, board=list(board), die1=die1, die2=die2,
+            eval_level=self.eval_level_str)
+
+    # -- command builders ---------------------------------------------------
+
+    def _build_preroll_command(self, checkers, cube_value=1, cube_owner="centered"):
+        """Build a GNUbg command for a pre-roll position hint (cube analytics)."""
+        cmd = 'new session\n'
+        cmd += f'set evaluation chequer eval plies {self.n_plies}\n'
+        cmd += f'set evaluation cubedecision eval plies {self.n_plies}\n'
+        cmd += f'set cube value {cube_value}\n'
+
+        # Cube owner: "centered" = default, "player" = turn 1 (on roll),
+        # "opponent" = turn 0
+        if cube_owner == "player":
+            cmd += 'set cube owner 1\n'
+        elif cube_owner == "opponent":
+            cmd += 'set cube owner 0\n'
+
+        cmd += f'set board simple {_board_simple_str(checkers)}\n'
+        cmd += 'set turn 1\n'
+        cmd += 'hint\n'
+        return cmd
+
+    def _build_batch_postmove_command(self, boards, cube_value=1,
+                                       cube_owner="centered"):
+        """Build a GNUbg command that evaluates multiple post-move positions.
+
+        For each board, we flip to the opponent's perspective and run hint.
+        All boards are evaluated in a single GNUbg subprocess.
+        """
+        cmd = 'new session\n'
+        cmd += f'set evaluation chequer eval plies {self.n_plies}\n'
+        cmd += f'set evaluation cubedecision eval plies {self.n_plies}\n'
+        cmd += f'set cube value {cube_value}\n'
+
+        if cube_owner == "player":
+            cmd += 'set cube owner 1\n'
+        elif cube_owner == "opponent":
+            cmd += 'set cube owner 0\n'
+
+        for board in boards:
+            opp_board = _flip_board(board)
+            cmd += f'set board simple {_board_simple_str(opp_board)}\n'
+            cmd += 'set turn 1\n'
+            cmd += 'hint\n'
+
+        return cmd

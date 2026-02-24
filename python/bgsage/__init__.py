@@ -38,10 +38,12 @@ from .types import (
     PostMoveAnalysis,
     Probabilities,
 )
+from .gnubg import GnuBgAnalyzer
 from .weights import MODELS, PRODUCTION_MODEL, WeightConfig
 
 __all__ = [
     "BgBotAnalyzer",
+    "GnuBgAnalyzer",
     "batch_checker_play",
     "batch_cube_action",
     "batch_evaluate",
