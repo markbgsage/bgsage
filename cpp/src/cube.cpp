@@ -597,54 +597,27 @@ static const DiceRoll ALL_ROLLS[21] = {
 };
 
 // ---------------------------------------------------------------------------
-// Unified N-ply cubeful evaluation (money game & match play)
+// Evaluate-all-and-decide N-ply cubeful evaluation (money game & match play)
 // ---------------------------------------------------------------------------
 //
-// Computes cubeful equity for a PRE-ROLL position from the roller's perspective.
+// Carries an array of cube states ("cci" = count of cube infos) through the
+// entire recursive search. At each level, states are expanded (cci → 2*cci)
+// into ND + DT branches, evaluated recursively, then collapsed (2*cci → cci)
+// by making optimal cube decisions using the full recursive values.
 //
-// Algorithm (same for money and match):
-//   0-ply (leaf): NN evaluation → Janowski cubeful conversion.
-//   N-ply: for each of 21 rolls:
-//     1. Generate legal moves.
-//     2. Evaluate each candidate's post-move position with 0-ply Janowski cubeful.
-//     3. TINY-filter candidates by cubeful equity.
-//     4. For survivors with plies>1: quick 0-ply cube action on opponent's
-//        pre-roll — if clear D/P, shortcut to DP value.
-//     5. Recurse at plies-1 on remaining candidates for refined cubeful equity.
-//     6. Pick best candidate by cubeful equity.
-//   Average best-candidate equities across 21 rolls.
+// This matches gnubg's EvaluatePositionCubeful4 approach: cube decisions
+// emerge from the tree values rather than from 0-ply heuristic predictions.
 //
-// Move selection uses cubeful equity throughout. Cube decisions (ND vs DT vs DP)
-// are only computed at the top level in cube_decision_nply.
-//
-// For money: operates in equity space, returns cubeful equity (cube=1 normalized).
-// For match: operates in MWC space, returns MWC from roller's perspective.
+// For money: operates in equity space (normalized to cube=1).
+// For match: operates in MWC space internally.
+
+// Max cube states supported. Doubles per ply level, so 64 supports 6+ ply.
+static constexpr int MAX_CCI = 64;
 
 // Resolve cube efficiency: use override if set, otherwise auto-detect.
 static float resolve_cube_x(const CubeInfo& cube, const Board& board, bool race) {
     if (cube.cube_x_override >= 0.0f) return cube.cube_x_override;
     return cube_efficiency(board, race);
-}
-
-// Helper: evaluate a post-move board at 0-ply Janowski cubeful.
-// Returns value from the MOVER's perspective (the player who just moved).
-// For money: returns cubeful equity. For match: returns cubeful MWC.
-static float eval_post_move_cubeful_0ply(
-    const Board& post_move,    // post-move board (mover's perspective)
-    const CubeInfo& cube,      // cube state from mover's perspective
-    const Strategy& strategy)
-{
-    // post_move is from the mover's perspective — that's what the NN evaluates.
-    bool race = is_race(post_move);
-    auto probs = strategy.evaluate_probs(post_move, race);
-    // probs are from mover's perspective (post-move semantics). Good.
-    float x = resolve_cube_x(cube, post_move, race);
-
-    if (cube.is_money()) {
-        return cl2cf_money(probs, cube.owner, x);
-    } else {
-        return cl2cf_match(probs, cube, x);
-    }
 }
 
 // Helper: evaluate a pre-roll board at 0-ply Janowski cubeful.
@@ -680,26 +653,9 @@ static float eval_pre_roll_cubeful_0ply(
     }
 }
 
-// Helper: get the D/P value from the perspective of the player who would pass.
-// For money: opponent passes = player gets +1.0.
-// For match: opponent passes = player wins cube_value points.
-static float dp_value(const CubeInfo& cube) {
-    if (cube.is_money()) {
-        return 1.0f;
-    } else {
-        return dp_mwc(cube.match.away1, cube.match.away2,
-                       cube.cube_value, cube.match.is_crawford);
-    }
-}
-
-// Helper: flip a value from opponent's perspective to player's perspective.
-// Money: negate. Match MWC: 1 - x.
-static float flip_value(float val, bool is_money) {
-    return is_money ? -val : (1.0f - val);
-}
-
-// Helper: make a CubeInfo for the opponent's perspective.
-static CubeInfo make_opp_cube(const CubeInfo& cube) {
+// Helper: flip a CubeInfo to the opponent's perspective.
+// PLAYER ↔ OPPONENT, CENTERED stays. Match away values swapped.
+static CubeInfo flip_cube_perspective(const CubeInfo& cube) {
     CubeInfo opp;
     opp.cube_value = cube.cube_value;
     opp.owner = flip_owner(cube.owner);
@@ -708,197 +664,290 @@ static CubeInfo make_opp_cube(const CubeInfo& cube) {
     return opp;
 }
 
-// Unified recursive cubeful evaluation.
-// Returns cubeful equity (money) or cubeful MWC (match) from roller's perspective.
-static float cubeful_recursive(
-    const Board& board,        // pre-roll, roller's perspective
-    const CubeInfo& cube,      // from roller's perspective
+// Expand cci cube states into 2*cci states (ND + DT pairs).
+//
+// For each input state i:
+//   output[2*i]   = ND branch (same cube state)
+//   output[2*i+1] = DT branch (doubled, opponent owns) or unavailable
+//
+// fTop: if true, never create DT branches (top-level already provides ND+DT).
+// fInvert: if true, flip perspective to opponent's view (for recursion prep).
+static void make_cube_pos(
+    const CubeInfo input[],   // cci input states
+    int cci,
+    bool fTop,
+    CubeInfo output[],        // 2*cci output states
+    bool fInvert)
+{
+    for (int ici = 0, i = 0; ici < cci; ici++) {
+        // ND branch (even index): same cube state
+        if (input[ici].cube_value > 0) {
+            output[i] = fInvert ? flip_cube_perspective(input[ici]) : input[ici];
+        } else {
+            output[i].cube_value = -1;  // unavailable sentinel
+        }
+        i++;
+
+        // DT branch (odd index): doubled, opponent owns
+        if (!fTop && input[ici].cube_value > 0 && can_double(input[ici])) {
+            CubeInfo dt = input[ici];
+            dt.cube_value = 2 * input[ici].cube_value;
+            dt.owner = CubeOwner::OPPONENT;  // taker owns
+            output[i] = fInvert ? flip_cube_perspective(dt) : dt;
+        } else {
+            output[i].cube_value = -1;  // unavailable sentinel
+        }
+        i++;
+    }
+}
+
+// Collapse 2*cci expanded equities back to cci by making optimal cube decisions.
+//
+// For each pair (ND at 2*i, DT at 2*i+1):
+//   - If DT is available: compare ND vs DT vs DP, pick optimal
+//   - If DT unavailable: result = ND
+//
+// Money: DT equity scaled by 2x (evaluated at doubled cube, normalize to 1x).
+// Match: DT in MWC space, no scaling needed.
+static void get_ecf3(
+    float arCubeful[],         // output: cci optimal equities
+    int cci,
+    const float arCf[],        // input: 2*cci expanded equities
+    const CubeInfo aci[])      // input: 2*cci expanded cube states
+{
+    for (int ici = 0, i = 0; ici < cci; ici++, i += 2) {
+        if (aci[i + 1].cube_value > 0) {
+            // DT branch available: make cube decision
+            float rND = arCf[i];
+            float rDT;
+            bool is_money = aci[i].is_money();
+
+            if (is_money) {
+                rDT = 2.0f * arCf[i + 1];  // Scale DT to cube=1
+            } else {
+                rDT = arCf[i + 1];          // MWC space, no scaling
+            }
+
+            // D/P value from the ND branch's cube state
+            float rDP;
+            if (is_money) {
+                rDP = 1.0f;
+            } else {
+                rDP = dp_mwc(aci[i].match.away1, aci[i].match.away2,
+                             aci[i].cube_value, aci[i].match.is_crawford);
+            }
+
+            // Decision: double if min(DT, DP) > ND
+            if (rDT >= rND && rDP >= rND) {
+                // Should double; opponent picks their best response
+                arCubeful[ici] = (rDT >= rDP) ? rDP : rDT;
+            } else {
+                arCubeful[ici] = rND;
+            }
+        } else {
+            // No cube available: always no double
+            arCubeful[ici] = arCf[i];
+        }
+    }
+}
+
+// Core recursive cubeful evaluation carrying multiple cube states.
+//
+// Evaluates a pre-roll position for all cci cube states simultaneously.
+// At leaves, applies Janowski. At internal nodes, loops over 21 rolls,
+// picks the best move by cubeless equity, recurses with all cube states,
+// then collapses via get_ecf3.
+//
+// board: pre-roll, from the roller's perspective.
+// aciCubePos: cci cube states, all from the roller's perspective.
+// arCubeful: output array of cci equities/MWC values.
+static void cubeful_recursive_multi(
+    const Board& board,
+    const CubeInfo aciCubePos[],
+    int cci,
     const Strategy& strategy,
     int plies,
     const MoveFilter& filter,
     int n_threads,
-    bool allow_parallel)
+    bool allow_parallel,
+    bool fTop,
+    float arCubeful[])
 {
-    bool is_money = cube.is_money();
+    bool is_money = (cci > 0 && aciCubePos[0].cube_value > 0)
+                    ? aciCubePos[0].is_money() : true;
 
     // Terminal check
     Board flipped = flip(board);
     GameResult result = check_game_over(flipped);
     if (result != GameResult::NOT_OVER) {
         auto t_probs = invert_probs(terminal_probs(result));
-        if (is_money) {
-            return cubeless_equity(t_probs);
-        } else {
-            return cubeless_mwc(t_probs, cube.match.away1, cube.match.away2,
-                                cube.cube_value, cube.match.is_crawford);
+        for (int ici = 0; ici < cci; ici++) {
+            if (aciCubePos[ici].cube_value <= 0) {
+                arCubeful[ici] = 0.0f;
+                continue;
+            }
+            if (aciCubePos[ici].is_money()) {
+                arCubeful[ici] = cubeless_equity(t_probs);
+            } else {
+                arCubeful[ici] = cubeless_mwc(t_probs,
+                    aciCubePos[ici].match.away1, aciCubePos[ici].match.away2,
+                    aciCubePos[ici].cube_value, aciCubePos[ici].match.is_crawford);
+            }
         }
+        return;
     }
 
+    // --- Leaf node (0-ply): NN evaluation + Janowski ---
     if (plies <= 0) {
-        return eval_pre_roll_cubeful_0ply(board, cube, strategy);
+        bool race = is_race(board);
+        auto post_probs = strategy.evaluate_probs(flipped, race);
+        auto pre_roll_probs = invert_probs(post_probs);
+        float default_x = resolve_cube_x(
+            (cci > 0 && aciCubePos[0].cube_value > 0) ? aciCubePos[0] : CubeInfo{},
+            board, race);
+
+        // Expand cci → 2*cci (fInvert=false: evaluate from current player's perspective)
+        CubeInfo aci[MAX_CCI * 2];
+        make_cube_pos(aciCubePos, cci, fTop, aci, false);
+
+        float arCf[MAX_CCI * 2];
+        for (int i = 0; i < 2 * cci; i++) {
+            if (aci[i].cube_value <= 0) {
+                arCf[i] = 0.0f;
+                continue;
+            }
+            float x = (aci[i].cube_x_override >= 0.0f)
+                       ? aci[i].cube_x_override : default_x;
+            if (aci[i].is_money()) {
+                arCf[i] = cl2cf_money(pre_roll_probs, aci[i].owner, x);
+            } else {
+                arCf[i] = cl2cf_match(pre_roll_probs, aci[i], x);
+            }
+        }
+
+        // Collapse 2*cci → cci
+        get_ecf3(arCubeful, cci, arCf, aci);
+        return;
     }
 
-    // Cube info from the opponent's perspective (after player moves, before opp rolls)
-    CubeInfo opp_cube = make_opp_cube(cube);
+    // --- Internal node (plies > 0): recurse over 21 rolls ---
 
-    // Lambda to evaluate a single roll. Returns weighted value contribution.
-    auto evaluate_roll = [&](int roll_idx) -> double {
+    // Expand cube states for recursion (fInvert=true: flip to opponent's perspective)
+    CubeInfo aci[MAX_CCI * 2];
+    make_cube_pos(aciCubePos, cci, fTop, aci, true);
+    int expanded_cci = 2 * cci;
+
+    // Accumulators for weighted cubeful equities
+    float arCf[MAX_CCI * 2] = {};
+
+    // Lambda to evaluate a single dice roll
+    auto evaluate_roll = [&](int roll_idx, float arCfLocal[]) {
         const auto& roll = ALL_ROLLS[roll_idx];
 
+        // Generate legal moves
         std::vector<Board> candidates;
         candidates.reserve(32);
-
-        // Generate the roller's legal moves
         possible_boards(board, roll.d1, roll.d2, candidates);
         int n_cand = static_cast<int>(candidates.size());
 
         if (n_cand == 0) {
-            // No legal moves (shouldn't happen in backgammon, but safety)
-            return roll.weight * static_cast<double>(
-                eval_pre_roll_cubeful_0ply(board, cube, strategy));
+            // No legal moves: evaluate standing pat (flip board = opponent's turn)
+            Board opp_board = flip(flipped);  // same as board, but flip(board) = flipped
+            float arCfTemp[MAX_CCI * 2];
+            cubeful_recursive_multi(opp_board, aci, expanded_cci,
+                                    strategy, plies - 1, filter,
+                                    n_threads, false, false, arCfTemp);
+            for (int i = 0; i < expanded_cci; i++)
+                arCfLocal[i] = roll.weight * arCfTemp[i];
+            return;
         }
 
-        // Step 1: Evaluate all candidates at 0-ply cubeful for ranking/filtering.
-        // Use the post-move Janowski estimate as a cheap heuristic.
-        // These values are only used for relative ranking, not as final values.
-        std::vector<float> cand_values(n_cand);
-
-        for (int i = 0; i < n_cand; ++i) {
-            GameResult post_result = check_game_over(candidates[i]);
-            if (post_result != GameResult::NOT_OVER) {
-                auto tp = terminal_probs(post_result);
-                cand_values[i] = is_money ? cubeless_equity(tp)
-                    : cubeless_mwc(tp, cube.match.away1, cube.match.away2,
-                                   cube.cube_value, cube.match.is_crawford);
+        // Pick best move by cubeless 0-ply equity (shared across all cube states)
+        int best_idx = 0;
+        float best_eq = -1e30f;
+        for (int c = 0; c < n_cand; c++) {
+            float eq;
+            GameResult gr = check_game_over(candidates[c]);
+            if (gr != GameResult::NOT_OVER) {
+                eq = cubeless_equity(terminal_probs(gr));
             } else {
-                cand_values[i] = eval_post_move_cubeful_0ply(
-                    candidates[i], cube, strategy);
+                auto probs = strategy.evaluate_probs(candidates[c],
+                                                      is_race(candidates[c]));
+                eq = cubeless_equity(probs);
             }
+            if (eq > best_eq) { best_eq = eq; best_idx = c; }
         }
 
-        // Step 2: Find best 0-ply value and TINY-filter.
-        float best_0ply = *std::max_element(cand_values.begin(), cand_values.end());
-
-        float threshold = filter.threshold;
-        int max_moves = filter.max_moves;
-
-        // Collect indices sorted by 0-ply value (descending)
-        std::vector<std::pair<float, int>> scored;
-        scored.reserve(n_cand);
-        for (int i = 0; i < n_cand; ++i) {
-            scored.push_back({cand_values[i], i});
-        }
-        std::sort(scored.begin(), scored.end(),
-                  [](const auto& a, const auto& b) { return a.first > b.first; });
-
-        // Filter: keep up to max_moves within threshold of best
-        int n_survivors = 0;
-        for (int i = 0; i < n_cand && n_survivors < max_moves; ++i) {
-            if (best_0ply - scored[i].first > threshold && n_survivors > 0) break;
-            ++n_survivors;
-        }
-
-        // Step 3: For each survivor, model the opponent's cube decision, then
-        // recurse at plies-1 with the correct post-cube-decision cube state.
-        //
-        // At the opponent's pre-roll position, the opponent may double:
-        //   - If opp doubles and we PASS: our value = my_dp_val (fixed)
-        //   - If opp doubles and we TAKE: recurse with doubled cube, we own it
-        //   - If opp doesn't double: recurse with current cube state
-        //
-        // We use a quick 0-ply cube check to decide whether the opponent doubles,
-        // then recurse at plies-1 with the appropriate cube state.
-
-        // Value we get if opponent doubles and we pass
-        float my_dp_val;
-        if (is_money) {
-            my_dp_val = -1.0f;  // Opponent D/P means we lose 1.0 at current cube
-        } else {
-            my_dp_val = 1.0f - dp_mwc(opp_cube.match.away1, opp_cube.match.away2,
-                                        opp_cube.cube_value, opp_cube.match.is_crawford);
-        }
-
-        // Cube state if opponent doubles and we take (from opponent's perspective)
-        CubeInfo opp_dt_cube;
-        opp_dt_cube.cube_value = 2 * opp_cube.cube_value;
-        opp_dt_cube.owner = CubeOwner::OPPONENT;  // We own it (OPPONENT from opp's view)
-        opp_dt_cube.match = opp_cube.match;
-        opp_dt_cube.cube_x_override = opp_cube.cube_x_override;
-
-        bool opp_can_dbl = can_double(opp_cube);
-
-        float best_val = -1e30f;
-        for (int si = 0; si < n_survivors; ++si) {
-            int idx = scored[si].second;
-            const Board& post_move = candidates[idx];
-
-            // Check terminal
-            GameResult post_result = check_game_over(post_move);
-            if (post_result != GameResult::NOT_OVER) {
-                float v = cand_values[idx];  // Terminal — value is exact
-                best_val = std::max(best_val, v);
-                continue;
-            }
-
-            Board opp_pre_roll = flip(post_move);
-
-            // Determine the cube state for the recursion by modeling
-            // the opponent's cube decision at their pre-roll position.
-            if (opp_can_dbl) {
-                // Quick 0-ply check: would the opponent double here?
-                float opp_nd_0ply = eval_pre_roll_cubeful_0ply(
-                    opp_pre_roll, opp_cube, strategy);
-                float opp_dt_0ply = eval_pre_roll_cubeful_0ply(
-                    opp_pre_roll, opp_dt_cube, strategy);
-                float opp_dp_val = dp_value(opp_cube);
-
-                // Opponent doubles if min(dt, dp) > nd (from their perspective)
-                float opp_best_double = std::min(opp_dt_0ply, opp_dp_val);
-                if (opp_best_double > opp_nd_0ply) {
-                    // Opponent would double.
-                    if (opp_dt_0ply > opp_dp_val) {
-                        // We would pass (DT worse than DP for us = better for opp)
-                        best_val = std::max(best_val, my_dp_val);
-                        continue;
-                    }
-                    // We would take — recurse with the DOUBLED cube state
-                    float opp_val = cubeful_recursive(
-                        opp_pre_roll, opp_dt_cube, strategy, plies - 1, filter,
-                        n_threads, /*allow_parallel=*/false);
-                    float our_val = flip_value(opp_val, is_money);
-                    best_val = std::max(best_val, our_val);
+        // Check if best move is terminal
+        GameResult post_result = check_game_over(candidates[best_idx]);
+        if (post_result != GameResult::NOT_OVER) {
+            auto tp = terminal_probs(post_result);
+            for (int i = 0; i < expanded_cci; i++) {
+                if (aci[i].cube_value <= 0) {
+                    arCfLocal[i] = 0.0f;
                     continue;
                 }
+                if (aci[i].is_money()) {
+                    arCfLocal[i] = roll.weight * cubeless_equity(tp);
+                } else {
+                    arCfLocal[i] = roll.weight * cubeless_mwc(tp,
+                        aci[i].match.away1, aci[i].match.away2,
+                        aci[i].cube_value, aci[i].match.is_crawford);
+                }
             }
-
-            // Opponent doesn't double (or can't) — recurse with current cube
-            float opp_val = cubeful_recursive(
-                opp_pre_roll, opp_cube, strategy, plies - 1, filter,
-                n_threads, /*allow_parallel=*/false);
-            float our_val = flip_value(opp_val, is_money);
-            best_val = std::max(best_val, our_val);
+            return;
         }
 
-        return roll.weight * static_cast<double>(best_val);
+        // Flip to opponent's perspective and recurse
+        Board opp_pre_roll = flip(candidates[best_idx]);
+
+        float arCfTemp[MAX_CCI * 2];
+        cubeful_recursive_multi(opp_pre_roll, aci, expanded_cci,
+                                strategy, plies - 1, filter,
+                                n_threads, false, false, arCfTemp);
+
+        for (int i = 0; i < expanded_cci; i++)
+            arCfLocal[i] = roll.weight * arCfTemp[i];
     };
 
-    double sum_val = 0.0;
-
+    // Execute rolls (serial or parallel)
     if (allow_parallel && n_threads > 1 && plies > 1) {
-        std::array<double, 21> roll_vals{};
+        std::array<std::array<float, MAX_CCI * 2>, 21> roll_results{};
         multipy_parallel_for(21, n_threads, [&](int idx) {
-            roll_vals[idx] = evaluate_roll(idx);
+            evaluate_roll(idx, roll_results[idx].data());
         });
-        for (int i = 0; i < 21; ++i) {
-            sum_val += roll_vals[i];
-        }
+        for (int r = 0; r < 21; r++)
+            for (int i = 0; i < expanded_cci; i++)
+                arCf[i] += roll_results[r][i];
     } else {
-        for (int i = 0; i < 21; ++i) {
-            sum_val += evaluate_roll(i);
+        float arCfLocal[MAX_CCI * 2];
+        for (int r = 0; r < 21; r++) {
+            std::fill(arCfLocal, arCfLocal + expanded_cci, 0.0f);
+            evaluate_roll(r, arCfLocal);
+            for (int i = 0; i < expanded_cci; i++)
+                arCf[i] += arCfLocal[i];
         }
     }
 
-    return static_cast<float>(sum_val / 36.0);
+    // Average over 36 and flip perspective back to current player
+    for (int i = 0; i < expanded_cci; i++) {
+        if (is_money) {
+            arCf[i] = -arCf[i] / 36.0f;          // Negate for opponent → player
+        } else {
+            arCf[i] = 1.0f - arCf[i] / 36.0f;    // MWC complement
+        }
+    }
+
+    // Un-invert the cube states back to current player's perspective
+    // (make_cube_pos with fInvert=true flipped them to opponent's view)
+    for (int i = 0; i < expanded_cci; i++) {
+        if (aci[i].cube_value > 0) {
+            aci[i] = flip_cube_perspective(aci[i]);
+        }
+    }
+
+    // Collapse 2*cci → cci via optimal cube decisions
+    get_ecf3(arCubeful, cci, arCf, aci);
 }
 
 float cubeful_equity_nply(
@@ -909,13 +958,23 @@ float cubeful_equity_nply(
     const MoveFilter& filter,
     int n_threads)
 {
-    CubeInfo cube;
-    cube.cube_value = 1;
-    cube.owner = owner;
+    if (n_plies <= 0) {
+        CubeInfo cube;
+        cube.cube_value = 1;
+        cube.owner = owner;
+        return eval_pre_roll_cubeful_0ply(board, cube, strategy);
+    }
+
+    CubeInfo aciCubePos[1];
+    aciCubePos[0].cube_value = 1;
+    aciCubePos[0].owner = owner;
     // match defaults to {0,0,false} = money game
+
+    float arCubeful[1];
     bool allow_parallel = (n_threads > 1 && n_plies > 1);
-    return cubeful_recursive(board, cube, strategy, n_plies, filter,
-                             n_threads, allow_parallel);
+    cubeful_recursive_multi(board, aciCubePos, 1, strategy, n_plies, filter,
+                            n_threads, allow_parallel, false, arCubeful);
+    return arCubeful[0];
 }
 
 // Match play overload: returns cubeful equity (NOT MWC).
@@ -927,13 +986,21 @@ float cubeful_equity_nply(
     const MoveFilter& filter,
     int n_threads)
 {
-    bool allow_parallel = (n_threads > 1 && n_plies > 1);
-    float val = cubeful_recursive(board, cube, strategy, n_plies, filter,
-                                   n_threads, allow_parallel);
-    if (cube.is_money()) {
-        return val;  // Already equity
+    if (n_plies <= 0) {
+        float val = eval_pre_roll_cubeful_0ply(board, cube, strategy);
+        if (cube.is_money()) return val;
+        return mwc2eq(val, cube.match.away1, cube.match.away2,
+                      cube.cube_value, cube.match.is_crawford);
     }
-    return mwc2eq(val, cube.match.away1, cube.match.away2,
+
+    CubeInfo aciCubePos[1] = {cube};
+    float arCubeful[1];
+    bool allow_parallel = (n_threads > 1 && n_plies > 1);
+    cubeful_recursive_multi(board, aciCubePos, 1, strategy, n_plies, filter,
+                            n_threads, allow_parallel, false, arCubeful);
+
+    if (cube.is_money()) return arCubeful[0];
+    return mwc2eq(arCubeful[0], cube.match.away1, cube.match.away2,
                   cube.cube_value, cube.match.is_crawford);
 }
 
@@ -958,24 +1025,23 @@ CubeDecision cube_decision_nply(
     bool is_money = cube.is_money();
     bool allow_parallel = (n_threads > 1 && n_plies > 1);
 
+    // Two initial cube states: ND (current) and DT (doubled, opponent owns)
+    CubeInfo aciCubePos[2];
+    aciCubePos[0] = cube;                                // ND state
+    aciCubePos[1] = cube;                                // DT state
+    aciCubePos[1].cube_value = 2 * cube.cube_value;
+    aciCubePos[1].owner = CubeOwner::OPPONENT;
+
+    float arCubeful[2];
+    cubeful_recursive_multi(board, aciCubePos, 2, strategy, n_plies, filter,
+                            n_threads, allow_parallel, /*fTop=*/true, arCubeful);
+
+    // arCubeful[0] = ND value, arCubeful[1] = DT value (at doubled cube scale)
     CubeDecision result;
 
-    // ND: cubeful value with current cube state
-    float nd_val = cubeful_recursive(board, cube, strategy, n_plies, filter,
-                                      n_threads, allow_parallel);
-
-    // DT: cubeful value with doubled cube, opponent owns
-    CubeInfo dt_cube;
-    dt_cube.cube_value = 2 * cube.cube_value;
-    dt_cube.owner = CubeOwner::OPPONENT;
-    dt_cube.match = cube.match;
-    dt_cube.cube_x_override = cube.cube_x_override;
-    float dt_val = cubeful_recursive(board, dt_cube, strategy, n_plies, filter,
-                                      n_threads, allow_parallel);
-
     if (is_money) {
-        result.equity_nd = nd_val;
-        result.equity_dt = 2.0f * dt_val;  // Normalize DT to cube=1 scale
+        result.equity_nd = arCubeful[0];
+        result.equity_dt = 2.0f * arCubeful[1];  // Scale DT to cube=1
         result.equity_dp = 1.0f;
     } else {
         int away1 = cube.match.away1;
@@ -983,12 +1049,10 @@ CubeDecision cube_decision_nply(
         int cv = cube.cube_value;
         bool craw = cube.match.is_crawford;
 
-        // DP MWC: opponent passes, player wins cv points
         float dp_m = dp_mwc(away1, away2, cv, craw);
 
-        // Convert all three MWC values to equity at the original cube value
-        result.equity_nd = mwc2eq(nd_val, away1, away2, cv, craw);
-        result.equity_dt = mwc2eq(dt_val, away1, away2, cv, craw);
+        result.equity_nd = mwc2eq(arCubeful[0], away1, away2, cv, craw);
+        result.equity_dt = mwc2eq(arCubeful[1], away1, away2, cv, craw);
         result.equity_dp = mwc2eq(dp_m, away1, away2, cv, craw);
     }
 
