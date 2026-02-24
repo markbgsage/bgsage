@@ -1,4 +1,4 @@
-# bgsage — Backgammon Bot Engine Library
+# bgsage — Open Sage Bot Engine Library
 
 Neural-network backgammon engine with C++ core and Python interface. MIT licensed.
 

@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "bgsage"
 version = "0.1.0"
-description = "A neural-network backgammon engine"
+description = "Open Sage bot engine — a neural-network backgammon engine"
 readme = "README.md"
 license = "MIT"
 requires-python = ">=3.10"

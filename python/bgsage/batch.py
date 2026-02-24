@@ -1,4 +1,4 @@
-"""Batch position evaluation for the bgsage backgammon engine.
+"""Batch position evaluation for the Open Sage bot engine.
 
 Evaluates lists of positions in parallel, returning cubeless probabilities,
 cubeless equity, cubeful equity, and (for pre-roll) cube decisions.

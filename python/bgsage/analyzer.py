@@ -1,4 +1,4 @@
-"""High-level analysis interface for the bgsage backgammon engine.
+"""High-level analysis interface for the Open Sage bot engine.
 
 This module provides :class:`BgBotAnalyzer`, the main entry point for
 checker play and cube action analysis at any evaluation level (0-ply
@@ -572,7 +572,7 @@ def _optimal_action(should_double: bool, should_take: bool) -> str:
 
 
 class BgBotAnalyzer:
-    """High-level interface to the backgammon bot engine.
+    """High-level interface to the Open Sage bot engine.
 
     Thread-safe: multiple threads can call methods concurrently.
 

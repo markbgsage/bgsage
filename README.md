@@ -1,6 +1,6 @@
-# The Backgammon Sage Backgammon Bot Engine Library
+# The Open Sage Backgammon Bot Engine Library
 
-Backgammon Sage is a "backgammon bot engine" - that is, a library that you can ask questions like "what's the best
+Open Sage is a "backgammon bot engine" - that is, a library that you can ask questions like "what's the best
 move in this situation, with all the analytics to back it up", or "is this a double, and if so, is it a take or a pass 
 (including analytics)?".
 

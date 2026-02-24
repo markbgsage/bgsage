@@ -1,4 +1,4 @@
-"""Typed data structures for the bgsage backgammon engine."""
+"""Typed data structures for the Open Sage bot engine."""
 
 from __future__ import annotations
 
