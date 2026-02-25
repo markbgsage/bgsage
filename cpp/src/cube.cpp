@@ -466,9 +466,13 @@ float cube_efficiency(const Board& board, bool is_race_pos) {
     if (!is_race_pos) {
         return 0.68f;  // Contact/crashed
     }
-    // Race: linear in roller's pip count, clamped to [0.6, 0.7]
+    // Race: linear in average pip count (both players), clamped to [0.6, 0.7].
+    // Using the average instead of just the roller's pips makes the Janowski
+    // cubeful conversion perspective-independent, eliminating a systematic
+    // bias at odd ply levels in N-ply match play evaluation.
     auto [player_pips, opponent_pips] = pip_counts(board);
-    float x = 0.55f + 0.00125f * static_cast<float>(player_pips);
+    float avg_pips = static_cast<float>(player_pips + opponent_pips) / 2.0f;
+    float x = 0.55f + 0.00125f * avg_pips;
     return std::clamp(x, 0.6f, 0.7f);
 }
 
