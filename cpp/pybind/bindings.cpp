@@ -1983,23 +1983,50 @@ PYBIND11_MODULE(bgbot_cpp, m) {
         auto pre_roll_probs = invert_probs(opp_probs);
         float cl_eq = cubeless_equity(pre_roll_probs);
 
-        // DP equity: +1.0 for money, MET-based for match
-        float equity_dp = 1.0f;  // money game default
+        // Decision logic: match play works in MWC space, money in equity
+        float equity_nd, equity_dt, equity_dp;
+        bool should_double, should_take;
+        float optimal_equity;
 
-        // Decision logic (same as cube_decision_0ply_money)
-        float best_double = std::min(static_cast<float>(cfr.dt_equity), equity_dp);
-        bool should_double = (best_double > static_cast<float>(cfr.nd_equity));
-        bool should_take = (static_cast<float>(cfr.dt_equity) <= equity_dp);
-        float optimal_equity = should_double ? best_double
-                                             : static_cast<float>(cfr.nd_equity);
+        if (!ci.is_money()) {
+            // Match play: cfr.nd_equity / dt_equity are MWC from SP perspective
+            int a1 = ci.match.away1, a2 = ci.match.away2;
+            int cv = ci.cube_value;
+            bool craw = ci.match.is_crawford;
+
+            float nd_m = static_cast<float>(cfr.nd_equity);
+            float dt_m = static_cast<float>(cfr.dt_equity);
+            float dp_m = dp_mwc(a1, a2, cv, craw);
+
+            // Decision in MWC space
+            float best_mwc = std::min(dt_m, dp_m);
+            should_double = (best_mwc > nd_m);
+            should_take = (dt_m <= dp_m);
+
+            // Convert to equity at original cv for display
+            equity_nd = mwc2eq(nd_m, a1, a2, cv, craw);
+            equity_dt = mwc2eq(dt_m, a1, a2, cv, craw);
+            equity_dp = mwc2eq(dp_m, a1, a2, cv, craw);
+            optimal_equity = should_double ? std::min(equity_dt, equity_dp)
+                                           : equity_nd;
+        } else {
+            // Money game: existing logic
+            equity_dp = 1.0f;
+            float best_double = std::min(static_cast<float>(cfr.dt_equity), equity_dp);
+            should_double = (best_double > static_cast<float>(cfr.nd_equity));
+            should_take = (static_cast<float>(cfr.dt_equity) <= equity_dp);
+            equity_nd = static_cast<float>(cfr.nd_equity);
+            equity_dt = static_cast<float>(cfr.dt_equity);
+            optimal_equity = should_double ? best_double : equity_nd;
+        }
 
         py::dict result;
         result["probs"] = pre_roll_probs;
         result["cubeless_equity"] = cl_eq;
         result["cubeless_se"] = 0.0;  // 0-ply probs, no SE
-        result["equity_nd"] = cfr.nd_equity;
+        result["equity_nd"] = equity_nd;
         result["equity_nd_se"] = cfr.nd_se;
-        result["equity_dt"] = cfr.dt_equity;
+        result["equity_dt"] = equity_dt;
         result["equity_dt_se"] = cfr.dt_se;
         result["equity_dp"] = equity_dp;
         result["should_double"] = should_double;

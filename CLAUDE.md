@@ -375,6 +375,7 @@ to override. Scripts live in `scripts/`.
 | `score_benchmark_pr_gnubg.py` | GNUbg's Benchmark PR (parallel GNUbg CLI subprocesses) | `--plies N` |
 | `test_evaluate_probs.py` | Single position eval at 0-3 ply + GNUbg + rollouts | `--model`, `--checkers`, `--ply N` |
 | `test_cube_decision.py` | Cube decisions vs 3 reference positions at 0-3 ply + rollout | `--model` |
+| `eval_position.py` | Side-by-side Stage 5 vs GNUbg evaluation (cube action or checker play, 0-3 ply + rollout, money or match play) | `cube`/`checker` subcommand, `--checkers`, `--dice`, `--match`, `--score`, `--cube-value`, `--cube-owner` |
 
 ```bash
 # Full benchmark with production model (0-ply)
@@ -390,6 +391,18 @@ python scripts/run_full_benchmark.py --ply 2 --scenarios 500
 
 # Score all registered models on Benchmark PR
 python scripts/score_benchmark_pr.py --all-models
+
+# Side-by-side Stage 5 vs GNUbg cube analysis (money game)
+python scripts/eval_position.py cube --checkers "0,-2,0,0,0,0,5,0,3,0,0,0,-5,5,0,0,0,-3,0,-5,0,0,0,0,2,0"
+
+# Side-by-side cube analysis (match play: 5-point match, player 3pts, opp 0pts)
+python scripts/eval_position.py cube --checkers "..." --match 5 --score 3 0
+
+# Side-by-side checker play analysis
+python scripts/eval_position.py checker --checkers "..." --dice 3 1
+
+# Side-by-side checker play analysis (match play)
+python scripts/eval_position.py checker --checkers "..." --dice 3 1 --match 5 --score 3 0
 ```
 
 ## Building
@@ -487,6 +500,14 @@ cache, incremental delta evaluation, transposed weight matrix.
 
 Monte Carlo evaluation with variance reduction. Stratified first roll
 (36 dice pairs). Parallelized trial execution.
+
+**Cubeful rollout** (for cube decisions): Two-branch simulation — ND (no double)
+and DT (double/take) branches share the same board evolution and dice. Cube
+decisions via `cube_decision_0ply()` at each half-move; double/pass terminates
+the branch immediately. VR luck tracked in cubeful value space per-branch.
+Match play works entirely in MWC space (`cl2cf_match`, `cubeless_mwc`, `dp_mwc`),
+with `away1/away2` swapped at each perspective flip. Money game branches use
+equity-based logic unchanged.
 
 ## Doubling Cube
 

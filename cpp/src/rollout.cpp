@@ -682,6 +682,7 @@ void RolloutStrategy::run_cubeful_trial(
     Board board = pre_roll_board;  // Mover's perspective (pre-roll)
     bool vr_enabled = (vr_strat_ != nullptr);
     int truncation = (config_.truncation_depth > 0) ? config_.truncation_depth : 9999;
+    const bool is_match = !branches[0].cube.is_money();
 
     for (int move_num = 0; move_num < truncation && move_num < max_moves; ++move_num) {
         // move_num 0 = starting player's (SP) turn, 1 = opponent, 2 = SP, ...
@@ -709,10 +710,21 @@ void RolloutStrategy::run_cubeful_trial(
                         branches[b].cube.owner = CubeOwner::OPPONENT;
                     } else {
                         // Double/Pass: mover wins current stake
-                        double dp_eq = static_cast<double>(branches[b].cube.cube_value)
-                                       / branches[b].basis_cube;
-                        if (!is_sp_turn) dp_eq = -dp_eq;
-                        branches[b].final_equity = dp_eq - branches[b].vr_luck;
+                        double sp_val;
+                        if (is_match) {
+                            float mwc = dp_mwc(
+                                branches[b].cube.match.away1,
+                                branches[b].cube.match.away2,
+                                branches[b].cube.cube_value,
+                                branches[b].cube.match.is_crawford);
+                            sp_val = is_sp_turn ? static_cast<double>(mwc)
+                                                : (1.0 - static_cast<double>(mwc));
+                        } else {
+                            sp_val = static_cast<double>(branches[b].cube.cube_value)
+                                     / branches[b].basis_cube;
+                            if (!is_sp_turn) sp_val = -sp_val;
+                        }
+                        branches[b].final_equity = sp_val - branches[b].vr_luck;
                         branches[b].finished = true;
                     }
                 }
@@ -763,19 +775,30 @@ void RolloutStrategy::run_cubeful_trial(
 
                 double mean_cf = 0.0;
                 for (size_t i = 0; i < ALL_ROLLS.size(); ++i) {
-                    float cf = cl2cf_money(roll_best_probs[i], branches[b].cube.owner, x);
-                    double cf_basis = cf * branches[b].cube.cube_value
-                                        / branches[b].basis_cube;
-                    mean_cf += ALL_ROLLS[i].weight * cf_basis;
+                    double val;
+                    if (is_match) {
+                        val = cl2cf_match(roll_best_probs[i], branches[b].cube, x);
+                    } else {
+                        float cf = cl2cf_money(roll_best_probs[i], branches[b].cube.owner, x);
+                        val = cf * branches[b].cube.cube_value
+                                 / branches[b].basis_cube;
+                    }
+                    mean_cf += ALL_ROLLS[i].weight * val;
                 }
                 mean_cf /= 36.0;
 
-                float actual_cf = cl2cf_money(
-                    roll_best_probs[actual_idx], branches[b].cube.owner, x);
-                double actual_cf_basis = actual_cf * branches[b].cube.cube_value
-                                                   / branches[b].basis_cube;
+                double actual_val;
+                if (is_match) {
+                    actual_val = cl2cf_match(
+                        roll_best_probs[actual_idx], branches[b].cube, x);
+                } else {
+                    float actual_cf = cl2cf_money(
+                        roll_best_probs[actual_idx], branches[b].cube.owner, x);
+                    actual_val = actual_cf * branches[b].cube.cube_value
+                                           / branches[b].basis_cube;
+                }
 
-                double luck = actual_cf_basis - mean_cf;
+                double luck = actual_val - mean_cf;
                 if (is_sp_turn) {
                     branches[b].vr_luck += luck;
                 } else {
@@ -820,21 +843,37 @@ void RolloutStrategy::run_cubeful_trial(
             for (int b = 0; b < n_branches; ++b) {
                 if (branches[b].finished) continue;
 
-                double points = mover_eq * branches[b].cube.cube_value;
-                double basis_eq = points / branches[b].basis_cube;
-                if (!is_sp_turn) basis_eq = -basis_eq;
+                double sp_val;
+                if (is_match) {
+                    float mwc = cubeless_mwc(
+                        t_probs,
+                        branches[b].cube.match.away1,
+                        branches[b].cube.match.away2,
+                        branches[b].cube.cube_value,
+                        branches[b].cube.match.is_crawford);
+                    sp_val = is_sp_turn ? static_cast<double>(mwc)
+                                        : (1.0 - static_cast<double>(mwc));
+                } else {
+                    double points = mover_eq * branches[b].cube.cube_value;
+                    sp_val = points / branches[b].basis_cube;
+                    if (!is_sp_turn) sp_val = -sp_val;
+                }
 
-                branches[b].final_equity = basis_eq - branches[b].vr_luck;
+                branches[b].final_equity = sp_val - branches[b].vr_luck;
                 branches[b].finished = true;
             }
             return;
         }
 
-        // Phase 6: Flip board and cube ownership
+        // Phase 6: Flip board and cube ownership (+ match perspective)
         board = flip(chosen);
         for (int b = 0; b < n_branches; ++b) {
             if (!branches[b].finished) {
                 branches[b].cube.owner = flip_owner(branches[b].cube.owner);
+                if (is_match) {
+                    std::swap(branches[b].cube.match.away1,
+                              branches[b].cube.match.away2);
+                }
             }
         }
     }
@@ -858,13 +897,23 @@ void RolloutStrategy::run_cubeful_trial(
         // Cube is from next mover's perspective; flip to last mover's
         CubeInfo last_cube = branches[b].cube;
         last_cube.owner = flip_owner(last_cube.owner);
+        if (is_match) {
+            std::swap(last_cube.match.away1, last_cube.match.away2);
+        }
 
-        float cf = cl2cf_money(last_mover_probs, last_cube.owner, trunc_x);
-        double points = cf * last_cube.cube_value;
-        double basis_eq = points / branches[b].basis_cube;
-        if (!last_mover_is_sp) basis_eq = -basis_eq;
+        double sp_val;
+        if (is_match) {
+            float mwc = cl2cf_match(last_mover_probs, last_cube, trunc_x);
+            sp_val = last_mover_is_sp ? static_cast<double>(mwc)
+                                      : (1.0 - static_cast<double>(mwc));
+        } else {
+            float cf = cl2cf_money(last_mover_probs, last_cube.owner, trunc_x);
+            double points = cf * last_cube.cube_value;
+            sp_val = points / branches[b].basis_cube;
+            if (!last_mover_is_sp) sp_val = -sp_val;
+        }
 
-        branches[b].final_equity = basis_eq - branches[b].vr_luck;
+        branches[b].final_equity = sp_val - branches[b].vr_luck;
         branches[b].finished = true;
     }
 }

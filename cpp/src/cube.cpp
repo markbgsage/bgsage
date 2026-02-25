@@ -119,15 +119,29 @@ static bool is_dead_cube(const CubeInfo& cube) {
 //   p < opponent's TG: opponent too good to double
 //   opponent's TG < p < player's TG: in doubling window
 //   p > player's TG: player too good to double
+// Automatic redouble detection (GNUbg's GetCubePrimeValue).
+// When the doubler (away_i) is close enough that losing at cv or 2*cv costs
+// the same, they always take a recube — making the effective cube 2*cv.
+// Uses 1-indexed away values (GNUbg uses 0-indexed).
+static int get_cube_prime_value(int away_i, int away_j, int cv) {
+    if ((away_i - 1) < 2 * cv && (away_j - 1) >= 2 * cv)
+        return 2 * cv;
+    return cv;
+}
+
 // Compute dead-cube cash point (take point) in P(win) space using MET values
 // at the doubled cube value. This is where the opponent is indifferent between
 // taking and passing the double. Following GNUbg's GetPoints approach.
 //
 // CP = (rDTL - rDP) / (rDTL - rDTW)
 // where:
-//   rDTW = weighted MWC if double-taken and doubler wins (at doubled cv)
-//   rDTL = weighted MWC if double-taken and doubler loses (at doubled cv)
+//   rDTW = weighted MWC if double-taken and doubler wins (at effective cube)
+//   rDTL = weighted MWC if double-taken and doubler loses (at effective cube)
 //   rDP  = MWC if opponent passes (doubler wins cv points)
+//
+// Effective cube accounts for automatic redoubles: when a player is close
+// enough (away < 2*dcv), losing at dcv or 2*dcv is equivalent, so they
+// always take a recube. This changes the DTW/DTL MET lookups.
 static float match_cash_point(
     int away1, int away2, int cv, bool craw,
     float rG, float rBG,          // gammon/bg ratios for the doubler's wins
@@ -136,14 +150,22 @@ static float match_cash_point(
     // MWC when opponent passes (doubler wins cv points)
     float rDP = get_met_after(away1, away2, cv, true, craw);
 
-    // MWC outcomes at doubled cube value (2*cv)
+    // Nominal doubled cube value
     int dcv = 2 * cv;
-    float dtw_s = get_met_after(away1, away2, dcv, true, craw);
-    float dtw_g = get_met_after(away1, away2, 2*dcv, true, craw);
-    float dtw_b = get_met_after(away1, away2, 3*dcv, true, craw);
-    float dtl_s = get_met_after(away1, away2, dcv, false, craw);
-    float dtl_g = get_met_after(away1, away2, 2*dcv, false, craw);
-    float dtl_b = get_met_after(away1, away2, 3*dcv, false, craw);
+
+    // Auto-redouble: effective cube may be higher than dcv
+    int prime_doubler = get_cube_prime_value(away1, away2, dcv);
+    int prime_taker = get_cube_prime_value(away2, away1, dcv);
+
+    // DTW: doubler wins at prime_doubler effective cube
+    float dtw_s = get_met_after(away1, away2, prime_doubler, true, craw);
+    float dtw_g = get_met_after(away1, away2, 2*prime_doubler, true, craw);
+    float dtw_b = get_met_after(away1, away2, 3*prime_doubler, true, craw);
+
+    // DTL: doubler loses at prime_taker effective cube
+    float dtl_s = get_met_after(away1, away2, prime_taker, false, craw);
+    float dtl_g = get_met_after(away1, away2, 2*prime_taker, false, craw);
+    float dtl_b = get_met_after(away1, away2, 3*prime_taker, false, craw);
 
     // Weighted MWC for double-take outcomes
     float rDTW = (1.0f - rG - rBG) * dtw_s + rG * dtw_g + rBG * dtw_b;
@@ -519,13 +541,15 @@ static CubeDecision cube_decision_0ply_match(
     dt_cube.match = cube.match;
     float dt_m = cl2cf_match(probs, dt_cube, cube_x);
 
-    // Convert all three MWC values to equity at the original cube value.
-    // This normalizes them to a common scale for comparison.
+    // Convert MWC values to equity for display.
+    // All three use the SAME normalization (original cube value) so they're
+    // directly comparable — matching GNUbg's FindCubeDecision convention.
     result.equity_nd = mwc2eq(nd_m, away1, away2, cv, craw);
     result.equity_dt = mwc2eq(dt_m, away1, away2, cv, craw);
     result.equity_dp = mwc2eq(dp_m, away1, away2, cv, craw);
 
-    // Decision logic (same structure as money, but can_double matters for match)
+    // Decision logic in MWC space for correctness (equities are all on the
+    // same scale now, but MWC decisions are the canonical approach for match play).
     bool player_can_double = can_double(cube);
 
     if (!player_can_double) {
@@ -534,10 +558,9 @@ static CubeDecision cube_decision_0ply_match(
         result.should_take = true;  // Irrelevant since no double
         result.optimal_equity = result.equity_nd;
     } else {
-        // Standard cube decision logic
-        float best_double = std::min(result.equity_dt, result.equity_dp);
-        result.should_double = (best_double > result.equity_nd);
-        result.should_take = (result.equity_dt <= result.equity_dp);
+        float best_double_mwc = std::min(dt_m, dp_m);
+        result.should_double = (best_double_mwc > nd_m);
+        result.should_take = (dt_m <= dp_m);
 
         if (result.should_double) {
             result.optimal_equity = std::min(result.equity_dt, result.equity_dp);
@@ -1055,10 +1078,26 @@ CubeDecision cube_decision_nply(
         result.should_double = false;
         result.should_take = true;
         result.optimal_equity = result.equity_nd;
-    } else {
+    } else if (is_money) {
+        // Money: compare equities (all at same scale)
         float best_double = std::min(result.equity_dt, result.equity_dp);
         result.should_double = (best_double > result.equity_nd);
         result.should_take = (result.equity_dt <= result.equity_dp);
+
+        if (result.should_double) {
+            result.optimal_equity = std::min(result.equity_dt, result.equity_dp);
+        } else {
+            result.optimal_equity = result.equity_nd;
+        }
+    } else {
+        // Match: compare in MWC space (canonical for match play decisions)
+        float nd_m = arCubeful[0];
+        float dt_m = arCubeful[1];
+        float dp_m_val = dp_mwc(cube.match.away1, cube.match.away2,
+                                 cube.cube_value, cube.match.is_crawford);
+        float best_double_mwc = std::min(dt_m, dp_m_val);
+        result.should_double = (best_double_mwc > nd_m);
+        result.should_take = (dt_m <= dp_m_val);
 
         if (result.should_double) {
             result.optimal_equity = std::min(result.equity_dt, result.equity_dp);
