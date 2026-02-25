@@ -670,7 +670,8 @@ void RolloutStrategy::run_cubeful_trial(
     const Board& pre_roll_board,
     CubefulBranch branches[], int n_branches,
     const std::pair<int,int>* dice_seq,
-    int max_moves) const
+    int max_moves,
+    TrialResult* cubeless_out) const
 {
     thread_local std::array<std::vector<Board>, ALL_ROLLS.size()> move_candidates;
     thread_local bool candidates_initialized = false;
@@ -683,6 +684,10 @@ void RolloutStrategy::run_cubeful_trial(
     bool vr_enabled = (vr_strat_ != nullptr);
     int truncation = (config_.truncation_depth > 0) ? config_.truncation_depth : 9999;
     const bool is_match = !branches[0].cube.is_money();
+
+    // Cubeless VR luck tracking (per-prob component, SP perspective)
+    std::array<double, NUM_OUTPUTS> cl_accumulated_luck = {0, 0, 0, 0, 0};
+    double cl_scalar_eq_luck = 0.0;
 
     for (int move_num = 0; move_num < truncation && move_num < max_moves; ++move_num) {
         // move_num 0 = starting player's (SP) turn, 1 = opponent, 2 = SP, ...
@@ -735,7 +740,23 @@ void RolloutStrategy::run_cubeful_trial(
             for (int b = 0; b < n_branches; ++b) {
                 if (!branches[b].finished) { all_done = false; break; }
             }
-            if (all_done) return;
+            if (all_done) {
+                // All branches D/P'd — use 0-ply pre-roll cubeless probs as best estimate
+                if (cubeless_out) {
+                    std::array<float, NUM_OUTPUTS> sp_probs;
+                    if (is_sp_turn) {
+                        sp_probs = mover_probs;
+                    } else {
+                        sp_probs = invert_probs(mover_probs);
+                    }
+                    double raw_eq = NeuralNetwork::compute_equity(sp_probs);
+                    for (int k = 0; k < NUM_OUTPUTS; ++k)
+                        cubeless_out->probs[k] = static_cast<float>(sp_probs[k] - cl_accumulated_luck[k]);
+                    cubeless_out->equity = raw_eq - cl_scalar_eq_luck;
+                    cubeless_out->scalar_vr_equity = cubeless_out->equity;
+                }
+                return;
+            }
         }
 
         // Phase 2: Generate moves for all 21 rolls + get actual dice
@@ -805,6 +826,39 @@ void RolloutStrategy::run_cubeful_trial(
                     branches[b].vr_luck -= luck;
                 }
             }
+
+            // Cubeless VR in probability space (piggybacking on roll_best_probs)
+            if (cubeless_out) {
+                std::array<double, NUM_OUTPUTS> mean_probs = {0,0,0,0,0};
+                for (size_t i = 0; i < ALL_ROLLS.size(); ++i) {
+                    for (int k = 0; k < NUM_OUTPUTS; ++k)
+                        mean_probs[k] += ALL_ROLLS[i].weight * roll_best_probs[i][k];
+                }
+                for (int k = 0; k < NUM_OUTPUTS; ++k) mean_probs[k] /= 36.0;
+
+                // Luck = actual - mean, in mover's prob space
+                std::array<double, NUM_OUTPUTS> luck_mover;
+                for (int k = 0; k < NUM_OUTPUTS; ++k)
+                    luck_mover[k] = roll_best_probs[actual_idx][k] - mean_probs[k];
+                double mean_eq = 2*mean_probs[0]-1 + mean_probs[1]-mean_probs[3]
+                                 + mean_probs[2]-mean_probs[4];
+                double actual_eq = NeuralNetwork::compute_equity(roll_best_probs[actual_idx]);
+                double luck_eq = actual_eq - mean_eq;
+
+                // Cross-map to SP perspective
+                if (is_sp_turn) {
+                    for (int k = 0; k < NUM_OUTPUTS; ++k)
+                        cl_accumulated_luck[k] += luck_mover[k];
+                    cl_scalar_eq_luck += luck_eq;
+                } else {
+                    cl_accumulated_luck[0] -= luck_mover[0];
+                    cl_accumulated_luck[1] += luck_mover[3];
+                    cl_accumulated_luck[2] += luck_mover[4];
+                    cl_accumulated_luck[3] += luck_mover[1];
+                    cl_accumulated_luck[4] += luck_mover[2];
+                    cl_scalar_eq_luck -= luck_eq;
+                }
+            }
         }
 
         // Phase 4: Pick best move for actual roll (cubeless, shared)
@@ -862,6 +916,21 @@ void RolloutStrategy::run_cubeful_trial(
                 branches[b].final_equity = sp_val - branches[b].vr_luck;
                 branches[b].finished = true;
             }
+
+            // Cubeless: terminal probs converted to SP perspective, VR corrected
+            if (cubeless_out) {
+                std::array<float, NUM_OUTPUTS> sp_probs;
+                if (is_sp_turn) {
+                    sp_probs = t_probs;
+                } else {
+                    sp_probs = invert_probs(t_probs);
+                }
+                double raw_eq = NeuralNetwork::compute_equity(sp_probs);
+                for (int k = 0; k < NUM_OUTPUTS; ++k)
+                    cubeless_out->probs[k] = static_cast<float>(sp_probs[k] - cl_accumulated_luck[k]);
+                cubeless_out->equity = raw_eq - cl_scalar_eq_luck;
+                cubeless_out->scalar_vr_equity = cubeless_out->equity;
+            }
             return;
         }
 
@@ -916,6 +985,21 @@ void RolloutStrategy::run_cubeful_trial(
         branches[b].final_equity = sp_val - branches[b].vr_luck;
         branches[b].finished = true;
     }
+
+    // Cubeless: truncation probs converted to SP perspective, VR corrected
+    if (cubeless_out) {
+        std::array<float, NUM_OUTPUTS> sp_probs;
+        if (last_mover_is_sp) {
+            sp_probs = last_mover_probs;
+        } else {
+            sp_probs = invert_probs(last_mover_probs);
+        }
+        double raw_eq = NeuralNetwork::compute_equity(sp_probs);
+        for (int k = 0; k < NUM_OUTPUTS; ++k)
+            cubeless_out->probs[k] = static_cast<float>(sp_probs[k] - cl_accumulated_luck[k]);
+        cubeless_out->equity = raw_eq - cl_scalar_eq_luck;
+        cubeless_out->scalar_vr_equity = cubeless_out->equity;
+    }
 }
 
 // ======================== Cubeful Cube Decision ========================
@@ -951,6 +1035,7 @@ RolloutStrategy::CubefulRolloutResult RolloutStrategy::cubeful_cube_decision(
     struct CubefulTrialResult {
         double nd_equity;
         double dt_equity;
+        TrialResult cubeless;  // VR-corrected cubeless probs from the same game
     };
     std::vector<CubefulTrialResult> trial_results(n_trials);
 
@@ -967,8 +1052,10 @@ RolloutStrategy::CubefulRolloutResult RolloutStrategy::cubeful_cube_decision(
         for (int t = 0; t < n_trials; ++t) {
             CubefulBranch branches[2] = {nd_template, dt_template};
             run_cubeful_trial(pre_roll_board, branches, 2,
-                              all_dice[t].data(), max_moves);
-            trial_results[t] = {branches[0].final_equity, branches[1].final_equity};
+                              all_dice[t].data(), max_moves,
+                              &trial_results[t].cubeless);
+            trial_results[t].nd_equity = branches[0].final_equity;
+            trial_results[t].dt_equity = branches[1].final_equity;
         }
     } else {
         // Work-stealing parallel dispatch
@@ -1003,9 +1090,10 @@ RolloutStrategy::CubefulRolloutResult RolloutStrategy::cubeful_cube_decision(
                         CubefulBranch branches[2] = {*a->nd_tmpl, *a->dt_tmpl};
                         a->self->run_cubeful_trial(
                             *a->board, branches, 2,
-                            (*a->all_dice)[t].data(), a->max_moves);
-                        a->results[t] = {branches[0].final_equity,
-                                         branches[1].final_equity};
+                            (*a->all_dice)[t].data(), a->max_moves,
+                            &a->results[t].cubeless);
+                        a->results[t].nd_equity = branches[0].final_equity;
+                        a->results[t].dt_equity = branches[1].final_equity;
                     }
                     return 0;
                 },
@@ -1026,9 +1114,10 @@ RolloutStrategy::CubefulRolloutResult RolloutStrategy::cubeful_cube_decision(
                        < n_trials) {
                     CubefulBranch branches[2] = {nd_template, dt_template};
                     run_cubeful_trial(pre_roll_board, branches, 2,
-                                      all_dice[t].data(), max_moves);
-                    trial_results[t] = {branches[0].final_equity,
-                                        branches[1].final_equity};
+                                      all_dice[t].data(), max_moves,
+                                      &trial_results[t].cubeless);
+                    trial_results[t].nd_equity = branches[0].final_equity;
+                    trial_results[t].dt_equity = branches[1].final_equity;
                 }
             });
         }
@@ -1036,14 +1125,27 @@ RolloutStrategy::CubefulRolloutResult RolloutStrategy::cubeful_cube_decision(
 #endif
     }
 
-    // Aggregate results
+    // Aggregate results: cubeful equities + cubeless probs (all from same trials)
     double sum_nd = 0, sum_nd_sq = 0;
     double sum_dt = 0, sum_dt_sq = 0;
+    std::array<double, NUM_OUTPUTS> sum_probs = {0,0,0,0,0};
+    std::array<double, NUM_OUTPUTS> sum_probs_sq = {0,0,0,0,0};
+    double sum_cl_eq = 0, sum_cl_eq_sq = 0;
+
     for (int t = 0; t < n_trials; ++t) {
         double nd = trial_results[t].nd_equity;
         double dt = trial_results[t].dt_equity;
         sum_nd += nd; sum_nd_sq += nd * nd;
         sum_dt += dt; sum_dt_sq += dt * dt;
+
+        for (int k = 0; k < NUM_OUTPUTS; ++k) {
+            double v = trial_results[t].cubeless.probs[k];
+            sum_probs[k] += v;
+            sum_probs_sq[k] += v * v;
+        }
+        double eq = trial_results[t].cubeless.equity;
+        sum_cl_eq += eq;
+        sum_cl_eq_sq += eq * eq;
     }
 
     CubefulRolloutResult result;
@@ -1056,6 +1158,22 @@ RolloutStrategy::CubefulRolloutResult RolloutStrategy::cubeful_cube_decision(
     double var_dt = (sum_dt_sq / n_trials) - (result.dt_equity * result.dt_equity);
     if (var_dt < 0) var_dt = 0;
     result.dt_se = std::sqrt(var_dt / n_trials);
+
+    // Cubeless: mean probs and SEs from the same trial games
+    for (int k = 0; k < NUM_OUTPUTS; ++k) {
+        result.cubeless.mean_probs[k] = static_cast<float>(sum_probs[k] / n_trials);
+        double mean_k = sum_probs[k] / n_trials;
+        double var_k = (sum_probs_sq[k] / n_trials) - (mean_k * mean_k);
+        if (var_k < 0) var_k = 0;
+        result.cubeless.prob_std_errors[k] = static_cast<float>(std::sqrt(var_k / n_trials));
+    }
+    result.cubeless.equity = cubeless_equity(result.cubeless.mean_probs);
+    double mean_cl = sum_cl_eq / n_trials;
+    double var_cl = (sum_cl_eq_sq / n_trials) - (mean_cl * mean_cl);
+    if (var_cl < 0) var_cl = 0;
+    result.cubeless.std_error = std::sqrt(var_cl / n_trials);
+    result.cubeless.scalar_vr_equity = mean_cl;
+    result.cubeless.scalar_vr_se = result.cubeless.std_error;
 
     return result;
 }

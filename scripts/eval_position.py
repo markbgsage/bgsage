@@ -283,18 +283,22 @@ def _action_str(should_double, should_take):
 
 
 def _print_cube_tables(sage, gnubg):
+    levels = ['0ply', '1ply', '2ply', '3ply', 'rollout']
+
     print()
-    print("Cubeless Probabilities (0-ply):")
-    print(f"{'Engine':<8} {'P(win)':>8} {'P(gw)':>8} {'P(bw)':>8} {'P(gl)':>8} {'P(bl)':>8} {'Eq':>9}")
-    print("-" * 59)
-    if '0ply' in sage:
-        p = sage['0ply']['result']['probs']
-        eq = sage['0ply']['result']['cubeless_equity']
-        print(f"{'Sage':<8} {p[0]:8.4f} {p[1]:8.4f} {p[2]:8.4f} {p[3]:8.4f} {p[4]:8.4f} {eq:+9.4f}")
-    if '0ply' in gnubg:
-        r = gnubg['0ply']['result']
-        eq = r['equity_cubeless']
-        print(f"{'GNUbg':<8} {r['p_win']:8.4f} {r['p_gw']:8.4f} {r['p_bw']:8.4f} {r['p_gl']:8.4f} {r['p_bl']:8.4f} {eq:+9.4f}")
+    print("Cubeless Probabilities:")
+    print(f"{'Level':<10} {'Engine':<8} {'P(win)':>8} {'P(gw)':>8} {'P(bw)':>8} {'P(gl)':>8} {'P(bl)':>8} {'Eq':>9}")
+    print("-" * 69)
+    for level in levels:
+        label = 'Rollout' if level == 'rollout' else level.replace('ply', '-ply')
+        if level in sage:
+            p = sage[level]['result']['probs']
+            eq = sage[level]['result']['cubeless_equity']
+            print(f"{label:<10} {'Sage':<8} {p[0]:8.4f} {p[1]:8.4f} {p[2]:8.4f} {p[3]:8.4f} {p[4]:8.4f} {eq:+9.4f}")
+        if level in gnubg:
+            r = gnubg[level]['result']
+            eq = r['equity_cubeless']
+            print(f"{label:<10} {'GNUbg':<8} {r['p_win']:8.4f} {r['p_gw']:8.4f} {r['p_bw']:8.4f} {r['p_gl']:8.4f} {r['p_bl']:8.4f} {eq:+9.4f}")
 
     print()
     print("Cubeful Equities:")

@@ -1878,17 +1878,21 @@ PYBIND11_MODULE(bgbot_cpp, m) {
         MoveFilter filter{filter_max_moves, filter_threshold};
 
         CubeDecision cd;
+        std::array<float, NUM_OUTPUTS> pre_roll_probs;
+        float cl_eq;
         {
             py::gil_scoped_release release;
             cd = cube_decision_nply(board, ci, strat, n_plies, filter, n_threads);
-        }
 
-        // Also get cubeless pre-roll probs for display
-        Board flipped = flip(board);
-        bool race = is_race(board);
-        auto post_probs = strat.evaluate_probs(flipped, race);
-        auto pre_roll_probs = invert_probs(post_probs);
-        float cl_eq = cubeless_equity(pre_roll_probs);
+            // Get N-ply cubeless pre-roll probs: flip board, evaluate at N-ply, invert.
+            Board flipped = flip(board);
+            MultiPlyStrategy multipy(
+                std::make_shared<GamePlanStrategy>(strat), n_plies, filter);
+            auto post_probs = multipy.evaluate_probs(flipped, flipped);
+            multipy.clear_cache();
+            pre_roll_probs = invert_probs(post_probs);
+            cl_eq = cubeless_equity(pre_roll_probs);
+        }
 
         py::dict result;
         result["probs"] = pre_roll_probs;
@@ -1976,12 +1980,11 @@ PYBIND11_MODULE(bgbot_cpp, m) {
             cfr = rollout->cubeful_cube_decision(board, ci);
         }
 
-        // Get cubeless probabilities from 0-ply (cheap — cubeful rollout is
-        // the expensive part, and we don't need rollout-quality probs here)
-        Board flipped = flip(board);
-        auto opp_probs = base->evaluate_probs(flipped, flipped);
-        auto pre_roll_probs = invert_probs(opp_probs);
-        float cl_eq = cubeless_equity(pre_roll_probs);
+        // Cubeless probs come from the cubeful rollout's integrated cubeless rollout
+        const auto& cl = cfr.cubeless;
+        auto pre_roll_probs = cl.mean_probs;
+        float cl_eq = cl.equity;
+        double cl_se = cl.std_error;
 
         // Decision logic: match play works in MWC space, money in equity
         float equity_nd, equity_dt, equity_dp;
@@ -2023,7 +2026,7 @@ PYBIND11_MODULE(bgbot_cpp, m) {
         py::dict result;
         result["probs"] = pre_roll_probs;
         result["cubeless_equity"] = cl_eq;
-        result["cubeless_se"] = 0.0;  // 0-ply probs, no SE
+        result["cubeless_se"] = cl_se;
         result["equity_nd"] = equity_nd;
         result["equity_nd_se"] = cfr.nd_se;
         result["equity_dt"] = equity_dt;

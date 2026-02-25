@@ -71,6 +71,9 @@ public:
         double nd_se = 0.0;         // Standard error of ND
         double dt_equity = 0.0;     // DT cubeful equity (basis cube units)
         double dt_se = 0.0;         // Standard error of DT
+
+        // Cubeless pre-roll rollout (from player-on-roll's perspective)
+        RolloutResult cubeless;
     };
 
     // Cubeful rollout for cube decisions. Rolls out two branches (ND and DT)
@@ -168,11 +171,14 @@ private:
 
     // Run a single cubeful trial with multiple branches sharing the same
     // board evolution and dice. Sets final_equity on each branch.
+    // If cubeless_out is non-null, also produces VR-corrected cubeless probs
+    // from the player-on-roll's perspective (piggybacking on the same game).
     void run_cubeful_trial(
         const Board& pre_roll_board,
         CubefulBranch branches[], int n_branches,
         const std::pair<int,int>* dice_seq,
-        int max_moves) const;
+        int max_moves,
+        TrialResult* cubeless_out = nullptr) const;
 };
 
 } // namespace bgbot
