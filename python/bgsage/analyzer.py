@@ -309,14 +309,13 @@ class _RolloutAnalyzer(_CubelessBase):
 
     def __init__(
         self, weights, n_trials=1296, truncation_depth=0,
-        decision_ply=0, vr_ply=0, n_threads=0, seed=42,
+        decision_ply=0, n_threads=0, seed=42,
     ):
         super().__init__(weights)
         self._rollout_config = {
             "n_trials": n_trials,
             "truncation_depth": truncation_depth,
             "decision_ply": decision_ply,
-            "vr_ply": vr_ply,
             "n_threads": n_threads,
             "seed": seed,
         }
@@ -325,7 +324,6 @@ class _RolloutAnalyzer(_CubelessBase):
             n_trials=n_trials,
             truncation_depth=truncation_depth,
             decision_ply=decision_ply,
-            vr_ply=vr_ply,
             n_threads=n_threads,
             seed=seed,
         )
@@ -586,7 +584,6 @@ class BgBotAnalyzer:
         n_trials: Rollout trial count.
         truncation_depth: Rollout truncation (0 = play to completion).
         decision_ply: Ply depth for move selection during rollout trials.
-        vr_ply: Ply depth for variance reduction (-1 = disable).
         seed: RNG seed for rollout.
     """
 
@@ -602,7 +599,6 @@ class BgBotAnalyzer:
         n_trials: int = 1296,
         truncation_depth: int = 0,
         decision_ply: int = 0,
-        vr_ply: int = 0,
         seed: int = 42,
     ):
         if weights is None:
@@ -624,7 +620,6 @@ class BgBotAnalyzer:
                 n_trials=n_trials,
                 truncation_depth=truncation_depth,
                 decision_ply=decision_ply,
-                vr_ply=vr_ply,
                 n_threads=parallel_threads,
                 seed=seed,
             )

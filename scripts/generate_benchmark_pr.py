@@ -489,7 +489,7 @@ def main():
         rollout_est = bgbot_cpp.create_rollout_5nn(
             *weight_tuple(weights), NH_PR, NH_RC, NH_AT, NH_PM, NH_AN,
             n_trials=args.n_trials, truncation_depth=0,
-            decision_ply=1, vr_ply=0,
+            decision_ply=1,
             n_threads=args.threads,
             late_ply=0, late_threshold=3)
 
@@ -518,7 +518,7 @@ def main():
     rollout = bgbot_cpp.create_rollout_5nn(
         *weight_tuple(weights), NH_PR, NH_RC, NH_AT, NH_PM, NH_AN,
         n_trials=args.n_trials, truncation_depth=0,
-        decision_ply=1, vr_ply=0,
+        decision_ply=1,
         n_threads=args.threads,
         late_ply=0, late_threshold=3)
 

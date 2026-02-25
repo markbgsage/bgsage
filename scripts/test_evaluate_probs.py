@@ -123,7 +123,6 @@ def main():
                                                n_trials=360,
                                                truncation_depth=trunc,
                                                decision_ply=1,
-                                               vr_ply=0,
                                                n_threads=0)
             t0_ = time.perf_counter()
             r_ = ro.evaluate_board(checkers, checkers)
@@ -141,7 +140,7 @@ def main():
                                                n_trials=360,
                                                truncation_depth=trunc,
                                                decision_ply=1,
-                                               vr_ply=-1,
+                                               enable_vr=False,
                                                n_threads=0)
             t0_ = time.perf_counter()
             r_ = ro.evaluate_board(checkers, checkers)

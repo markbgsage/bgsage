@@ -15,7 +15,7 @@ struct RolloutConfig {
     int n_trials = 36;           // Number of trial games per candidate
     int truncation_depth = 7;    // Half-moves before truncating (0 = play to completion)
     int decision_ply = 0;        // Ply depth for move selection during trials
-    int vr_ply = 0;              // Ply depth for VR equity estimation (-1 = disable VR)
+    bool enable_vr = true;       // Enable variance reduction (VR uses same ply as decision)
     MoveFilter filter = MoveFilters::TINY;  // Filter for candidate selection at top level
     int n_threads = 0;           // Threads for parallelizing trials (0 = auto)
     uint32_t seed = 42;
@@ -37,10 +37,14 @@ struct RolloutResult {
 //
 // Wraps a base strategy and evaluates positions by playing out trial games
 // from the given position. At each half-move in a trial:
-//   1. Compute mean equity across all 36 dice outcomes (at vr_ply) — the "expected" equity
-//   2. Make the actual move with pre-determined dice (at decision_ply)
+//   1. Compute mean equity across all 36 dice outcomes — the "expected" equity
+//   2. Make the actual move with pre-determined dice
 //   3. Luck = actual equity - expected equity; accumulated from starting player's perspective
 //   4. At truncation/game-end: VR result = outcome equity - accumulated luck
+//
+// VR always uses the SAME strategy as decision-making at each point in the game
+// (decision_strat_ before late_threshold, base_ after). This ensures the luck
+// tracking matches the actual game path.
 //
 // Both sides' luck is tracked (full XG-style VR).
 //
@@ -103,9 +107,8 @@ private:
     // If late_ply < 0, same as decision_strat_.
     std::shared_ptr<Strategy> late_decision_strat_;
 
-    // VR evaluation strategy. If vr_ply > 0, wraps base_ in MultiPlyStrategy.
-    // If vr_ply == 0, same as base_. If vr_ply < 0, VR is disabled.
-    std::shared_ptr<Strategy> vr_strat_;
+    // Whether VR is enabled (from config_.enable_vr).
+    bool vr_enabled_;
 
     // The 21 unique dice rolls (shared with MultiPlyStrategy).
     struct DiceRoll { int d1, d2, weight; };
@@ -144,18 +147,17 @@ private:
         std::vector<std::vector<std::pair<int,int>>>& dice_out);
 
     // Compute probs of the best move for a given roll (for VR computation).
-    // Uses vr_strat_ for both move selection and probability evaluation.
+    // Uses the provided strategy for both move selection and evaluation.
     // Returns probs from mover's perspective.
     std::array<float, NUM_OUTPUTS> best_move_probs(
-        const Board& board, int d1, int d2) const;
-
-    // Compute equity of the best move for a given roll (scalar VR).
-    double best_move_equity(const Board& board, int d1, int d2) const;
+        const Board& board, int d1, int d2,
+        const Strategy& strat) const;
 
     // Internal helper: evaluate the best move among pre-generated candidate
     // boards (used by both VR mean computation and internal move loops).
     std::array<float, NUM_OUTPUTS> best_move_probs_for_candidates(
         const Board& board, const std::vector<Board>& candidates,
+        const Strategy& strat,
         int* best_index = nullptr) const;
 
     // --- Cubeful rollout internals ---

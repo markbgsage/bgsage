@@ -1556,7 +1556,7 @@ PYBIND11_MODULE(bgbot_cpp, m) {
         .def_readwrite("n_trials", &RolloutConfig::n_trials)
         .def_readwrite("truncation_depth", &RolloutConfig::truncation_depth)
         .def_readwrite("decision_ply", &RolloutConfig::decision_ply)
-        .def_readwrite("vr_ply", &RolloutConfig::vr_ply)
+        .def_readwrite("enable_vr", &RolloutConfig::enable_vr)
         .def_readwrite("filter", &RolloutConfig::filter)
         .def_readwrite("n_threads", &RolloutConfig::n_threads)
         .def_readwrite("seed", &RolloutConfig::seed);
@@ -1611,13 +1611,13 @@ PYBIND11_MODULE(bgbot_cpp, m) {
                                     int n_trials,
                                     int truncation_depth,
                                     int decision_ply,
-                                    int vr_ply,
                                     int filter_max_moves,
                                     float filter_threshold,
                                     int n_threads,
                                     uint32_t seed,
                                     int late_ply,
-                                    int late_threshold) {
+                                    int late_threshold,
+                                    bool enable_vr) {
         auto base = std::make_shared<GamePlanStrategy>(
             purerace_w, racing_w, attacking_w, priming_w, anchoring_w,
             n_h_purerace, n_h_racing, n_h_attacking, n_h_priming, n_h_anchoring);
@@ -1625,7 +1625,7 @@ PYBIND11_MODULE(bgbot_cpp, m) {
         config.n_trials = n_trials;
         config.truncation_depth = truncation_depth;
         config.decision_ply = decision_ply;
-        config.vr_ply = vr_ply;
+        config.enable_vr = enable_vr;
         config.filter = {filter_max_moves, filter_threshold};
         config.n_threads = n_threads;
         config.seed = seed;
@@ -1646,13 +1646,13 @@ PYBIND11_MODULE(bgbot_cpp, m) {
        py::arg("n_trials") = 36,
        py::arg("truncation_depth") = 7,
        py::arg("decision_ply") = 0,
-       py::arg("vr_ply") = 0,
        py::arg("filter_max_moves") = 5,
        py::arg("filter_threshold") = 0.08f,
        py::arg("n_threads") = 0,
        py::arg("seed") = 42,
        py::arg("late_ply") = -1,
-       py::arg("late_threshold") = 20);
+       py::arg("late_threshold") = 20,
+       py::arg("enable_vr") = true);
 
     // Score benchmarks using rollout strategy
     // n_threads=1 for outer loop because parallelism is within each scenario
@@ -1945,7 +1945,6 @@ PYBIND11_MODULE(bgbot_cpp, m) {
                                        int n_trials,
                                        int truncation_depth,
                                        int decision_ply,
-                                       int vr_ply,
                                        int filter_max_moves,
                                        float filter_threshold,
                                        int n_threads,
@@ -1953,7 +1952,8 @@ PYBIND11_MODULE(bgbot_cpp, m) {
                                        int late_ply,
                                        int late_threshold,
                                        int away1, int away2, bool is_crawford,
-                                       float cube_x_override) {
+                                       float cube_x_override,
+                                       bool enable_vr) {
         Board board = list_to_board(checkers);
         bool race = is_race(board);
 
@@ -1964,7 +1964,7 @@ PYBIND11_MODULE(bgbot_cpp, m) {
         config.n_trials = n_trials;
         config.truncation_depth = truncation_depth;
         config.decision_ply = decision_ply;
-        config.vr_ply = vr_ply;
+        config.enable_vr = enable_vr;
         config.filter = {filter_max_moves, filter_threshold};
         config.n_threads = n_threads;
         config.seed = seed;
@@ -2055,7 +2055,6 @@ PYBIND11_MODULE(bgbot_cpp, m) {
        py::arg("n_trials") = 1296,
        py::arg("truncation_depth") = 0,
        py::arg("decision_ply") = 0,
-       py::arg("vr_ply") = 0,
        py::arg("filter_max_moves") = 5,
        py::arg("filter_threshold") = 0.08f,
        py::arg("n_threads") = 0,
@@ -2063,7 +2062,8 @@ PYBIND11_MODULE(bgbot_cpp, m) {
        py::arg("late_ply") = -1,
        py::arg("late_threshold") = 20,
        py::arg("away1") = 0, py::arg("away2") = 0, py::arg("is_crawford") = false,
-       py::arg("cube_x_override") = -1.0f);
+       py::arg("cube_x_override") = -1.0f,
+       py::arg("enable_vr") = true);
 
     // ======================== Batch position evaluation ========================
 

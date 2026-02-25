@@ -67,7 +67,7 @@ def get_weights():
     return paths
 
 
-def run_rollout(weights, n_trials, trunc_depth, decision_ply, vr_ply,
+def run_rollout(weights, n_trials, trunc_depth, decision_ply,
                 n_threads=0, seed=42, late_ply=-1, late_threshold=20):
     rollout = bgbot_cpp.create_rollout_5nn(
         weights['purerace'], weights['racing'], weights['attacking'],
@@ -76,7 +76,6 @@ def run_rollout(weights, n_trials, trunc_depth, decision_ply, vr_ply,
         n_trials=n_trials,
         truncation_depth=trunc_depth,
         decision_ply=decision_ply,
-        vr_ply=vr_ply,
         n_threads=n_threads,
         seed=seed,
         late_ply=late_ply,

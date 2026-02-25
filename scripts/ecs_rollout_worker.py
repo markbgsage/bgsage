@@ -67,7 +67,7 @@ def main():
     rollout = bgbot_cpp.create_rollout_5nn(
         *wt, NH_PR, NH_RC, NH_AT, NH_PM, NH_AN,
         n_trials=n_trials, truncation_depth=0,
-        decision_ply=decision_ply, vr_ply=0,
+        decision_ply=decision_ply,
         n_threads=n_threads,
         late_ply=0, late_threshold=3)
 

@@ -170,7 +170,7 @@ def main():
         rollout_1p_1296 = bgbot_cpp.create_rollout_5nn(
             *w.weight_args,
             n_trials=1296, truncation_depth=0,
-            decision_ply=1, vr_ply=0,
+            decision_ply=1,
             n_threads=args.threads,
             late_ply=0, late_threshold=3)
 
@@ -184,7 +184,7 @@ def main():
         rollout_2p_1296 = bgbot_cpp.create_rollout_5nn(
             *w.weight_args,
             n_trials=1296, truncation_depth=0,
-            decision_ply=2, vr_ply=0,
+            decision_ply=2,
             n_threads=args.threads,
             late_ply=0, late_threshold=3)
 

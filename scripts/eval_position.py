@@ -243,7 +243,7 @@ def run_cube_analysis(checkers, cube_value, cube_owner_str, match_length,
         n_hidden_purerace=w.n_hidden_purerace, n_hidden_racing=w.n_hidden_racing,
         n_hidden_attacking=w.n_hidden_attacking, n_hidden_priming=w.n_hidden_priming,
         n_hidden_anchoring=w.n_hidden_anchoring,
-        n_trials=1296, truncation_depth=0, decision_ply=0, vr_ply=0,
+        n_trials=1296, truncation_depth=0, decision_ply=0,
         n_threads=0, seed=42,
         away1=away1, away2=away2, is_crawford=is_crawford)
     sage['rollout'] = {'result': r, 'time': time.time() - t0}

@@ -281,7 +281,7 @@ def main():
             n_hidden_purerace=w.n_hidden_purerace, n_hidden_racing=w.n_hidden_racing,
             n_hidden_attacking=w.n_hidden_attacking, n_hidden_priming=w.n_hidden_priming,
             n_hidden_anchoring=w.n_hidden_anchoring,
-            n_trials=1296, truncation_depth=0, decision_ply=0, vr_ply=0,
+            n_trials=1296, truncation_depth=0, decision_ply=0,
             n_threads=0, seed=42)
         dt = time.time() - t0
 

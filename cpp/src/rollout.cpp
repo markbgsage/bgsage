@@ -70,14 +70,8 @@ RolloutStrategy::RolloutStrategy(std::shared_ptr<Strategy> base, RolloutConfig c
         late_decision_strat_ = base_;
     }
 
-    // Build VR strategy
-    if (config_.vr_ply > 0) {
-        vr_strat_ = std::make_shared<MultiPlyStrategy>(
-            base_, config_.vr_ply, config_.filter);
-    } else if (config_.vr_ply == 0) {
-        vr_strat_ = base_;
-    }
-    // vr_ply < 0: VR disabled, vr_strat_ left as nullptr
+    // VR enabled flag
+    vr_enabled_ = config_.enable_vr;
 
     if (config_.n_trials > 0 && cached_max_moves_ > 0) {
         generate_stratified_dice(
@@ -154,21 +148,23 @@ void RolloutStrategy::generate_stratified_dice(
 
 // Evaluate probs of the best move for a given roll, from the MOVER's perspective.
 // Returns evaluate_probs(chosen, board) for the best chosen move.
-// Uses vr_strat_ for both move selection and evaluation.
+// Uses the provided strategy for both move selection and evaluation.
 std::array<float, NUM_OUTPUTS> RolloutStrategy::best_move_probs(
-    const Board& board, int d1, int d2) const
+    const Board& board, int d1, int d2,
+    const Strategy& strat) const
 {
     thread_local std::vector<Board> candidates;
     possible_boards(board, d1, d2, candidates);
-    return best_move_probs_for_candidates(board, candidates);
+    return best_move_probs_for_candidates(board, candidates, strat);
 }
 
 std::array<float, NUM_OUTPUTS> RolloutStrategy::best_move_probs_for_candidates(
-    const Board& board, const std::vector<Board>& candidates, int* best_index) const
+    const Board& board, const std::vector<Board>& candidates,
+    const Strategy& strat, int* best_index) const
 {
     if (candidates.empty()) {
         if (best_index) *best_index = -1;
-        return vr_strat_->evaluate_probs(board, board);
+        return strat.evaluate_probs(board, board);
     }
 
     if (candidates.size() == 1) {
@@ -177,10 +173,11 @@ std::array<float, NUM_OUTPUTS> RolloutStrategy::best_move_probs_for_candidates(
         if (r != GameResult::NOT_OVER) {
             return terminal_probs(r);
         }
-        return vr_strat_->evaluate_probs(candidates[0], board);
+        return strat.evaluate_probs(candidates[0], board);
     }
 
-    if (base_gps_ && config_.vr_ply == 0) {
+    // Fast batch path for 0-ply GamePlanStrategy
+    if (base_gps_ && &strat == base_.get()) {
         std::array<float, NUM_OUTPUTS> best_probs{};
         int idx = base_gps_->batch_evaluate_candidates_best_prob(
             candidates, board, nullptr, &best_probs);
@@ -199,7 +196,7 @@ std::array<float, NUM_OUTPUTS> RolloutStrategy::best_move_probs_for_candidates(
             probs = terminal_probs(r);
             eq = static_cast<double>(static_cast<int>(r));
         } else {
-            probs = vr_strat_->evaluate_probs(candidates[i], board);
+            probs = strat.evaluate_probs(candidates[i], board);
             eq = NeuralNetwork::compute_equity(probs);
         }
         if (eq > best_eq) {
@@ -209,10 +206,6 @@ std::array<float, NUM_OUTPUTS> RolloutStrategy::best_move_probs_for_candidates(
         }
     }
     return best_probs;
-}
-
-double RolloutStrategy::best_move_equity(const Board& board, int d1, int d2) const {
-    return NeuralNetwork::compute_equity(best_move_probs(board, d1, d2));
 }
 
 // ======================== Single Trial ========================
@@ -233,7 +226,7 @@ RolloutStrategy::TrialResult RolloutStrategy::run_trial(
     // VR luck accumulated in starting player's probability space.
     std::array<double, NUM_OUTPUTS> accumulated_luck = {0, 0, 0, 0, 0};
     double scalar_eq_luck = 0.0;
-    bool vr_enabled = (vr_strat_ != nullptr);
+    bool vr_enabled = vr_enabled_;
     int truncation = (config_.truncation_depth > 0) ? config_.truncation_depth : 9999;
 
     // start_board is POST-move from starting player's perspective.
@@ -243,15 +236,18 @@ RolloutStrategy::TrialResult RolloutStrategy::run_trial(
     for (int move_num = 0; move_num < truncation && move_num < max_moves; ++move_num) {
         bool is_starting_players_turn = (move_num % 2 == 1);
 
-    // Once contact is broken (pure race), 0-ply is nearly perfect.
-    // Use base strategy for both decisions and VR — much cheaper.
-    bool use_base = (move_num >= config_.late_threshold) || is_race(board);
+        // Once contact is broken (pure race), 0-ply is nearly perfect.
+        // Use base strategy for both decisions and VR — much cheaper.
+        bool use_base = (move_num >= config_.late_threshold) || is_race(board);
 
-    // Step 1: VR mean — average best_move_probs across all 36 rolls.
-    // best_move_probs returns probs from MOVER's perspective.
-    std::array<double, NUM_OUTPUTS> mean_mover_probs = {0, 0, 0, 0, 0};
-    std::array<int, ALL_ROLLS.size()> best_candidate_idx{};
-    double mean_mover_equity = 0.0;
+        // Pick the strategy for this half-move (used for BOTH decisions and VR).
+        const auto& current_strat = use_base ? *base_ : *decision_strat_;
+
+        // Step 1: VR mean — average best_move_probs across all 36 rolls.
+        // best_move_probs returns probs from MOVER's perspective.
+        std::array<double, NUM_OUTPUTS> mean_mover_probs = {0, 0, 0, 0, 0};
+        std::array<int, ALL_ROLLS.size()> best_candidate_idx{};
+        double mean_mover_equity = 0.0;
 
         int d1 = dice_seq[move_num].first;
         int d2 = dice_seq[move_num].second;
@@ -261,16 +257,16 @@ RolloutStrategy::TrialResult RolloutStrategy::run_trial(
             possible_boards(board, ALL_ROLLS[i].d1, ALL_ROLLS[i].d2, move_candidates[i]);
         }
 
-    if (vr_enabled) {
-            bool reuse_vr_idx = (config_.vr_ply == 0) && base_gps_ &&
-                                (config_.decision_ply == 0 || use_base);
+        // VR uses the SAME strategy as decision-making for consistency.
+        bool can_reuse_idx = vr_enabled && use_base && base_gps_;
 
+        if (vr_enabled) {
             for (size_t i = 0; i < ALL_ROLLS.size(); ++i) {
                 int best_idx = -1;
                 auto mover_probs = best_move_probs_for_candidates(
-                    board, move_candidates[i],
-                    reuse_vr_idx ? &best_idx : nullptr);
-                if (reuse_vr_idx) {
+                    board, move_candidates[i], current_strat,
+                    can_reuse_idx ? &best_idx : nullptr);
+                if (can_reuse_idx) {
                     best_candidate_idx[i] = best_idx;
                 }
                 for (int k = 0; k < NUM_OUTPUTS; ++k) {
@@ -287,36 +283,31 @@ RolloutStrategy::TrialResult RolloutStrategy::run_trial(
                 + mean_mover_probs[2] - mean_mover_probs[4];
         }
 
-    int a = d1;
-    int b = d2;
-    if (a > b) std::swap(a, b);
-    int actual_idx = kOrderedRollToIndex[a][b];
-    if (actual_idx < 0) {
-        // Should never happen for valid dice, but keep deterministic fallback.
-        actual_idx = 0;
-    }
-
-    const auto& candidates = move_candidates[actual_idx];
-    const bool can_use_cached_actual =
-        vr_enabled && (config_.decision_ply == 0 || use_base);
-    const int cached_actual_idx = best_candidate_idx[actual_idx];
-
-    Board chosen;
-    if (candidates.empty()) {
-        chosen = board;
-    } else if (candidates.size() == 1) {
-        chosen = candidates[0];
-    } else {
-        int idx = -1;
-        if (can_use_cached_actual && cached_actual_idx >= 0 &&
-            cached_actual_idx < static_cast<int>(candidates.size())) {
-            idx = cached_actual_idx;
-        } else {
-            const auto& strat = use_base ? *base_ : *decision_strat_;
-            idx = strat.best_move_index(candidates, board);
+        int a = d1;
+        int b = d2;
+        if (a > b) std::swap(a, b);
+        int actual_idx = kOrderedRollToIndex[a][b];
+        if (actual_idx < 0) {
+            actual_idx = 0;
         }
-        chosen = candidates[idx];
-    }
+
+        const auto& candidates = move_candidates[actual_idx];
+
+        Board chosen;
+        if (candidates.empty()) {
+            chosen = board;
+        } else if (candidates.size() == 1) {
+            chosen = candidates[0];
+        } else {
+            int idx = -1;
+            if (can_reuse_idx && best_candidate_idx[actual_idx] >= 0 &&
+                best_candidate_idx[actual_idx] < static_cast<int>(candidates.size())) {
+                idx = best_candidate_idx[actual_idx];
+            } else {
+                idx = current_strat.best_move_index(candidates, board);
+            }
+            chosen = candidates[idx];
+        }
 
         // Step 3: VR luck — evaluate actual move from MOVER's perspective,
         // compute luck in mover's space, then cross-map to SP.
@@ -326,7 +317,7 @@ RolloutStrategy::TrialResult RolloutStrategy::run_trial(
             if (r != GameResult::NOT_OVER) {
                 actual_mover_probs = terminal_probs(r);
             } else {
-                actual_mover_probs = vr_strat_->evaluate_probs(chosen, board);
+                actual_mover_probs = current_strat.evaluate_probs(chosen, board);
             }
             double actual_mover_eq = NeuralNetwork::compute_equity(actual_mover_probs);
 
@@ -339,23 +330,16 @@ RolloutStrategy::TrialResult RolloutStrategy::run_trial(
 
             // Cross-map luck to starting player's space
             if (is_starting_players_turn) {
-                // Mover is SP: luck maps directly
                 for (int k = 0; k < NUM_OUTPUTS; ++k) {
                     accumulated_luck[k] += luck_mover[k];
                 }
                 scalar_eq_luck += luck_eq;
             } else {
-                // Mover is opponent: cross-map via invert_probs relationship
-                // SP's P(win) luck = -(opp's P(win) luck)
-                // SP's P(gw) luck = opp's P(gl) luck (they swap)
-                // SP's P(bw) luck = opp's P(bl) luck (they swap)
-                // SP's P(gl) luck = opp's P(gw) luck
-                // SP's P(bl) luck = opp's P(bw) luck
-                accumulated_luck[0] -= luck_mover[0];  // win
-                accumulated_luck[1] += luck_mover[3];   // gw ← opp gl
-                accumulated_luck[2] += luck_mover[4];   // bw ← opp bl
-                accumulated_luck[3] += luck_mover[1];   // gl ← opp gw
-                accumulated_luck[4] += luck_mover[2];   // bl ← opp bw
+                accumulated_luck[0] -= luck_mover[0];
+                accumulated_luck[1] += luck_mover[3];
+                accumulated_luck[2] += luck_mover[4];
+                accumulated_luck[3] += luck_mover[1];
+                accumulated_luck[4] += luck_mover[2];
                 scalar_eq_luck -= luck_eq;
             }
         }
@@ -495,8 +479,8 @@ RolloutResult RolloutStrategy::run_trials_parallel(
     // Allocate per-trial results
     std::vector<TrialResult> trial_results(n_trials);
 
-    if (config_.decision_ply == 0 && config_.vr_ply <= 0) {
-        // For fixed-depth shallow rollout (decision_ply/vr_ply == 0) and short
+    if (config_.decision_ply == 0) {
+        // For fixed-depth shallow rollout (decision_ply == 0) and short
         // batches, static partitioning is often faster than atomic work stealing.
 #ifdef _WIN32
         struct ThreadArg {
@@ -681,7 +665,7 @@ void RolloutStrategy::run_cubeful_trial(
     }
 
     Board board = pre_roll_board;  // Mover's perspective (pre-roll)
-    bool vr_enabled = (vr_strat_ != nullptr);
+    bool vr_enabled = vr_enabled_;
     int truncation = (config_.truncation_depth > 0) ? config_.truncation_depth : 9999;
     const bool is_match = !branches[0].cube.is_money();
 
@@ -774,16 +758,17 @@ void RolloutStrategy::run_cubeful_trial(
         bool race_for_x = is_race(board);
         float x = cube_efficiency(board, race_for_x);
 
-        if (vr_enabled) {
-            bool reuse_idx = (config_.vr_ply == 0) && base_gps_ &&
-                             (config_.decision_ply == 0 || use_base);
+        // Pick the strategy for this half-move (used for BOTH decisions and VR).
+        const auto& current_strat = use_base ? *base_ : *decision_strat_;
+        bool can_reuse_idx = vr_enabled && use_base && base_gps_;
 
+        if (vr_enabled) {
             for (size_t i = 0; i < ALL_ROLLS.size(); ++i) {
                 int idx = -1;
                 roll_best_probs[i] = best_move_probs_for_candidates(
-                    board, move_candidates[i],
-                    reuse_idx ? &idx : nullptr);
-                if (reuse_idx) best_candidate_idx[i] = idx;
+                    board, move_candidates[i], current_strat,
+                    can_reuse_idx ? &idx : nullptr);
+                if (can_reuse_idx) best_candidate_idx[i] = idx;
             }
 
             // Per-branch cubeful equity VR
@@ -868,8 +853,6 @@ void RolloutStrategy::run_cubeful_trial(
         if (actual_idx < 0) actual_idx = 0;
 
         const auto& candidates = move_candidates[actual_idx];
-        const bool can_reuse = vr_enabled && (config_.decision_ply == 0 || use_base);
-        const int cached_idx = best_candidate_idx[actual_idx];
 
         Board chosen;
         if (candidates.empty()) {
@@ -878,12 +861,11 @@ void RolloutStrategy::run_cubeful_trial(
             chosen = candidates[0];
         } else {
             int idx;
-            if (can_reuse && cached_idx >= 0 &&
-                cached_idx < static_cast<int>(candidates.size())) {
-                idx = cached_idx;
+            if (can_reuse_idx && best_candidate_idx[actual_idx] >= 0 &&
+                best_candidate_idx[actual_idx] < static_cast<int>(candidates.size())) {
+                idx = best_candidate_idx[actual_idx];
             } else {
-                const auto& strat = use_base ? *base_ : *decision_strat_;
-                idx = strat.best_move_index(candidates, board);
+                idx = current_strat.best_move_index(candidates, board);
             }
             chosen = candidates[idx];
         }
