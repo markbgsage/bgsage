@@ -225,8 +225,9 @@ analyzer = BgBotAnalyzer(eval_level="2ply", cubeful=True)
 cube = analyzer.cube_action(board, cube_value=1, cube_owner="centered")
 # cube: CubeActionResult with .equity_nd, .equity_dt, .equity_dp,
 #   .should_double, .should_take, .optimal_action, .probs, .cubeless_equity
+# jacoby=True by default for unlimited games; pass jacoby=False to disable
 
-# Match play:
+# Match play (Jacoby auto-disabled):
 cube = analyzer.cube_action(board, cube_value=1, cube_owner="centered",
                              away1=5, away2=3, is_crawford=False)
 ```
@@ -247,9 +248,10 @@ positions = [{"board": b, "cube_value": 1, "cube_owner": "centered",
 **C++** — `evaluate_cube_decision()` (0-ply), `cube_decision_nply()` (N-ply),
 `cube_decision_rollout()`:
 ```cpp
-// 0-ply: evaluate_cube_decision(checkers, cube_value, owner, weight_args...)
-// N-ply: cube_decision_nply(checkers, cube_value, owner, n_plies, weight_args...)
-// Rollout: cube_decision_rollout(checkers, cube_value, owner, weight_args..., config...)
+// 0-ply: evaluate_cube_decision(checkers, cube_value, owner, weight_args..., jacoby=false)
+// N-ply: cube_decision_nply(checkers, cube_value, owner, n_plies, weight_args..., jacoby=false)
+// Rollout: cube_decision_rollout(checkers, cube_value, owner, weight_args..., config..., jacoby=false)
+// All accept optional jacoby=true to enable Jacoby rule for money games
 ```
 
 C++ batch pre-roll: `bgbot_cpp.batch_evaluate_positions(positions, strategy, n_threads)`
@@ -507,17 +509,36 @@ decisions via `cube_decision_0ply()` at each half-move; double/pass terminates
 the branch immediately. VR luck tracked in cubeful value space per-branch.
 Match play works entirely in MWC space (`cl2cf_match`, `cubeless_mwc`, `dp_mwc`),
 with `away1/away2` swapped at each perspective flip. Money game branches use
-equity-based logic unchanged.
+equity-based logic unchanged. Jacoby rule is propagated through `CubeInfo` on
+each branch; VR luck, terminal payoffs, and truncation all respect `jacoby_active()`.
 
 ## Doubling Cube
 
-Janowski interpolation for both money games and match play. Cube efficiency:
-0.68 contact, pip-dependent for race (unchanged for match play).
+Janowski interpolation for both money games and match play. Optional Jacoby rule
+for unlimited games (default on in Python API). Cube efficiency: 0.68 contact,
+pip-dependent for race (unchanged for match play).
+
+### Jacoby Rule
+
+Optional rule for unlimited (money) games: while the cube remains centered (never
+doubled), gammons and backgammons count as single wins/losses only. Once either
+player doubles (cube is turned), gammon values are restored. Does not apply to
+match play.
+
+**Implementation:** `CubeInfo` carries a `bool jacoby` flag. `CubeInfo::jacoby_active()`
+returns true only when: `jacoby && is_money() && owner == CENTERED`. When active:
+W=1, L=1, dead-cube equity = `2*P(win) - 1`. The DT branch turns the cube →
+`jacoby_active()` automatically becomes false (no explicit deactivation needed).
+
+**Defaults:** Python public API defaults `jacoby=True`. C++ bindings default
+`jacoby=false`. Auto-disabled when match play params are present.
 
 ### Money Game
 
 Three equities compared: ND (no double), DT (double/take), DP (double/pass = +1.0).
 Double if `min(DT, DP) > ND`. Opponent takes if `DT <= DP`.
+When Jacoby is active, ND uses W=1/L=1 (gammons zeroed); DT always has
+`jacoby_active()=false` since the cube is turned.
 
 ### N-Ply Cubeful Algorithm (Evaluate-All-and-Decide)
 
@@ -652,6 +673,7 @@ We (and GNUbg) call raw NN evaluation "0-ply". XG calls it "1-ply". So XG's 2-pl
 - **gpw**: Game plan weight — gradient multiplier for matching positions in SL
 - **TINY filter**: Default move filter (5 moves, 0.08 threshold)
 - **VR**: Variance Reduction — luck-tracking for rollout noise reduction
+- **Jacoby rule**: Optional money game rule — gammons/backgammons count as single while cube is centered. Default on in Python API, auto-disabled for match play. `CubeInfo::jacoby_active()` checks `jacoby && is_money() && owner == CENTERED`.
 - **Janowski**: Cubeless-to-cubeful equity interpolation
 - **ND/DT/DP**: No Double / Double-Take / Double-Pass
 - **MET**: Match Equity Table — lookup table of match-winning probabilities at each score
