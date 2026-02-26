@@ -1808,7 +1808,8 @@ PYBIND11_MODULE(bgbot_cpp, m) {
                                         int n_h_priming,
                                         int n_h_anchoring,
                                         int away1, int away2, bool is_crawford,
-                                        float cube_x_override, bool jacoby) {
+                                        float cube_x_override, bool jacoby,
+                                        bool beaver) {
         Board board = list_to_board(checkers);
         GamePlanStrategy strat(purerace_w, racing_w, attacking_w, priming_w, anchoring_w,
                                n_h_purerace, n_h_racing, n_h_attacking, n_h_priming, n_h_anchoring);
@@ -1823,7 +1824,7 @@ PYBIND11_MODULE(bgbot_cpp, m) {
         float x = (cube_x_override >= 0.0f) ? cube_x_override : cube_efficiency(board, race);
 
         // Cube decision
-        CubeInfo ci{cube_value, owner, {away1, away2, is_crawford}, cube_x_override, jacoby};
+        CubeInfo ci{cube_value, owner, {away1, away2, is_crawford}, cube_x_override, jacoby, beaver};
         auto cd = cube_decision_0ply(pre_roll_probs, ci, x);
 
         // Cubeless equity
@@ -1839,10 +1840,11 @@ PYBIND11_MODULE(bgbot_cpp, m) {
         result["should_double"] = cd.should_double;
         result["should_take"] = cd.should_take;
         result["optimal_equity"] = cd.optimal_equity;
+        result["is_beaver"] = cd.is_beaver;
         result["is_race"] = race;
         return result;
     }, "Evaluate pre-roll probs and cube decision for a position.\n"
-       "Returns dict with probs, cubeless_equity, cube_x, equity_nd/dt/dp, should_double, should_take, optimal_equity.",
+       "Returns dict with probs, cubeless_equity, cube_x, equity_nd/dt/dp, should_double, should_take, optimal_equity, is_beaver.",
        py::arg("checkers"),
        py::arg("cube_value") = 1,
        py::arg("owner") = CubeOwner::CENTERED,
@@ -1857,7 +1859,8 @@ PYBIND11_MODULE(bgbot_cpp, m) {
        py::arg("n_hidden_priming") = 400,
        py::arg("n_hidden_anchoring") = 400,
        py::arg("away1") = 0, py::arg("away2") = 0, py::arg("is_crawford") = false,
-       py::arg("cube_x_override") = -1.0f, py::arg("jacoby") = false);
+       py::arg("cube_x_override") = -1.0f, py::arg("jacoby") = false,
+       py::arg("beaver") = false);
 
     // N-ply cube decision (standalone — creates its own strategy, serial by default)
     m.def("cube_decision_nply", [](const std::vector<int>& checkers,
@@ -1877,11 +1880,12 @@ PYBIND11_MODULE(bgbot_cpp, m) {
                                     float filter_threshold,
                                     int n_threads,
                                     int away1, int away2, bool is_crawford,
-                                    float cube_x_override, bool jacoby) {
+                                    float cube_x_override, bool jacoby,
+                                    bool beaver) {
         Board board = list_to_board(checkers);
         GamePlanStrategy strat(purerace_w, racing_w, attacking_w, priming_w, anchoring_w,
                                n_h_purerace, n_h_racing, n_h_attacking, n_h_priming, n_h_anchoring);
-        CubeInfo ci{cube_value, owner, {away1, away2, is_crawford}, cube_x_override, jacoby};
+        CubeInfo ci{cube_value, owner, {away1, away2, is_crawford}, cube_x_override, jacoby, beaver};
         MoveFilter filter{filter_max_moves, filter_threshold};
 
         CubeDecision cd;
@@ -1910,10 +1914,11 @@ PYBIND11_MODULE(bgbot_cpp, m) {
         result["should_double"] = cd.should_double;
         result["should_take"] = cd.should_take;
         result["optimal_equity"] = cd.optimal_equity;
+        result["is_beaver"] = cd.is_beaver;
         result["n_plies"] = n_plies;
         return result;
     }, "N-ply cube decision for a pre-roll position.\n"
-       "Returns dict with probs, cubeless_equity, equity_nd/dt/dp, should_double, should_take, optimal_equity.",
+       "Returns dict with probs, cubeless_equity, equity_nd/dt/dp, should_double, should_take, optimal_equity, is_beaver.",
        py::arg("checkers"),
        py::arg("cube_value") = 1,
        py::arg("owner") = CubeOwner::CENTERED,
@@ -1932,7 +1937,8 @@ PYBIND11_MODULE(bgbot_cpp, m) {
        py::arg("filter_threshold") = 0.08f,
        py::arg("n_threads") = 1,
        py::arg("away1") = 0, py::arg("away2") = 0, py::arg("is_crawford") = false,
-       py::arg("cube_x_override") = -1.0f, py::arg("jacoby") = false);
+       py::arg("cube_x_override") = -1.0f, py::arg("jacoby") = false,
+       py::arg("beaver") = false);
 
     // Cubeful rollout: simulates cube decisions during trial games.
     // Two branches (ND and DT) share the same board evolution and dice sequences.
@@ -1960,7 +1966,8 @@ PYBIND11_MODULE(bgbot_cpp, m) {
                                        int late_threshold,
                                        int away1, int away2, bool is_crawford,
                                        float cube_x_override,
-                                       bool enable_vr, bool jacoby) {
+                                       bool enable_vr, bool jacoby,
+                                       bool beaver) {
         Board board = list_to_board(checkers);
         bool race = is_race(board);
 
@@ -1979,7 +1986,7 @@ PYBIND11_MODULE(bgbot_cpp, m) {
         config.late_threshold = late_threshold;
         auto rollout = std::make_shared<RolloutStrategy>(base, config);
 
-        CubeInfo ci{cube_value, owner, {away1, away2, is_crawford}, cube_x_override, jacoby};
+        CubeInfo ci{cube_value, owner, {away1, away2, is_crawford}, cube_x_override, jacoby, beaver};
 
         RolloutStrategy::CubefulRolloutResult cfr;
         {
@@ -2030,12 +2037,29 @@ PYBIND11_MODULE(bgbot_cpp, m) {
         } else {
             // Money game: existing logic
             equity_dp = 1.0f;
-            float best_double = std::min(static_cast<float>(cfr.dt_equity), equity_dp);
-            should_double = (best_double > static_cast<float>(cfr.nd_equity));
-            should_take = (static_cast<float>(cfr.dt_equity) <= equity_dp);
+            float actual_dt = static_cast<float>(cfr.dt_equity);
             equity_nd = static_cast<float>(cfr.nd_equity);
-            equity_dt = static_cast<float>(cfr.dt_equity);
+
+            // Beaver: if enabled and DT < 0, opponent beavers (DB = 2*DT)
+            bool is_beaver_flag = false;
+            if (ci.beaver && actual_dt < 0.0f) {
+                equity_dt = 2.0f * actual_dt;  // DB equity
+                is_beaver_flag = true;
+            } else {
+                equity_dt = actual_dt;
+            }
+
+            float best_double = std::min(equity_dt, equity_dp);
+            should_double = (best_double > equity_nd);
+            should_take = (equity_dt <= equity_dp);
             optimal_equity = should_double ? best_double : equity_nd;
+        }
+
+        // Determine is_beaver for non-money path (always false for match play)
+        bool is_beaver_result = false;
+        if (ci.is_money() && ci.beaver) {
+            float actual_dt_check = static_cast<float>(cfr.dt_equity);
+            is_beaver_result = (actual_dt_check < 0.0f);
         }
 
         py::dict result;
@@ -2050,6 +2074,7 @@ PYBIND11_MODULE(bgbot_cpp, m) {
         result["should_double"] = should_double;
         result["should_take"] = should_take;
         result["optimal_equity"] = optimal_equity;
+        result["is_beaver"] = is_beaver_result;
         result["is_race"] = race;
         return result;
     }, "Cubeful rollout: simulates cube decisions during trial games.\n"
@@ -2079,7 +2104,8 @@ PYBIND11_MODULE(bgbot_cpp, m) {
        py::arg("away1") = 0, py::arg("away2") = 0, py::arg("is_crawford") = false,
        py::arg("cube_x_override") = -1.0f,
        py::arg("enable_vr") = true,
-       py::arg("jacoby") = false);
+       py::arg("jacoby") = false,
+       py::arg("beaver") = false);
 
     // ======================== Batch position evaluation ========================
 
@@ -2103,7 +2129,8 @@ PYBIND11_MODULE(bgbot_cpp, m) {
             py::list positions,
             std::shared_ptr<MultiPlyStrategy> strategy,
             int n_threads,
-            bool jacoby) {
+            bool jacoby,
+            bool beaver) {
         // Parse positions into C++ structs
         struct PosInput {
             Board board;
@@ -2157,7 +2184,7 @@ PYBIND11_MODULE(bgbot_cpp, m) {
 
                 // Cubeful equity via Janowski (unified money/match)
                 float x = cube_efficiency(inp.board, race);
-                CubeInfo ci{inp.cube_value, inp.owner, inp.match, -1.0f, jacoby};
+                CubeInfo ci{inp.cube_value, inp.owner, inp.match, -1.0f, jacoby, beaver};
                 out.cubeful_equity = cl2cf(out.probs, ci, x);
 
                 // Cube decision
@@ -2207,9 +2234,17 @@ PYBIND11_MODULE(bgbot_cpp, m) {
             d["equity_dp"] = cd.equity_dp;
             d["should_double"] = cd.should_double;
             d["should_take"] = cd.should_take;
-            const char* action = cd.should_double
-                ? (cd.should_take ? "Double/Take" : "Double/Pass")
-                : "No Double";
+            d["is_beaver"] = cd.is_beaver;
+            const char* action;
+            if (!cd.should_double) {
+                action = "No Double";
+            } else if (cd.is_beaver) {
+                action = "Double/Beaver";
+            } else if (cd.should_take) {
+                action = "Double/Take";
+            } else {
+                action = "Double/Pass";
+            }
             d["optimal_action"] = action;
             out.append(d);
         }
@@ -2221,14 +2256,16 @@ PYBIND11_MODULE(bgbot_cpp, m) {
        py::arg("positions"),
        py::arg("strategy"),
        py::arg("n_threads") = 0,
-       py::arg("jacoby") = false);
+       py::arg("jacoby") = false,
+       py::arg("beaver") = false);
 
     // Overload that takes a GamePlanStrategy (0-ply) directly
     m.def("batch_evaluate_positions", [](
             py::list positions,
             GamePlanStrategy& strategy,
             int n_threads,
-            bool jacoby) {
+            bool jacoby,
+            bool beaver) {
         struct PosInput {
             Board board;
             int cube_value;
@@ -2278,7 +2315,7 @@ PYBIND11_MODULE(bgbot_cpp, m) {
                 out.cubeless_equity = cubeless_equity(out.probs);
 
                 float x = cube_efficiency(inp.board, race);
-                CubeInfo ci{inp.cube_value, inp.owner, inp.match, -1.0f, jacoby};
+                CubeInfo ci{inp.cube_value, inp.owner, inp.match, -1.0f, jacoby, beaver};
                 out.cubeful_equity = cl2cf(out.probs, ci, x);
 
                 out.cube_decision = cube_decision_0ply(out.probs, ci, x);
@@ -2321,9 +2358,17 @@ PYBIND11_MODULE(bgbot_cpp, m) {
             d["equity_dp"] = cd.equity_dp;
             d["should_double"] = cd.should_double;
             d["should_take"] = cd.should_take;
-            const char* action = cd.should_double
-                ? (cd.should_take ? "Double/Take" : "Double/Pass")
-                : "No Double";
+            d["is_beaver"] = cd.is_beaver;
+            const char* action;
+            if (!cd.should_double) {
+                action = "No Double";
+            } else if (cd.is_beaver) {
+                action = "Double/Beaver";
+            } else if (cd.should_take) {
+                action = "Double/Take";
+            } else {
+                action = "Double/Pass";
+            }
             d["optimal_action"] = action;
             out.append(d);
         }
@@ -2335,7 +2380,8 @@ PYBIND11_MODULE(bgbot_cpp, m) {
        py::arg("positions"),
        py::arg("strategy"),
        py::arg("n_threads") = 0,
-       py::arg("jacoby") = false);
+       py::arg("jacoby") = false,
+       py::arg("beaver") = false);
 
     // ======================== Batch post-move position evaluation ========================
 

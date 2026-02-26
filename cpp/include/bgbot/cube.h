@@ -22,6 +22,7 @@ struct CubeInfo {
     MatchInfo match;                         // Default: {0,0,false} = money game
     float cube_x_override = -1.0f;          // If >= 0, override auto-detected cube efficiency
     bool jacoby = false;                     // Jacoby rule (money games only)
+    bool beaver = false;                     // Beaver rule (money games only)
 
     bool is_money() const { return match.is_money(); }
 
@@ -100,11 +101,12 @@ float cl2cf(const std::array<float, NUM_OUTPUTS>& probs,
 // Result of a cube decision analysis.
 struct CubeDecision {
     float equity_nd;      // No Double equity (normalized to cube=1)
-    float equity_dt;      // Double/Take equity (normalized to cube=1)
+    float equity_dt;      // Double/Take equity (or Double/Beaver if is_beaver)
     float equity_dp;      // Double/Pass equity (+1.0 for money, MET-based for match)
     bool should_double;   // True if doubling is correct
-    bool should_take;     // True if opponent should take (vs pass)
+    bool should_take;     // True if opponent should take (vs pass/beaver counts as take)
     float optimal_equity; // Cubeful equity after optimal play by both sides
+    bool is_beaver = false; // True if opponent would beaver (DT field = DB equity)
 };
 
 // Compute cube decision for a pre-roll position (0-ply).

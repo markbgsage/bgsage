@@ -165,6 +165,7 @@ class _CubelessBase:
             "should_double": bool(r["should_double"]),
             "should_take": bool(r["should_take"]),
             "optimal_equity": r["optimal_equity"],
+            "is_beaver": bool(r.get("is_beaver", False)),
             "cubeless_se": r.get("cubeless_se", None),
             "eval_level": eval_level,
         }
@@ -194,13 +195,13 @@ class _ZeroPlyAnalyzer(_CubelessBase):
 
     def cube_action_analytics(
         self, board, cube_value=1, cube_owner="centered",
-        away1=0, away2=0, is_crawford=False, jacoby=False,
+        away1=0, away2=0, is_crawford=False, jacoby=False, beaver=False,
     ) -> dict:
         owner = resolve_owner(cube_owner)
         r = bgbot_cpp.evaluate_cube_decision(
             board, cube_value, owner, *self._weights.weight_args,
             away1=away1, away2=away2, is_crawford=is_crawford,
-            jacoby=jacoby,
+            jacoby=jacoby, beaver=beaver,
         )
         return self._format_cube_result(r, eval_level="0-ply")
 
@@ -278,14 +279,14 @@ class _MultiPlyAnalyzer(_CubelessBase):
 
     def cube_action_analytics(
         self, board, cube_value=1, cube_owner="centered",
-        away1=0, away2=0, is_crawford=False, jacoby=False,
+        away1=0, away2=0, is_crawford=False, jacoby=False, beaver=False,
     ) -> dict:
         owner = resolve_owner(cube_owner)
         r = bgbot_cpp.cube_decision_nply(
             board, cube_value, owner, self._n_plies, *self._weights.weight_args,
             n_threads=self._parallel_threads,
             away1=away1, away2=away2, is_crawford=is_crawford,
-            jacoby=jacoby,
+            jacoby=jacoby, beaver=beaver,
         )
         result = self._format_cube_result(r, eval_level=f"{self._n_plies}-ply")
 
@@ -394,14 +395,14 @@ class _RolloutAnalyzer(_CubelessBase):
 
     def cube_action_analytics(
         self, board, cube_value=1, cube_owner="centered",
-        away1=0, away2=0, is_crawford=False, jacoby=False,
+        away1=0, away2=0, is_crawford=False, jacoby=False, beaver=False,
     ) -> dict:
         owner = resolve_owner(cube_owner)
         r = bgbot_cpp.cube_decision_rollout(
             board, cube_value, owner, *self._weights.weight_args,
             **self._rollout_config,
             away1=away1, away2=away2, is_crawford=is_crawford,
-            jacoby=jacoby,
+            jacoby=jacoby, beaver=beaver,
         )
         return self._format_cube_result(r, eval_level="Rollout")
 
@@ -538,12 +539,12 @@ class _CubefulAnalyzer:
 
     def cube_action_analytics(
         self, board, cube_value=1, cube_owner="centered",
-        away1=0, away2=0, is_crawford=False, jacoby=False,
+        away1=0, away2=0, is_crawford=False, jacoby=False, beaver=False,
     ) -> dict:
         return self._inner.cube_action_analytics(
             board, cube_value, cube_owner,
             away1=away1, away2=away2, is_crawford=is_crawford,
-            jacoby=jacoby,
+            jacoby=jacoby, beaver=beaver,
         )
 
 
@@ -578,9 +579,12 @@ def _dict_to_move_analysis(d: dict, include_game_plans: bool = False) -> MoveAna
     )
 
 
-def _optimal_action(should_double: bool, should_take: bool) -> str:
+def _optimal_action(should_double: bool, should_take: bool,
+                    is_beaver: bool = False) -> str:
     if not should_double:
         return "No Double"
+    if is_beaver:
+        return "Double/Beaver"
     if should_take:
         return "Double/Take"
     return "Double/Pass"
@@ -777,6 +781,7 @@ class BgBotAnalyzer:
         away2: int = 0,
         is_crawford: bool = False,
         jacoby: bool = True,
+        beaver: bool = True,
     ) -> CubeActionResult:
         """Analyze the cube decision for a pre-roll position.
 
@@ -792,15 +797,20 @@ class BgBotAnalyzer:
             is_crawford: True if this is the Crawford game.
             jacoby: If True, gammons/backgammons don't count when cube is
                 centered (money games only). Auto-disabled for match play.
+            beaver: If True, opponent can beaver (redouble while retaining
+                ownership) after being doubled. Money games only.
+                Auto-disabled for match play.
         """
         if away1 > 0 or away2 > 0:
             jacoby = False
+            beaver = False
         raw = self._analyzer.cube_action_analytics(
             board, cube_value, cube_owner,
             away1=away1, away2=away2, is_crawford=is_crawford,
-            jacoby=jacoby,
+            jacoby=jacoby, beaver=beaver,
         )
         probs = Probabilities.from_list(raw["probs"])
+        is_beaver = raw.get("is_beaver", False)
         return CubeActionResult(
             probs=probs,
             cubeless_equity=raw["cubeless_equity"],
@@ -810,8 +820,10 @@ class BgBotAnalyzer:
             should_double=raw["should_double"],
             should_take=raw["should_take"],
             optimal_equity=raw["optimal_equity"],
-            optimal_action=_optimal_action(raw["should_double"], raw["should_take"]),
+            optimal_action=_optimal_action(
+                raw["should_double"], raw["should_take"], is_beaver),
             eval_level=raw["eval_level"],
+            is_beaver=is_beaver,
             cubeless_se=raw.get("cubeless_se"),
         )
 

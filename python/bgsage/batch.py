@@ -54,6 +54,7 @@ class PositionEval:
     should_double: bool
     should_take: bool
     optimal_action: str
+    is_beaver: bool = False
 
 
 def batch_evaluate(
@@ -65,6 +66,7 @@ def batch_evaluate(
     filter_max_moves: int = 5,
     filter_threshold: float = 0.08,
     jacoby: bool = True,
+    beaver: bool = True,
 ) -> list[PositionEval]:
     """Evaluate a batch of pre-roll positions in parallel.
 
@@ -88,6 +90,8 @@ def batch_evaluate(
         filter_threshold: Equity threshold for N-ply move filter.
         jacoby: If True, gammons/backgammons don't count when cube is
             centered (money games only). Auto-disabled for match play.
+        beaver: If True, opponent can beaver after being doubled
+            (money games only). Auto-disabled for match play.
 
     Returns:
         List of :class:`PositionEval`, one per input position.
@@ -110,15 +114,16 @@ def batch_evaluate(
         else:
             cpp_positions.append((board, cube_value, cube_owner))
 
-    # Auto-disable Jacoby for match play positions
+    # Auto-disable Jacoby and beaver for match play positions
     has_match = any(p.get("away1", 0) > 0 or p.get("away2", 0) > 0 for p in positions)
     effective_jacoby = jacoby and not has_match
+    effective_beaver = beaver and not has_match
 
     if eval_level == "0ply":
         strategy = bgbot_cpp.GamePlanStrategy(*weights.weight_args)
         raw_results = bgbot_cpp.batch_evaluate_positions(
             cpp_positions, strategy, n_threads,
-            jacoby=effective_jacoby,
+            jacoby=effective_jacoby, beaver=effective_beaver,
         )
     elif eval_level in ("1ply", "2ply", "3ply"):
         n_plies = int(eval_level[0])
@@ -134,7 +139,7 @@ def batch_evaluate(
         )
         raw_results = bgbot_cpp.batch_evaluate_positions(
             cpp_positions, strategy, n_threads,
-            jacoby=effective_jacoby,
+            jacoby=effective_jacoby, beaver=effective_beaver,
         )
     else:
         raise ValueError(
@@ -153,6 +158,7 @@ def batch_evaluate(
             should_double=bool(r["should_double"]),
             should_take=bool(r["should_take"]),
             optimal_action=r["optimal_action"],
+            is_beaver=bool(r.get("is_beaver", False)),
         )
         for r in raw_results
     ]
@@ -268,6 +274,7 @@ def batch_cube_action(
     filter_max_moves: int = 5,
     filter_threshold: float = 0.08,
     jacoby: bool = True,
+    beaver: bool = True,
 ) -> list[CubeActionResult]:
     """Evaluate cube decisions for a batch of pre-roll positions in parallel.
 
@@ -310,6 +317,7 @@ def batch_cube_action(
         filter_max_moves=filter_max_moves,
         filter_threshold=filter_threshold,
         jacoby=jacoby,
+        beaver=beaver,
     )
 
     n_plies = 0 if eval_level == "0ply" else int(eval_level[0])
@@ -331,6 +339,7 @@ def batch_cube_action(
             ),
             optimal_action=e.optimal_action,
             eval_level=level_label,
+            is_beaver=e.is_beaver,
         )
         for e in evals
     ]

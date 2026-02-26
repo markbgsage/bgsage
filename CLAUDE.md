@@ -248,10 +248,10 @@ positions = [{"board": b, "cube_value": 1, "cube_owner": "centered",
 **C++** — `evaluate_cube_decision()` (0-ply), `cube_decision_nply()` (N-ply),
 `cube_decision_rollout()`:
 ```cpp
-// 0-ply: evaluate_cube_decision(checkers, cube_value, owner, weight_args..., jacoby=false)
-// N-ply: cube_decision_nply(checkers, cube_value, owner, n_plies, weight_args..., jacoby=false)
-// Rollout: cube_decision_rollout(checkers, cube_value, owner, weight_args..., config..., jacoby=false)
-// All accept optional jacoby=true to enable Jacoby rule for money games
+// 0-ply: evaluate_cube_decision(checkers, cube_value, owner, weight_args..., jacoby=false, beaver=false)
+// N-ply: cube_decision_nply(checkers, cube_value, owner, n_plies, weight_args..., jacoby=false, beaver=false)
+// Rollout: cube_decision_rollout(checkers, cube_value, owner, weight_args..., config..., jacoby=false, beaver=false)
+// All accept optional jacoby/beaver to enable Jacoby/Beaver rules for money games
 ```
 
 C++ batch pre-roll: `bgbot_cpp.batch_evaluate_positions(positions, strategy, n_threads)`
@@ -533,12 +533,49 @@ W=1, L=1, dead-cube equity = `2*P(win) - 1`. The DT branch turns the cube →
 **Defaults:** Python public API defaults `jacoby=True`. C++ bindings default
 `jacoby=false`. Auto-disabled when match play params are present.
 
+### Beaver Rule
+
+Optional rule for unlimited (money) games: after being doubled, the opponent can
+immediately redouble (beaver) while retaining cube ownership. This punishes
+incorrect doubles where DT equity < 0 from the doubler's perspective.
+
+**Math:** DB (Double/Beaver) equity = 2 * DT equity. This is exact at all ply
+levels because `cl2cf_money()` returns equity normalized to cube=1, independent
+of absolute cube value. A beaver doubles the cube value but keeps the same
+ownership (OPPONENT), so the equity scales linearly. No third recursion branch
+is needed anywhere.
+
+**When does beaver apply?** When DT < 0 from the doubler's perspective. Since
+DB = 2*DT: when DT < 0, DB < DT < DP, so the opponent prefers beaver over
+take. When DT >= 0, DB >= DT, so take is better for the opponent — standard
+DT/DP logic applies.
+
+**Output:** `CubeDecision` has `bool is_beaver`. When `is_beaver=true`, the
+`equity_dt` field contains the DB equity (= 2*DT). `optimal_action` string:
+`"Double/Beaver"` when `is_beaver && should_double`. `should_take = true` when
+beaver applies (opponent IS accepting the double, plus beavering).
+
+**Implementation:** `CubeInfo` carries a `bool beaver` flag. Beaver logic is
+applied at the decision layer in `cube_decision_0ply_money()`, `get_ecf3()`
+(N-ply), `cube_decision_nply()` (top-level), and `cube_decision_rollout()`
+(binding). Rollout internal cube decisions via `cube_decision_0ply()` also
+respect the beaver flag; a beaver results in cube_value *= 4 (double + beaver).
+
+**Janowski is NOT affected** by beavers. The formulas (take point, cash point,
+live cube equity, cube efficiency) are unchanged. Beavers are an additional
+decision layer on top.
+
+**Defaults:** Python public API defaults `beaver=True`. C++ bindings default
+`beaver=false`. Auto-disabled when match play params are present.
+
 ### Money Game
 
 Three equities compared: ND (no double), DT (double/take), DP (double/pass = +1.0).
 Double if `min(DT, DP) > ND`. Opponent takes if `DT <= DP`.
 When Jacoby is active, ND uses W=1/L=1 (gammons zeroed); DT always has
 `jacoby_active()=false` since the cube is turned.
+When beaver is enabled and DT < 0, DB = 2*DT replaces DT in the decision:
+opponent chooses min(DB, DP) vs ND.
 
 ### N-Ply Cubeful Algorithm (Evaluate-All-and-Decide)
 
@@ -674,8 +711,9 @@ We (and GNUbg) call raw NN evaluation "0-ply". XG calls it "1-ply". So XG's 2-pl
 - **TINY filter**: Default move filter (5 moves, 0.08 threshold)
 - **VR**: Variance Reduction — luck-tracking for rollout noise reduction
 - **Jacoby rule**: Optional money game rule — gammons/backgammons count as single while cube is centered. Default on in Python API, auto-disabled for match play. `CubeInfo::jacoby_active()` checks `jacoby && is_money() && owner == CENTERED`.
+- **Beaver rule**: Optional money game rule — opponent can redouble while retaining cube after being doubled. Punishes bad doubles (DT < 0). DB = 2*DT. Default on in Python API, auto-disabled for match play.
 - **Janowski**: Cubeless-to-cubeful equity interpolation
-- **ND/DT/DP**: No Double / Double-Take / Double-Pass
+- **ND/DT/DP/DB**: No Double / Double-Take / Double-Pass / Double-Beaver
 - **MET**: Match Equity Table — lookup table of match-winning probabilities at each score
 - **MWC**: Match Winning Chance — probability of winning the match from a given score
 - **Crawford**: First game after a player reaches 1-away; no doubling allowed

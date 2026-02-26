@@ -754,7 +754,11 @@ void RolloutStrategy::run_cubeful_trial(
 
                 CubeDecision cd = cube_decision_0ply(mover_probs, branches[b].cube, x);
                 if (cd.should_double) {
-                    if (cd.should_take) {
+                    if (cd.is_beaver) {
+                        // Double/Beaver: cube goes to 4x, opponent retains ownership
+                        branches[b].cube.cube_value *= 4;
+                        branches[b].cube.owner = CubeOwner::OPPONENT;
+                    } else if (cd.should_take) {
                         // Double/Take: update cube state
                         branches[b].cube.cube_value *= 2;
                         branches[b].cube.owner = CubeOwner::OPPONENT;

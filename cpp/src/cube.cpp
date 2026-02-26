@@ -505,22 +505,31 @@ static CubeDecision cube_decision_0ply_money(
     // Double/Take equity: cubeful equity if cube is doubled and opponent takes.
     // After doubling, the opponent owns the cube at 2x the current value.
     // Jacoby is NOT active here — the cube has been turned, gammons count.
-    result.equity_dt = 2.0f * cl2cf_money(probs, CubeOwner::OPPONENT, cube_x, false);
+    float actual_dt = 2.0f * cl2cf_money(probs, CubeOwner::OPPONENT, cube_x, false);
+
+    // Beaver check: if beavers are allowed and DT < 0, the opponent beavers.
+    // DB = 2 * DT (beaver doubles the cube value, opponent retains ownership).
+    // This is exact for money games because cl2cf_money is cube-value-independent.
+    if (cube.beaver && actual_dt < 0.0f) {
+        result.equity_dt = 2.0f * actual_dt;  // DB equity
+        result.is_beaver = true;
+    } else {
+        result.equity_dt = actual_dt;
+        result.is_beaver = false;
+    }
 
     // Decision logic
     // If we double, the opponent picks the response that gives us LESS equity.
-    // So the effective equity of doubling = min(DT, DP).
-    // We should double if min(DT, DP) > ND.
+    // With beaver: opponent already chose min(DT, DB, DP) — result.equity_dt
+    // reflects the effective response (DB if beaver, DT otherwise).
     float best_double = std::min(result.equity_dt, result.equity_dp);
     result.should_double = (best_double > result.equity_nd);
 
-    // Should opponent take? Take if DT < DP (from doubler's perspective,
-    // opponent prefers to give us less equity)
+    // Should opponent take? Take if effective DT < DP (beaver counts as take)
     result.should_take = (result.equity_dt <= result.equity_dp);
 
     // Optimal equity after both sides play optimally
     if (result.should_double) {
-        // We double; opponent picks the option that gives us less equity
         result.optimal_equity = std::min(result.equity_dt, result.equity_dp);
     } else {
         result.optimal_equity = result.equity_nd;
@@ -705,6 +714,7 @@ static CubeInfo flip_cube_perspective(const CubeInfo& cube) {
     opp.match = cube.match.flip();
     opp.cube_x_override = cube.cube_x_override;
     opp.jacoby = cube.jacoby;
+    opp.beaver = cube.beaver;
     return opp;
 }
 
@@ -770,6 +780,12 @@ static void get_ecf3(
                 rDT = 2.0f * arCf[i + 1];  // Scale DT to cube=1
             } else {
                 rDT = arCf[i + 1];          // MWC space, no scaling
+            }
+
+            // Beaver: if enabled and DT < 0, opponent beavers (DB = 2*DT).
+            // Exact for money games (cl2cf_money is cube-value-independent).
+            if (is_money && aci[i].beaver && rDT < 0.0f) {
+                rDT = 2.0f * rDT;  // DB equity
             }
 
             // D/P value from the ND branch's cube state
@@ -1094,8 +1110,16 @@ CubeDecision cube_decision_nply(
 
     if (is_money) {
         result.equity_nd = arCubeful[0];
-        result.equity_dt = 2.0f * arCubeful[1];  // Scale DT to cube=1
+        float actual_dt = 2.0f * arCubeful[1];  // Scale DT to cube=1
         result.equity_dp = 1.0f;
+
+        // Beaver: if enabled and DT < 0, opponent beavers (DB = 2*DT).
+        if (cube.beaver && actual_dt < 0.0f) {
+            result.equity_dt = 2.0f * actual_dt;  // DB equity
+            result.is_beaver = true;
+        } else {
+            result.equity_dt = actual_dt;
+        }
     } else {
         int away1 = cube.match.away1;
         int away2 = cube.match.away2;

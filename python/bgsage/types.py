@@ -89,13 +89,14 @@ class CubeActionResult:
     probs: Probabilities        # Pre-roll cubeless probabilities
     cubeless_equity: float
     equity_nd: float            # No Double / Take equity
-    equity_dt: float            # Double / Take equity
+    equity_dt: float            # Double / Take equity (or Double / Beaver if is_beaver)
     equity_dp: float            # Double / Pass equity (+1.0 money game, MET-based for match)
     should_double: bool
     should_take: bool
     optimal_equity: float
-    optimal_action: str         # "No Double", "Double/Take", "Double/Pass"
+    optimal_action: str         # "No Double", "Double/Take", "Double/Pass", "Double/Beaver"
     eval_level: str
+    is_beaver: bool = False     # True if opponent would beaver (equity_dt = DB equity)
     cubeless_se: float | None = None  # Rollout standard error
 
 
