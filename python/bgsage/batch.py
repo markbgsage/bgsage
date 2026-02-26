@@ -64,6 +64,7 @@ def batch_evaluate(
     n_threads: int = 0,
     filter_max_moves: int = 5,
     filter_threshold: float = 0.08,
+    jacoby: bool = True,
 ) -> list[PositionEval]:
     """Evaluate a batch of pre-roll positions in parallel.
 
@@ -85,6 +86,8 @@ def batch_evaluate(
             (0 = auto-detect all cores).
         filter_max_moves: Max moves for N-ply move filter.
         filter_threshold: Equity threshold for N-ply move filter.
+        jacoby: If True, gammons/backgammons don't count when cube is
+            centered (money games only). Auto-disabled for match play.
 
     Returns:
         List of :class:`PositionEval`, one per input position.
@@ -107,10 +110,15 @@ def batch_evaluate(
         else:
             cpp_positions.append((board, cube_value, cube_owner))
 
+    # Auto-disable Jacoby for match play positions
+    has_match = any(p.get("away1", 0) > 0 or p.get("away2", 0) > 0 for p in positions)
+    effective_jacoby = jacoby and not has_match
+
     if eval_level == "0ply":
         strategy = bgbot_cpp.GamePlanStrategy(*weights.weight_args)
         raw_results = bgbot_cpp.batch_evaluate_positions(
             cpp_positions, strategy, n_threads,
+            jacoby=effective_jacoby,
         )
     elif eval_level in ("1ply", "2ply", "3ply"):
         n_plies = int(eval_level[0])
@@ -126,6 +134,7 @@ def batch_evaluate(
         )
         raw_results = bgbot_cpp.batch_evaluate_positions(
             cpp_positions, strategy, n_threads,
+            jacoby=effective_jacoby,
         )
     else:
         raise ValueError(
@@ -157,6 +166,7 @@ def batch_post_move_evaluate(
     n_threads: int = 0,
     filter_max_moves: int = 5,
     filter_threshold: float = 0.08,
+    jacoby: bool = True,
 ) -> list[PostMoveAnalysis]:
     """Evaluate a batch of post-move positions in parallel.
 
@@ -182,6 +192,8 @@ def batch_post_move_evaluate(
             (0 = auto-detect all cores).
         filter_max_moves: Max moves for N-ply move filter.
         filter_threshold: Equity threshold for N-ply move filter.
+        jacoby: If True, gammons/backgammons don't count when cube is
+            centered (money games only). Auto-disabled for match play.
 
     Returns:
         List of :class:`~bgsage.types.PostMoveAnalysis`, one per input position.
@@ -204,10 +216,15 @@ def batch_post_move_evaluate(
         else:
             cpp_positions.append((board, cube_owner))
 
+    # Auto-disable Jacoby for match play positions
+    has_match = any(p.get("away1", 0) > 0 or p.get("away2", 0) > 0 for p in positions)
+    effective_jacoby = jacoby and not has_match
+
     if eval_level == "0ply":
         strategy = bgbot_cpp.GamePlanStrategy(*weights.weight_args)
         raw_results = bgbot_cpp.batch_evaluate_post_move(
             cpp_positions, strategy, n_threads,
+            jacoby=effective_jacoby,
         )
         level_label = "0-ply"
     elif eval_level in ("1ply", "2ply", "3ply"):
@@ -222,6 +239,7 @@ def batch_post_move_evaluate(
         )
         raw_results = bgbot_cpp.batch_evaluate_post_move(
             cpp_positions, strategy, n_threads,
+            jacoby=effective_jacoby,
         )
         level_label = f"{n_plies}-ply"
     else:
@@ -249,6 +267,7 @@ def batch_cube_action(
     n_threads: int = 0,
     filter_max_moves: int = 5,
     filter_threshold: float = 0.08,
+    jacoby: bool = True,
 ) -> list[CubeActionResult]:
     """Evaluate cube decisions for a batch of pre-roll positions in parallel.
 
@@ -290,6 +309,7 @@ def batch_cube_action(
         n_threads=n_threads,
         filter_max_moves=filter_max_moves,
         filter_threshold=filter_threshold,
+        jacoby=jacoby,
     )
 
     n_plies = 0 if eval_level == "0ply" else int(eval_level[0])
@@ -324,6 +344,7 @@ def batch_checker_play(
     n_threads: int = 0,
     filter_max_moves: int = 5,
     filter_threshold: float = 0.08,
+    jacoby: bool = True,
 ) -> list[CheckerPlayResult]:
     """Evaluate checker play for a batch of positions in parallel.
 
@@ -382,10 +403,15 @@ def batch_checker_play(
 
     strategy_0ply = bgbot_cpp.GamePlanStrategy(*weights.weight_args)
 
+    # Auto-disable Jacoby for match play positions
+    has_match = any(p.get("away1", 0) > 0 or p.get("away2", 0) > 0 for p in positions)
+    effective_jacoby = jacoby and not has_match
+
     if eval_level == "0ply":
         raw_results = bgbot_cpp.batch_checker_play(
             cpp_inputs, strategy_0ply,
             filter_max_moves, filter_threshold, n_threads,
+            jacoby=effective_jacoby,
         )
         level_label = "0-ply"
     elif eval_level in ("1ply", "2ply", "3ply"):
@@ -401,6 +427,7 @@ def batch_checker_play(
         raw_results = bgbot_cpp.batch_checker_play(
             cpp_inputs, strategy_0ply, strategy_nply,
             filter_max_moves, filter_threshold, n_threads,
+            jacoby=effective_jacoby,
         )
         level_label = f"{n_plies}-ply"
     else:

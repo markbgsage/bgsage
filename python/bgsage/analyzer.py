@@ -88,6 +88,7 @@ class _CubelessBase:
         away1: int = 0,
         away2: int = 0,
         is_crawford: bool = False,
+        jacoby: bool = False,
     ) -> list[tuple[float, float, list[int], list[float]]]:
         owner = resolve_owner(cube_owner) if cube_owner else None
         is_match = away1 > 0 or away2 > 0
@@ -102,9 +103,14 @@ class _CubelessBase:
                 x = bgbot_cpp.cube_efficiency(bl, race)
                 if is_match:
                     cf_eq = bgbot_cpp.cl2cf(probs, cube_value, owner, x,
-                                            away1, away2, is_crawford)
+                                            away1, away2, is_crawford,
+                                            jacoby=jacoby)
                 else:
-                    cf_eq = bgbot_cpp.cl2cf_money(probs, owner, x)
+                    jacoby_active = (
+                        jacoby and owner == bgbot_cpp.CubeOwner.CENTERED
+                    )
+                    cf_eq = bgbot_cpp.cl2cf_money(probs, owner, x,
+                                                  jacoby_active=jacoby_active)
             else:
                 cf_eq = cl_eq
             scored.append((cf_eq, cl_eq, bl, probs))
@@ -169,7 +175,7 @@ class _ZeroPlyAnalyzer(_CubelessBase):
     def checker_play_analytics(
         self, board, die1, die2, cube_value=1, cube_owner="centered",
         progress_callback=None,
-        away1=0, away2=0, is_crawford=False,
+        away1=0, away2=0, is_crawford=False, jacoby=False,
     ) -> list[dict]:
         candidates = bgbot_cpp.possible_moves(board, die1, die2)
         if not candidates:
@@ -188,12 +194,13 @@ class _ZeroPlyAnalyzer(_CubelessBase):
 
     def cube_action_analytics(
         self, board, cube_value=1, cube_owner="centered",
-        away1=0, away2=0, is_crawford=False,
+        away1=0, away2=0, is_crawford=False, jacoby=False,
     ) -> dict:
         owner = resolve_owner(cube_owner)
         r = bgbot_cpp.evaluate_cube_decision(
             board, cube_value, owner, *self._weights.weight_args,
             away1=away1, away2=away2, is_crawford=is_crawford,
+            jacoby=jacoby,
         )
         return self._format_cube_result(r, eval_level="0-ply")
 
@@ -223,7 +230,7 @@ class _MultiPlyAnalyzer(_CubelessBase):
     def checker_play_analytics(
         self, board, die1, die2, cube_value=1, cube_owner="centered",
         progress_callback=None,
-        away1=0, away2=0, is_crawford=False,
+        away1=0, away2=0, is_crawford=False, jacoby=False,
     ) -> list[dict]:
         candidates = bgbot_cpp.possible_moves(board, die1, die2)
         if not candidates:
@@ -232,7 +239,7 @@ class _MultiPlyAnalyzer(_CubelessBase):
         scored_0ply = self._score_candidates_0ply(
             candidates, board, cube_owner,
             cube_value=cube_value, away1=away1, away2=away2,
-            is_crawford=is_crawford,
+            is_crawford=is_crawford, jacoby=jacoby,
         )
         survivors, survivor_set = self._filter_candidates(
             scored_0ply, self.FILTER_THRESHOLD, self.FILTER_MAX_MOVES
@@ -271,13 +278,14 @@ class _MultiPlyAnalyzer(_CubelessBase):
 
     def cube_action_analytics(
         self, board, cube_value=1, cube_owner="centered",
-        away1=0, away2=0, is_crawford=False,
+        away1=0, away2=0, is_crawford=False, jacoby=False,
     ) -> dict:
         owner = resolve_owner(cube_owner)
         r = bgbot_cpp.cube_decision_nply(
             board, cube_value, owner, self._n_plies, *self._weights.weight_args,
             n_threads=self._parallel_threads,
             away1=away1, away2=away2, is_crawford=is_crawford,
+            jacoby=jacoby,
         )
         result = self._format_cube_result(r, eval_level=f"{self._n_plies}-ply")
 
@@ -331,7 +339,7 @@ class _RolloutAnalyzer(_CubelessBase):
     def checker_play_analytics(
         self, board, die1, die2, cube_value=1, cube_owner="centered",
         progress_callback=None,
-        away1=0, away2=0, is_crawford=False,
+        away1=0, away2=0, is_crawford=False, jacoby=False,
     ) -> list[dict]:
         candidates = bgbot_cpp.possible_moves(board, die1, die2)
         if not candidates:
@@ -340,7 +348,7 @@ class _RolloutAnalyzer(_CubelessBase):
         scored_0ply = self._score_candidates_0ply(
             candidates, board, cube_owner,
             cube_value=cube_value, away1=away1, away2=away2,
-            is_crawford=is_crawford,
+            is_crawford=is_crawford, jacoby=jacoby,
         )
         survivors, survivor_set = self._filter_candidates(
             scored_0ply, self.FILTER_THRESHOLD, self.FILTER_MAX_MOVES
@@ -386,13 +394,14 @@ class _RolloutAnalyzer(_CubelessBase):
 
     def cube_action_analytics(
         self, board, cube_value=1, cube_owner="centered",
-        away1=0, away2=0, is_crawford=False,
+        away1=0, away2=0, is_crawford=False, jacoby=False,
     ) -> dict:
         owner = resolve_owner(cube_owner)
         r = bgbot_cpp.cube_decision_rollout(
             board, cube_value, owner, *self._weights.weight_args,
             **self._rollout_config,
             away1=away1, away2=away2, is_crawford=is_crawford,
+            jacoby=jacoby,
         )
         return self._format_cube_result(r, eval_level="Rollout")
 
@@ -410,7 +419,7 @@ class _CubefulAnalyzer:
 
     def _cubeful_equity(
         self, post_move_board, probs, owner,
-        cube_value=1, away1=0, away2=0, is_crawford=False,
+        cube_value=1, away1=0, away2=0, is_crawford=False, jacoby=False,
     ) -> float:
         is_match = away1 > 0 or away2 > 0
         if self._cubeful_ply == 0:
@@ -418,9 +427,14 @@ class _CubefulAnalyzer:
             x = bgbot_cpp.cube_efficiency(post_move_board, race)
             if is_match:
                 return bgbot_cpp.cl2cf(probs, cube_value, owner, x,
-                                       away1, away2, is_crawford)
+                                       away1, away2, is_crawford,
+                                       jacoby=jacoby)
             else:
-                return bgbot_cpp.cl2cf_money(probs, owner, x)
+                jacoby_active = (
+                    jacoby and owner == bgbot_cpp.CubeOwner.CENTERED
+                )
+                return bgbot_cpp.cl2cf_money(probs, owner, x,
+                                             jacoby_active=jacoby_active)
         else:
             opp_pre_roll = bgbot_cpp.flip_board(post_move_board)
             opp_owner = _FLIP_OWNER[owner]
@@ -430,23 +444,25 @@ class _CubefulAnalyzer:
                     self._inner._strategy_0ply, self._cubeful_ply,
                     cube_value=cube_value,
                     away1=away2, away2=away1, is_crawford=is_crawford,
+                    jacoby=jacoby,
                 )
             else:
                 opp_eq = bgbot_cpp.cubeful_equity_nply(
                     opp_pre_roll, opp_owner,
                     self._inner._strategy_0ply, self._cubeful_ply,
+                    jacoby=jacoby,
                 )
             return -opp_eq
 
     def checker_play_analytics(
         self, board, die1, die2, cube_value=1, cube_owner="centered",
         progress_callback=None,
-        away1=0, away2=0, is_crawford=False,
+        away1=0, away2=0, is_crawford=False, jacoby=False,
     ) -> list[dict]:
         owner = resolve_owner(cube_owner)
         results = self._inner.checker_play_analytics(
             board, die1, die2, cube_value, cube_owner, progress_callback,
-            away1=away1, away2=away2, is_crawford=is_crawford,
+            away1=away1, away2=away2, is_crawford=is_crawford, jacoby=jacoby,
         )
         if not results:
             return results
@@ -461,7 +477,7 @@ class _CubefulAnalyzer:
             cf_eq = self._cubeful_equity(
                 m["board"], m["probs"], owner,
                 cube_value=cube_value, away1=away1, away2=away2,
-                is_crawford=is_crawford,
+                is_crawford=is_crawford, jacoby=jacoby,
             )
             return cubeless_eq, cf_eq
 
@@ -495,7 +511,7 @@ class _CubefulAnalyzer:
             cf_eq = self._cubeful_equity(
                 b, probs, owner,
                 cube_value=cube_value, away1=away1, away2=away2,
-                is_crawford=is_crawford,
+                is_crawford=is_crawford, jacoby=jacoby,
             )
             extra["cubeless_equity"] = r["equity"]
             return cf_eq, probs, eval_level, extra
@@ -522,11 +538,12 @@ class _CubefulAnalyzer:
 
     def cube_action_analytics(
         self, board, cube_value=1, cube_owner="centered",
-        away1=0, away2=0, is_crawford=False,
+        away1=0, away2=0, is_crawford=False, jacoby=False,
     ) -> dict:
         return self._inner.cube_action_analytics(
             board, cube_value, cube_owner,
             away1=away1, away2=away2, is_crawford=is_crawford,
+            jacoby=jacoby,
         )
 
 
@@ -644,6 +661,7 @@ class BgBotAnalyzer:
         away1: int = 0,
         away2: int = 0,
         is_crawford: bool = False,
+        jacoby: bool = True,
     ) -> CheckerPlayResult:
         """Analyze all legal moves for a checker play decision.
 
@@ -662,10 +680,14 @@ class BgBotAnalyzer:
             away1: Points player needs to win (0 = money game).
             away2: Points opponent needs to win (0 = money game).
             is_crawford: True if this is the Crawford game.
+            jacoby: If True, gammons/backgammons don't count when cube is
+                centered (money games only). Auto-disabled for match play.
         """
+        if away1 > 0 or away2 > 0:
+            jacoby = False
         raw = self._analyzer.checker_play_analytics(
             board, die1, die2, cube_value, cube_owner, progress_callback,
-            away1=away1, away2=away2, is_crawford=is_crawford,
+            away1=away1, away2=away2, is_crawford=is_crawford, jacoby=jacoby,
         )
         moves = [_dict_to_move_analysis(d, include_game_plans) for d in raw]
         eval_level = moves[0].eval_level if moves else self._eval_level
@@ -683,6 +705,7 @@ class BgBotAnalyzer:
         away1: int = 0,
         away2: int = 0,
         is_crawford: bool = False,
+        jacoby: bool = True,
     ) -> PostMoveAnalysis:
         """Evaluate a post-move position (right before the opponent's turn).
 
@@ -696,7 +719,12 @@ class BgBotAnalyzer:
             away1: Points player needs to win (0 = money game).
             away2: Points opponent needs to win (0 = money game).
             is_crawford: True if this is the Crawford game.
+            jacoby: If True, gammons/backgammons don't count when cube is
+                centered (money games only). Auto-disabled for match play.
         """
+        if away1 > 0 or away2 > 0:
+            jacoby = False
+
         inner = self._analyzer
         if isinstance(inner, _CubefulAnalyzer):
             inner = inner._inner
@@ -723,9 +751,14 @@ class BgBotAnalyzer:
         is_match = away1 > 0 or away2 > 0
         if is_match:
             cf_eq = bgbot_cpp.cl2cf(probs_list, cube_value, owner, x,
-                                    away1, away2, is_crawford)
+                                    away1, away2, is_crawford,
+                                    jacoby=jacoby)
         else:
-            cf_eq = bgbot_cpp.cl2cf_money(probs_list, owner, x)
+            jacoby_active = (
+                jacoby and owner == bgbot_cpp.CubeOwner.CENTERED
+            )
+            cf_eq = bgbot_cpp.cl2cf_money(probs_list, owner, x,
+                                          jacoby_active=jacoby_active)
 
         return PostMoveAnalysis(
             probs=Probabilities.from_list(probs_list),
@@ -743,6 +776,7 @@ class BgBotAnalyzer:
         away1: int = 0,
         away2: int = 0,
         is_crawford: bool = False,
+        jacoby: bool = True,
     ) -> CubeActionResult:
         """Analyze the cube decision for a pre-roll position.
 
@@ -756,10 +790,15 @@ class BgBotAnalyzer:
             away1: Points player needs to win (0 = money game).
             away2: Points opponent needs to win (0 = money game).
             is_crawford: True if this is the Crawford game.
+            jacoby: If True, gammons/backgammons don't count when cube is
+                centered (money games only). Auto-disabled for match play.
         """
+        if away1 > 0 or away2 > 0:
+            jacoby = False
         raw = self._analyzer.cube_action_analytics(
             board, cube_value, cube_owner,
             away1=away1, away2=away2, is_crawford=is_crawford,
+            jacoby=jacoby,
         )
         probs = Probabilities.from_list(raw["probs"])
         return CubeActionResult(

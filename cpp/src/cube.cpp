@@ -77,10 +77,23 @@ float money_live(float W, float L, float p_win, CubeOwner owner) {
 
 float cl2cf_money(const std::array<float, NUM_OUTPUTS>& probs,
                   CubeOwner owner, float cube_x) {
-    float W, L;
-    compute_WL(probs, W, L);
+    return cl2cf_money(probs, owner, cube_x, false);
+}
 
-    float e_dead = cubeless_equity(probs);
+float cl2cf_money(const std::array<float, NUM_OUTPUTS>& probs,
+                  CubeOwner owner, float cube_x, bool jacoby_active) {
+    float W, L;
+    if (jacoby_active) {
+        // Jacoby: gammons/backgammons worth nothing with centered cube
+        W = 1.0f;
+        L = 1.0f;
+    } else {
+        compute_WL(probs, W, L);
+    }
+
+    float e_dead = jacoby_active
+        ? (2.0f * probs[0] - 1.0f)  // Gammon terms zeroed
+        : cubeless_equity(probs);
     float e_live = money_live(W, L, probs[0], owner);
 
     return e_dead * (1.0f - cube_x) + e_live * cube_x;
@@ -454,7 +467,7 @@ float cl2cf(const std::array<float, NUM_OUTPUTS>& probs,
             const CubeInfo& cube, float cube_x)
 {
     if (cube.is_money()) {
-        return cl2cf_money(probs, cube.owner, cube_x);
+        return cl2cf_money(probs, cube.owner, cube_x, cube.jacoby_active());
     }
     // Match play: cl2cf_match returns MWC, convert to equity
     float mwc = cl2cf_match(probs, cube, cube_x);
@@ -485,15 +498,14 @@ static CubeDecision cube_decision_0ply_money(
     CubeDecision result;
     result.equity_dp = 1.0f;  // Double/Pass: always +1.0 for money games
 
-    // No Double equity: cubeful equity with current cube state
-    result.equity_nd = cl2cf_money(probs, cube.owner, cube_x);
+    // No Double equity: cubeful equity with current cube state.
+    // With Jacoby and centered cube, gammons are zeroed (W=1, L=1).
+    result.equity_nd = cl2cf_money(probs, cube.owner, cube_x, cube.jacoby_active());
 
     // Double/Take equity: cubeful equity if cube is doubled and opponent takes.
     // After doubling, the opponent owns the cube at 2x the current value.
-    // The cubeful equity at the new cube state, normalized to the new cube value,
-    // is cl2cf_money(probs, OPPONENT, cube_x). We multiply by 2 to normalize
-    // back to the original cube value (since doubling doubles the stakes).
-    result.equity_dt = 2.0f * cl2cf_money(probs, CubeOwner::OPPONENT, cube_x);
+    // Jacoby is NOT active here — the cube has been turned, gammons count.
+    result.equity_dt = 2.0f * cl2cf_money(probs, CubeOwner::OPPONENT, cube_x, false);
 
     // Decision logic
     // If we double, the opponent picks the response that gives us LESS equity.
@@ -663,6 +675,9 @@ static float eval_pre_roll_cubeful_0ply(
     if (result != GameResult::NOT_OVER) {
         auto t_probs = invert_probs(terminal_probs(result));
         if (cube.is_money()) {
+            if (cube.jacoby_active()) {
+                return 2.0f * t_probs[0] - 1.0f;  // Jacoby: gammons worth nothing
+            }
             return cubeless_equity(t_probs);
         } else {
             return cubeless_mwc(t_probs, cube.match.away1, cube.match.away2,
@@ -675,7 +690,7 @@ static float eval_pre_roll_cubeful_0ply(
     float x = resolve_cube_x(cube, board, race);
 
     if (cube.is_money()) {
-        return cl2cf_money(pre_roll_probs, cube.owner, x);
+        return cl2cf_money(pre_roll_probs, cube.owner, x, cube.jacoby_active());
     } else {
         return cl2cf_match(pre_roll_probs, cube, x);
     }
@@ -689,6 +704,7 @@ static CubeInfo flip_cube_perspective(const CubeInfo& cube) {
     opp.owner = flip_owner(cube.owner);
     opp.match = cube.match.flip();
     opp.cube_x_override = cube.cube_x_override;
+    opp.jacoby = cube.jacoby;
     return opp;
 }
 
@@ -815,7 +831,11 @@ static void cubeful_recursive_multi(
                 continue;
             }
             if (aciCubePos[ici].is_money()) {
-                arCubeful[ici] = cubeless_equity(t_probs);
+                if (aciCubePos[ici].jacoby_active()) {
+                    arCubeful[ici] = 2.0f * t_probs[0] - 1.0f;  // Jacoby: gammons = 0
+                } else {
+                    arCubeful[ici] = cubeless_equity(t_probs);
+                }
             } else {
                 arCubeful[ici] = cubeless_mwc(t_probs,
                     aciCubePos[ici].match.away1, aciCubePos[ici].match.away2,
@@ -847,7 +867,8 @@ static void cubeful_recursive_multi(
             float x = (aci[i].cube_x_override >= 0.0f)
                        ? aci[i].cube_x_override : default_x;
             if (aci[i].is_money()) {
-                arCf[i] = cl2cf_money(pre_roll_probs, aci[i].owner, x);
+                arCf[i] = cl2cf_money(pre_roll_probs, aci[i].owner, x,
+                                       aci[i].jacoby_active());
             } else {
                 arCf[i] = cl2cf_match(pre_roll_probs, aci[i], x);
             }
@@ -916,7 +937,11 @@ static void cubeful_recursive_multi(
                     continue;
                 }
                 if (aci[i].is_money()) {
-                    arCfLocal[i] = roll.weight * cubeless_equity(tp);
+                    if (aci[i].jacoby_active()) {
+                        arCfLocal[i] = roll.weight * (2.0f * tp[0] - 1.0f);
+                    } else {
+                        arCfLocal[i] = roll.weight * cubeless_equity(tp);
+                    }
                 } else {
                     arCfLocal[i] = roll.weight * cubeless_mwc(tp,
                         aci[i].match.away1, aci[i].match.away2,

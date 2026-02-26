@@ -21,8 +21,15 @@ struct CubeInfo {
     CubeOwner owner = CubeOwner::CENTERED;
     MatchInfo match;                         // Default: {0,0,false} = money game
     float cube_x_override = -1.0f;          // If >= 0, override auto-detected cube efficiency
+    bool jacoby = false;                     // Jacoby rule (money games only)
 
     bool is_money() const { return match.is_money(); }
+
+    // Is Jacoby rule currently active? Only when: money game + Jacoby enabled +
+    // cube has never been turned (centered). Once the cube is turned, gammons count.
+    bool jacoby_active() const {
+        return jacoby && is_money() && owner == CubeOwner::CENTERED;
+    }
 };
 
 // Flip cube ownership (PLAYER <-> OPPONENT, CENTERED stays).
@@ -49,7 +56,7 @@ inline bool can_double(const CubeInfo& ci) {
 void compute_WL(const std::array<float, NUM_OUTPUTS>& probs, float& W, float& L);
 
 // Live cube equity (piecewise linear, depends on cube ownership).
-// No Jacoby rule. Returns equity normalized to cube value 1.
+// Returns equity normalized to cube value 1.
 float money_live(float W, float L, float p_win, CubeOwner owner);
 
 // Cubeless equity from probabilities.
@@ -63,6 +70,11 @@ inline float cubeless_equity(const std::array<float, NUM_OUTPUTS>& probs) {
 // Returns cubeful equity normalized to cube value 1.
 float cl2cf_money(const std::array<float, NUM_OUTPUTS>& probs,
                   CubeOwner owner, float cube_x);
+
+// Jacoby-aware overload: when jacoby_active, gammons/backgammons are zeroed
+// (W=1, L=1, dead-cube equity = 2*P(win)-1).
+float cl2cf_money(const std::array<float, NUM_OUTPUTS>& probs,
+                  CubeOwner owner, float cube_x, bool jacoby_active);
 
 // Cube efficiency for a position.
 // Contact/crashed: 0.68

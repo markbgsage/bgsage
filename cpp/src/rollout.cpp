@@ -846,7 +846,8 @@ void RolloutStrategy::run_cubeful_trial(
                     if (is_match) {
                         val = cl2cf_match(roll_best_probs[i], branches[b].cube, x);
                     } else {
-                        float cf = cl2cf_money(roll_best_probs[i], branches[b].cube.owner, x);
+                        float cf = cl2cf_money(roll_best_probs[i], branches[b].cube.owner, x,
+                                               branches[b].cube.jacoby_active());
                         val = cf * branches[b].cube.cube_value
                                  / branches[b].basis_cube;
                     }
@@ -860,7 +861,8 @@ void RolloutStrategy::run_cubeful_trial(
                         roll_best_probs[actual_idx], branches[b].cube, x);
                 } else {
                     float actual_cf = cl2cf_money(
-                        roll_best_probs[actual_idx], branches[b].cube.owner, x);
+                        roll_best_probs[actual_idx], branches[b].cube.owner, x,
+                        branches[b].cube.jacoby_active());
                     actual_val = actual_cf * branches[b].cube.cube_value
                                            / branches[b].basis_cube;
                 }
@@ -935,7 +937,7 @@ void RolloutStrategy::run_cubeful_trial(
         GameResult result = check_game_over(chosen);
         if (result != GameResult::NOT_OVER) {
             auto t_probs = terminal_probs(result);
-            double mover_eq = NeuralNetwork::compute_equity(t_probs);
+            double mover_eq_full = NeuralNetwork::compute_equity(t_probs);
 
             for (int b = 0; b < n_branches; ++b) {
                 if (branches[b].finished) continue;
@@ -951,6 +953,10 @@ void RolloutStrategy::run_cubeful_trial(
                     sp_val = is_sp_turn ? static_cast<double>(mwc)
                                         : (1.0 - static_cast<double>(mwc));
                 } else {
+                    // Jacoby: gammons worth nothing when cube never turned
+                    double mover_eq = branches[b].cube.jacoby_active()
+                        ? (2.0 * t_probs[0] - 1.0)
+                        : mover_eq_full;
                     double points = mover_eq * branches[b].cube.cube_value;
                     sp_val = points / branches[b].basis_cube;
                     if (!is_sp_turn) sp_val = -sp_val;
@@ -1019,7 +1025,8 @@ void RolloutStrategy::run_cubeful_trial(
             sp_val = last_mover_is_sp ? static_cast<double>(mwc)
                                       : (1.0 - static_cast<double>(mwc));
         } else {
-            float cf = cl2cf_money(last_mover_probs, last_cube.owner, trunc_x);
+            float cf = cl2cf_money(last_mover_probs, last_cube.owner, trunc_x,
+                                    last_cube.jacoby_active());
             double points = cf * last_cube.cube_value;
             sp_val = points / branches[b].basis_cube;
             if (!last_mover_is_sp) sp_val = -sp_val;

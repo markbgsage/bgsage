@@ -75,7 +75,7 @@ def _board_simple_str(checkers):
     return ' '.join(parts)
 
 
-def _build_cube_analytics_command(checkers, n_plies=0):
+def _build_cube_analytics_command(checkers, n_plies=0, jacoby=True):
     """Build a gnubg command file to get pre-roll cube analytics for a position.
 
     The checkers represent the board from the perspective of the player on roll
@@ -85,11 +85,14 @@ def _build_cube_analytics_command(checkers, n_plies=0):
     Args:
         checkers: 26-element list (player on roll's perspective)
         n_plies: evaluation depth (0, 1, 2, or 3)
+        jacoby: if True, enable Jacoby rule (gammons don't count when cube
+            is centered)
 
     Returns:
         Command string for gnubg.
     """
     cmd = 'new session\n'
+    cmd += f'set jacoby {"on" if jacoby else "off"}\n'
     cmd += f'set evaluation chequer eval plies {n_plies}\n'
     cmd += f'set evaluation cubedecision eval plies {n_plies}\n'
     # Lock cube at 1 for cubeless evaluation
@@ -255,7 +258,7 @@ def _parse_cube_analytics_full(output, search_start=0):
 # Module-level functions (backward-compatible)
 # ---------------------------------------------------------------------------
 
-def post_move_analytics(checkers, n_plies=0, timeout=60):
+def post_move_analytics(checkers, n_plies=0, timeout=60, jacoby=True):
     """Evaluate a post-move board position using gnubg.
 
     Returns cubeless probabilities from the perspective of the player who just
@@ -275,6 +278,7 @@ def post_move_analytics(checkers, n_plies=0, timeout=60):
             [25] = mover checkers on bar (>= 0)
         n_plies: evaluation depth (0, 1, 2, or 3)
         timeout: seconds before killing gnubg process
+        jacoby: if True, enable Jacoby rule
 
     Returns:
         dict with:
@@ -330,7 +334,7 @@ def post_move_analytics(checkers, n_plies=0, timeout=60):
     opp_board = _flip_board(checkers)
 
     # Get pre-roll cube analytics from opponent's perspective
-    cmd = _build_cube_analytics_command(opp_board, n_plies)
+    cmd = _build_cube_analytics_command(opp_board, n_plies, jacoby=jacoby)
     output = _run_gnubg(cmd, timeout=timeout)
     opp_result = _parse_cube_analytics(output, n_plies)
 
@@ -350,7 +354,8 @@ def post_move_analytics(checkers, n_plies=0, timeout=60):
     }
 
 
-def post_move_analytics_many(checkers_list, n_plies=0, max_workers=None, timeout=60):
+def post_move_analytics_many(checkers_list, n_plies=0, max_workers=None, timeout=60,
+                             jacoby=True):
     """Evaluate multiple post-move positions in parallel.
 
     Args:
@@ -358,6 +363,7 @@ def post_move_analytics_many(checkers_list, n_plies=0, max_workers=None, timeout
         n_plies: evaluation depth
         max_workers: thread pool size (default: CPU count)
         timeout: per-position timeout in seconds
+        jacoby: if True, enable Jacoby rule
 
     Returns:
         List of result dicts (same format as post_move_analytics)
@@ -372,7 +378,8 @@ def post_move_analytics_many(checkers_list, n_plies=0, max_workers=None, timeout
     with ThreadPoolExecutor(max_workers=max_workers) as executor:
         futures = {}
         for idx, checkers in enumerate(checkers_list):
-            future = executor.submit(post_move_analytics, checkers, n_plies, timeout)
+            future = executor.submit(post_move_analytics, checkers, n_plies, timeout,
+                                     jacoby=jacoby)
             futures[future] = idx
 
         for future in as_completed(futures):
@@ -397,26 +404,34 @@ class GnuBgAnalyzer:
         print(cube.equity_nd, cube.equity_dt, cube.optimal_action)
     """
 
-    def __init__(self, eval_level="0ply", timeout=120):
+    def __init__(self, eval_level="0ply", timeout=120, jacoby=True):
         if eval_level not in _EVAL_LEVELS:
             raise ValueError(
                 f"eval_level must be one of {list(_EVAL_LEVELS)}, got {eval_level!r}")
         self.n_plies = _EVAL_LEVELS[eval_level]
         self.eval_level_str = f"{self.n_plies}-ply"
         self.timeout = timeout
+        self.jacoby = jacoby
 
     # -- cube_action --------------------------------------------------------
 
     def cube_action(self, board, cube_value=1, cube_owner="centered",
-                    *, away1=0, away2=0, is_crawford=False):
+                    *, away1=0, away2=0, is_crawford=False, jacoby=None):
         """Evaluate cube decision for a pre-roll position.
 
         Returns CubeActionResult with cubeful ND/DT/DP equities and cubeless
         probabilities, all from the current player's perspective.
+
+        Args:
+            jacoby: Override the instance default. None = use self.jacoby.
+                Auto-disabled for match play.
         """
+        j = self.jacoby if jacoby is None else jacoby
+        if away1 > 0 or away2 > 0:
+            j = False
         cmd = self._build_preroll_command(board, cube_value, cube_owner,
                                          away1=away1, away2=away2,
-                                         is_crawford=is_crawford)
+                                         is_crawford=is_crawford, jacoby=j)
         output = _run_gnubg(cmd, timeout=self.timeout)
         r, _ = _parse_cube_analytics_full(output)
 
@@ -452,22 +467,30 @@ class GnuBgAnalyzer:
     # -- post_move_analytics ------------------------------------------------
 
     def post_move_analytics(self, board, cube_owner="centered", cube_value=1,
-                            *, away1=0, away2=0, is_crawford=False):
+                            *, away1=0, away2=0, is_crawford=False, jacoby=None):
         """Evaluate a post-move position (after move, before opponent rolls).
 
         Returns PostMoveAnalysis with cubeless probs/equity and cubeful equity.
         The cubeful equity is the ND cubeful equity from GNUbg (the value of
         the position without any doubling action).
+
+        Args:
+            jacoby: Override the instance default. None = use self.jacoby.
+                Auto-disabled for match play.
         """
         if len(board) != 26:
             raise ValueError(f"board must have 26 elements, got {len(board)}")
+
+        j = self.jacoby if jacoby is None else jacoby
+        if away1 > 0 or away2 > 0:
+            j = False
 
         # Flip to opponent's perspective (they are about to roll)
         opp_board = _flip_board(board)
 
         cmd = self._build_preroll_command(opp_board, cube_value, cube_owner,
                                          away1=away1, away2=away2,
-                                         is_crawford=is_crawford)
+                                         is_crawford=is_crawford, jacoby=j)
         output = _run_gnubg(cmd, timeout=self.timeout)
         r, _ = _parse_cube_analytics_full(output)
 
@@ -492,14 +515,22 @@ class GnuBgAnalyzer:
     # -- checker_play -------------------------------------------------------
 
     def checker_play(self, board, die1, die2, cube_value=1, cube_owner="centered",
-                     *, away1=0, away2=0, is_crawford=False):
+                     *, away1=0, away2=0, is_crawford=False, jacoby=None):
         """Evaluate all legal moves for a position + dice.
 
         Returns CheckerPlayResult with moves sorted best-first by cubeless equity.
         Uses batch evaluation: generates all legal boards, evaluates each in a
         single GNUbg subprocess (one hint per board from the opponent's perspective).
+
+        Args:
+            jacoby: Override the instance default. None = use self.jacoby.
+                Auto-disabled for match play.
         """
         from .board import possible_moves
+
+        j = self.jacoby if jacoby is None else jacoby
+        if away1 > 0 or away2 > 0:
+            j = False
 
         candidates = possible_moves(board, die1, die2)
 
@@ -514,7 +545,7 @@ class GnuBgAnalyzer:
             opp_board = _flip_board(b)
             cmd = self._build_preroll_command(opp_board, cube_value, cube_owner,
                                              away1=away1, away2=away2,
-                                             is_crawford=is_crawford)
+                                             is_crawford=is_crawford, jacoby=j)
             output = _run_gnubg(cmd, timeout=self.timeout)
             r, _ = _parse_cube_analytics_full(output)
             probs = Probabilities(
@@ -532,7 +563,7 @@ class GnuBgAnalyzer:
         # Batch: evaluate all candidate boards in one GNUbg subprocess
         cmd = self._build_batch_postmove_command(
             candidates, cube_value, cube_owner,
-            away1=away1, away2=away2, is_crawford=is_crawford)
+            away1=away1, away2=away2, is_crawford=is_crawford, jacoby=j)
         output = _run_gnubg(cmd, timeout=self.timeout)
 
         move_analyses = []
@@ -595,9 +626,10 @@ class GnuBgAnalyzer:
         return cmd
 
     def _build_preroll_command(self, checkers, cube_value=1, cube_owner="centered",
-                               *, away1=0, away2=0, is_crawford=False):
+                               *, away1=0, away2=0, is_crawford=False, jacoby=True):
         """Build a GNUbg command for a pre-roll position hint (cube analytics)."""
         cmd = self._match_prefix(away1, away2, is_crawford)
+        cmd += f'set jacoby {"on" if jacoby else "off"}\n'
         cmd += f'set evaluation chequer eval plies {self.n_plies}\n'
         cmd += f'set evaluation cubedecision eval plies {self.n_plies}\n'
         cmd += f'set cube value {cube_value}\n'
@@ -616,13 +648,15 @@ class GnuBgAnalyzer:
 
     def _build_batch_postmove_command(self, boards, cube_value=1,
                                        cube_owner="centered",
-                                       *, away1=0, away2=0, is_crawford=False):
+                                       *, away1=0, away2=0, is_crawford=False,
+                                       jacoby=True):
         """Build a GNUbg command that evaluates multiple post-move positions.
 
         For each board, we flip to the opponent's perspective and run hint.
         All boards are evaluated in a single GNUbg subprocess.
         """
         cmd = self._match_prefix(away1, away2, is_crawford)
+        cmd += f'set jacoby {"on" if jacoby else "off"}\n'
         cmd += f'set evaluation chequer eval plies {self.n_plies}\n'
         cmd += f'set evaluation cubedecision eval plies {self.n_plies}\n'
         cmd += f'set cube value {cube_value}\n'
