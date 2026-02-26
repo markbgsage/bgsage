@@ -1742,7 +1742,7 @@ PYBIND11_MODULE(bgbot_cpp, m) {
     }, "Cubeless-to-cubeful conversion (money or match). Returns cubeful equity.",
        py::arg("probs"), py::arg("cube_value"), py::arg("owner"), py::arg("cube_x"),
        py::arg("away1") = 0, py::arg("away2") = 0, py::arg("is_crawford") = false,
-       py::arg("jacoby") = false);
+       py::arg("jacoby") = true);
 
     m.def("cubeful_equity_nply", [](const std::vector<int>& board_vec,
                                      CubeOwner owner,
@@ -1753,15 +1753,15 @@ PYBIND11_MODULE(bgbot_cpp, m) {
                                      int n_threads,
                                      int cube_value,
                                      int away1, int away2, bool is_crawford,
-                                     bool jacoby) {
+                                     bool jacoby, bool beaver) {
         Board board = list_to_board(board_vec);
         MoveFilter filter{filter_max_moves, filter_threshold};
         py::gil_scoped_release release;
         if (away1 > 0 && away2 > 0) {
-            CubeInfo ci{cube_value, owner, {away1, away2, is_crawford}, -1.0f, jacoby};
+            CubeInfo ci{cube_value, owner, {away1, away2, is_crawford}, -1.0f, jacoby, beaver};
             return cubeful_equity_nply(board, ci, strategy, n_plies, filter, n_threads);
         }
-        CubeInfo ci{cube_value, owner, {0, 0, false}, -1.0f, jacoby};
+        CubeInfo ci{cube_value, owner, {0, 0, false}, -1.0f, jacoby, beaver};
         return cubeful_equity_nply(board, ci, strategy, n_plies, filter, n_threads);
     }, "Compute cubeful equity for a pre-roll position at N-ply depth.\n"
        "Uses recursive cube decision modeling (Janowski only at 0-ply leaves).\n"
@@ -1774,7 +1774,7 @@ PYBIND11_MODULE(bgbot_cpp, m) {
        py::arg("n_threads") = 1,
        py::arg("cube_value") = 1,
        py::arg("away1") = 0, py::arg("away2") = 0, py::arg("is_crawford") = false,
-       py::arg("jacoby") = false);
+       py::arg("jacoby") = true, py::arg("beaver") = true);
 
     m.def("cube_efficiency", [](const std::vector<int>& board, bool is_race_pos) {
         return cube_efficiency(list_to_board(board), is_race_pos);
@@ -1792,7 +1792,7 @@ PYBIND11_MODULE(bgbot_cpp, m) {
        py::arg("probs"), py::arg("cube_value") = 1,
        py::arg("owner") = CubeOwner::CENTERED, py::arg("cube_x") = 0.68f,
        py::arg("away1") = 0, py::arg("away2") = 0, py::arg("is_crawford") = false,
-       py::arg("jacoby") = false);
+       py::arg("jacoby") = true);
 
     // Convenience: evaluate pre-roll probs + cube decision in one call
     m.def("evaluate_cube_decision", [](const std::vector<int>& checkers,
@@ -1859,8 +1859,8 @@ PYBIND11_MODULE(bgbot_cpp, m) {
        py::arg("n_hidden_priming") = 400,
        py::arg("n_hidden_anchoring") = 400,
        py::arg("away1") = 0, py::arg("away2") = 0, py::arg("is_crawford") = false,
-       py::arg("cube_x_override") = -1.0f, py::arg("jacoby") = false,
-       py::arg("beaver") = false);
+       py::arg("cube_x_override") = -1.0f, py::arg("jacoby") = true,
+       py::arg("beaver") = true);
 
     // N-ply cube decision (standalone — creates its own strategy, serial by default)
     m.def("cube_decision_nply", [](const std::vector<int>& checkers,
@@ -1937,8 +1937,8 @@ PYBIND11_MODULE(bgbot_cpp, m) {
        py::arg("filter_threshold") = 0.08f,
        py::arg("n_threads") = 1,
        py::arg("away1") = 0, py::arg("away2") = 0, py::arg("is_crawford") = false,
-       py::arg("cube_x_override") = -1.0f, py::arg("jacoby") = false,
-       py::arg("beaver") = false);
+       py::arg("cube_x_override") = -1.0f, py::arg("jacoby") = true,
+       py::arg("beaver") = true);
 
     // Cubeful rollout: simulates cube decisions during trial games.
     // Two branches (ND and DT) share the same board evolution and dice sequences.
@@ -2104,8 +2104,8 @@ PYBIND11_MODULE(bgbot_cpp, m) {
        py::arg("away1") = 0, py::arg("away2") = 0, py::arg("is_crawford") = false,
        py::arg("cube_x_override") = -1.0f,
        py::arg("enable_vr") = true,
-       py::arg("jacoby") = false,
-       py::arg("beaver") = false);
+       py::arg("jacoby") = true,
+       py::arg("beaver") = true);
 
     // ======================== Batch position evaluation ========================
 
@@ -2256,8 +2256,8 @@ PYBIND11_MODULE(bgbot_cpp, m) {
        py::arg("positions"),
        py::arg("strategy"),
        py::arg("n_threads") = 0,
-       py::arg("jacoby") = false,
-       py::arg("beaver") = false);
+       py::arg("jacoby") = true,
+       py::arg("beaver") = true);
 
     // Overload that takes a GamePlanStrategy (0-ply) directly
     m.def("batch_evaluate_positions", [](
@@ -2380,8 +2380,8 @@ PYBIND11_MODULE(bgbot_cpp, m) {
        py::arg("positions"),
        py::arg("strategy"),
        py::arg("n_threads") = 0,
-       py::arg("jacoby") = false,
-       py::arg("beaver") = false);
+       py::arg("jacoby") = true,
+       py::arg("beaver") = true);
 
     // ======================== Batch post-move position evaluation ========================
 
@@ -2491,7 +2491,7 @@ PYBIND11_MODULE(bgbot_cpp, m) {
        py::arg("positions"),
        py::arg("strategy"),
        py::arg("n_threads") = 0,
-       py::arg("jacoby") = false);
+       py::arg("jacoby") = true);
 
     // Overload for MultiPlyStrategy
     m.def("batch_evaluate_post_move", [](
@@ -2594,7 +2594,7 @@ PYBIND11_MODULE(bgbot_cpp, m) {
        py::arg("positions"),
        py::arg("strategy"),
        py::arg("n_threads") = 0,
-       py::arg("jacoby") = false);
+       py::arg("jacoby") = true);
 
     // ======================== Batch checker play ========================
 
@@ -2614,7 +2614,8 @@ PYBIND11_MODULE(bgbot_cpp, m) {
             int filter_max_moves,
             float filter_threshold,
             int n_threads,
-            bool jacoby) {
+            bool jacoby,
+            bool beaver) {
 
         struct CPInput {
             Board board;
@@ -2677,7 +2678,7 @@ PYBIND11_MODULE(bgbot_cpp, m) {
                     float cubeful_equity;
                 };
                 std::vector<Scored> scored(candidates.size());
-                CubeInfo ci{inp.cube_value, inp.owner, inp.match, -1.0f, jacoby};
+                CubeInfo ci{inp.cube_value, inp.owner, inp.match, -1.0f, jacoby, beaver};
                 for (size_t j = 0; j < candidates.size(); ++j) {
                     auto post_probs = strategy_0ply.evaluate_probs(
                         candidates[j], inp.board);
@@ -2764,7 +2765,8 @@ PYBIND11_MODULE(bgbot_cpp, m) {
        py::arg("filter_max_moves") = 5,
        py::arg("filter_threshold") = 0.08f,
        py::arg("n_threads") = 0,
-       py::arg("jacoby") = false);
+       py::arg("jacoby") = true,
+       py::arg("beaver") = true);
 
     // N-ply overload: 0-ply filter + N-ply rescore of survivors
     m.def("batch_checker_play", [](
@@ -2774,7 +2776,8 @@ PYBIND11_MODULE(bgbot_cpp, m) {
             int filter_max_moves,
             float filter_threshold,
             int n_threads,
-            bool jacoby) {
+            bool jacoby,
+            bool beaver) {
 
         struct CPInput {
             Board board;
@@ -2832,14 +2835,14 @@ PYBIND11_MODULE(bgbot_cpp, m) {
                 default:                  opp_owner = CubeOwner::CENTERED;  break;
             }
             if (match.is_money()) {
-                CubeInfo opp_ci{1, opp_owner, MatchInfo{}, -1.0f, jacoby};
+                CubeInfo opp_ci{1, opp_owner, MatchInfo{}, -1.0f, jacoby, beaver};
                 float opp_eq = cubeful_equity_nply(
                     opp_pre_roll, opp_ci, strategy_0ply,
                     n_plies, filter, /*n_threads=*/1);
                 return -opp_eq;
             } else {
                 // Match play: work in MWC space via CubeInfo overload
-                CubeInfo opp_ci{1, opp_owner, match.flip(), -1.0f, jacoby};
+                CubeInfo opp_ci{1, opp_owner, match.flip(), -1.0f, jacoby, beaver};
                 float opp_eq = cubeful_equity_nply(
                     opp_pre_roll, opp_ci, strategy_0ply,
                     n_plies, filter, /*n_threads=*/1);
@@ -2996,5 +2999,6 @@ PYBIND11_MODULE(bgbot_cpp, m) {
        py::arg("filter_max_moves") = 5,
        py::arg("filter_threshold") = 0.08f,
        py::arg("n_threads") = 0,
-       py::arg("jacoby") = false);
+       py::arg("jacoby") = true,
+       py::arg("beaver") = true);
 }

@@ -88,7 +88,7 @@ class _CubelessBase:
         away1: int = 0,
         away2: int = 0,
         is_crawford: bool = False,
-        jacoby: bool = False,
+        jacoby: bool = True,
     ) -> list[tuple[float, float, list[int], list[float]]]:
         owner = resolve_owner(cube_owner) if cube_owner else None
         is_match = away1 > 0 or away2 > 0
@@ -176,7 +176,7 @@ class _ZeroPlyAnalyzer(_CubelessBase):
     def checker_play_analytics(
         self, board, die1, die2, cube_value=1, cube_owner="centered",
         progress_callback=None,
-        away1=0, away2=0, is_crawford=False, jacoby=False,
+        away1=0, away2=0, is_crawford=False, jacoby=True,
     ) -> list[dict]:
         candidates = bgbot_cpp.possible_moves(board, die1, die2)
         if not candidates:
@@ -195,7 +195,7 @@ class _ZeroPlyAnalyzer(_CubelessBase):
 
     def cube_action_analytics(
         self, board, cube_value=1, cube_owner="centered",
-        away1=0, away2=0, is_crawford=False, jacoby=False, beaver=False,
+        away1=0, away2=0, is_crawford=False, jacoby=True, beaver=True,
     ) -> dict:
         owner = resolve_owner(cube_owner)
         r = bgbot_cpp.evaluate_cube_decision(
@@ -231,7 +231,7 @@ class _MultiPlyAnalyzer(_CubelessBase):
     def checker_play_analytics(
         self, board, die1, die2, cube_value=1, cube_owner="centered",
         progress_callback=None,
-        away1=0, away2=0, is_crawford=False, jacoby=False,
+        away1=0, away2=0, is_crawford=False, jacoby=True,
     ) -> list[dict]:
         candidates = bgbot_cpp.possible_moves(board, die1, die2)
         if not candidates:
@@ -279,7 +279,7 @@ class _MultiPlyAnalyzer(_CubelessBase):
 
     def cube_action_analytics(
         self, board, cube_value=1, cube_owner="centered",
-        away1=0, away2=0, is_crawford=False, jacoby=False, beaver=False,
+        away1=0, away2=0, is_crawford=False, jacoby=True, beaver=True,
     ) -> dict:
         owner = resolve_owner(cube_owner)
         r = bgbot_cpp.cube_decision_nply(
@@ -340,7 +340,7 @@ class _RolloutAnalyzer(_CubelessBase):
     def checker_play_analytics(
         self, board, die1, die2, cube_value=1, cube_owner="centered",
         progress_callback=None,
-        away1=0, away2=0, is_crawford=False, jacoby=False,
+        away1=0, away2=0, is_crawford=False, jacoby=True,
     ) -> list[dict]:
         candidates = bgbot_cpp.possible_moves(board, die1, die2)
         if not candidates:
@@ -395,7 +395,7 @@ class _RolloutAnalyzer(_CubelessBase):
 
     def cube_action_analytics(
         self, board, cube_value=1, cube_owner="centered",
-        away1=0, away2=0, is_crawford=False, jacoby=False, beaver=False,
+        away1=0, away2=0, is_crawford=False, jacoby=True, beaver=True,
     ) -> dict:
         owner = resolve_owner(cube_owner)
         r = bgbot_cpp.cube_decision_rollout(
@@ -420,7 +420,8 @@ class _CubefulAnalyzer:
 
     def _cubeful_equity(
         self, post_move_board, probs, owner,
-        cube_value=1, away1=0, away2=0, is_crawford=False, jacoby=False,
+        cube_value=1, away1=0, away2=0, is_crawford=False, jacoby=True,
+        beaver=True,
     ) -> float:
         is_match = away1 > 0 or away2 > 0
         if self._cubeful_ply == 0:
@@ -445,20 +446,20 @@ class _CubefulAnalyzer:
                     self._inner._strategy_0ply, self._cubeful_ply,
                     cube_value=cube_value,
                     away1=away2, away2=away1, is_crawford=is_crawford,
-                    jacoby=jacoby,
+                    jacoby=jacoby, beaver=beaver,
                 )
             else:
                 opp_eq = bgbot_cpp.cubeful_equity_nply(
                     opp_pre_roll, opp_owner,
                     self._inner._strategy_0ply, self._cubeful_ply,
-                    jacoby=jacoby,
+                    jacoby=jacoby, beaver=beaver,
                 )
             return -opp_eq
 
     def checker_play_analytics(
         self, board, die1, die2, cube_value=1, cube_owner="centered",
         progress_callback=None,
-        away1=0, away2=0, is_crawford=False, jacoby=False,
+        away1=0, away2=0, is_crawford=False, jacoby=True, beaver=True,
     ) -> list[dict]:
         owner = resolve_owner(cube_owner)
         results = self._inner.checker_play_analytics(
@@ -478,7 +479,7 @@ class _CubefulAnalyzer:
             cf_eq = self._cubeful_equity(
                 m["board"], m["probs"], owner,
                 cube_value=cube_value, away1=away1, away2=away2,
-                is_crawford=is_crawford, jacoby=jacoby,
+                is_crawford=is_crawford, jacoby=jacoby, beaver=beaver,
             )
             return cubeless_eq, cf_eq
 
@@ -512,7 +513,7 @@ class _CubefulAnalyzer:
             cf_eq = self._cubeful_equity(
                 b, probs, owner,
                 cube_value=cube_value, away1=away1, away2=away2,
-                is_crawford=is_crawford, jacoby=jacoby,
+                is_crawford=is_crawford, jacoby=jacoby, beaver=beaver,
             )
             extra["cubeless_equity"] = r["equity"]
             return cf_eq, probs, eval_level, extra
@@ -539,7 +540,7 @@ class _CubefulAnalyzer:
 
     def cube_action_analytics(
         self, board, cube_value=1, cube_owner="centered",
-        away1=0, away2=0, is_crawford=False, jacoby=False, beaver=False,
+        away1=0, away2=0, is_crawford=False, jacoby=True, beaver=True,
     ) -> dict:
         return self._inner.cube_action_analytics(
             board, cube_value, cube_owner,
@@ -666,6 +667,7 @@ class BgBotAnalyzer:
         away2: int = 0,
         is_crawford: bool = False,
         jacoby: bool = True,
+        beaver: bool = True,
     ) -> CheckerPlayResult:
         """Analyze all legal moves for a checker play decision.
 
@@ -686,12 +688,16 @@ class BgBotAnalyzer:
             is_crawford: True if this is the Crawford game.
             jacoby: If True, gammons/backgammons don't count when cube is
                 centered (money games only). Auto-disabled for match play.
+            beaver: If True, opponent can beaver after being doubled
+                (money games only). Auto-disabled for match play.
         """
         if away1 > 0 or away2 > 0:
             jacoby = False
+            beaver = False
         raw = self._analyzer.checker_play_analytics(
             board, die1, die2, cube_value, cube_owner, progress_callback,
             away1=away1, away2=away2, is_crawford=is_crawford, jacoby=jacoby,
+            beaver=beaver,
         )
         moves = [_dict_to_move_analysis(d, include_game_plans) for d in raw]
         eval_level = moves[0].eval_level if moves else self._eval_level
