@@ -175,9 +175,10 @@ def _parse_cube_section_full(lines):
         dict with cubeless probs/equity + cubeful ND/DT/DP + action info.
     """
     # Line 0: "Cube analysis"
-    # Line 1: "N-ply cubeless equity +X.XXX"
+    # Line 1: "N-ply cubeless equity +X.XXX" or "+X.XXX (Money: +Y.YYY)" in match play
     eq_line = lines[1].strip()
-    eq_cubeless = float(eq_line.split()[-1])
+    eq_match = re.search(r'equity\s+([+-]?\d+\.\d+)', eq_line)
+    eq_cubeless = float(eq_match.group(1))
 
     # Line 2: "  0.527 0.148 0.008 - 0.473 0.128 0.005"
     prob_line = lines[2].strip()
@@ -413,7 +414,9 @@ class GnuBgAnalyzer:
         Returns CubeActionResult with cubeful ND/DT/DP equities and cubeless
         probabilities, all from the current player's perspective.
         """
-        cmd = self._build_preroll_command(board, cube_value, cube_owner)
+        cmd = self._build_preroll_command(board, cube_value, cube_owner,
+                                         away1=away1, away2=away2,
+                                         is_crawford=is_crawford)
         output = _run_gnubg(cmd, timeout=self.timeout)
         r, _ = _parse_cube_analytics_full(output)
 
@@ -462,7 +465,9 @@ class GnuBgAnalyzer:
         # Flip to opponent's perspective (they are about to roll)
         opp_board = _flip_board(board)
 
-        cmd = self._build_preroll_command(opp_board, cube_value, cube_owner)
+        cmd = self._build_preroll_command(opp_board, cube_value, cube_owner,
+                                         away1=away1, away2=away2,
+                                         is_crawford=is_crawford)
         output = _run_gnubg(cmd, timeout=self.timeout)
         r, _ = _parse_cube_analytics_full(output)
 
@@ -507,7 +512,9 @@ class GnuBgAnalyzer:
             # Single legal move — still evaluate it
             b = candidates[0]
             opp_board = _flip_board(b)
-            cmd = self._build_preroll_command(opp_board, cube_value, cube_owner)
+            cmd = self._build_preroll_command(opp_board, cube_value, cube_owner,
+                                             away1=away1, away2=away2,
+                                             is_crawford=is_crawford)
             output = _run_gnubg(cmd, timeout=self.timeout)
             r, _ = _parse_cube_analytics_full(output)
             probs = Probabilities(
@@ -524,7 +531,8 @@ class GnuBgAnalyzer:
 
         # Batch: evaluate all candidate boards in one GNUbg subprocess
         cmd = self._build_batch_postmove_command(
-            candidates, cube_value, cube_owner)
+            candidates, cube_value, cube_owner,
+            away1=away1, away2=away2, is_crawford=is_crawford)
         output = _run_gnubg(cmd, timeout=self.timeout)
 
         move_analyses = []
@@ -564,9 +572,32 @@ class GnuBgAnalyzer:
 
     # -- command builders ---------------------------------------------------
 
-    def _build_preroll_command(self, checkers, cube_value=1, cube_owner="centered"):
+    @staticmethod
+    def _match_prefix(away1, away2, is_crawford):
+        """Build GNUbg commands for match context.
+
+        Returns 'new session\\n' for money games (away1==0 and away2==0),
+        or 'new match N\\nset score ...\\n[set postcrawford on\\n]' for match play.
+        """
+        if not away1 and not away2:
+            return 'new session\n'
+        match_length = max(away1, away2)
+        player_score = match_length - away1
+        opp_score = match_length - away2
+        cmd = f'new match {match_length}\n'
+        cmd += f'set score {opp_score} {player_score}\n'
+        # Post-Crawford: one player is 1-away and Crawford has already occurred.
+        # GNUbg defaults to Crawford when a player first reaches 1-away, so we
+        # must explicitly enable post-Crawford play.  During Crawford
+        # (is_crawford=True) we don't set this — GNUbg handles it automatically.
+        if not is_crawford and (away1 == 1 or away2 == 1):
+            cmd += 'set postcrawford on\n'
+        return cmd
+
+    def _build_preroll_command(self, checkers, cube_value=1, cube_owner="centered",
+                               *, away1=0, away2=0, is_crawford=False):
         """Build a GNUbg command for a pre-roll position hint (cube analytics)."""
-        cmd = 'new session\n'
+        cmd = self._match_prefix(away1, away2, is_crawford)
         cmd += f'set evaluation chequer eval plies {self.n_plies}\n'
         cmd += f'set evaluation cubedecision eval plies {self.n_plies}\n'
         cmd += f'set cube value {cube_value}\n'
@@ -584,13 +615,14 @@ class GnuBgAnalyzer:
         return cmd
 
     def _build_batch_postmove_command(self, boards, cube_value=1,
-                                       cube_owner="centered"):
+                                       cube_owner="centered",
+                                       *, away1=0, away2=0, is_crawford=False):
         """Build a GNUbg command that evaluates multiple post-move positions.
 
         For each board, we flip to the opponent's perspective and run hint.
         All boards are evaluated in a single GNUbg subprocess.
         """
-        cmd = 'new session\n'
+        cmd = self._match_prefix(away1, away2, is_crawford)
         cmd += f'set evaluation chequer eval plies {self.n_plies}\n'
         cmd += f'set evaluation cubedecision eval plies {self.n_plies}\n'
         cmd += f'set cube value {cube_value}\n'

@@ -114,13 +114,17 @@ float get_met_after(int away1, int away2, int nPoints,
                     bool player_wins, bool is_crawford) {
     int new_away1 = player_wins ? away1 - nPoints : away1;
     int new_away2 = player_wins ? away2 : away2 - nPoints;
-    // After a game ends, determine if the resulting state is post-Crawford.
-    // If the current game IS the Crawford game, then after it ends we're
-    // in the post-Crawford period (someone was already 1-away).
-    // If the current game is NOT Crawford, and someone reaches 1-away from
-    // this game's result, the Crawford game hasn't happened yet — use
-    // pre-Crawford table (is_post_crawford=false).
-    bool post_crawford = is_crawford;  // Crawford game just ended → post-Crawford
+    // Determine if the resulting position is post-Crawford.
+    // Three cases:
+    // 1. Current game IS Crawford (is_crawford=true): after it ends, we enter
+    //    the post-Crawford period.
+    // 2. Already post-Crawford (!is_crawford AND someone already at 1-away):
+    //    Crawford has already occurred, so the post-Crawford state persists.
+    // 3. Pre-Crawford (neither player at 1-away yet): even if someone reaches
+    //    1-away from this game's result, their Crawford game hasn't happened
+    //    yet — use pre-Crawford table (which accounts for the upcoming Crawford).
+    bool already_post_crawford = !is_crawford && (away1 == 1 || away2 == 1);
+    bool post_crawford = is_crawford || already_post_crawford;
     return get_met(new_away1, new_away2, post_crawford);
 }
 

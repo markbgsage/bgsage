@@ -30,9 +30,6 @@ Usage:
 import sys
 import os
 import argparse
-import re
-import subprocess
-import tempfile
 import time
 
 # ---------------------------------------------------------------------------
@@ -52,117 +49,6 @@ for d in [os.path.join(root_dir, 'build_msvc'), os.path.join(root_dir, 'build')]
     if os.path.isdir(d):
         os.add_dll_directory(d)
 
-
-# ---------------------------------------------------------------------------
-# GNUbg helpers
-# ---------------------------------------------------------------------------
-
-GNUBG_CLI = r'C:\Program Files (x86)\gnubg\gnubg-cli.exe'
-
-
-def _board_simple_str(checkers):
-    parts = [str(checkers[25])]
-    for n in checkers[1:25]:
-        parts.append(str(n))
-    parts.append(str(checkers[0]))
-    return ' '.join(parts)
-
-
-def _flip_board(checkers):
-    flipped = [0] * 26
-    flipped[0] = checkers[25]
-    flipped[25] = checkers[0]
-    for i in range(1, 25):
-        flipped[i] = -checkers[25 - i]
-    return flipped
-
-
-def _run_gnubg(cmd, timeout=300):
-    with tempfile.NamedTemporaryFile(mode='w', suffix='.txt', delete=False) as f:
-        f.write(cmd)
-        cmd_file = f.name
-    try:
-        result = subprocess.run(
-            [GNUBG_CLI, '-q', '-t', '--no-rc', '-c', cmd_file],
-            capture_output=True, text=True, timeout=timeout
-        )
-        return result.stdout
-    finally:
-        os.remove(cmd_file)
-
-
-def _parse_gnubg_cube_section(output, search_start=0):
-    """Parse a GNUbg 'Cube analysis' section.
-
-    Returns (result_dict, next_offset) or (None, -1) if not found.
-    """
-    idx = output.find('Cube analysis', search_start)
-    if idx == -1:
-        return None, -1
-    section = output[idx:]
-    lines = section.split('\n')
-
-    # Line 1: "N-ply cubeless equity +X.XXX" or "... +X.XXX (Money: +X.XXX)"
-    eq_match = re.search(r'([+-]?\d+\.\d+)', lines[1])
-    if not eq_match:
-        return None, -1
-    eq_cubeless = float(eq_match.group(1))
-
-    # Line 2: "  0.527 0.148 0.008 - 0.473 0.128 0.005"
-    bits = lines[2].strip().split()
-    p_win = float(bits[0])
-    p_gw = float(bits[1])
-    p_bw = float(bits[2])
-    p_gl = float(bits[5])
-    p_bl = float(bits[6])
-
-    # Cubeful equities
-    nd = dt = dp = None
-    optimal_action = ""
-    for line in lines[3:]:
-        line = line.strip()
-        m = re.match(r'^\d+\.\s+(.+?)\s+([+-]?\d+\.\d+)(?:\s|$)', line)
-        if m:
-            act = m.group(1).strip()
-            val = float(m.group(2))
-            if 'No double' in act or 'No redouble' in act or 'No dbl' in act:
-                nd = val
-            elif 'take' in act.lower():
-                dt = val
-            elif 'pass' in act.lower():
-                dp = val
-        elif 'Proper cube action' in line:
-            if ':' in line:
-                optimal_action = line.split(':', 1)[1].strip()
-            break
-
-    result = {
-        'p_win': p_win, 'p_gw': p_gw, 'p_bw': p_bw, 'p_gl': p_gl, 'p_bl': p_bl,
-        'equity_cubeless': eq_cubeless,
-        'equity_nd': nd, 'equity_dt': dt, 'equity_dp': dp,
-        'optimal_action': optimal_action,
-    }
-    next_offset = idx + len('Cube analysis') + 1
-    return result, next_offset
-
-
-def _gnubg_match_prefix(match_length, player_score, opp_score):
-    """Build GNUbg commands for match context (empty string for money game)."""
-    if match_length and match_length > 0:
-        cmd = f'new match {match_length}\n'
-        cmd += f'set score {opp_score} {player_score}\n'
-        return cmd
-    return 'new session\n'
-
-
-def _gnubg_cube_setup(cube_value, cube_owner_str):
-    """Build GNUbg commands for cube setup."""
-    cmd = f'set cube value {cube_value}\n'
-    if cube_owner_str == "player":
-        cmd += 'set cube owner 1\n'
-    elif cube_owner_str == "opponent":
-        cmd += 'set cube owner 0\n'
-    return cmd
 
 
 # ---------------------------------------------------------------------------
@@ -249,28 +135,30 @@ def run_cube_analysis(checkers, cube_value, cube_owner_str, match_length,
     sage['rollout'] = {'result': r, 'time': time.time() - t0}
 
     # --- GNUbg ---
+    from bgsage.gnubg import GnuBgAnalyzer
+
     gnubg = {}
-    prefix = _gnubg_match_prefix(match_length, player_score, opp_score)
-    cube_setup = _gnubg_cube_setup(cube_value, cube_owner_str)
-
     for n_ply in [0, 1, 2, 3]:
-        cmd = prefix
-        cmd += f'set evaluation chequer eval plies {n_ply}\n'
-        cmd += f'set evaluation cubedecision eval plies {n_ply}\n'
-        cmd += cube_setup
-        cmd += f'set board simple {_board_simple_str(checkers)}\n'
-        cmd += 'set turn 1\n'
-        cmd += 'hint\n'
-
+        analyzer = GnuBgAnalyzer(eval_level=f'{n_ply}ply', timeout=300)
         t0 = time.time()
-        output = _run_gnubg(cmd)
-        dt = time.time() - t0
-
-        r, _ = _parse_gnubg_cube_section(output)
-        if r:
-            gnubg[f'{n_ply}ply'] = {'result': r, 'time': dt}
-        else:
-            print(f"WARNING: Failed to parse GNUbg {n_ply}-ply output")
+        try:
+            cr = analyzer.cube_action(
+                checkers, cube_value=cube_value, cube_owner=cube_owner_str,
+                away1=away1, away2=away2, is_crawford=is_crawford)
+            gnubg[f'{n_ply}ply'] = {
+                'result': {
+                    'p_win': cr.probs.win, 'p_gw': cr.probs.gammon_win,
+                    'p_bw': cr.probs.backgammon_win,
+                    'p_gl': cr.probs.gammon_loss, 'p_bl': cr.probs.backgammon_loss,
+                    'equity_cubeless': cr.cubeless_equity,
+                    'equity_nd': cr.equity_nd, 'equity_dt': cr.equity_dt,
+                    'equity_dp': cr.equity_dp,
+                    'optimal_action': cr.optimal_action,
+                },
+                'time': time.time() - t0,
+            }
+        except Exception as e:
+            print(f"WARNING: GNUbg {n_ply}-ply failed: {e}")
 
     # --- Print tables ---
     _print_cube_tables(sage, gnubg)
