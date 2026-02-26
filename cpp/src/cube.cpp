@@ -556,11 +556,20 @@ static CubeDecision cube_decision_0ply_match(
     // same scale now, but MWC decisions are the canonical approach for match play).
     bool player_can_double = can_double(cube);
 
+    // Post-Crawford automatic double: the trailing player (away1 > 1,
+    // opponent at 1-away) should always double — losing costs the match
+    // regardless of cube value, but winning scores more points.
+    bool auto_double = (!craw && player_can_double && away1 > 1 && away2 == 1);
+
     if (!player_can_double) {
         // Player cannot double (Crawford, dead cube, etc.)
         result.should_double = false;
         result.should_take = true;  // Irrelevant since no double
         result.optimal_equity = result.equity_nd;
+    } else if (auto_double) {
+        result.should_double = true;
+        result.should_take = (dt_m <= dp_m);
+        result.optimal_equity = std::min(result.equity_dt, result.equity_dp);
     } else {
         float best_double_mwc = std::min(dt_m, dp_m);
         result.should_double = (best_double_mwc > nd_m);
@@ -1077,6 +1086,10 @@ CubeDecision cube_decision_nply(
 
     // Decision logic
     bool player_can_double = can_double(cube);
+    // Post-Crawford automatic double: trailing player should always double
+    bool auto_double = (!is_money && !cube.match.is_crawford &&
+                        player_can_double &&
+                        cube.match.away1 > 1 && cube.match.away2 == 1);
 
     if (!player_can_double) {
         result.should_double = false;
@@ -1093,6 +1106,15 @@ CubeDecision cube_decision_nply(
         } else {
             result.optimal_equity = result.equity_nd;
         }
+    } else if (auto_double) {
+        // Post-Crawford trailer: always double, opponent decides take/pass
+        float nd_m = arCubeful[0];
+        float dt_m = arCubeful[1];
+        float dp_m_val = dp_mwc(cube.match.away1, cube.match.away2,
+                                 cube.cube_value, cube.match.is_crawford);
+        result.should_double = true;
+        result.should_take = (dt_m <= dp_m_val);
+        result.optimal_equity = std::min(result.equity_dt, result.equity_dp);
     } else {
         // Match: compare in MWC space (canonical for match play decisions)
         float nd_m = arCubeful[0];

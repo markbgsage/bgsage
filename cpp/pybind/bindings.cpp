@@ -2001,10 +2001,18 @@ PYBIND11_MODULE(bgbot_cpp, m) {
             float dt_m = static_cast<float>(cfr.dt_equity);
             float dp_m = dp_mwc(a1, a2, cv, craw);
 
+            // Post-Crawford automatic double: trailing player always doubles
+            bool auto_double = (!craw && a1 > 1 && a2 == 1);
+
             // Decision in MWC space
-            float best_mwc = std::min(dt_m, dp_m);
-            should_double = (best_mwc > nd_m);
-            should_take = (dt_m <= dp_m);
+            if (auto_double) {
+                should_double = true;
+                should_take = (dt_m <= dp_m);
+            } else {
+                float best_mwc = std::min(dt_m, dp_m);
+                should_double = (best_mwc > nd_m);
+                should_take = (dt_m <= dp_m);
+            }
 
             // Convert to equity at original cv for display
             equity_nd = mwc2eq(nd_m, a1, a2, cv, craw);
