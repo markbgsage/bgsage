@@ -946,7 +946,10 @@ static void cubeful_recursive_multi(
         // Check if best move is terminal
         GameResult post_result = check_game_over(candidates[best_idx]);
         if (post_result != GameResult::NOT_OVER) {
-            auto tp = terminal_probs(post_result);
+            // terminal_probs gives mover's perspective, but accumulated values
+            // are from the opponent of the mover's perspective (matching the
+            // recursive case). Invert to get the correct perspective.
+            auto tp = invert_probs(terminal_probs(post_result));
             for (int i = 0; i < expanded_cci; i++) {
                 if (aci[i].cube_value <= 0) {
                     arCfLocal[i] = 0.0f;
