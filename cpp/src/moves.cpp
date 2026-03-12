@@ -90,11 +90,13 @@ bool has_checkers(const Board& b) {
     return false;
 }
 
-// Recursively generate all boards reachable with the given sequence of dice.
-// Uses a shared scratch vector to avoid per-recursion heap allocation.
-void generate_boards(const Board& b, const int* dice, int n_dice,
-                     std::vector<Board>& results,
-                     std::vector<Board>& scratch) {
+// Strict recursive generator: only adds boards where ALL n_dice are used.
+// Does NOT add partial (fewer-dice) fallback results.
+// This enforces the backgammon rule: must use maximum number of dice possible.
+void generate_boards_strict(const Board& b, const int* dice, int n_dice,
+                            std::vector<Board>& results,
+                            std::vector<Board>& scratch) {
+    // All checkers borne off mid-sequence — game over, remaining dice irrelevant
     if (!has_checkers(b)) {
         results.push_back(b);
         return;
@@ -115,18 +117,11 @@ void generate_boards(const Board& b, const int* dice, int n_dice,
     }
 
     // Save intermediate results to avoid scratch being overwritten in recursion.
-    // Use a local copy since recursion will reuse scratch.
-    // For 2-die non-doubles: max depth is 2, so one level of copying.
-    // For doubles: max depth is 4, but each level has few boards.
     auto intermediates = scratch;  // copy
 
     for (const auto& nb : intermediates) {
-        size_t before = results.size();
-        generate_boards(nb, dice + 1, n_dice - 1, results, scratch);
-        if (results.size() == before) {
-            // Couldn't use remaining dice from this position
-            results.push_back(nb);
-        }
+        // Only recurse — do NOT add intermediate if remaining dice can't be used.
+        generate_boards_strict(nb, dice + 1, n_dice - 1, results, scratch);
     }
 }
 
@@ -139,13 +134,28 @@ std::vector<Board> possible_boards(const Board& board, int die1, int die2) {
     scratch.reserve(16);
 
     if (die1 == die2) {
+        // Doubles: must use maximum number of dice possible (4, then 3, ...)
         int dice[4] = {die1, die1, die1, die1};
-        generate_boards(board, dice, 4, results, scratch);
+        for (int n = 4; n >= 1; --n) {
+            generate_boards_strict(board, dice, n, results, scratch);
+            if (!results.empty()) break;
+        }
     } else {
+        // Non-doubles: must use both dice if possible
         int dice_a[2] = {die1, die2};
         int dice_b[2] = {die2, die1};
-        generate_boards(board, dice_a, 2, results, scratch);
-        generate_boards(board, dice_b, 2, results, scratch);
+        generate_boards_strict(board, dice_a, 2, results, scratch);
+        generate_boards_strict(board, dice_b, 2, results, scratch);
+
+        if (results.empty()) {
+            // Can't use both dice. Must use the larger one if possible.
+            int large = std::max(die1, die2);
+            int small = std::min(die1, die2);
+            possible_boards_one_die(board, large, results);
+            if (results.empty()) {
+                possible_boards_one_die(board, small, results);
+            }
+        }
     }
 
     if (results.empty()) {
@@ -168,13 +178,28 @@ void possible_boards(const Board& board, int die1, int die2,
     scratch.reserve(16);
 
     if (die1 == die2) {
+        // Doubles: must use maximum number of dice possible (4, then 3, ...)
         int dice[4] = {die1, die1, die1, die1};
-        generate_boards(board, dice, 4, results, scratch);
+        for (int n = 4; n >= 1; --n) {
+            generate_boards_strict(board, dice, n, results, scratch);
+            if (!results.empty()) break;
+        }
     } else {
+        // Non-doubles: must use both dice if possible
         int dice_a[2] = {die1, die2};
         int dice_b[2] = {die2, die1};
-        generate_boards(board, dice_a, 2, results, scratch);
-        generate_boards(board, dice_b, 2, results, scratch);
+        generate_boards_strict(board, dice_a, 2, results, scratch);
+        generate_boards_strict(board, dice_b, 2, results, scratch);
+
+        if (results.empty()) {
+            // Can't use both dice. Must use the larger one if possible.
+            int large = std::max(die1, die2);
+            int small = std::min(die1, die2);
+            possible_boards_one_die(board, large, results);
+            if (results.empty()) {
+                possible_boards_one_die(board, small, results);
+            }
+        }
     }
 
     if (results.empty()) {
