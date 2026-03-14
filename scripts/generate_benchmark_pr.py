@@ -161,7 +161,7 @@ def simulate_game(strategy, rng, max_turns=300):
             player = 1 - player
             continue
 
-        # Evaluate all candidates at 1-ply
+        # Evaluate all candidates at 2-ply
         equities = []
         for cand in candidates:
             result = strategy.evaluate_board(cand, board)
@@ -190,7 +190,7 @@ def simulate_game(strategy, rng, max_turns=300):
             'board': list(board),
             'dice': [d1, d2],
             'candidates': [list(c) for c in f_cands],
-            'candidate_equities_1ply': f_eqs,
+            'candidate_equities_2ply': f_eqs,
             'chosen_idx': f_chosen,
             'n_total_candidates': len(candidates),
             'turn': turn,
@@ -218,7 +218,7 @@ def simulate_games_parallel(weights, n_games, seed, n_workers=4):
         """Worker simulates a batch of games."""
         strategy = bgbot_cpp.create_multipy_5nn(
             *weight_tuple(weights), NH_PR, NH_RC, NH_AT, NH_PM, NH_AN,
-            n_plies=1)
+            n_plies=2)
         results = []
         for game_idx, game_seed in game_indices_seeds:
             rng = random.Random(game_seed)
@@ -489,9 +489,9 @@ def main():
         rollout_est = bgbot_cpp.create_rollout_5nn(
             *weight_tuple(weights), NH_PR, NH_RC, NH_AT, NH_PM, NH_AN,
             n_trials=args.n_trials, truncation_depth=0,
-            decision_ply=1,
+            decision_ply=2,
             n_threads=args.threads,
-            late_ply=0, late_threshold=3)
+            late_ply=1, late_threshold=3)
 
         sample_keys = [k for k in positions if k not in completed][:5]
         times = []
@@ -514,13 +514,13 @@ def main():
         return
 
     # Step 5: Run rollouts
-    log(log_file, f"Starting rollouts (1-ply, {args.n_trials} trials, VR=0, late=0@3)...")
+    log(log_file, f"Starting rollouts (2-ply, {args.n_trials} trials, VR=1, late=1@3)...")
     rollout = bgbot_cpp.create_rollout_5nn(
         *weight_tuple(weights), NH_PR, NH_RC, NH_AT, NH_PM, NH_AN,
         n_trials=args.n_trials, truncation_depth=0,
-        decision_ply=1,
+        decision_ply=2,
         n_threads=args.threads,
-        late_ply=0, late_threshold=3)
+        late_ply=1, late_threshold=3)
 
     rollout_equities = run_rollouts(
         positions, rollout, rollout_file, log_file, completed)
@@ -530,7 +530,7 @@ def main():
     errors.sort(key=lambda x: -x['error'])
 
     log(log_file, f"\n{'='*60}")
-    log(log_file, f"Benchmark PR (1-ply strategy, Stage 5): {benchmark_pr:.2f}")
+    log(log_file, f"Benchmark PR (2-ply strategy, Stage 5): {benchmark_pr:.2f}")
     log(log_file, f"Total decisions: {len(all_decisions)}")
     log(log_file, f"Total unique positions rolled out: {len(positions)}")
     log(log_file, f"{'='*60}")

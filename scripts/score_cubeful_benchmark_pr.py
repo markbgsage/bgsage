@@ -15,8 +15,8 @@ For cube decisions:
 Cubeful PR = mean(all_errors) * 500
 
 Usage:
-  python python/score_cubeful_benchmark_pr.py                # Score Stage 5 at 0-ply
-  python python/score_cubeful_benchmark_pr.py --plies 1      # Score at 1-ply
+  python python/score_cubeful_benchmark_pr.py                # Score Stage 5 at 1-ply
+  python python/score_cubeful_benchmark_pr.py --plies 2      # Score at 2-ply
   python python/score_cubeful_benchmark_pr.py --checker-only  # Checker-play only
   python python/score_cubeful_benchmark_pr.py --cube-only     # Cube only
 """
@@ -135,7 +135,7 @@ def prepare_checker_decisions(checker_decisions, rollout_data):
     return prepared, n_missing
 
 
-def score_cube_decisions(cube_decisions, rollout_data, weights, hidden, n_plies=0):
+def score_cube_decisions(cube_decisions, rollout_data, weights, hidden, n_plies=1):
     """Score cube decisions using rollout-derived reference equities.
 
     For each cube decision:
@@ -198,11 +198,11 @@ def score_cube_decisions(cube_decisions, rollout_data, weights, hidden, n_plies=
             else:
                 owner_enum = bgbot_cpp.CubeOwner.OPPONENT
 
-            ref_cd = bgbot_cpp.cube_decision_0ply(ref_probs, cube_value, owner_enum, cube_x)
+            ref_cd = bgbot_cpp.cube_decision_1ply(ref_probs, cube_value, owner_enum, cube_x)
             ref_optimal_eq = ref_cd.optimal_equity
 
             # Strategy's cube decision
-            if n_plies == 0:
+            if n_plies == 1:
                 strat_result = bgbot_cpp.evaluate_cube_decision(
                     board, cube_value, owner_enum,
                     *wt, *ht)
@@ -250,10 +250,10 @@ def score_cube_decisions(cube_decisions, rollout_data, weights, hidden, n_plies=
             else:
                 owner_enum = bgbot_cpp.CubeOwner.OPPONENT
 
-            ref_cd = bgbot_cpp.cube_decision_0ply(ref_probs, cube_value, owner_enum, cube_x)
+            ref_cd = bgbot_cpp.cube_decision_1ply(ref_probs, cube_value, owner_enum, cube_x)
 
             # Strategy's take/pass decision
-            if n_plies == 0:
+            if n_plies == 1:
                 strat_result = bgbot_cpp.evaluate_cube_decision(
                     board, cube_value, owner_enum,
                     *wt, *ht)
@@ -424,8 +424,8 @@ def main():
     parser = argparse.ArgumentParser(description='Score strategies on Cubeful Benchmark PR')
     parser.add_argument('--stage', type=int, default=5,
                         choices=[5], help='Model stage (default: 5)')
-    parser.add_argument('--plies', type=int, default=0,
-                        help='Ply depth for cube scoring (default: 0)')
+    parser.add_argument('--plies', type=int, default=1,
+                        help='Ply depth for cube scoring (default: 1)')
     parser.add_argument('--checker-plies', type=int, default=None,
                         help='Ply depth for checker scoring (default: same as --plies)')
     parser.add_argument('--checker-only', action='store_true',
@@ -470,8 +470,8 @@ def main():
 
         if prepared:
             t0 = time.perf_counter()
-            if args.checker_plies == 0:
-                raw = bgbot_cpp.score_benchmark_pr_0ply(
+            if args.checker_plies == 1:
+                raw = bgbot_cpp.score_benchmark_pr_1ply(
                     prepared, *wt, *ht, n_threads=args.threads)
             else:
                 raw = bgbot_cpp.score_benchmark_pr_nply(

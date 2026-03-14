@@ -140,7 +140,7 @@ ranked by equity, with cubeless post-move probabilities for each.
 ```python
 from bgsage import BgBotAnalyzer, STARTING_BOARD
 
-analyzer = BgBotAnalyzer(eval_level="2ply", cubeful=True)
+analyzer = BgBotAnalyzer(eval_level="3ply", cubeful=True)
 result = analyzer.checker_play(STARTING_BOARD, 3, 1, cube_value=1, cube_owner="centered")
 # result: CheckerPlayResult with .moves (list[MoveAnalysis], best first)
 for m in result.moves[:3]:
@@ -174,7 +174,7 @@ return cubeful equity, cubeless equity, and cubeless probabilities.
 ```python
 from bgsage import BgBotAnalyzer
 
-analyzer = BgBotAnalyzer(eval_level="1ply")
+analyzer = BgBotAnalyzer(eval_level="2ply")
 result = analyzer.post_move_analytics(post_move_board, cube_owner="centered")
 # result: PostMoveAnalysis with .probs, .cubeless_equity, .cubeful_equity, .eval_level
 
@@ -191,7 +191,7 @@ positions = [
     {"board": board1, "cube_owner": "centered"},
     {"board": board2, "cube_owner": "player"},
 ]
-results = batch_post_move_evaluate(positions, eval_level="0ply", n_threads=0)
+results = batch_post_move_evaluate(positions, eval_level="1ply", n_threads=0)
 # results: list[PostMoveAnalysis]
 for r in results:
     print(f"CL={r.cubeless_equity:+.3f}  CF={r.cubeful_equity:+.3f}")
@@ -221,7 +221,7 @@ cubeless equity, and cubeless probabilities.
 ```python
 from bgsage import BgBotAnalyzer
 
-analyzer = BgBotAnalyzer(eval_level="2ply", cubeful=True)
+analyzer = BgBotAnalyzer(eval_level="3ply", cubeful=True)
 cube = analyzer.cube_action(board, cube_value=1, cube_owner="centered")
 # cube: CubeActionResult with .equity_nd, .equity_dt, .equity_dp,
 #   .should_double, .should_take, .optimal_action, .probs, .cubeless_equity
@@ -237,7 +237,7 @@ cube = analyzer.cube_action(board, cube_value=1, cube_owner="centered",
 from bgsage import batch_evaluate
 
 positions = [{"board": b, "cube_value": 1, "cube_owner": "centered"} for b in boards]
-results = batch_evaluate(positions, eval_level="2ply", n_threads=0)
+results = batch_evaluate(positions, eval_level="3ply", n_threads=0)
 # results: list[PositionEval] — includes probs, cubeless/cubeful equity, cube decision
 
 # Match play: add optional away1, away2, is_crawford to position dicts
@@ -245,10 +245,10 @@ positions = [{"board": b, "cube_value": 1, "cube_owner": "centered",
               "away1": 5, "away2": 3} for b in boards]
 ```
 
-**C++** — `evaluate_cube_decision()` (0-ply), `cube_decision_nply()` (N-ply),
+**C++** — `evaluate_cube_decision()` (1-ply), `cube_decision_nply()` (N-ply),
 `cube_decision_rollout()`:
 ```cpp
-// 0-ply: evaluate_cube_decision(checkers, cube_value, owner, weight_args..., jacoby=false, beaver=false)
+// 1-ply: evaluate_cube_decision(checkers, cube_value, owner, weight_args..., jacoby=false, beaver=false)
 // N-ply: cube_decision_nply(checkers, cube_value, owner, n_plies, weight_args..., jacoby=false, beaver=false)
 // Rollout: cube_decision_rollout(checkers, cube_value, owner, weight_args..., config..., jacoby=false, beaver=false)
 // All accept optional jacoby/beaver to enable Jacoby/Beaver rules for money games
@@ -258,11 +258,11 @@ C++ batch pre-roll: `bgbot_cpp.batch_evaluate_positions(positions, strategy, n_t
 via pybind11; takes `list[(board, cube_value, CubeOwner[, away1, away2, is_crawford])]`,
 returns `list[dict]`.
 
-C++ batch checker play: `bgbot_cpp.batch_checker_play(inputs, strategy_0ply, [strategy_nply,]
+C++ batch checker play: `bgbot_cpp.batch_checker_play(inputs, strategy_1ply, [strategy_nply,]
 filter_max_moves, filter_threshold, n_threads)` via pybind11; takes `list[dict]` with
 `{board, die1, die2, cube_value, cube_owner}`, returns `list[dict]` each with `moves` list
-sorted by cubeful equity desc. Two overloads: 0-ply (GamePlanStrategy only) and N-ply
-(GamePlanStrategy + MultiPlyStrategy). Survivors evaluated at N-ply, rest at 0-ply.
+sorted by cubeful equity desc. Two overloads: 1-ply (GamePlanStrategy only) and N-ply
+(GamePlanStrategy + MultiPlyStrategy). Survivors evaluated at N-ply, rest at 1-ply.
 
 **Python batch wrapper** — `batch_checker_play()` (`python/bgsage/batch.py`):
 ```python
@@ -271,7 +271,7 @@ positions = [
     {"board": b, "die1": 3, "die2": 1, "cube_value": 1, "cube_owner": "centered"}
     for b in boards
 ]
-results = batch_checker_play(positions, eval_level="2ply", n_threads=0)
+results = batch_checker_play(positions, eval_level="3ply", n_threads=0)
 # results: list[CheckerPlayResult], each with .moves sorted best-first
 ```
 
@@ -343,13 +343,13 @@ from bgsage.weights import WeightConfig
 weights = WeightConfig.from_model("stage3")
 
 # Single-position
-analyzer = BgBotAnalyzer(weights=weights, eval_level="1ply")
+analyzer = BgBotAnalyzer(weights=weights, eval_level="2ply")
 
 # Batch pre-roll
-results = batch_evaluate(positions, eval_level="0ply", weights=weights)
+results = batch_evaluate(positions, eval_level="1ply", weights=weights)
 
 # Batch post-move
-results = batch_post_move_evaluate(positions, eval_level="0ply", weights=weights)
+results = batch_post_move_evaluate(positions, eval_level="1ply", weights=weights)
 ```
 
 ### Return Types
@@ -371,16 +371,16 @@ to override. Scripts live in `scripts/`.
 
 | Script | What it measures | Key args |
 |--------|-----------------|----------|
-| `run_full_benchmark.py` | Full suite: per-plan ER + contact/crashed/race ER + vs PubEval ppg + self-play distribution. Supports 0-ply through N-ply. | `--model`, `--ply N`, `--scenarios N`, `--threads N`, `--games N` |
-| `run_rollout_benchmark.py` | Top-N worst 0-ply errors compared at 1-ply, 2-ply, 3-ply, rollout | `--model`, `--top N`, `--threads N` |
+| `run_full_benchmark.py` | Full suite: per-plan ER + contact/crashed/race ER + vs PubEval ppg + self-play distribution. Supports 1-ply through N-ply. | `--model`, `--ply N`, `--scenarios N`, `--threads N`, `--games N` |
+| `run_rollout_benchmark.py` | Top-N worst 1-ply errors compared at 2-ply, 3-ply, 4-ply, rollout | `--model`, `--top N`, `--threads N` |
 | `score_benchmark_pr.py` | Benchmark PR (equity error vs rollout reference, 103k decisions) | `--model`, `--plies N`, `--all-models`, `--all-plies` |
 | `score_benchmark_pr_gnubg.py` | GNUbg's Benchmark PR (parallel GNUbg CLI subprocesses) | `--plies N` |
-| `test_evaluate_probs.py` | Single position eval at 0-3 ply + GNUbg + rollouts | `--model`, `--checkers`, `--ply N` |
-| `test_cube_decision.py` | Cube decisions vs 3 reference positions at 0-3 ply + rollout | `--model` |
-| `eval_position.py` | Side-by-side Stage 5 vs GNUbg evaluation (cube action or checker play, 0-3 ply + rollout, money or match play) | `cube`/`checker` subcommand, `--checkers`, `--dice`, `--match`, `--score`, `--cube-value`, `--cube-owner` |
+| `test_evaluate_probs.py` | Single position eval at 1-4 ply + GNUbg + rollouts | `--model`, `--checkers`, `--ply N` |
+| `test_cube_decision.py` | Cube decisions vs 3 reference positions at 1-4 ply + rollout | `--model` |
+| `eval_position.py` | Side-by-side Stage 5 vs GNUbg evaluation (cube action or checker play, 1-4 ply + rollout, money or match play) | `cube`/`checker` subcommand, `--checkers`, `--dice`, `--match`, `--score`, `--cube-value`, `--cube-owner` |
 
 ```bash
-# Full benchmark with production model (0-ply)
+# Full benchmark with production model (1-ply)
 python scripts/run_full_benchmark.py
 
 # Compare two models
@@ -388,8 +388,8 @@ python scripts/run_full_benchmark.py --model stage5
 python scripts/run_full_benchmark.py --model stage3
 
 # Multi-ply benchmark
-python scripts/run_full_benchmark.py --ply 1
-python scripts/run_full_benchmark.py --ply 2 --scenarios 500
+python scripts/run_full_benchmark.py --ply 2
+python scripts/run_full_benchmark.py --ply 3 --scenarios 500
 
 # Score all registered models on Benchmark PR
 python scripts/score_benchmark_pr.py --all-models
@@ -488,11 +488,11 @@ See "Benchmark Scripts" section above for all benchmarking commands.
 
 ## Multi-Ply Search
 
-- 0-ply: Direct NN evaluation
-- 1-ply: Average over 21 opponent rolls (~60x slower with TINY filter)
-- 2-ply: Recursive (~800-1000x slower than 0-ply)
+- 1-ply: Direct NN evaluation
+- 2-ply: Average over 21 opponent rolls (~60x slower with TINY filter)
+- 3-ply: Recursive (~800-1000x slower than 1-ply)
 
-**Move filter**: After 0-ply scoring, keep top `max_moves` within `threshold` equity.
+**Move filter**: After 1-ply scoring, keep top `max_moves` within `threshold` equity.
 Default TINY: 5 moves, 0.08 threshold.
 
 **Optimizations**: AVX2 FMA intrinsics, fast sigmoid LUT, open-addressing position
@@ -505,7 +505,7 @@ Monte Carlo evaluation with variance reduction. Stratified first roll
 
 **Cubeful rollout** (for cube decisions): Two-branch simulation — ND (no double)
 and DT (double/take) branches share the same board evolution and dice. Cube
-decisions via `cube_decision_0ply()` at each half-move; double/pass terminates
+decisions via `cube_decision_1ply()` at each half-move; double/pass terminates
 the branch immediately. VR luck tracked in cubeful value space per-branch.
 Match play works entirely in MWC space (`cl2cf_match`, `cubeless_mwc`, `dp_mwc`),
 with `away1/away2` swapped at each perspective flip. Money game branches use
@@ -556,9 +556,9 @@ DT/DP logic applies.
 beaver applies (opponent IS accepting the double, plus beavering).
 
 **Implementation:** `CubeInfo` carries a `bool beaver` flag. Beaver logic is
-applied at the decision layer in `cube_decision_0ply_money()`, `get_ecf3()`
+applied at the decision layer in `cube_decision_1ply_money()`, `get_ecf3()`
 (N-ply), `cube_decision_nply()` (top-level), and `cube_decision_rollout()`
-(binding). Rollout internal cube decisions via `cube_decision_0ply()` also
+(binding). Rollout internal cube decisions via `cube_decision_1ply()` also
 respect the beaver flag; a beaver results in cube_value *= 4 (double + beaver).
 
 **Janowski is NOT affected** by beavers. The formulas (take point, cash point,
@@ -607,7 +607,7 @@ this array:
 
 - **Internal (plies>0):** Expand via make_cube_pos (with fInvert=true for opponent's
   perspective). For each of 21 dice rolls: generate moves, pick best by cubeless
-  0-ply equity (shared across all cube states), flip to opponent perspective, recurse
+  1-ply equity (shared across all cube states), flip to opponent perspective, recurse
   at plies-1. Average over 36 total weight, flip perspective back, collapse via
   get_ecf3.
 
@@ -621,7 +621,7 @@ this array:
 **Key properties:**
 - Cube decisions at every level use full recursive values (not heuristic predictions)
 - Move selection is cubeless (negligible impact, much cheaper than per-state cubeful)
-- Janowski `x` is only applied at 0-ply leaf nodes
+- Janowski `x` is only applied at 1-ply leaf nodes
 - The cci array grows and shrinks at each level (1->2->4->...->collapse back)
 - Both money game and match play use the same recursion; only the leaf conversion
   (`cl2cf_money` vs `cl2cf_match`) and get_ecf3 scaling differ
@@ -633,7 +633,7 @@ back to money game behavior (all existing callers unchanged).
 
 **Key files:**
 - `cpp/include/bgbot/match_equity.h` / `cpp/src/match_equity.cpp` — MET data + utilities
-- `cube.h` / `cube.cpp` — `cl2cf_match()`, `cube_decision_0ply_match()`, `cubeful_mwc_recursive()`
+- `cube.h` / `cube.cpp` — `cl2cf_match()`, `cube_decision_1ply_match()`, `cubeful_mwc_recursive()`
 
 **Hardcoded Kazaross-XG2 MET** (from GNUbg): 25x25 pre-Crawford + 25 post-Crawford values.
 - `get_met(away1, away2, is_crawford)` → MWC for the player needing `away1` points
@@ -657,13 +657,13 @@ double; trailer should double immediately.
 
 ## Current Best Scores (Production Model: stage5)
 
-| Metric | 0-ply | Target |
+| Metric | 1-ply | Target |
 |--------|-------|--------|
 | Contact ER | 9.87 | < 10.5 |
 | Race ER | 0.95 | < 0.643 |
 | vs PubEval | +0.633 | > +0.63 |
 
-Benchmark PR (103k decisions): 0-ply=2.47, 1-ply=1.85, 2-ply=1.53.
+Benchmark PR (103k decisions): 1-ply=2.47, 2-ply=1.85, 3-ply=1.53.
 
 The production model is defined in `python/bgsage/weights.py` — see "Production Model"
 section above. See `MODEL_BENCHMARKS.md` for full comparison of all trained models.
@@ -689,8 +689,9 @@ Each line: `<20-char position string> <P_win> <P_gw> <P_bw> <P_gl> <P_bl>`
 
 ## Ply Counting Convention
 
-We (and GNUbg) call raw NN evaluation "0-ply". XG calls it "1-ply". So XG's 2-ply
-= our 1-ply, XG's 4-ply = our 3-ply. Keep this in mind when comparing results.
+We use the XG convention where 1-ply = raw NN evaluation. GNUbg calls raw NN
+evaluation "0-ply". So GNUbg's 0-ply = our 1-ply, GNUbg's 1-ply = our 2-ply, etc.
+Keep this in mind when comparing results.
 
 ## C++ Gotchas
 

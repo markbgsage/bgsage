@@ -1,13 +1,13 @@
 """Full benchmark suite for the 5-NN game plan strategy.
 
 Runs game plan benchmarks, old-style benchmarks, vs PubEval, and self-play
-outcome distribution. Supports 0-ply (direct NN) and N-ply (multi-ply search).
+outcome distribution. Supports 1-ply (direct NN) and N-ply (multi-ply search).
 
 Usage:
-  python bgsage/scripts/run_full_benchmark.py                     # 0-ply, production model
-  python bgsage/scripts/run_full_benchmark.py --model stage3      # 0-ply, specific model
-  python bgsage/scripts/run_full_benchmark.py --ply 1             # 1-ply
-  python bgsage/scripts/run_full_benchmark.py --ply 2 --scenarios 500  # 2-ply, subsample
+  python bgsage/scripts/run_full_benchmark.py                     # 1-ply, production model
+  python bgsage/scripts/run_full_benchmark.py --model stage3      # 1-ply, specific model
+  python bgsage/scripts/run_full_benchmark.py --ply 2             # 2-ply
+  python bgsage/scripts/run_full_benchmark.py --ply 3 --scenarios 500  # 3-ply, subsample
 """
 
 import os
@@ -41,7 +41,7 @@ OLD_STYLE_BENCHMARKS = ['contact', 'crashed', 'race']
 def score_benchmark(scenarios, w, n_plies, multipy, n_threads):
     """Score a benchmark at the given ply level. Returns (result, elapsed)."""
     t0 = time.perf_counter()
-    if n_plies == 0:
+    if n_plies == 1:
         result = bgbot_cpp.score_benchmarks_5nn(scenarios, *w.weight_args)
     else:
         result = bgbot_cpp.score_benchmarks_multipy(scenarios, multipy, n_threads)
@@ -66,7 +66,7 @@ def load_scenarios(bm_name, max_scenarios):
 def run_benchmarks(w, n_plies, max_scenarios, n_threads):
     """Run game plan and old-style benchmarks."""
     multipy = None
-    if n_plies > 0:
+    if n_plies > 1:
         multipy = bgbot_cpp.create_multipy_5nn(*w.weight_args, n_plies=n_plies)
 
     for label, bm_list in [('Game Plan benchmarks', GAME_PLAN_BENCHMARKS),
@@ -83,7 +83,7 @@ def run_benchmarks(w, n_plies, max_scenarios, n_threads):
             count_str = f'{n}' if n == n_total else f'{n}/{n_total}'
             print(f'  {bm_name:10s}: {result.score():8.2f}  ({count_str} scenarios, {elapsed:.1f}s)')
 
-            if n_plies > 0:
+            if n_plies > 1:
                 multipy.clear_cache()
 
         print()
@@ -121,7 +121,7 @@ def run_self_play(w, n_games):
 def main():
     parser = argparse.ArgumentParser(description='Full benchmark suite')
     WeightConfig.add_model_arg(parser)
-    parser.add_argument('--ply', type=int, default=0, help='Number of plies (default: 0)')
+    parser.add_argument('--ply', type=int, default=1, help='Number of plies (default: 1)')
     parser.add_argument('--scenarios', type=int, default=0, help='Max scenarios per benchmark (0=all)')
     parser.add_argument('--threads', type=int, default=0, help='CPU threads for multi-ply (0=auto)')
     parser.add_argument('--games', type=int, default=10000, help='Games for PubEval/self-play (default: 10000)')

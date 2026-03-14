@@ -8,8 +8,8 @@ measuring the equity error against the rollout-determined best move.
 Benchmark PR = mean(error) * 500
 
 Usage:
-  python bgsage/scripts/score_benchmark_pr.py                      # production model at 0-ply
-  python bgsage/scripts/score_benchmark_pr.py --plies 1            # production model at 1-ply
+  python bgsage/scripts/score_benchmark_pr.py                      # production model at 1-ply
+  python bgsage/scripts/score_benchmark_pr.py --plies 2            # production model at 2-ply
   python bgsage/scripts/score_benchmark_pr.py --model stage3       # specific model
   python bgsage/scripts/score_benchmark_pr.py --all-models         # all registered models
 """
@@ -141,12 +141,12 @@ def print_result(label, result):
 def main():
     parser = argparse.ArgumentParser(description='Score strategies on Benchmark PR')
     WeightConfig.add_model_arg(parser)
-    parser.add_argument('--plies', type=int, default=0,
-                        help='Ply depth (default: 0)')
+    parser.add_argument('--plies', type=int, default=1,
+                        help='Ply depth (default: 1)')
     parser.add_argument('--all-models', action='store_true',
                         help='Score all registered models at the given ply depth')
     parser.add_argument('--all-plies', action='store_true',
-                        help='Score at 0-ply and 1-ply')
+                        help='Score at 1-ply and 2-ply')
     parser.add_argument('--threads', type=int, default=0,
                         help='Number of threads (0 = auto)')
     args = parser.parse_args()
@@ -166,7 +166,7 @@ def main():
         model_names = [args.model]
 
     if args.all_plies:
-        plies_list = [0, 1]
+        plies_list = [1, 2]
     else:
         plies_list = [args.plies]
 
@@ -187,8 +187,8 @@ def main():
             label = f"{model_name} ({plies}-ply)"
             t0 = time.perf_counter()
 
-            if plies == 0:
-                raw = bgbot_cpp.score_benchmark_pr_0ply(
+            if plies == 1:
+                raw = bgbot_cpp.score_benchmark_pr_1ply(
                     decisions, *wt, *ht, n_threads=args.threads)
             else:
                 raw = bgbot_cpp.score_benchmark_pr_nply(

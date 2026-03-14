@@ -489,8 +489,8 @@ float cube_efficiency(const Board& board, bool is_race_pos) {
     return std::clamp(x, 0.6f, 0.7f);
 }
 
-// Money game cube decision (0-ply).
-static CubeDecision cube_decision_0ply_money(
+// Money game cube decision (1-ply / raw NN).
+static CubeDecision cube_decision_1ply_money(
     const std::array<float, NUM_OUTPUTS>& probs,
     const CubeInfo& cube,
     float cube_x)
@@ -538,9 +538,9 @@ static CubeDecision cube_decision_0ply_money(
     return result;
 }
 
-// Match play cube decision (0-ply).
+// Match play cube decision (1-ply / raw NN).
 // Computes ND/DT/DP in MWC space, then converts to equity at original cube value.
-static CubeDecision cube_decision_0ply_match(
+static CubeDecision cube_decision_1ply_match(
     const std::array<float, NUM_OUTPUTS>& probs,
     const CubeInfo& cube,
     float cube_x)
@@ -606,18 +606,18 @@ static CubeDecision cube_decision_0ply_match(
     return result;
 }
 
-CubeDecision cube_decision_0ply(
+CubeDecision cube_decision_1ply(
     const std::array<float, NUM_OUTPUTS>& probs,
     const CubeInfo& cube,
     float cube_x)
 {
     if (cube.is_money()) {
-        return cube_decision_0ply_money(probs, cube, cube_x);
+        return cube_decision_1ply_money(probs, cube, cube_x);
     }
-    return cube_decision_0ply_match(probs, cube, cube_x);
+    return cube_decision_1ply_match(probs, cube, cube_x);
 }
 
-CubeDecision cube_decision_0ply(
+CubeDecision cube_decision_1ply(
     const std::array<float, NUM_OUTPUTS>& probs,
     const CubeInfo& cube,
     const Board& board,
@@ -625,7 +625,7 @@ CubeDecision cube_decision_0ply(
 {
     float x = (cube.cube_x_override >= 0.0f) ? cube.cube_x_override
                                                : cube_efficiency(board, is_race_pos);
-    return cube_decision_0ply(probs, cube, x);
+    return cube_decision_1ply(probs, cube, x);
 }
 
 // ---------------------------------------------------------------------------
@@ -655,7 +655,7 @@ static const DiceRoll ALL_ROLLS[21] = {
 // by making optimal cube decisions using the full recursive values.
 //
 // This matches gnubg's EvaluatePositionCubeful4 approach: cube decisions
-// emerge from the tree values rather than from 0-ply heuristic predictions.
+// emerge from the tree values rather than from 1-ply heuristic predictions.
 //
 // For money: operates in equity space (normalized to cube=1).
 // For match: operates in MWC space internally.
@@ -669,9 +669,9 @@ static float resolve_cube_x(const CubeInfo& cube, const Board& board, bool race)
     return cube_efficiency(board, race);
 }
 
-// Helper: evaluate a pre-roll board at 0-ply Janowski cubeful.
+// Helper: evaluate a pre-roll board at 1-ply Janowski cubeful.
 // Returns value from the ROLLER's perspective.
-static float eval_pre_roll_cubeful_0ply(
+static float eval_pre_roll_cubeful_1ply(
     const Board& board,        // pre-roll board (roller's perspective)
     const CubeInfo& cube,      // cube state from roller's perspective
     const Strategy& strategy)
@@ -861,8 +861,8 @@ static void cubeful_recursive_multi(
         return;
     }
 
-    // --- Leaf node (0-ply): NN evaluation + Janowski ---
-    if (plies <= 0) {
+    // --- Leaf node (1-ply): NN evaluation + Janowski ---
+    if (plies <= 1) {
         bool race = is_race(board);
         auto post_probs = strategy.evaluate_probs(flipped, race);
         auto pre_roll_probs = invert_probs(post_probs);
@@ -927,7 +927,7 @@ static void cubeful_recursive_multi(
             return;
         }
 
-        // Pick best move by cubeless 0-ply equity (shared across all cube states)
+        // Pick best move by cubeless 1-ply equity (shared across all cube states)
         int best_idx = 0;
         float best_eq = -1e30f;
         for (int c = 0; c < n_cand; c++) {
@@ -1030,11 +1030,11 @@ float cubeful_equity_nply(
     const MoveFilter& filter,
     int n_threads)
 {
-    if (n_plies <= 0) {
+    if (n_plies <= 1) {
         CubeInfo cube;
         cube.cube_value = 1;
         cube.owner = owner;
-        return eval_pre_roll_cubeful_0ply(board, cube, strategy);
+        return eval_pre_roll_cubeful_1ply(board, cube, strategy);
     }
 
     CubeInfo aciCubePos[1];
@@ -1043,7 +1043,7 @@ float cubeful_equity_nply(
     // match defaults to {0,0,false} = money game
 
     float arCubeful[1];
-    bool allow_parallel = (n_threads > 1 && n_plies > 1);
+    bool allow_parallel = (n_threads > 1 && n_plies > 2);
     cubeful_recursive_multi(board, aciCubePos, 1, strategy, n_plies, filter,
                             n_threads, allow_parallel, false, arCubeful);
     return arCubeful[0];
@@ -1058,8 +1058,8 @@ float cubeful_equity_nply(
     const MoveFilter& filter,
     int n_threads)
 {
-    if (n_plies <= 0) {
-        float val = eval_pre_roll_cubeful_0ply(board, cube, strategy);
+    if (n_plies <= 1) {
+        float val = eval_pre_roll_cubeful_1ply(board, cube, strategy);
         if (cube.is_money()) return val;
         return mwc2eq(val, cube.match.away1, cube.match.away2,
                       cube.cube_value, cube.match.is_crawford);
@@ -1067,7 +1067,7 @@ float cubeful_equity_nply(
 
     CubeInfo aciCubePos[1] = {cube};
     float arCubeful[1];
-    bool allow_parallel = (n_threads > 1 && n_plies > 1);
+    bool allow_parallel = (n_threads > 1 && n_plies > 2);
     cubeful_recursive_multi(board, aciCubePos, 1, strategy, n_plies, filter,
                             n_threads, allow_parallel, false, arCubeful);
 
@@ -1084,18 +1084,18 @@ CubeDecision cube_decision_nply(
     const MoveFilter& filter,
     int n_threads)
 {
-    if (n_plies <= 0) {
-        // Use 0-ply path: get pre-roll probs, apply Janowski
+    if (n_plies <= 1) {
+        // Use 1-ply path: get pre-roll probs, apply Janowski
         Board flipped = flip(board);
         bool race = is_race(board);
         auto post_probs = strategy.evaluate_probs(flipped, race);
         auto pre_roll_probs = invert_probs(post_probs);
         float x = resolve_cube_x(cube, board, race);
-        return cube_decision_0ply(pre_roll_probs, cube, x);
+        return cube_decision_1ply(pre_roll_probs, cube, x);
     }
 
     bool is_money = cube.is_money();
-    bool allow_parallel = (n_threads > 1 && n_plies > 1);
+    bool allow_parallel = (n_threads > 1 && n_plies > 2);
 
     // Two initial cube states: ND (current) and DT (doubled, opponent owns)
     CubeInfo aciCubePos[2];

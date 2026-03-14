@@ -336,7 +336,7 @@ def simulate_game(strategy, wt, rng, max_turns=300):
                 'board': list(board),
                 'dice': list(dice),
                 'candidates': [list(c) for c in f_cands],
-                'candidate_equities_0ply': f_eqs,
+                'candidate_equities_1ply': f_eqs,
                 'chosen_idx': f_chosen,
                 'n_total_candidates': len(candidates),
                 'turn': turn,

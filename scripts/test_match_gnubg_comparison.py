@@ -1,4 +1,4 @@
-"""Compare bgsage match play cube decisions against GNUbg at 0-ply.
+"""Compare bgsage match play cube decisions against GNUbg at 1-ply.
 
 Runs GNUbg in match mode at several match scores and compares cube decisions
 and equities against our engine. This validates that the MET implementation,
@@ -238,7 +238,7 @@ def main():
         return 0
 
     print("=" * 70)
-    print("Match Play Cube Decision: bgsage vs GNUbg (0-ply)")
+    print("Match Play Cube Decision: bgsage vs GNUbg (1-ply)")
     print("=" * 70)
 
     starting = STARTING_BOARD

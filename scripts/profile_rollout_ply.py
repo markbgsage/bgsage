@@ -28,7 +28,7 @@ w.validate()
 
 print(f"Position: {checkers}")
 print(f"Model: {PRODUCTION_MODEL}")
-print(f"Rollout: 36 trials, decision_ply=1, late_ply=0, late_threshold=5")
+print(f"Rollout: 36 trials, decision_ply=2, late_ply=1, late_threshold=5")
 print(f"Cube: centered, value=1, money game")
 print()
 
@@ -49,12 +49,12 @@ result = bgbot_cpp.cube_decision_rollout(
     n_hidden_anchoring=w.n_hidden_anchoring,
     n_trials=36,
     truncation_depth=0,
-    decision_ply=1,
+    decision_ply=2,
     filter_max_moves=5,
     filter_threshold=0.08,
     n_threads=0,
     seed=42,
-    late_ply=0,
+    late_ply=1,
     late_threshold=5,
     enable_vr=True,
 )

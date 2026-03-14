@@ -1,6 +1,6 @@
 """Test doubling cube decisions against reference positions.
 
-Tests the Janowski cubeful equity model at 0-ply against three reference
+Tests the Janowski cubeful equity model at 1-ply against three reference
 positions covering all three cube decision types:
   1. Double/Take (centered cube)
   2. No Double (player owns cube)
@@ -108,7 +108,7 @@ def main():
         cube_x = bgbot_cpp.cube_efficiency(pos['checkers'], is_race)
 
         # Cube decision using reference probs
-        cd = bgbot_cpp.cube_decision_0ply(ref_probs, pos['cube_value'],
+        cd = bgbot_cpp.cube_decision_1ply(ref_probs, pos['cube_value'],
                                            pos['cube_owner'], cube_x)
         cl_eq = bgbot_cpp.cubeless_equity(ref_probs)
 
@@ -190,13 +190,13 @@ def main():
         print()
 
     # N-ply cube decisions
-    print("--- N-ply Cube Decisions (1-ply, using our NN) ---\n")
+    print("--- N-ply Cube Decisions (2-ply, using our NN) ---\n")
 
     for pos in positions:
         t0 = time.time()
         result = bgbot_cpp.cube_decision_nply(
             pos['checkers'], pos['cube_value'], pos['cube_owner'],
-            n_plies=1,
+            n_plies=2,
             purerace_weights=w.purerace, racing_weights=w.racing,
             attacking_weights=w.attacking, priming_weights=w.priming,
             anchoring_weights=w.anchoring,
@@ -228,8 +228,8 @@ def main():
             print(f"    OK")
         print()
 
-    # N-ply cube decisions at 2-ply and 3-ply
-    for n_ply in [2, 3]:
+    # N-ply cube decisions at 3-ply and 4-ply
+    for n_ply in [3, 4]:
         print(f"--- N-ply Cube Decisions ({n_ply}-ply, using our NN) ---\n")
 
         for pos in positions:
@@ -269,7 +269,7 @@ def main():
             print()
 
     # Rollout-based cube decisions (cubeless rollout + Janowski)
-    print("--- Rollout Cube Decisions (1296 trials, 0-ply, VR) ---\n")
+    print("--- Rollout Cube Decisions (1296 trials, 1-ply, VR) ---\n")
 
     for pos in positions:
         t0 = time.time()
@@ -281,7 +281,7 @@ def main():
             n_hidden_purerace=w.n_hidden_purerace, n_hidden_racing=w.n_hidden_racing,
             n_hidden_attacking=w.n_hidden_attacking, n_hidden_priming=w.n_hidden_priming,
             n_hidden_anchoring=w.n_hidden_anchoring,
-            n_trials=1296, truncation_depth=0, decision_ply=0,
+            n_trials=1296, truncation_depth=0, decision_ply=1,
             n_threads=0, seed=42)
         dt = time.time() - t0
 

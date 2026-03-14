@@ -109,16 +109,16 @@ struct CubeDecision {
     bool is_beaver = false; // True if opponent would beaver (DT field = DB equity)
 };
 
-// Compute cube decision for a pre-roll position (0-ply).
+// Compute cube decision for a pre-roll position (1-ply / raw NN).
 // `probs` are cubeless pre-roll probabilities from the player's perspective.
 // Uses Janowski interpolation with the given cube efficiency.
-CubeDecision cube_decision_0ply(
+CubeDecision cube_decision_1ply(
     const std::array<float, NUM_OUTPUTS>& probs,
     const CubeInfo& cube,
     float cube_x);
 
 // Convenience: compute cube decision using auto-detected cube efficiency.
-CubeDecision cube_decision_0ply(
+CubeDecision cube_decision_1ply(
     const std::array<float, NUM_OUTPUTS>& probs,
     const CubeInfo& cube,
     const Board& board,
@@ -130,7 +130,7 @@ CubeDecision cube_decision_0ply(
 
 // Compute cubeful equity for a pre-roll position at N-ply depth (money game).
 // The position is from the player-on-roll's perspective (before rolling).
-// Cube efficiency x is only used at 0-ply leaves (Janowski).
+// Cube efficiency x is only used at 1-ply leaves (Janowski).
 // At internal nodes, cube decisions emerge naturally from recursion.
 //
 // `owner` is from the player-on-roll's perspective:
@@ -175,14 +175,14 @@ CubeDecision cube_decision_nply(
 // Compute cube decision from cubeless pre-roll probabilities (Janowski conversion).
 // This is the simplest form of cubeful evaluation from any source of cubeless probs
 // (rollout, N-ply, etc.) — just applies Janowski to the given probs.
-// Same as cube_decision_0ply but with auto-detected cube efficiency.
+// Same as cube_decision_1ply but with auto-detected cube efficiency.
 inline CubeDecision cube_decision_from_probs(
     const std::array<float, NUM_OUTPUTS>& cubeless_probs,
     const CubeInfo& cube,
     const Board& board,
     bool is_race_pos)
 {
-    return cube_decision_0ply(cubeless_probs, cube, board, is_race_pos);
+    return cube_decision_1ply(cubeless_probs, cube, board, is_race_pos);
 }
 
 } // namespace bgbot

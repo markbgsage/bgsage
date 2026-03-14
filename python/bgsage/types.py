@@ -64,7 +64,7 @@ class MoveAnalysis:
     cubeless_equity: float               # Cubeless equity
     probs: Probabilities                 # Post-move probabilities
     equity_diff: float                   # Difference from best move (0.0 for best)
-    eval_level: str                      # "0-ply", "1-ply", "2-ply", ..., "Rollout"
+    eval_level: str                      # "1-ply", "2-ply", "3-ply", ..., "Rollout"
     player_game_plan: str | None = None  # Game plan after this move (opt-in)
     opponent_game_plan: str | None = None
     std_error: float | None = None       # Rollout standard error
@@ -110,7 +110,7 @@ class PostMoveAnalysis:
     probs: Probabilities        # Post-move cubeless probabilities
     cubeless_equity: float      # Cubeless equity
     cubeful_equity: float       # Cubeful equity (Janowski), or same as cubeless if cubeful=False
-    eval_level: str             # "0-ply", "1-ply", "2-ply", ..., "Rollout"
+    eval_level: str             # "1-ply", "2-ply", "3-ply", ..., "Rollout"
 
 
 @dataclass

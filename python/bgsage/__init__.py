@@ -1,7 +1,7 @@
 """bgsage — the Open Sage bot engine, a neural-network backgammon engine.
 
 Provides position analysis (checker play and cube decisions) at multiple
-evaluation levels: raw NN (0-ply), N-ply search, and Monte Carlo rollout.
+evaluation levels: raw NN (1-ply), N-ply search, and Monte Carlo rollout.
 
 Quick start::
 

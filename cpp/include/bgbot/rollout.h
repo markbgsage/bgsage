@@ -14,7 +14,7 @@ namespace bgbot {
 struct RolloutConfig {
     int n_trials = 36;           // Number of trial games per candidate
     int truncation_depth = 7;    // Half-moves before truncating (0 = play to completion)
-    int decision_ply = 0;        // Ply depth for move selection during trials
+    int decision_ply = 1;        // Ply depth for move selection during trials (1 = raw NN)
     bool enable_vr = true;       // Enable variance reduction (VR uses same ply as decision)
     MoveFilter filter = MoveFilters::TINY;  // Filter for candidate selection at top level
     int n_threads = 0;           // Threads for parallelizing trials (0 = auto)
@@ -82,7 +82,7 @@ public:
 
     // Cubeful rollout for cube decisions. Rolls out two branches (ND and DT)
     // simultaneously with the same dice sequences. Cube decisions (double/take/pass)
-    // are simulated at each half-move using 0-ply Janowski evaluation.
+    // are simulated at each half-move using 1-ply Janowski evaluation.
     // `pre_roll_board` is from the player-on-roll's perspective (before rolling).
     CubefulRolloutResult cubeful_cube_decision(
         const Board& pre_roll_board,

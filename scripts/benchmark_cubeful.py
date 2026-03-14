@@ -1,4 +1,4 @@
-"""Benchmark cubeful cube decision at 1-ply through 3-ply.
+"""Benchmark cubeful cube decision at 2-ply through 4-ply.
 
 Uses a specific contact position to measure timing and equity values.
 Run before and after algorithm changes to compare.
@@ -44,7 +44,7 @@ def main():
     print(f"Runs per ply: {N_RUNS} (median time)")
     print()
 
-    for ply_str in ['1ply', '2ply', '3ply', 'rollout']:
+    for ply_str in ['2ply', '3ply', '4ply', 'rollout']:
         print(f"--- {ply_str} ---")
         median_time, r = benchmark_ply(ply_str, n_runs=2 if ply_str == 'rollout' else N_RUNS)
 

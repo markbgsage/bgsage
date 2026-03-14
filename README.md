@@ -16,9 +16,9 @@ It is a joint Python/C++ library that includes:
 
 ## What Evaluation Levels Does It Support?
 
-The library supports "multi-ply" lookahead calculations. 0-ply is the raw neural network evaluation, which is equivalent to 1-ply in
-eXtreme Gammon (just a difference in numbering convention - we follow gnubg's convention). Adding a ply makes the calculation roughly
-20x slower. It efficiently parallelizes these multi-ply calculations on your CPUs.
+The library supports "multi-ply" lookahead calculations. 1-ply is the raw neural network evaluation (we follow the XG/eXtreme Gammon
+numbering convention; GNUbg calls this "0-ply"). Adding a ply makes the calculation roughly 20x slower. It efficiently parallelizes
+these multi-ply calculations on your CPUs.
 
 It also supports rollout calculations, which are Monte Carlo simulations playing out the game over and over. It includes
 variance reduction and efficiently parallelizes on your CPUs.

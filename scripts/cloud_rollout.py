@@ -50,7 +50,7 @@ ECS_TASK_DEF = 'bgbot-rollout-worker'
 
 # Rollout config
 N_TRIALS = 1296
-DECISION_PLY = 1
+DECISION_PLY = 2
 
 
 def log(log_file, msg):

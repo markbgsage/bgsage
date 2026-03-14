@@ -15,7 +15,7 @@ Typical usage::
         {"board": STARTING_BOARD, "cube_value": 1, "cube_owner": "centered"},
         {"board": other_board,    "cube_value": 2, "cube_owner": "player"},
     ]
-    results = batch_evaluate(positions, eval_level="2ply")
+    results = batch_evaluate(positions, eval_level="3ply")
     for r in results:
         print(f"Eq: {r.cubeless_equity:+.3f}  CF: {r.cubeful_equity:+.3f}")
 
@@ -24,7 +24,7 @@ Typical usage::
         {"board": post_move_board1, "cube_owner": "centered"},
         {"board": post_move_board2, "cube_owner": "player"},
     ]
-    results = batch_post_move_evaluate(post_positions, eval_level="0ply")
+    results = batch_post_move_evaluate(post_positions, eval_level="1ply")
     for r in results:
         print(f"CL={r.cubeless_equity:+.3f}  CF={r.cubeful_equity:+.3f}")
 """
@@ -59,7 +59,7 @@ class PositionEval:
 
 def batch_evaluate(
     positions: list[dict],
-    eval_level: str = "0ply",
+    eval_level: str = "1ply",
     weights: WeightConfig | None = None,
     *,
     n_threads: int = 0,
@@ -82,7 +82,7 @@ def batch_evaluate(
 
     Args:
         positions: List of position dicts.
-        eval_level: ``"0ply"``, ``"1ply"``, ``"2ply"``, or ``"3ply"``.
+        eval_level: ``"1ply"``, ``"2ply"``, ``"3ply"``, or ``"4ply"``.
         weights: Weight configuration (defaults to production model).
         n_threads: Number of threads for position-level parallelism
             (0 = auto-detect all cores).
@@ -119,13 +119,13 @@ def batch_evaluate(
     effective_jacoby = jacoby and not has_match
     effective_beaver = beaver and not has_match
 
-    if eval_level == "0ply":
+    if eval_level == "1ply":
         strategy = bgbot_cpp.GamePlanStrategy(*weights.weight_args)
         raw_results = bgbot_cpp.batch_evaluate_positions(
             cpp_positions, strategy, n_threads,
             jacoby=effective_jacoby, beaver=effective_beaver,
         )
-    elif eval_level in ("1ply", "2ply", "3ply"):
+    elif eval_level in ("2ply", "3ply", "4ply"):
         n_plies = int(eval_level[0])
         # parallel_evaluate=False so each N-ply eval is serial;
         # parallelism is across positions in the C++ batch function.
@@ -144,7 +144,7 @@ def batch_evaluate(
     else:
         raise ValueError(
             f"Unsupported eval_level for batch: {eval_level!r}. "
-            f"Use '0ply', '1ply', '2ply', or '3ply'."
+            f"Use '1ply', '2ply', '3ply', or '4ply'."
         )
 
     return [
@@ -166,7 +166,7 @@ def batch_evaluate(
 
 def batch_post_move_evaluate(
     positions: list[dict],
-    eval_level: str = "0ply",
+    eval_level: str = "1ply",
     weights: WeightConfig | None = None,
     *,
     n_threads: int = 0,
@@ -192,7 +192,7 @@ def batch_post_move_evaluate(
 
     Args:
         positions: List of position dicts.
-        eval_level: ``"0ply"``, ``"1ply"``, ``"2ply"``, or ``"3ply"``.
+        eval_level: ``"1ply"``, ``"2ply"``, ``"3ply"``, or ``"4ply"``.
         weights: Weight configuration (defaults to production model).
         n_threads: Number of threads for position-level parallelism
             (0 = auto-detect all cores).
@@ -226,14 +226,14 @@ def batch_post_move_evaluate(
     has_match = any(p.get("away1", 0) > 0 or p.get("away2", 0) > 0 for p in positions)
     effective_jacoby = jacoby and not has_match
 
-    if eval_level == "0ply":
+    if eval_level == "1ply":
         strategy = bgbot_cpp.GamePlanStrategy(*weights.weight_args)
         raw_results = bgbot_cpp.batch_evaluate_post_move(
             cpp_positions, strategy, n_threads,
             jacoby=effective_jacoby,
         )
-        level_label = "0-ply"
-    elif eval_level in ("1ply", "2ply", "3ply"):
+        level_label = "1-ply"
+    elif eval_level in ("2ply", "3ply", "4ply"):
         n_plies = int(eval_level[0])
         strategy = bgbot_cpp.create_multipy_5nn(
             *weights.weight_args,
@@ -251,7 +251,7 @@ def batch_post_move_evaluate(
     else:
         raise ValueError(
             f"Unsupported eval_level for batch: {eval_level!r}. "
-            f"Use '0ply', '1ply', '2ply', or '3ply'."
+            f"Use '1ply', '2ply', '3ply', or '4ply'."
         )
 
     return [
@@ -267,7 +267,7 @@ def batch_post_move_evaluate(
 
 def batch_cube_action(
     positions: list[dict],
-    eval_level: str = "0ply",
+    eval_level: str = "1ply",
     weights: WeightConfig | None = None,
     *,
     n_threads: int = 0,
@@ -299,7 +299,7 @@ def batch_cube_action(
 
     Args:
         positions: List of position dicts.
-        eval_level: ``"0ply"``, ``"1ply"``, ``"2ply"``, or ``"3ply"``.
+        eval_level: ``"1ply"``, ``"2ply"``, ``"3ply"``, or ``"4ply"``.
         weights: Weight configuration (defaults to production model).
         n_threads: Number of threads for position-level parallelism
             (0 = auto-detect all cores).
@@ -320,8 +320,8 @@ def batch_cube_action(
         beaver=beaver,
     )
 
-    n_plies = 0 if eval_level == "0ply" else int(eval_level[0])
-    level_label = "0-ply" if n_plies == 0 else f"{n_plies}-ply"
+    n_plies = int(eval_level[0])
+    level_label = f"{n_plies}-ply"
 
     return [
         CubeActionResult(
@@ -347,7 +347,7 @@ def batch_cube_action(
 
 def batch_checker_play(
     positions: list[dict],
-    eval_level: str = "0ply",
+    eval_level: str = "1ply",
     weights: WeightConfig | None = None,
     *,
     n_threads: int = 0,
@@ -375,7 +375,7 @@ def batch_checker_play(
 
     Args:
         positions: List of position dicts.
-        eval_level: ``"0ply"``, ``"1ply"``, ``"2ply"``, or ``"3ply"``.
+        eval_level: ``"1ply"``, ``"2ply"``, ``"3ply"``, or ``"4ply"``.
         weights: Weight configuration (defaults to production model).
         n_threads: Number of threads for position-level parallelism
             (0 = auto-detect all cores).
@@ -386,7 +386,7 @@ def batch_checker_play(
         List of :class:`~bgsage.types.CheckerPlayResult`, one per input
         position.  Each contains a ``moves`` list sorted best-first by
         cubeful equity, with survivors evaluated at the requested ply and
-        the rest at 0-ply.
+        the rest at 1-ply.
     """
     if weights is None:
         weights = WeightConfig.default()
@@ -410,20 +410,20 @@ def batch_checker_play(
             d["is_crawford"] = is_crawford
         cpp_inputs.append(d)
 
-    strategy_0ply = bgbot_cpp.GamePlanStrategy(*weights.weight_args)
+    strategy_1ply = bgbot_cpp.GamePlanStrategy(*weights.weight_args)
 
     # Auto-disable Jacoby for match play positions
     has_match = any(p.get("away1", 0) > 0 or p.get("away2", 0) > 0 for p in positions)
     effective_jacoby = jacoby and not has_match
 
-    if eval_level == "0ply":
+    if eval_level == "1ply":
         raw_results = bgbot_cpp.batch_checker_play(
-            cpp_inputs, strategy_0ply,
+            cpp_inputs, strategy_1ply,
             filter_max_moves, filter_threshold, n_threads,
             jacoby=effective_jacoby,
         )
-        level_label = "0-ply"
-    elif eval_level in ("1ply", "2ply", "3ply"):
+        level_label = "1-ply"
+    elif eval_level in ("2ply", "3ply", "4ply"):
         n_plies = int(eval_level[0])
         strategy_nply = bgbot_cpp.create_multipy_5nn(
             *weights.weight_args,
@@ -434,7 +434,7 @@ def batch_checker_play(
             parallel_threads=0,
         )
         raw_results = bgbot_cpp.batch_checker_play(
-            cpp_inputs, strategy_0ply, strategy_nply,
+            cpp_inputs, strategy_1ply, strategy_nply,
             filter_max_moves, filter_threshold, n_threads,
             jacoby=effective_jacoby,
         )
@@ -442,7 +442,7 @@ def batch_checker_play(
     else:
         raise ValueError(
             f"Unsupported eval_level: {eval_level!r}. "
-            f"Use '0ply', '1ply', '2ply', or '3ply'."
+            f"Use '1ply', '2ply', '3ply', or '4ply'."
         )
 
     results = []

@@ -10,7 +10,7 @@ perspective). The scoring script will invert the rollout probs to get pre-roll
 cubeless probs and apply Janowski conversion.
 
 Both checker-play and cube positions use the same rollout config:
-  1-ply decision, 1296 trials, VR=0, truncation=0, late=0@3
+  2-ply decision, 1296 trials, VR=1, truncation=0, late=1@3
 
 Usage:
   python python/cloud_rollout_cubeful.py                    # Run all pending
@@ -57,7 +57,7 @@ ECS_TASK_DEF = 'bgbot-rollout-worker'
 
 # Rollout config
 N_TRIALS = 1296
-DECISION_PLY = 1
+DECISION_PLY = 2
 
 
 def log(log_file, msg):

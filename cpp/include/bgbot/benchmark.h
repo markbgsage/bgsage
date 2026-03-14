@@ -107,10 +107,10 @@ struct PRResult {
 };
 
 // Score a strategy against benchmark PR decisions.
-// For 0-ply: base_strategy should be nullptr (strategy evaluates all moves directly).
-// For N-ply: base_strategy is the 0-ply strategy used for pre-filtering, strategy
+// For 1-ply: base_strategy should be nullptr (strategy evaluates all moves directly).
+// For N-ply: base_strategy is the 1-ply strategy used for pre-filtering, strategy
 //            is the N-ply strategy that evaluates survivors.
-// filter: move filter for the 0-ply pre-filter pass.
+// filter: move filter for the 1-ply pre-filter pass.
 PRResult score_benchmark_pr(const Strategy& strategy,
                             const Strategy* base_strategy,
                             const std::vector<PRDecision>& decisions,

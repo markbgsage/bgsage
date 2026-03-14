@@ -9,9 +9,9 @@ Decisions are scored in parallel using ThreadPoolExecutor. Each worker
 processes a batch of decisions, spawning one GNUbg subprocess per decision.
 
 Usage:
-  python python/score_benchmark_pr_gnubg.py                  # GNUbg 0-ply
-  python python/score_benchmark_pr_gnubg.py --plies 1        # GNUbg 1-ply
-  python python/score_benchmark_pr_gnubg.py --plies 0 --plies 1  # Both
+  python python/score_benchmark_pr_gnubg.py                  # GNUbg 1-ply
+  python python/score_benchmark_pr_gnubg.py --plies 2        # GNUbg 2-ply
+  python python/score_benchmark_pr_gnubg.py --plies 1 --plies 2  # Both
 """
 
 import os
@@ -105,13 +105,17 @@ def _flip_board(checkers):
 def _build_batch_eval_command(boards, n_plies):
     """Build a GNUbg command that evaluates multiple post-move positions.
 
+    n_plies uses XG convention (1-ply = raw NN). Converted to GNUbg-native
+    (0-ply = raw NN) for the CLI command.
+
     For each board, we flip to opponent's perspective and get cube analytics
     (pre-roll evaluation). The output will contain multiple 'Cube analysis'
     sections that we parse sequentially.
     """
+    gnubg_plies = n_plies - 1  # XG convention -> GNUbg-native
     cmd = 'new session\n'
-    cmd += f'set evaluation chequer eval plies {n_plies}\n'
-    cmd += f'set evaluation cubedecision eval plies {n_plies}\n'
+    cmd += f'set evaluation chequer eval plies {gnubg_plies}\n'
+    cmd += f'set evaluation cubedecision eval plies {gnubg_plies}\n'
     cmd += 'set cube value 1\n'
 
     for board in boards:
@@ -337,7 +341,7 @@ def main():
     args = parser.parse_args()
 
     if args.plies is None:
-        args.plies = [0]
+        args.plies = [1]
 
     if args.workers <= 0:
         import multiprocessing

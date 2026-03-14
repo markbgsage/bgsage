@@ -1,6 +1,6 @@
-"""Compare cube analysis time: bgbot Stage 5 vs GNUbg at 3-ply.
+"""Compare cube analysis time: bgbot Stage 5 vs GNUbg at 4-ply.
 
-Evaluates cubeless probabilities from the starting position (pre-roll) at 3-ply
+Evaluates cubeless probabilities from the starting position (pre-roll) at 4-ply
 for both our NN (via MultiPlyStrategy) and GNUbg CLI.
 
 Usage:
@@ -49,12 +49,12 @@ def main():
             print(f"ERROR: {path} not found")
             sys.exit(1)
 
-    print("=== Cube Analysis Time Benchmark: Starting Position, 3-ply ===\n")
+    print("=== Cube Analysis Time Benchmark: Starting Position, 4-ply ===\n")
     print(f"Position: {starting_pos}")
     print(f"This is a pre-roll position (player about to roll).\n")
 
     # ---------------------------------------------------------------
-    # bgbot Stage 5 — cubeless probabilities at 3-ply
+    # bgbot Stage 5 — cubeless probabilities at 4-ply
     # ---------------------------------------------------------------
     # For a pre-roll position: flip → evaluate (post-move semantics) → invert
     # The MultiPlyStrategy.evaluate_board() expects a post-move board.
@@ -62,9 +62,9 @@ def main():
 
     N_RUNS = 5
 
-    print("--- bgbot Stage 5 (3-ply, TINY filter) ---\n")
+    print("--- bgbot Stage 5 (4-ply, TINY filter) ---\n")
 
-    # Create 3-ply strategy
+    # Create 4-ply strategy
     strat = bgbot_cpp.create_multipy_5nn(
         purerace_weights=pr_w,
         racing_weights=rc_w,
@@ -76,7 +76,7 @@ def main():
         n_hidden_attacking=400,
         n_hidden_priming=400,
         n_hidden_anchoring=400,
-        n_plies=3,
+        n_plies=4,
         filter_max_moves=5,
         filter_threshold=0.08,
         parallel_evaluate=True,
@@ -113,14 +113,14 @@ def main():
     print()
 
     # ---------------------------------------------------------------
-    # GNUbg — cubeless probabilities at 3-ply
+    # GNUbg — cubeless probabilities at 4-ply
     # ---------------------------------------------------------------
     # For a pre-roll position, we call GNUbg's cube analytics directly
     # (GNUbg hint gives pre-roll cubeless probs for the player on roll)
 
-    print("--- GNUbg (3-ply) ---\n")
+    print("--- GNUbg (4-ply) ---\n")
 
-    cmd = _build_cube_analytics_command(starting_pos, n_plies=3)
+    cmd = _build_cube_analytics_command(starting_pos, n_plies=4)
 
     gnubg_times = []
     for i in range(N_RUNS):
@@ -130,7 +130,7 @@ def main():
         gnubg_times.append(dt)
         print(f"  Run {i+1}: {dt:.3f}s")
 
-    gnubg_result = _parse_cube_analytics(output, n_plies=3)
+    gnubg_result = _parse_cube_analytics(output, n_plies=4)
     t_gnubg = sum(gnubg_times) / len(gnubg_times)
 
     print(f"\n  Average: {t_gnubg:.3f}s  (min={min(gnubg_times):.3f}, max={max(gnubg_times):.3f})")

@@ -1,14 +1,14 @@
 """High-level analysis interface for the Open Sage bot engine.
 
 This module provides :class:`BgBotAnalyzer`, the main entry point for
-checker play and cube action analysis at any evaluation level (0-ply
+checker play and cube action analysis at any evaluation level (1-ply
 through N-ply and Monte Carlo rollout).
 
 Typical usage::
 
     from bgsage import BgBotAnalyzer
 
-    analyzer = BgBotAnalyzer()                       # 0-ply, cubeful
+    analyzer = BgBotAnalyzer()                       # 1-ply, cubeful
     result = analyzer.checker_play(STARTING_BOARD, 3, 1)
     for m in result.moves:
         print(f"{m.equity:+.3f}  {m.probs.win:.1%}")
@@ -77,9 +77,9 @@ class _CubelessBase:
 
     def __init__(self, weights: WeightConfig):
         self._weights = weights
-        self._strategy_0ply = bgbot_cpp.GamePlanStrategy(*weights.weight_args)
+        self._strategy_1ply = bgbot_cpp.GamePlanStrategy(*weights.weight_args)
 
-    def _score_candidates_0ply(
+    def _score_candidates_1ply(
         self,
         candidates: list,
         board: list[int],
@@ -95,7 +95,7 @@ class _CubelessBase:
         scored = []
         for b in candidates:
             bl = list(b)
-            r = self._strategy_0ply.evaluate_board(bl, board)
+            r = self._strategy_1ply.evaluate_board(bl, board)
             cl_eq = r["equity"]
             probs = list(r["probs"])
             if owner is not None:
@@ -119,14 +119,14 @@ class _CubelessBase:
 
     @staticmethod
     def _filter_candidates(
-        scored_0ply: list,
+        scored_1ply: list,
         threshold: float,
         max_moves: int,
     ) -> tuple[list, set]:
-        best_eq = scored_0ply[0][0]
+        best_eq = scored_1ply[0][0]
         survivors = [
             item
-            for item in scored_0ply
+            for item in scored_1ply
             if (best_eq - item[0]) < threshold
         ][:max_moves]
         survivor_set = {tuple(item[2]) for item in survivors}
@@ -135,13 +135,13 @@ class _CubelessBase:
     @staticmethod
     def _promote_second_best(results: list, board: list[int], evaluate_fn) -> None:
         results.sort(key=lambda x: -x["equity"])
-        while len(results) >= 2 and results[1].get("is_0ply_only"):
+        while len(results) >= 2 and results[1].get("is_1ply_only"):
             r = results[1]
             equity, probs, eval_level, extra = evaluate_fn(r["board"], board)
             r["equity"] = equity
             r["probs"] = probs
             r["eval_level"] = eval_level
-            r.pop("is_0ply_only", None)
+            r.pop("is_1ply_only", None)
             r.update(extra)
             results.sort(key=lambda x: -x["equity"])
 
@@ -155,7 +155,7 @@ class _CubelessBase:
         return results
 
     @staticmethod
-    def _format_cube_result(r: dict, eval_level: str = "0-ply") -> dict:
+    def _format_cube_result(r: dict, eval_level: str = "1-ply") -> dict:
         return {
             "probs": list(r["probs"]),
             "cubeless_equity": r.get("cubeless_equity", 0),
@@ -171,7 +171,7 @@ class _CubelessBase:
         }
 
 
-class _ZeroPlyAnalyzer(_CubelessBase):
+class _OnePlyAnalyzer(_CubelessBase):
 
     def checker_play_analytics(
         self, board, die1, die2, cube_value=1, cube_owner="centered",
@@ -184,12 +184,12 @@ class _ZeroPlyAnalyzer(_CubelessBase):
         results = []
         for b in candidates:
             bl = list(b)
-            r = self._strategy_0ply.evaluate_board(bl, board)
+            r = self._strategy_1ply.evaluate_board(bl, board)
             results.append({
                 "board": bl,
                 "equity": r["equity"],
                 "probs": list(r["probs"]),
-                "eval_level": "0-ply",
+                "eval_level": "1-ply",
             })
         return self._finalize_results(results)
 
@@ -203,7 +203,7 @@ class _ZeroPlyAnalyzer(_CubelessBase):
             away1=away1, away2=away2, is_crawford=is_crawford,
             jacoby=jacoby, beaver=beaver,
         )
-        return self._format_cube_result(r, eval_level="0-ply")
+        return self._format_cube_result(r, eval_level="1-ply")
 
 
 class _MultiPlyAnalyzer(_CubelessBase):
@@ -237,13 +237,13 @@ class _MultiPlyAnalyzer(_CubelessBase):
         if not candidates:
             return []
 
-        scored_0ply = self._score_candidates_0ply(
+        scored_1ply = self._score_candidates_1ply(
             candidates, board, cube_owner,
             cube_value=cube_value, away1=away1, away2=away2,
             is_crawford=is_crawford, jacoby=jacoby,
         )
         survivors, survivor_set = self._filter_candidates(
-            scored_0ply, self.FILTER_THRESHOLD, self.FILTER_MAX_MOVES
+            scored_1ply, self.FILTER_THRESHOLD, self.FILTER_MAX_MOVES
         )
 
         results = []
@@ -256,14 +256,14 @@ class _MultiPlyAnalyzer(_CubelessBase):
                 "eval_level": f"{self._n_plies}-ply",
             })
 
-        for feq, cleq, b, p in scored_0ply:
+        for feq, cleq, b, p in scored_1ply:
             if tuple(b) not in survivor_set:
                 results.append({
                     "board": b,
                     "equity": cleq,
                     "probs": p,
-                    "is_0ply_only": True,
-                    "eval_level": "0-ply",
+                    "is_1ply_only": True,
+                    "eval_level": "1-ply",
                 })
 
         n_plies = self._n_plies
@@ -318,7 +318,7 @@ class _RolloutAnalyzer(_CubelessBase):
 
     def __init__(
         self, weights, n_trials=1296, truncation_depth=0,
-        decision_ply=0, n_threads=0, seed=42,
+        decision_ply=1, n_threads=0, seed=42,
     ):
         super().__init__(weights)
         self._rollout_config = {
@@ -346,13 +346,13 @@ class _RolloutAnalyzer(_CubelessBase):
         if not candidates:
             return []
 
-        scored_0ply = self._score_candidates_0ply(
+        scored_1ply = self._score_candidates_1ply(
             candidates, board, cube_owner,
             cube_value=cube_value, away1=away1, away2=away2,
             is_crawford=is_crawford, jacoby=jacoby,
         )
         survivors, survivor_set = self._filter_candidates(
-            scored_0ply, self.FILTER_THRESHOLD, self.FILTER_MAX_MOVES
+            scored_1ply, self.FILTER_THRESHOLD, self.FILTER_MAX_MOVES
         )
 
         results = []
@@ -370,14 +370,14 @@ class _RolloutAnalyzer(_CubelessBase):
             if progress_callback:
                 progress_callback(i + 1, total, results)
 
-        for feq, cleq, b, p in scored_0ply:
+        for feq, cleq, b, p in scored_1ply:
             if tuple(b) not in survivor_set:
                 results.append({
                     "board": b,
                     "equity": cleq,
                     "probs": p,
-                    "is_0ply_only": True,
-                    "eval_level": "0-ply",
+                    "is_1ply_only": True,
+                    "eval_level": "1-ply",
                 })
 
         rollout_strategy = self._rollout_strategy
@@ -416,7 +416,7 @@ class _CubefulAnalyzer:
         if isinstance(inner, _MultiPlyAnalyzer):
             self._cubeful_ply = inner._n_plies
         else:
-            self._cubeful_ply = 0
+            self._cubeful_ply = 1
 
     def _cubeful_equity(
         self, post_move_board, probs, owner,
@@ -424,7 +424,7 @@ class _CubefulAnalyzer:
         beaver=True,
     ) -> float:
         is_match = away1 > 0 or away2 > 0
-        if self._cubeful_ply == 0:
+        if self._cubeful_ply == 1:
             race = bgbot_cpp.is_race(post_move_board)
             x = bgbot_cpp.cube_efficiency(post_move_board, race)
             if is_match:
@@ -443,7 +443,7 @@ class _CubefulAnalyzer:
             if is_match:
                 opp_eq = bgbot_cpp.cubeful_equity_nply(
                     opp_pre_roll, opp_owner,
-                    self._inner._strategy_0ply, self._cubeful_ply,
+                    self._inner._strategy_1ply, self._cubeful_ply,
                     cube_value=cube_value,
                     away1=away2, away2=away1, is_crawford=is_crawford,
                     jacoby=jacoby, beaver=beaver,
@@ -451,7 +451,7 @@ class _CubefulAnalyzer:
             else:
                 opp_eq = bgbot_cpp.cubeful_equity_nply(
                     opp_pre_roll, opp_owner,
-                    self._inner._strategy_0ply, self._cubeful_ply,
+                    self._inner._strategy_1ply, self._cubeful_ply,
                     jacoby=jacoby, beaver=beaver,
                 )
             return -opp_eq
@@ -518,7 +518,7 @@ class _CubefulAnalyzer:
             extra["cubeless_equity"] = r["equity"]
             return cf_eq, probs, eval_level, extra
 
-        while len(results) >= 2 and results[1].get("is_0ply_only"):
+        while len(results) >= 2 and results[1].get("is_1ply_only"):
             r = results[1]
             ret = _cubeful_eval(r["board"], board)
             if ret is None:
@@ -527,7 +527,7 @@ class _CubefulAnalyzer:
             r["equity"] = cf_eq
             r["probs"] = probs
             r["eval_level"] = eval_level
-            r.pop("is_0ply_only", None)
+            r.pop("is_1ply_only", None)
             r.update(extra)
             results.sort(key=lambda x: -x["equity"])
 
@@ -598,7 +598,7 @@ class BgBotAnalyzer:
 
     Args:
         weights: Weight file configuration (defaults to bundled Stage 5 models).
-        eval_level: ``'0ply'``, ``'1ply'``, ``'2ply'``, ``'3ply'``, or ``'rollout'``.
+        eval_level: ``'1ply'``, ``'2ply'``, ``'3ply'``, ``'4ply'``, or ``'rollout'``.
         cubeful: If True, compute cubeful equities via Janowski.
         filter_max_moves: Max moves to carry through N-ply/rollout.
         filter_threshold: Equity threshold for move filter.
@@ -612,7 +612,7 @@ class BgBotAnalyzer:
     def __init__(
         self,
         weights: WeightConfig | None = None,
-        eval_level: str = "0ply",
+        eval_level: str = "1ply",
         cubeful: bool = True,
         *,
         filter_max_moves: int = 5,
@@ -620,7 +620,7 @@ class BgBotAnalyzer:
         parallel_threads: int = 0,
         n_trials: int = 1296,
         truncation_depth: int = 0,
-        decision_ply: int = 0,
+        decision_ply: int = 1,
         seed: int = 42,
     ):
         if weights is None:
@@ -628,9 +628,9 @@ class BgBotAnalyzer:
         self._weights = weights
         self._eval_level = eval_level
 
-        if eval_level == "0ply":
-            inner: _CubelessBase = _ZeroPlyAnalyzer(weights)
-        elif eval_level in ("1ply", "2ply", "3ply"):
+        if eval_level == "1ply":
+            inner: _CubelessBase = _OnePlyAnalyzer(weights)
+        elif eval_level in ("2ply", "3ply", "4ply"):
             n_plies = int(eval_level[0])
             inner = _MultiPlyAnalyzer(
                 weights, n_plies=n_plies,
@@ -748,8 +748,8 @@ class BgBotAnalyzer:
             r = inner._rollout_strategy.evaluate_board(board, board)
             eval_level = "Rollout"
         else:
-            r = inner._strategy_0ply.evaluate_board(board, board)
-            eval_level = "0-ply"
+            r = inner._strategy_1ply.evaluate_board(board, board)
+            eval_level = "1-ply"
 
         probs_list = list(r["probs"])
         cl_eq = r["equity"]
@@ -835,7 +835,7 @@ class BgBotAnalyzer:
 
 
 def create_analyzer(
-    level: str = "0ply",
+    level: str = "1ply",
     weights: WeightConfig | None = None,
     cubeful: bool = True,
     **kwargs: Any,

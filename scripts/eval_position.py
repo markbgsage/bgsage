@@ -1,7 +1,7 @@
 """Evaluate a position with Stage 5 and GNUbg side-by-side.
 
 Supports both cube action and checker play analysis, for money games or match play.
-Evaluates at 0-ply through 3-ply plus rollout (Stage 5 only), and prints a comparison table.
+Evaluates at 1-ply through 4-ply plus rollout (Stage 5 only), and prints a comparison table.
 
 Usage:
     # Cube action (money game, centered cube)
@@ -98,15 +98,15 @@ def run_cube_analysis(checkers, cube_value, cube_owner_str, match_length,
     # --- Stage 5 ---
     sage = {}
 
-    # 0-ply
+    # 1-ply
     t0 = time.time()
     r = bgbot_cpp.evaluate_cube_decision(
         checkers, cube_value, owner, *w.weight_args,
         away1=away1, away2=away2, is_crawford=is_crawford)
-    sage['0ply'] = {'result': r, 'time': time.time() - t0}
+    sage['1ply'] = {'result': r, 'time': time.time() - t0}
 
-    # 1-3 ply
-    for n_ply in [1, 2, 3]:
+    # 2-4 ply
+    for n_ply in [2, 3, 4]:
         t0 = time.time()
         r = bgbot_cpp.cube_decision_nply(
             checkers, cube_value, owner, n_plies=n_ply,
@@ -129,7 +129,7 @@ def run_cube_analysis(checkers, cube_value, cube_owner_str, match_length,
         n_hidden_purerace=w.n_hidden_purerace, n_hidden_racing=w.n_hidden_racing,
         n_hidden_attacking=w.n_hidden_attacking, n_hidden_priming=w.n_hidden_priming,
         n_hidden_anchoring=w.n_hidden_anchoring,
-        n_trials=1296, truncation_depth=0, decision_ply=0,
+        n_trials=1296, truncation_depth=0, decision_ply=1,
         n_threads=0, seed=42,
         away1=away1, away2=away2, is_crawford=is_crawford)
     sage['rollout'] = {'result': r, 'time': time.time() - t0}
@@ -138,7 +138,7 @@ def run_cube_analysis(checkers, cube_value, cube_owner_str, match_length,
     from bgsage.gnubg import GnuBgAnalyzer
 
     gnubg = {}
-    for n_ply in [0, 1, 2, 3]:
+    for n_ply in [1, 2, 3, 4]:
         analyzer = GnuBgAnalyzer(eval_level=f'{n_ply}ply', timeout=300)
         t0 = time.time()
         try:
@@ -171,7 +171,7 @@ def _action_str(should_double, should_take):
 
 
 def _print_cube_tables(sage, gnubg):
-    levels = ['0ply', '1ply', '2ply', '3ply', 'rollout']
+    levels = ['1ply', '2ply', '3ply', '4ply', 'rollout']
 
     print()
     print("Cubeless Probabilities:")
@@ -193,8 +193,8 @@ def _print_cube_tables(sage, gnubg):
     print(f"{'Level':<10} {'Engine':<8} {'ND':>9} {'DT':>9} {'DP':>9} {'Action':<16} {'Time':>7}")
     print("-" * 68)
 
-    levels = ['0ply', '1ply', '2ply', '3ply', 'rollout']
-    for level in levels:
+    levels_cf = ['1ply', '2ply', '3ply', '4ply', 'rollout']
+    for level in levels_cf:
         label = 'Rollout' if level == 'rollout' else level.replace('ply', '-ply')
         if level in sage:
             r = sage[level]['result']
@@ -254,7 +254,7 @@ def run_checker_analysis(checkers, die1, die2, cube_value, cube_owner_str,
 
     # --- Stage 5 at each level ---
     sage = {}
-    for level_str in ['0ply', '1ply', '2ply', '3ply']:
+    for level_str in ['1ply', '2ply', '3ply', '4ply']:
         analyzer = BgBotAnalyzer(eval_level=level_str, cubeful=(away1 > 0))
         t0 = time.time()
         result = analyzer.checker_play(
@@ -264,7 +264,7 @@ def run_checker_analysis(checkers, die1, die2, cube_value, cube_owner_str,
 
     # --- GNUbg at each level ---
     gnubg = {}
-    for n_ply in [0, 1, 2, 3]:
+    for n_ply in [1, 2, 3, 4]:
         analyzer = GnuBgAnalyzer(eval_level=f'{n_ply}ply', timeout=300)
         t0 = time.time()
         result = analyzer.checker_play(
@@ -278,7 +278,7 @@ def run_checker_analysis(checkers, die1, die2, cube_value, cube_owner_str,
 
 def _print_checker_tables(sage, gnubg):
     # Show top 5 moves at each level
-    levels = ['0ply', '1ply', '2ply', '3ply']
+    levels = ['1ply', '2ply', '3ply', '4ply']
     for level in levels:
         label = level.replace('ply', '-ply')
         print(f"\n{label}:")
@@ -306,13 +306,13 @@ def _print_checker_tables(sage, gnubg):
     print("Best Move Summary:")
     print(f"{'Level':<10} {'Engine':<8} {'Equity':>9} {'P(win)':>8}")
     print("-" * 40)
-    for level in levels:
-        label = level.replace('ply', '-ply')
-        if level in sage and sage[level]['result'].moves:
-            m = sage[level]['result'].moves[0]
+    for lvl in levels:
+        label = lvl.replace('ply', '-ply')
+        if lvl in sage and sage[lvl]['result'].moves:
+            m = sage[lvl]['result'].moves[0]
             print(f"{label:<10} {'Sage':<8} {m.equity:+9.4f} {m.probs.win:8.4f}")
-        if level in gnubg and gnubg[level]['result'].moves:
-            m = gnubg[level]['result'].moves[0]
+        if lvl in gnubg and gnubg[lvl]['result'].moves:
+            m = gnubg[lvl]['result'].moves[0]
             print(f"{label:<10} {'GNUbg':<8} {m.equity:+9.4f} {m.probs.win:8.4f}")
 
 

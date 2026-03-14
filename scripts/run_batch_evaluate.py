@@ -2,7 +2,7 @@
 """Demo script for batch position evaluation.
 
 Usage:
-    python bgsage/scripts/run_batch_evaluate.py [--model stage5] [--level 0ply]
+    python bgsage/scripts/run_batch_evaluate.py [--model stage5] [--level 1ply]
 """
 
 import argparse
@@ -51,9 +51,9 @@ TEST_POSITIONS = [
 def main():
     parser = argparse.ArgumentParser(description="Batch position evaluation demo")
     WeightConfig.add_model_arg(parser)
-    parser.add_argument("--level", type=str, default="0ply",
-                        choices=["0ply", "1ply", "2ply", "3ply"],
-                        help="Evaluation level (default: 0ply)")
+    parser.add_argument("--level", type=str, default="1ply",
+                        choices=["1ply", "2ply", "3ply", "4ply"],
+                        help="Evaluation level (default: 1ply)")
     parser.add_argument("--n-threads", type=int, default=0,
                         help="Thread count (0 = auto)")
     parser.add_argument("--repeat", type=int, default=1,

@@ -28,7 +28,7 @@ from .types import (
 
 GNUBG_CLI = r'C:\Program Files (x86)\gnubg\gnubg-cli.exe'
 
-_EVAL_LEVELS = {'0ply': 0, '1ply': 1, '2ply': 2, '3ply': 3}
+_EVAL_LEVELS = {'1ply': 0, '2ply': 1, '3ply': 2, '4ply': 3}
 
 
 # ---------------------------------------------------------------------------
@@ -399,17 +399,18 @@ class GnuBgAnalyzer:
     Usage::
 
         from bgsage import GnuBgAnalyzer
-        analyzer = GnuBgAnalyzer(eval_level="2ply")
+        analyzer = GnuBgAnalyzer(eval_level="3ply")
         cube = analyzer.cube_action(board, cube_value=1, cube_owner="centered")
         print(cube.equity_nd, cube.equity_dt, cube.optimal_action)
     """
 
-    def __init__(self, eval_level="0ply", timeout=120, jacoby=True):
+    def __init__(self, eval_level="1ply", timeout=120, jacoby=True):
         if eval_level not in _EVAL_LEVELS:
             raise ValueError(
                 f"eval_level must be one of {list(_EVAL_LEVELS)}, got {eval_level!r}")
         self.n_plies = _EVAL_LEVELS[eval_level]
-        self.eval_level_str = f"{self.n_plies}-ply"
+        # Display label uses our XG convention (1-ply = raw NN)
+        self.eval_level_str = f"{self.n_plies + 1}-ply"
         self.timeout = timeout
         self.jacoby = jacoby
 

@@ -52,7 +52,7 @@ RolloutStrategy::RolloutStrategy(std::shared_ptr<Strategy> base, RolloutConfig c
                        : 200)
 {
     // Build decision strategy
-    if (config_.decision_ply > 0) {
+    if (config_.decision_ply > 1) {
         decision_strat_ = std::make_shared<MultiPlyStrategy>(
             base_, config_.decision_ply, config_.filter);
     } else {
@@ -60,10 +60,10 @@ RolloutStrategy::RolloutStrategy(std::shared_ptr<Strategy> base, RolloutConfig c
     }
 
     // Build late-game decision strategy
-    int effective_late_ply = (config_.late_ply >= 0) ? config_.late_ply : config_.decision_ply;
+    int effective_late_ply = (config_.late_ply >= 1) ? config_.late_ply : config_.decision_ply;
     if (effective_late_ply == config_.decision_ply) {
         late_decision_strat_ = decision_strat_;
-    } else if (effective_late_ply > 0) {
+    } else if (effective_late_ply > 1) {
         late_decision_strat_ = std::make_shared<MultiPlyStrategy>(
             base_, effective_late_ply, config_.filter);
     } else {
@@ -176,7 +176,7 @@ std::array<float, NUM_OUTPUTS> RolloutStrategy::best_move_probs_for_candidates(
         return strat.evaluate_probs(candidates[0], board);
     }
 
-    // Fast batch path for 0-ply GamePlanStrategy
+    // Fast batch path for 1-ply (raw NN) GamePlanStrategy
     if (base_gps_ && &strat == base_.get()) {
         std::array<float, NUM_OUTPUTS> best_probs{};
         int idx = base_gps_->batch_evaluate_candidates_best_prob(
@@ -185,7 +185,7 @@ std::array<float, NUM_OUTPUTS> RolloutStrategy::best_move_probs_for_candidates(
         return best_probs;
     }
 
-    // For non-base strategies (e.g. MultiPly 1-ply): generous 0-ply pre-filter
+    // For non-base strategies (e.g. MultiPly 2-ply): generous 1-ply pre-filter
     // to avoid evaluating clearly terrible candidates at expensive N-ply depth.
     // Threshold is 2x wider than TINY (0.08) to virtually never drop a good move.
     if (base_gps_) {
@@ -196,16 +196,16 @@ std::array<float, NUM_OUTPUTS> RolloutStrategy::best_move_probs_for_candidates(
         eq_buf.resize(candidates.size());
         base_gps_->batch_evaluate_candidates_equity(candidates, board, eq_buf.data());
 
-        double best_0ply = -1e30;
+        double best_1ply = -1e30;
         for (size_t i = 0; i < candidates.size(); ++i) {
-            if (eq_buf[i] > best_0ply) best_0ply = eq_buf[i];
+            if (eq_buf[i] > best_1ply) best_1ply = eq_buf[i];
         }
 
         // Collect survivors within threshold
         thread_local std::vector<std::pair<double, int>> ranked;
         ranked.clear();
         for (size_t i = 0; i < candidates.size(); ++i) {
-            if (eq_buf[i] >= best_0ply - VR_FILTER_THRESHOLD) {
+            if (eq_buf[i] >= best_1ply - VR_FILTER_THRESHOLD) {
                 ranked.push_back({eq_buf[i], static_cast<int>(i)});
             }
         }
@@ -297,7 +297,7 @@ RolloutStrategy::TrialResult RolloutStrategy::run_trial(
     for (int move_num = 0; move_num < truncation && move_num < max_moves; ++move_num) {
         bool is_starting_players_turn = (move_num % 2 == 1);
 
-        // Once contact is broken (pure race), 0-ply is nearly perfect.
+        // Once contact is broken (pure race), 1-ply is nearly perfect.
         // Use base strategy for both decisions and VR — much cheaper.
         bool use_base = (move_num >= config_.late_threshold) || is_race(board);
 
@@ -540,8 +540,8 @@ RolloutResult RolloutStrategy::run_trials_parallel(
     // Allocate per-trial results
     std::vector<TrialResult> trial_results(n_trials);
 
-    if (config_.decision_ply == 0) {
-        // For fixed-depth shallow rollout (decision_ply == 0) and short
+    if (config_.decision_ply == 1) {
+        // For fixed-depth shallow rollout (decision_ply == 1) and short
         // batches, static partitioning is often faster than atomic work stealing.
 #ifdef _WIN32
         struct ThreadArg {
@@ -752,7 +752,7 @@ void RolloutStrategy::run_cubeful_trial(
                 if (branches[b].finished) continue;
                 if (!can_double(branches[b].cube)) continue;
 
-                CubeDecision cd = cube_decision_0ply(mover_probs, branches[b].cube, x);
+                CubeDecision cd = cube_decision_1ply(mover_probs, branches[b].cube, x);
                 if (cd.should_double) {
                     if (cd.is_beaver) {
                         // Double/Beaver: cube goes to 4x, opponent retains ownership
@@ -790,7 +790,7 @@ void RolloutStrategy::run_cubeful_trial(
                 if (!branches[b].finished) { all_done = false; break; }
             }
             if (all_done) {
-                // All branches D/P'd — use 0-ply pre-roll cubeless probs as best estimate
+                // All branches D/P'd — use 1-ply pre-roll cubeless probs as best estimate
                 if (cubeless_out) {
                     std::array<float, NUM_OUTPUTS> sp_probs;
                     if (is_sp_turn) {
@@ -1274,21 +1274,21 @@ int RolloutStrategy::best_move_index(const std::vector<Board>& candidates,
     const int n = static_cast<int>(candidates.size());
     if (n <= 1) return 0;
 
-    // Step 1: Score all candidates at 0-ply for filtering
+    // Step 1: Score all candidates at 1-ply for filtering
     std::vector<double> equities(n);
-    double best_0ply = -1e30;
+    double best_1ply = -1e30;
 
     if (base_gps_) {
         base_gps_->batch_evaluate_candidates_equity(
             candidates, pre_move_board, equities.data());
         for (int i = 0; i < n; ++i) {
-            if (equities[i] > best_0ply) best_0ply = equities[i];
+            if (equities[i] > best_1ply) best_1ply = equities[i];
         }
     } else {
         for (int i = 0; i < n; ++i) {
             equities[i] = NeuralNetwork::compute_equity(
                 base_->evaluate_probs(candidates[i], pre_move_board));
-            if (equities[i] > best_0ply) best_0ply = equities[i];
+            if (equities[i] > best_1ply) best_1ply = equities[i];
         }
     }
 
@@ -1302,7 +1302,7 @@ int RolloutStrategy::best_move_index(const std::vector<Board>& candidates,
     survivors.reserve(std::min(n, config_.filter.max_moves));
     for (int idx : sorted_indices) {
         if (static_cast<int>(survivors.size()) >= config_.filter.max_moves) break;
-        if (best_0ply - equities[idx] > config_.filter.threshold) break;
+        if (best_1ply - equities[idx] > config_.filter.threshold) break;
         survivors.push_back(idx);
     }
 

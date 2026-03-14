@@ -66,9 +66,9 @@ target_link_libraries(bgbot_profile PRIVATE bgbot_lib)
 add_executable(bgbot_test_crash src/test_benchmark_crash.cpp)
 target_link_libraries(bgbot_test_crash PRIVATE bgbot_lib)
 
-# 0-ply evaluation profiler
-add_executable(bgbot_profile_0ply src/profile_0ply.cpp)
-target_link_libraries(bgbot_profile_0ply PRIVATE bgbot_lib)
+# 1-ply evaluation profiler
+add_executable(bgbot_profile_1ply src/profile_0ply.cpp)
+target_link_libraries(bgbot_profile_1ply PRIVATE bgbot_lib)
 
 # pybind11 Python module
 find_package(pybind11 CONFIG REQUIRED)

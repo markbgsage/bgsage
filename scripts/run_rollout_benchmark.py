@@ -1,8 +1,8 @@
 """
-Rollout benchmark: find top-100 worst 0-ply errors, compare with 1-ply, 2-ply, and rollout.
+Rollout benchmark: find top-100 worst 1-ply errors, compare with 2-ply, 3-ply, and rollout.
 
 Usage:
-  python bgsage/scripts/run_rollout_benchmark.py [--top N] [--threads N] [--skip-2ply]
+  python bgsage/scripts/run_rollout_benchmark.py [--top N] [--threads N] [--skip-3ply]
   python bgsage/scripts/run_rollout_benchmark.py --model stage3  # specific model
 """
 
@@ -34,13 +34,13 @@ DATA_DIR = os.path.join(project_dir, 'data')
 
 
 def main():
-    parser = argparse.ArgumentParser(description='Rollout benchmark: top-N worst 0-ply errors')
+    parser = argparse.ArgumentParser(description='Rollout benchmark: top-N worst 1-ply errors')
     WeightConfig.add_model_arg(parser)
     parser.add_argument('--top', type=int, default=100, help='Number of worst scenarios (default: 100)')
     parser.add_argument('--threads', type=int, default=0, help='CPU threads (0=auto)')
-    parser.add_argument('--skip-2ply', action='store_true', help='Skip 2-ply and 3-ply')
-    parser.add_argument('--skip-rollout-1p', action='store_true', help='Skip 1-ply rollout')
+    parser.add_argument('--skip-3ply', action='store_true', help='Skip 3-ply and 4-ply')
     parser.add_argument('--skip-rollout-2p', action='store_true', help='Skip 2-ply rollout')
+    parser.add_argument('--skip-rollout-3p', action='store_true', help='Skip 3-ply rollout')
     args = parser.parse_args()
 
     w = WeightConfig.from_args(args)
@@ -66,7 +66,7 @@ def main():
     wt = (w.purerace, w.racing, w.attacking, w.priming, w.anchoring)
     ht = w.hidden_sizes
 
-    print("Scoring all scenarios at 0-ply...")
+    print("Scoring all scenarios at 1-ply...")
     t0 = time.perf_counter()
     errors_contact = bgbot_cpp.score_benchmarks_per_scenario_5nn(
         scenarios_contact, *wt, *ht)
@@ -84,18 +84,18 @@ def main():
     all_errors.sort(key=lambda x: -x[0])
 
     overall_er = sum(e[0] for e in all_errors) / total * 1000
-    print(f"  Overall 0-ply ER: {overall_er:.2f}")
+    print(f"  Overall 1-ply ER: {overall_er:.2f}")
 
     # Step 2: Extract top-N indices
     top_n = min(args.top, total)
     top_errors = all_errors[:top_n]
-    top_mean_0ply = sum(e[0] for e in top_errors) / top_n * 1000
+    top_mean_1ply = sum(e[0] for e in top_errors) / top_n * 1000
 
     contact_indices = sorted([e[2] for e in top_errors if e[1] == 'contact'])
     crashed_indices = sorted([e[2] for e in top_errors if e[1] == 'crashed'])
 
-    print(f"\nTop {top_n} worst 0-ply errors:")
-    print(f"  Mean error: {top_mean_0ply:.2f} millipips")
+    print(f"\nTop {top_n} worst 1-ply errors:")
+    print(f"  Mean error: {top_mean_1ply:.2f} millipips")
     print(f"  Range: [{top_errors[-1][0]*1000:.1f}, {top_errors[0][0]*1000:.1f}]")
     print(f"  From contact: {len(contact_indices)}, from crashed: {len(crashed_indices)}")
     print()
@@ -130,33 +130,23 @@ def main():
     # Step 4: Score with each strategy
     results = []
 
-    # 0-ply (subset verification)
-    def score_0ply(ss):
-        return bgbot_cpp.score_benchmarks_5nn(ss, *w.weight_args)
-    er_0ply, t_0ply = score_subset('0-ply', score_0ply)
-    results.append(('0-ply', er_0ply, t_0ply))
-
-    # 1-ply
-    multipy_1 = bgbot_cpp.create_multipy_5nn(*w.weight_args, n_plies=1)
-
+    # 1-ply (subset verification)
     def score_1ply(ss):
-        multipy_1.clear_cache()
-        return bgbot_cpp.score_benchmarks_multipy(ss, multipy_1, args.threads)
+        return bgbot_cpp.score_benchmarks_5nn(ss, *w.weight_args)
     er_1ply, t_1ply = score_subset('1-ply', score_1ply)
     results.append(('1-ply', er_1ply, t_1ply))
 
     # 2-ply
-    if not args.skip_2ply:
-        multipy_2 = bgbot_cpp.create_multipy_5nn(*w.weight_args, n_plies=2)
+    multipy_2 = bgbot_cpp.create_multipy_5nn(*w.weight_args, n_plies=2)
 
-        def score_2ply(ss):
-            multipy_2.clear_cache()
-            return bgbot_cpp.score_benchmarks_multipy(ss, multipy_2, args.threads)
-        er_2ply, t_2ply = score_subset('2-ply', score_2ply)
-        results.append(('2-ply', er_2ply, t_2ply))
+    def score_2ply(ss):
+        multipy_2.clear_cache()
+        return bgbot_cpp.score_benchmarks_multipy(ss, multipy_2, args.threads)
+    er_2ply, t_2ply = score_subset('2-ply', score_2ply)
+    results.append(('2-ply', er_2ply, t_2ply))
 
     # 3-ply
-    if not args.skip_2ply:
+    if not args.skip_3ply:
         multipy_3 = bgbot_cpp.create_multipy_5nn(*w.weight_args, n_plies=3)
 
         def score_3ply(ss):
@@ -165,38 +155,48 @@ def main():
         er_3ply, t_3ply = score_subset('3-ply', score_3ply)
         results.append(('3-ply', er_3ply, t_3ply))
 
-    # Rollout: 1-ply decisions, 1296 trials, no trunc, VR at 0-ply, late=0@3
-    if not args.skip_rollout_1p:
-        rollout_1p_1296 = bgbot_cpp.create_rollout_5nn(
-            *w.weight_args,
-            n_trials=1296, truncation_depth=0,
-            decision_ply=1,
-            n_threads=args.threads,
-            late_ply=0, late_threshold=3)
+    # 4-ply
+    if not args.skip_3ply:
+        multipy_4 = bgbot_cpp.create_multipy_5nn(*w.weight_args, n_plies=4)
 
-        def score_rollout_1p_1296(ss):
-            return bgbot_cpp.score_benchmarks_rollout(ss, rollout_1p_1296, 1)
-        er_ro, t_ro = score_subset('Rollout(dp=1, 1296t, late=0@3)', score_rollout_1p_1296)
-        results.append(('Rollout(dp=1, 1296t, late=0@3)', er_ro, t_ro))
+        def score_4ply(ss):
+            multipy_4.clear_cache()
+            return bgbot_cpp.score_benchmarks_multipy(ss, multipy_4, args.threads)
+        er_4ply, t_4ply = score_subset('4-ply', score_4ply)
+        results.append(('4-ply', er_4ply, t_4ply))
 
-    # Rollout: 2-ply decisions, 1296 trials, no trunc, VR at 0-ply, late=0@3
+    # Rollout: 2-ply decisions, 1296 trials, no trunc, VR at 1-ply, late=1@3
     if not args.skip_rollout_2p:
         rollout_2p_1296 = bgbot_cpp.create_rollout_5nn(
             *w.weight_args,
             n_trials=1296, truncation_depth=0,
             decision_ply=2,
             n_threads=args.threads,
-            late_ply=0, late_threshold=3)
+            late_ply=1, late_threshold=3)
 
         def score_rollout_2p_1296(ss):
             return bgbot_cpp.score_benchmarks_rollout(ss, rollout_2p_1296, 1)
-        er_ro2, t_ro2 = score_subset('Rollout(dp=2, 1296t, late=0@3)', score_rollout_2p_1296)
-        results.append(('Rollout(dp=2, 1296t, late=0@3)', er_ro2, t_ro2))
+        er_ro, t_ro = score_subset('Rollout(dp=2, 1296t, late=1@3)', score_rollout_2p_1296)
+        results.append(('Rollout(dp=2, 1296t, late=1@3)', er_ro, t_ro))
+
+    # Rollout: 3-ply decisions, 1296 trials, no trunc, VR at 1-ply, late=1@3
+    if not args.skip_rollout_3p:
+        rollout_3p_1296 = bgbot_cpp.create_rollout_5nn(
+            *w.weight_args,
+            n_trials=1296, truncation_depth=0,
+            decision_ply=3,
+            n_threads=args.threads,
+            late_ply=1, late_threshold=3)
+
+        def score_rollout_3p_1296(ss):
+            return bgbot_cpp.score_benchmarks_rollout(ss, rollout_3p_1296, 1)
+        er_ro2, t_ro2 = score_subset('Rollout(dp=3, 1296t, late=1@3)', score_rollout_3p_1296)
+        results.append(('Rollout(dp=3, 1296t, late=1@3)', er_ro2, t_ro2))
 
     # Step 5: Summary table
     print()
     print("=" * 75)
-    print(f"Summary: top {top_n} worst 0-ply scenarios from {total} total")
+    print(f"Summary: top {top_n} worst 1-ply scenarios from {total} total")
     print("=" * 75)
     print(f"  {'Strategy':<45} {'ER':>8} {'Time':>10}")
     print(f"  {'-'*45} {'-'*8} {'-'*10}")

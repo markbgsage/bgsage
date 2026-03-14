@@ -1,4 +1,4 @@
-"""Run Stage 5 2-ply contact + race benchmarks, output to stdout."""
+"""Run Stage 5 3-ply contact + race benchmarks, output to stdout."""
 import bgbot_cpp, os, sys, time
 sys.path.insert(0, 'python')
 from bgsage.data import load_benchmark_file
@@ -18,24 +18,24 @@ race = load_benchmark_file('data/race.bm')
 
 multipy2 = bgbot_cpp.create_multipy_5nn(
     w5['pr'], w5['rc'], w5['at'], w5['pm'], w5['an'], *NH5,
-    n_plies=2, filter_max_moves=5, filter_threshold=0.08)
+    n_plies=3, filter_max_moves=5, filter_threshold=0.08)
 
-# 2-ply contact
+# 3-ply contact
 t0 = time.perf_counter()
 r = bgbot_cpp.score_benchmarks_multipy(contact, multipy2, 0)
 elapsed = time.perf_counter() - t0
 ch = multipy2.cache_hits()
 cm = multipy2.cache_misses()
-print(f'Stage 5 2-ply contact: {r.score():.2f}  ({elapsed:.1f}s)')
+print(f'Stage 5 3-ply contact: {r.score():.2f}  ({elapsed:.1f}s)')
 print(f'  Cache: {multipy2.cache_size()} entries, {ch} hits / {ch+cm} lookups ({ch/max(ch+cm,1)*100:.1f}%)')
 sys.stdout.flush()
 
-# 2-ply race
+# 3-ply race
 multipy2.clear_cache()
 t0 = time.perf_counter()
 r = bgbot_cpp.score_benchmarks_multipy(race, multipy2, 0)
 elapsed = time.perf_counter() - t0
 ch = multipy2.cache_hits()
 cm = multipy2.cache_misses()
-print(f'Stage 5 2-ply race: {r.score():.2f}  ({elapsed:.1f}s)')
+print(f'Stage 5 3-ply race: {r.score():.2f}  ({elapsed:.1f}s)')
 print(f'  Cache: {multipy2.cache_size()} entries, {ch} hits / {ch+cm} lookups ({ch/max(ch+cm,1)*100:.1f}%)')

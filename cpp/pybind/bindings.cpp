@@ -723,7 +723,7 @@ PYBIND11_MODULE(bgbot_cpp, m) {
             result["probs"] = probs;
             result["equity"] = eq;
             return result;
-        }, "Evaluate board at 0-ply, returns probs and equity",
+        }, "Evaluate board at 1-ply (raw NN), returns probs and equity",
            py::arg("board"), py::arg("pre_move_board"));
 
     // --- Benchmark scoring with GamePlanStrategy (5-NN) ---
@@ -1293,7 +1293,7 @@ PYBIND11_MODULE(bgbot_cpp, m) {
        py::arg("n_hidden_attacking") = 250,
        py::arg("n_hidden_priming") = 250,
        py::arg("n_hidden_anchoring") = 250,
-       py::arg("n_plies") = 1,
+       py::arg("n_plies") = 2,
        py::arg("filter_max_moves") = 5,
        py::arg("filter_threshold") = 0.08f,
        py::arg("full_depth_opponent") = false,
@@ -1319,7 +1319,7 @@ PYBIND11_MODULE(bgbot_cpp, m) {
        py::arg("weights_path"),
        py::arg("n_hidden") = 120,
        py::arg("n_inputs") = 196,
-       py::arg("n_plies") = 1,
+       py::arg("n_plies") = 2,
        py::arg("filter_max_moves") = 5,
        py::arg("filter_threshold") = 0.08f,
        py::arg("full_depth_opponent") = false,
@@ -1394,10 +1394,10 @@ PYBIND11_MODULE(bgbot_cpp, m) {
 
     // ======================== Benchmark PR scoring ========================
 
-    // Score a 0-ply strategy against benchmark PR data.
+    // Score a 1-ply strategy against benchmark PR data.
     // decisions: list of dicts with 'board', 'dice', 'candidates', 'rollout_equities'
     // Returns a dict with overall PR, per-plan PR, per-plan counts, etc.
-    m.def("score_benchmark_pr_0ply", [](py::list decisions_py,
+    m.def("score_benchmark_pr_1ply", [](py::list decisions_py,
                                          const std::string& purerace_w,
                                          const std::string& racing_w,
                                          const std::string& attacking_w,
@@ -1429,7 +1429,7 @@ PYBIND11_MODULE(bgbot_cpp, m) {
 
         GamePlanStrategy strat(purerace_w, racing_w, attacking_w, priming_w, anchoring_w,
                                n_h_purerace, n_h_racing, n_h_attacking, n_h_priming, n_h_anchoring);
-        MoveFilter filter{5, 0.08f};  // TINY (unused for 0-ply but needed by signature)
+        MoveFilter filter{5, 0.08f};  // TINY (unused for 1-ply but needed by signature)
         PRResult result;
         {
             py::gil_scoped_release release;
@@ -1453,7 +1453,7 @@ PYBIND11_MODULE(bgbot_cpp, m) {
         out["per_plan_n"] = gp_n;
         out["per_plan_n_with_error"] = gp_n_err;
         return out;
-    }, "Score 0-ply strategy against benchmark PR data (parallel)",
+    }, "Score 1-ply strategy against benchmark PR data (parallel)",
        py::arg("decisions"),
        py::arg("purerace_weights"),
        py::arg("racing_weights"),
@@ -1468,7 +1468,7 @@ PYBIND11_MODULE(bgbot_cpp, m) {
        py::arg("n_threads") = 0);
 
     // Score an N-ply strategy against benchmark PR data.
-    // Uses 0-ply pre-filter + full-depth scoring on survivors.
+    // Uses 1-ply pre-filter + full-depth scoring on survivors.
     m.def("score_benchmark_pr_nply", [](py::list decisions_py,
                                          const std::string& purerace_w,
                                          const std::string& racing_w,
@@ -1544,7 +1544,7 @@ PYBIND11_MODULE(bgbot_cpp, m) {
        py::arg("n_hidden_attacking") = 400,
        py::arg("n_hidden_priming") = 400,
        py::arg("n_hidden_anchoring") = 400,
-       py::arg("n_plies") = 1,
+       py::arg("n_plies") = 2,
        py::arg("filter_max_moves") = 5,
        py::arg("filter_threshold") = 0.08f,
        py::arg("n_threads") = 0);
@@ -1645,7 +1645,7 @@ PYBIND11_MODULE(bgbot_cpp, m) {
        py::arg("n_hidden_anchoring") = 250,
        py::arg("n_trials") = 36,
        py::arg("truncation_depth") = 7,
-       py::arg("decision_ply") = 0,
+       py::arg("decision_ply") = 1,
        py::arg("filter_max_moves") = 5,
        py::arg("filter_threshold") = 0.08f,
        py::arg("n_threads") = 0,
@@ -1764,11 +1764,11 @@ PYBIND11_MODULE(bgbot_cpp, m) {
         CubeInfo ci{cube_value, owner, {0, 0, false}, -1.0f, jacoby, beaver};
         return cubeful_equity_nply(board, ci, strategy, n_plies, filter, n_threads);
     }, "Compute cubeful equity for a pre-roll position at N-ply depth.\n"
-       "Uses recursive cube decision modeling (Janowski only at 0-ply leaves).\n"
+       "Uses recursive cube decision modeling (Janowski only at 1-ply leaves).\n"
        "Returns cubeful equity normalized to cube value 1.",
        py::arg("board"), py::arg("owner"),
        py::arg("strategy"),
-       py::arg("n_plies") = 1,
+       py::arg("n_plies") = 2,
        py::arg("filter_max_moves") = 5,
        py::arg("filter_threshold") = 0.08f,
        py::arg("n_threads") = 1,
@@ -1781,13 +1781,13 @@ PYBIND11_MODULE(bgbot_cpp, m) {
     }, "Cube efficiency for a position (0.68 contact, pip-dependent race)",
        py::arg("board"), py::arg("is_race"));
 
-    m.def("cube_decision_0ply", [](const std::array<float, NUM_OUTPUTS>& probs,
+    m.def("cube_decision_1ply", [](const std::array<float, NUM_OUTPUTS>& probs,
                                     int cube_value, CubeOwner owner, float cube_x,
                                     int away1, int away2, bool is_crawford,
                                     bool jacoby) {
         CubeInfo ci{cube_value, owner, {away1, away2, is_crawford}, -1.0f, jacoby};
-        return cube_decision_0ply(probs, ci, cube_x);
-    }, "Compute 0-ply cube decision from cubeless pre-roll probs (Janowski).\n"
+        return cube_decision_1ply(probs, ci, cube_x);
+    }, "Compute 1-ply cube decision from cubeless pre-roll probs (Janowski).\n"
        "Returns CubeDecision with equity_nd, equity_dt, equity_dp, should_double, should_take, optimal_equity.",
        py::arg("probs"), py::arg("cube_value") = 1,
        py::arg("owner") = CubeOwner::CENTERED, py::arg("cube_x") = 0.68f,
@@ -1825,7 +1825,7 @@ PYBIND11_MODULE(bgbot_cpp, m) {
 
         // Cube decision
         CubeInfo ci{cube_value, owner, {away1, away2, is_crawford}, cube_x_override, jacoby, beaver};
-        auto cd = cube_decision_0ply(pre_roll_probs, ci, x);
+        auto cd = cube_decision_1ply(pre_roll_probs, ci, x);
 
         // Cubeless equity
         float cl_eq = cubeless_equity(pre_roll_probs);
@@ -1922,7 +1922,7 @@ PYBIND11_MODULE(bgbot_cpp, m) {
        py::arg("checkers"),
        py::arg("cube_value") = 1,
        py::arg("owner") = CubeOwner::CENTERED,
-       py::arg("n_plies") = 1,
+       py::arg("n_plies") = 2,
        py::arg("purerace_weights") = "",
        py::arg("racing_weights") = "",
        py::arg("attacking_weights") = "",
@@ -1942,7 +1942,7 @@ PYBIND11_MODULE(bgbot_cpp, m) {
 
     // Cubeful rollout: simulates cube decisions during trial games.
     // Two branches (ND and DT) share the same board evolution and dice sequences.
-    // Cube decisions (double/take/pass) evaluated at 0-ply Janowski at each half-move.
+    // Cube decisions (double/take/pass) evaluated at 1-ply Janowski at each half-move.
     m.def("cube_decision_rollout", [](const std::vector<int>& checkers,
                                        int cube_value, CubeOwner owner,
                                        const std::string& purerace_w,
@@ -2078,7 +2078,7 @@ PYBIND11_MODULE(bgbot_cpp, m) {
         result["is_race"] = race;
         return result;
     }, "Cubeful rollout: simulates cube decisions during trial games.\n"
-       "Two branches (ND and DT) share same board/dice. 0-ply cube checks at each turn.",
+       "Two branches (ND and DT) share same board/dice. 1-ply cube checks at each turn.",
        py::arg("checkers"),
        py::arg("cube_value") = 1,
        py::arg("owner") = CubeOwner::CENTERED,
@@ -2094,7 +2094,7 @@ PYBIND11_MODULE(bgbot_cpp, m) {
        py::arg("n_hidden_anchoring") = 400,
        py::arg("n_trials") = 1296,
        py::arg("truncation_depth") = 0,
-       py::arg("decision_ply") = 0,
+       py::arg("decision_ply") = 1,
        py::arg("filter_max_moves") = 5,
        py::arg("filter_threshold") = 0.08f,
        py::arg("n_threads") = 0,
@@ -2111,7 +2111,7 @@ PYBIND11_MODULE(bgbot_cpp, m) {
 
     // Evaluate a batch of pre-roll positions in parallel.
     // Each position is a (board, cube_value, cube_owner) tuple.
-    // Uses a MultiPlyStrategy (or GamePlanStrategy for 0-ply) shared across
+    // Uses a MultiPlyStrategy (or GamePlanStrategy for 1-ply) shared across
     // threads. Individual N-ply evaluations are serial; parallelism is across
     // positions. Each thread gets its own thread-local position cache.
     //
@@ -2188,7 +2188,7 @@ PYBIND11_MODULE(bgbot_cpp, m) {
                 out.cubeful_equity = cl2cf(out.probs, ci, x);
 
                 // Cube decision
-                out.cube_decision = cube_decision_0ply(out.probs, ci, x);
+                out.cube_decision = cube_decision_1ply(out.probs, ci, x);
             };
 
             if (n_threads <= 1) {
@@ -2251,7 +2251,7 @@ PYBIND11_MODULE(bgbot_cpp, m) {
         return out;
     }, "Evaluate a batch of pre-roll positions in parallel.\n"
        "positions: list of (board, cube_value, CubeOwner) tuples.\n"
-       "strategy: MultiPlyStrategy (0-ply uses n_plies=0 wrapper).\n"
+       "strategy: MultiPlyStrategy (1-ply uses n_plies=1 wrapper).\n"
        "Returns list of dicts with probs, cubeless_equity, cubeful_equity, cube decision fields.",
        py::arg("positions"),
        py::arg("strategy"),
@@ -2259,7 +2259,7 @@ PYBIND11_MODULE(bgbot_cpp, m) {
        py::arg("jacoby") = true,
        py::arg("beaver") = true);
 
-    // Overload that takes a GamePlanStrategy (0-ply) directly
+    // Overload that takes a GamePlanStrategy (1-ply) directly
     m.def("batch_evaluate_positions", [](
             py::list positions,
             GamePlanStrategy& strategy,
@@ -2318,7 +2318,7 @@ PYBIND11_MODULE(bgbot_cpp, m) {
                 CubeInfo ci{inp.cube_value, inp.owner, inp.match, -1.0f, jacoby, beaver};
                 out.cubeful_equity = cl2cf(out.probs, ci, x);
 
-                out.cube_decision = cube_decision_0ply(out.probs, ci, x);
+                out.cube_decision = cube_decision_1ply(out.probs, ci, x);
             };
 
             if (n_threads <= 1) {
@@ -2373,9 +2373,9 @@ PYBIND11_MODULE(bgbot_cpp, m) {
             out.append(d);
         }
         return out;
-    }, "Evaluate a batch of pre-roll positions at 0-ply in parallel.\n"
+    }, "Evaluate a batch of pre-roll positions at 1-ply in parallel.\n"
        "positions: list of (board, cube_value, CubeOwner) tuples.\n"
-       "strategy: GamePlanStrategy (0-ply).\n"
+       "strategy: GamePlanStrategy (1-ply).\n"
        "Returns list of dicts with probs, cubeless_equity, cubeful_equity, cube decision fields.",
        py::arg("positions"),
        py::arg("strategy"),
@@ -2484,9 +2484,9 @@ PYBIND11_MODULE(bgbot_cpp, m) {
             out.append(d);
         }
         return out;
-    }, "Evaluate a batch of post-move positions at 0-ply in parallel.\n"
+    }, "Evaluate a batch of post-move positions at 1-ply in parallel.\n"
        "positions: list of (board, CubeOwner) tuples.\n"
-       "strategy: GamePlanStrategy (0-ply).\n"
+       "strategy: GamePlanStrategy (1-ply).\n"
        "Returns list of dicts with probs, cubeless_equity, cubeful_equity.",
        py::arg("positions"),
        py::arg("strategy"),
@@ -2599,7 +2599,7 @@ PYBIND11_MODULE(bgbot_cpp, m) {
     // ======================== Batch checker play ========================
 
     // Batch checker play: for each (board, die1, die2, cube_value, cube_owner),
-    // generate legal moves, score at 0-ply, filter, compute cubeful equity,
+    // generate legal moves, score at 1-ply, filter, compute cubeful equity,
     // return sorted moves.  Parallelized across positions.
     //
     // Each input is a dict: {board, die1, die2, cube_value, cube_owner}.
@@ -2607,10 +2607,10 @@ PYBIND11_MODULE(bgbot_cpp, m) {
     //   {moves: [{board, equity, cubeless_equity, probs, equity_diff, eval_level}, ...]}
     // Moves sorted by equity descending (best first).
 
-    // 0-ply overload: GamePlanStrategy only
+    // 1-ply overload: GamePlanStrategy only
     m.def("batch_checker_play", [](
             py::list inputs,
-            GamePlanStrategy& strategy_0ply,
+            GamePlanStrategy& strategy_1ply,
             int filter_max_moves,
             float filter_threshold,
             int n_threads,
@@ -2680,7 +2680,7 @@ PYBIND11_MODULE(bgbot_cpp, m) {
                 std::vector<Scored> scored(candidates.size());
                 CubeInfo ci{inp.cube_value, inp.owner, inp.match, -1.0f, jacoby, beaver};
                 for (size_t j = 0; j < candidates.size(); ++j) {
-                    auto post_probs = strategy_0ply.evaluate_probs(
+                    auto post_probs = strategy_1ply.evaluate_probs(
                         candidates[j], inp.board);
                     float cl_eq = NeuralNetwork::compute_equity(post_probs);
                     bool race = is_race(candidates[j]);
@@ -2707,7 +2707,7 @@ PYBIND11_MODULE(bgbot_cpp, m) {
                 }
                 if (keep == 0) keep = 1;
 
-                // All moves at 0-ply
+                // All moves at 1-ply
                 out.moves.resize(scored.size());
                 for (size_t j = 0; j < scored.size(); ++j) {
                     out.moves[j] = {
@@ -2749,7 +2749,7 @@ PYBIND11_MODULE(bgbot_cpp, m) {
                 d["cubeless_equity"] = m.cubeless_equity;
                 d["probs"] = m.probs;
                 d["equity_diff"] = m.cubeful_equity - best_eq;
-                d["eval_level"] = "0-ply";
+                d["eval_level"] = "1-ply";
                 moves_list.append(d);
             }
             py::dict pos_result;
@@ -2757,21 +2757,21 @@ PYBIND11_MODULE(bgbot_cpp, m) {
             out.append(pos_result);
         }
         return out;
-    }, "Batch checker play at 0-ply.\n"
+    }, "Batch checker play at 1-ply.\n"
        "inputs: list of dicts {board, die1, die2, cube_value, cube_owner[, away1, away2, is_crawford]}.\n"
        "Returns list of dicts, each with 'moves' list sorted by equity desc.",
        py::arg("inputs"),
-       py::arg("strategy_0ply"),
+       py::arg("strategy_1ply"),
        py::arg("filter_max_moves") = 5,
        py::arg("filter_threshold") = 0.08f,
        py::arg("n_threads") = 0,
        py::arg("jacoby") = true,
        py::arg("beaver") = true);
 
-    // N-ply overload: 0-ply filter + N-ply rescore of survivors
+    // N-ply overload: 1-ply filter + N-ply rescore of survivors
     m.def("batch_checker_play", [](
             py::list inputs,
-            GamePlanStrategy& strategy_0ply,
+            GamePlanStrategy& strategy_1ply,
             std::shared_ptr<MultiPlyStrategy> strategy_nply,
             int filter_max_moves,
             float filter_threshold,
@@ -2823,7 +2823,7 @@ PYBIND11_MODULE(bgbot_cpp, m) {
         // Helper: compute cubeful equity for a post-move board.
         // Matches Python _CubefulAnalyzer._cubeful_equity exactly:
         // flip board to opponent's pre-roll, evaluate cubeful at N-ply
-        // using the 0-ply strategy, negate.
+        // using the 1-ply strategy, negate.
         auto compute_cubeful = [&](const Board& post_move_board,
                                    CubeOwner owner,
                                    const MatchInfo& match) -> float {
@@ -2837,14 +2837,14 @@ PYBIND11_MODULE(bgbot_cpp, m) {
             if (match.is_money()) {
                 CubeInfo opp_ci{1, opp_owner, MatchInfo{}, -1.0f, jacoby, beaver};
                 float opp_eq = cubeful_equity_nply(
-                    opp_pre_roll, opp_ci, strategy_0ply,
+                    opp_pre_roll, opp_ci, strategy_1ply,
                     n_plies, filter, /*n_threads=*/1);
                 return -opp_eq;
             } else {
                 // Match play: work in MWC space via CubeInfo overload
                 CubeInfo opp_ci{1, opp_owner, match.flip(), -1.0f, jacoby, beaver};
                 float opp_eq = cubeful_equity_nply(
-                    opp_pre_roll, opp_ci, strategy_0ply,
+                    opp_pre_roll, opp_ci, strategy_1ply,
                     n_plies, filter, /*n_threads=*/1);
                 return -opp_eq;
             }
@@ -2866,7 +2866,7 @@ PYBIND11_MODULE(bgbot_cpp, m) {
                 auto candidates = possible_boards(inp.board, inp.die1, inp.die2);
                 if (candidates.empty()) return;
 
-                // Score all at 0-ply for filtering
+                // Score all at 1-ply for filtering
                 struct Scored0 {
                     Board board;
                     std::array<float, NUM_OUTPUTS> probs;
@@ -2876,7 +2876,7 @@ PYBIND11_MODULE(bgbot_cpp, m) {
                 CubeInfo ci{inp.cube_value, inp.owner, inp.match, -1.0f, jacoby};
                 std::vector<Scored0> scored(candidates.size());
                 for (size_t j = 0; j < candidates.size(); ++j) {
-                    auto post_probs = strategy_0ply.evaluate_probs(
+                    auto post_probs = strategy_1ply.evaluate_probs(
                         candidates[j], inp.board);
                     float cl_eq = NeuralNetwork::compute_equity(post_probs);
                     bool race = is_race(candidates[j]);
@@ -2928,7 +2928,7 @@ PYBIND11_MODULE(bgbot_cpp, m) {
                         return a.cubeful_equity > b.cubeful_equity;
                     });
 
-                // Promote-second-best: if #2 is 0-ply-only, promote to N-ply
+                // Promote-second-best: if #2 is 1-ply-only, promote to N-ply
                 // and re-sort. Repeat until #2 is a survivor.
                 while (out.moves.size() >= 2 && !out.moves[1].is_survivor) {
                     auto& m = out.moves[1];
@@ -2980,7 +2980,7 @@ PYBIND11_MODULE(bgbot_cpp, m) {
                 d["cubeless_equity"] = m.cubeless_equity;
                 d["probs"] = m.probs;
                 d["equity_diff"] = m.cubeful_equity - best_eq;
-                d["eval_level"] = m.is_survivor ? nply_label : std::string("0-ply");
+                d["eval_level"] = m.is_survivor ? nply_label : std::string("1-ply");
                 moves_list.append(d);
             }
             py::dict pos_result;
@@ -2988,13 +2988,13 @@ PYBIND11_MODULE(bgbot_cpp, m) {
             out.append(pos_result);
         }
         return out;
-    }, "Batch checker play at N-ply: 0-ply filter + N-ply rescore.\n"
+    }, "Batch checker play at N-ply: 1-ply filter + N-ply rescore.\n"
        "inputs: list of dicts {board, die1, die2, cube_value, cube_owner}.\n"
-       "strategy_0ply: GamePlanStrategy for filtering.\n"
+       "strategy_1ply: GamePlanStrategy for filtering.\n"
        "strategy_nply: MultiPlyStrategy for N-ply rescore of survivors.\n"
        "Returns list of dicts, each with 'moves' list sorted by equity desc.",
        py::arg("inputs"),
-       py::arg("strategy_0ply"),
+       py::arg("strategy_1ply"),
        py::arg("strategy_nply"),
        py::arg("filter_max_moves") = 5,
        py::arg("filter_threshold") = 0.08f,

@@ -2,7 +2,7 @@
 
 Usage:
   python python/bench_multipy_reference.py --build-dir build_macos --repeats 25
-  python python/bench_multipy_reference.py --plies 1 2 3 --threads 8
+  python python/bench_multipy_reference.py --plies 2 3 4 --threads 8
 """
 
 import argparse
@@ -17,7 +17,7 @@ def main() -> None:
     parser.add_argument('--build-dir', default='build_macos')
     parser.add_argument('--repeats', type=int, default=25)
     parser.add_argument('--threads', type=int, default=0)
-    parser.add_argument('--plies', nargs='+', type=int, default=[1, 2, 3])
+    parser.add_argument('--plies', nargs='+', type=int, default=[2, 3, 4])
     parser.add_argument('--full-depth', action='store_true')
     args = parser.parse_args()
 

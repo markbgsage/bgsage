@@ -2,9 +2,9 @@
 Benchmark rollout speed and accuracy for the reference position.
 
 XG reference (mover perspective): equity=+0.650, std_err=0.005, time=45s
-  (1296 trials, no trunc, 2-ply decisions, VR at 0-ply)
+  (1296 trials, no trunc, 3-ply decisions, VR at 1-ply)
 
-Our optimized settings: late_ply=0 at threshold=3, race detection.
+Our optimized settings: late_ply=1 at threshold=3, race detection.
   Achieves ~24s with SE~0.006 — nearly 2x faster than XG.
 
 Usage:
@@ -120,23 +120,23 @@ def main():
     print(f"Threads: {args.threads} (0=auto)")
 
     if args.quick:
-        result, elapsed = run_rollout(weights, 36, 0, 2, 0, args.threads,
-                                      late_ply=0, late_threshold=3)
-        print_result("Quick: 36 trials, 2-ply, no trunc, late=0@3", result, elapsed)
+        result, elapsed = run_rollout(weights, 36, 0, 3, 0, args.threads,
+                                      late_ply=1, late_threshold=3)
+        print_result("Quick: 36 trials, 3-ply, no trunc, late=1@3", result, elapsed)
         return
 
     if args.full:
         # Baseline: no late downgrade
         print("\n--- Baseline (no optimizations) ---")
-        result, elapsed = run_rollout(weights, 1296, 0, 2, 0, args.threads)
-        print_result("Baseline: 1296t, 2-ply, no trunc", result, elapsed)
+        result, elapsed = run_rollout(weights, 1296, 0, 3, 0, args.threads)
+        print_result("Baseline: 1296t, 3-ply, no trunc", result, elapsed)
         baseline_time = elapsed
 
         # Sweep late thresholds
         print("\n--- Late threshold sweep ---")
         for thr in [20, 10, 7, 5, 3]:
-            result, elapsed = run_rollout(weights, 1296, 0, 2, 0, args.threads,
-                                          late_ply=0, late_threshold=thr)
+            result, elapsed = run_rollout(weights, 1296, 0, 3, 0, args.threads,
+                                          late_ply=1, late_threshold=thr)
             p = result['probs']
             print(f"  thr={thr:>2}: {elapsed:.1f}s  eq={result['equity']:.4f}  "
                   f"se={result['std_error']:.4f}  P(w)={p[0]:.4f}  "
@@ -145,11 +145,11 @@ def main():
 
     # Default: run optimized config
     print("\n" + "=" * 70)
-    print("Optimized: 1296 trials, 2-ply, no trunc, VR=0, late=0@3, race detect")
+    print("Optimized: 1296 trials, 3-ply, no trunc, VR=1, late=1@3, race detect")
     print("=" * 70)
 
-    result, elapsed = run_rollout(weights, 1296, 0, 2, 0, args.threads,
-                                  late_ply=0, late_threshold=3)
+    result, elapsed = run_rollout(weights, 1296, 0, 3, 0, args.threads,
+                                  late_ply=1, late_threshold=3)
     print_result("Result", result, elapsed)
 
     print(f"\n  vs XG: {XG_REF['time']/elapsed:.1f}x faster ({elapsed:.1f}s vs {XG_REF['time']}s)")

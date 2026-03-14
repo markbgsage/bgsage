@@ -3,7 +3,7 @@
 Historical benchmark results for all trained models. When a new model stage is
 trained, append its results to the tables below.
 
-## Summary Table (0-ply)
+## Summary Table (1-ply)
 
 | Model | Contact ER | Race ER | vs PubEval | Self-Play (S/G/B%) |
 |-------|-----------|---------|------------|-------------------|
@@ -108,7 +108,7 @@ Training script: `python/run_stage5_training.py`
 
 ## Benchmark PR (Performance Rating)
 
-Benchmark PR measures average equity error per decision against 1-ply 1296-trial
+Benchmark PR measures average equity error per decision against 2-ply 1296-trial
 VR rollout reference. Lower is better. Analogous to XG's Performance Rating.
 
 Data: 200 games, 8,667 decisions (6,326 scored after excluding single-candidate),
@@ -117,13 +117,13 @@ Decisions use TINY filter (top 5 within 0.08). Trivial positions excluded (sprea
 Formula: PR = mean(error) * 500. Scoring generates all legal moves, strategy picks best,
 looks up rollout equity in filtered set (worst equity penalty if not found).
 
-| Model | 0-ply | 1-ply |
+| Model | 1-ply | 2-ply |
 |-------|-------|-------|
 | Stage 3 | 2.76 | 2.12 |
 | Stage 4 | 2.57 | 1.97 |
 | **Stage 5** | **2.45** | **1.81** |
 
-Per-plan detail (Stage 5 0-ply):
+Per-plan detail (Stage 5 1-ply):
 
 | PureRace | Racing | Attacking | Priming | Anchoring |
 |----------|--------|-----------|---------|-----------|
@@ -135,7 +135,7 @@ Scripts: `python/generate_benchmark_pr.py`, `python/score_benchmark_pr.py`
 
 ## Multi-Ply Results (Stage 3 weights, 24 threads, AVX2)
 
-| Metric | 0-ply | 1-ply (TINY) | 2-ply (TINY) |
+| Metric | 1-ply | 2-ply (TINY) | 3-ply (TINY) |
 |--------|-------|--------------|--------------|
 | Contact ER | 10.47 | 8.71 | 7.19 |
 | Race ER | 1.03 | 0.84 | 0.48 |

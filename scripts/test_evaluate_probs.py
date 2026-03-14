@@ -1,10 +1,10 @@
-"""Test script: evaluate a position at 0-ply, 1-ply, 2-ply, 3-ply, and rollout.
+"""Test script: evaluate a position at 1-ply, 2-ply, 3-ply, 4-ply, and rollout.
 
 Displays a table of the 5 probabilities, equity, and computation time for each.
 
 Usage:
     python bgsage/scripts/test_evaluate_probs.py [--checkers 0,0,0,...] [--build-dir build_msvc]
-    python bgsage/scripts/test_evaluate_probs.py --ply 3 --model stage3
+    python bgsage/scripts/test_evaluate_probs.py --ply 4 --model stage3
 """
 
 import sys
@@ -69,7 +69,7 @@ def main():
     print()
 
     # Build strategies
-    # 0-ply: GamePlanStrategy (5-NN)
+    # 1-ply: GamePlanStrategy (5-NN)
     gps = bgbot_cpp.GamePlanStrategy(*w.weight_args)
 
     results = []
@@ -78,15 +78,15 @@ def main():
     if args.ply is not None:
         ply_depths = [args.ply]
     else:
-        ply_depths = [0, 1, 2, 3]
+        ply_depths = [1, 2, 3, 4]
 
     # ---- N-ply evaluations ----
     for depth in ply_depths:
-        if depth == 0:
+        if depth == 1:
             t0 = time.perf_counter()
             r0 = gps.evaluate_board(checkers, checkers)
             t0_elapsed = time.perf_counter() - t0
-            results.append({'name': '0-ply', 'probs': r0['probs'], 'equity': r0['equity'],
+            results.append({'name': '1-ply', 'probs': r0['probs'], 'equity': r0['equity'],
                             'time': t0_elapsed})
         else:
             mp = bgbot_cpp.create_multipy_5nn(*w.weight_args, n_plies=depth)
@@ -105,7 +105,7 @@ def main():
     # ---- gnubg evaluations ----
     if not args.skip_gnubg:
         from bgsage.gnubg import post_move_analytics
-        gnubg_plies = ply_depths if args.ply is not None else list(range(4))
+        gnubg_plies = ply_depths if args.ply is not None else list(range(1, 5))
         for n_plies in gnubg_plies:
             label = f'gnubg {n_plies}-ply'
             t_ = time.perf_counter()
@@ -114,7 +114,7 @@ def main():
             results.append({'name': label, 'probs': r_['probs'], 'equity': r_['equity'],
                             'time': t_elapsed})
 
-    # ---- Rollouts at different truncation depths (all dp=1, VR=0) ----
+    # ---- Rollouts at different truncation depths (all dp=2, VR=1) ----
     if not args.skip_rollout and args.ply is None:
         for trunc, label in [(7, 'RO t=7'), (8, 'RO t=8'), (11, 'RO t=11'),
                               (14, 'RO t=14'), (15, 'RO t=15'), (16, 'RO t=16'),
@@ -122,7 +122,7 @@ def main():
             ro = bgbot_cpp.create_rollout_5nn(*w.weight_args,
                                                n_trials=360,
                                                truncation_depth=trunc,
-                                               decision_ply=1,
+                                               decision_ply=2,
                                                n_threads=0)
             t0_ = time.perf_counter()
             r_ = ro.evaluate_board(checkers, checkers)
@@ -139,7 +139,7 @@ def main():
             ro = bgbot_cpp.create_rollout_5nn(*w.weight_args,
                                                n_trials=360,
                                                truncation_depth=trunc,
-                                               decision_ply=1,
+                                               decision_ply=2,
                                                enable_vr=False,
                                                n_threads=0)
             t0_ = time.perf_counter()

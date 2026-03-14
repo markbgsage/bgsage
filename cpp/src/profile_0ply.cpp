@@ -1,5 +1,5 @@
-// Profile 0-ply evaluation: encode + forward pass for a contact position.
-// Usage: bgbot_profile_0ply [iterations]
+// Profile 1-ply evaluation: encode + forward pass for a contact position.
+// Usage: bgbot_profile_1ply [iterations]
 //   Default iterations auto-calibrated to ~1 second.
 //
 // Measures:
@@ -100,7 +100,7 @@ int main(int argc, char* argv[]) {
         auto t1 = Clock::now();
         double elapsed = std::chrono::duration<double>(t1 - t0).count();
         double per_iter_us = elapsed / iterations * 1e6;
-        printf("[Full 0-ply eval]  Total: %.3f s  |  Per-call: %.2f us  |  Throughput: %.0f evals/s\n",
+        printf("[Full 1-ply eval]  Total: %.3f s  |  Per-call: %.2f us  |  Throughput: %.0f evals/s\n",
                elapsed, per_iter_us, iterations / elapsed);
         // Prevent optimization
         volatile float sink = probs[0];

@@ -7,7 +7,7 @@ Tests cube decisions at various match scores to verify correct behavior:
   4. Normal match scores: 0-ply cube decisions
   5. Money game regression: verify existing money decisions unchanged
   6. Batch evaluation with match play
-  7. N-ply match cube decisions (1-ply)
+  7. N-ply match cube decisions (2-ply)
 
 Usage:
     python bgsage/scripts/test_match_cube.py [--build-dir build] [--model stage5]
@@ -120,7 +120,7 @@ def main():
     print(f"    ND={r_craw['equity_nd']:.4f}")
 
     # Also test via BgBotAnalyzer
-    analyzer = BgBotAnalyzer(weights=w, eval_level='0ply', cubeful=True)
+    analyzer = BgBotAnalyzer(weights=w, eval_level='1ply', cubeful=True)
     cube_craw = analyzer.cube_action(starting, cube_value=1, cube_owner='centered',
                                       away1=5, away2=1, is_crawford=True)
     check("Crawford via BgBotAnalyzer: No Double",
@@ -205,7 +205,7 @@ def main():
     print("\n=== Test 6: BgBotAnalyzer Match Play ===")
     # =========================================================================
 
-    analyzer = BgBotAnalyzer(weights=w, eval_level='0ply', cubeful=True)
+    analyzer = BgBotAnalyzer(weights=w, eval_level='1ply', cubeful=True)
 
     # Checker play with match state
     cp_money = analyzer.checker_play(starting, 3, 1, cube_value=1, cube_owner='centered')
@@ -237,7 +237,7 @@ def main():
          "away1": 1, "away2": 1},
     ]
 
-    results = batch_evaluate(positions, eval_level="0ply", weights=w)
+    results = batch_evaluate(positions, eval_level="1ply", weights=w)
     check("Batch: 3 results returned",
           len(results) == 3,
           f"got {len(results)}")
@@ -264,7 +264,7 @@ def main():
     print(f"    Batch DMP:   ND={results[2].equity_nd:+.4f} DP={results[2].equity_dp:+.4f}")
 
     # batch_cube_action
-    cube_results = batch_cube_action(positions, eval_level="0ply", weights=w)
+    cube_results = batch_cube_action(positions, eval_level="1ply", weights=w)
     check("batch_cube_action: 3 results",
           len(cube_results) == 3)
     check("batch_cube_action DMP: No Double",
@@ -272,41 +272,41 @@ def main():
           f"got {cube_results[2].optimal_action}")
 
     # =========================================================================
-    print("\n=== Test 8: 1-ply Match Cube Decision ===")
+    print("\n=== Test 8: 2-ply Match Cube Decision ===")
     # =========================================================================
 
     t0 = time.time()
-    r_1ply = bgbot_cpp.cube_decision_nply(
-        starting, 1, CubeOwner.CENTERED, 1, *w.weight_args,
+    r_2ply = bgbot_cpp.cube_decision_nply(
+        starting, 1, CubeOwner.CENTERED, 2, *w.weight_args,
         away1=5, away2=5, is_crawford=False,
     )
     t1 = time.time()
-    action_1ply = "D/T" if r_1ply["should_double"] and r_1ply["should_take"] else \
-                  "D/P" if r_1ply["should_double"] else "ND"
-    print(f"    1-ply 5a5a: ND={r_1ply['equity_nd']:+.4f} DT={r_1ply['equity_dt']:+.4f} "
-          f"DP={r_1ply['equity_dp']:+.4f} -> {action_1ply} ({t1-t0:.2f}s)")
+    action_2ply = "D/T" if r_2ply["should_double"] and r_2ply["should_take"] else \
+                  "D/P" if r_2ply["should_double"] else "ND"
+    print(f"    2-ply 5a5a: ND={r_2ply['equity_nd']:+.4f} DT={r_2ply['equity_dt']:+.4f} "
+          f"DP={r_2ply['equity_dp']:+.4f} -> {action_2ply} ({t1-t0:.2f}s)")
 
-    check("1-ply match: equity_nd in [-2, 2]",
-          -2.0 < r_1ply['equity_nd'] < 2.0,
-          f"equity_nd={r_1ply['equity_nd']:.4f}")
+    check("2-ply match: equity_nd in [-2, 2]",
+          -2.0 < r_2ply['equity_nd'] < 2.0,
+          f"equity_nd={r_2ply['equity_nd']:.4f}")
 
-    # 1-ply DMP
-    r_1ply_dmp = bgbot_cpp.cube_decision_nply(
-        starting, 1, CubeOwner.CENTERED, 1, *w.weight_args,
+    # 2-ply DMP
+    r_2ply_dmp = bgbot_cpp.cube_decision_nply(
+        starting, 1, CubeOwner.CENTERED, 2, *w.weight_args,
         away1=1, away2=1, is_crawford=False,
     )
-    check("1-ply DMP: should not double",
-          not r_1ply_dmp["should_double"],
-          f"should_double={r_1ply_dmp['should_double']}")
+    check("2-ply DMP: should not double",
+          not r_2ply_dmp["should_double"],
+          f"should_double={r_2ply_dmp['should_double']}")
 
-    # 1-ply Crawford
-    r_1ply_craw = bgbot_cpp.cube_decision_nply(
-        starting, 1, CubeOwner.CENTERED, 1, *w.weight_args,
+    # 2-ply Crawford
+    r_2ply_craw = bgbot_cpp.cube_decision_nply(
+        starting, 1, CubeOwner.CENTERED, 2, *w.weight_args,
         away1=5, away2=1, is_crawford=True,
     )
-    check("1-ply Crawford: should not double",
-          not r_1ply_craw["should_double"],
-          f"should_double={r_1ply_craw['should_double']}")
+    check("2-ply Crawford: should not double",
+          not r_2ply_craw["should_double"],
+          f"should_double={r_2ply_craw['should_double']}")
 
     # =========================================================================
     print("\n=== Test 9: cl2cf Match vs Money ===")

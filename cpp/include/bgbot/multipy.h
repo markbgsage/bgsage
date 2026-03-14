@@ -14,7 +14,7 @@
 namespace bgbot {
 
 // Move filtering parameters for N-ply search.
-// After scoring all candidates at 0-ply, keep up to `max_moves` that are
+// After scoring all candidates at 1-ply, keep up to `max_moves` that are
 // within `threshold` equity of the best.
 struct MoveFilter {
     int max_moves = 8;
@@ -32,17 +32,17 @@ namespace MoveFilters {
 
 // N-ply lookahead strategy that wraps any base strategy.
 //
-// At 0-ply: delegates directly to the base strategy.
-// At N-ply: for each post-move position, flips the board to the opponent's
+// At 1-ply: delegates directly to the base strategy (raw NN evaluation).
+// At N-ply (N>=2): for each post-move position, flips the board to the opponent's
 // perspective, iterates over all 21 unique dice rolls, finds the opponent's
 // best response, then recursively evaluates the resulting position at (N-1)-ply.
 //
 // Two modes for opponent move selection:
-//   fast (default):     opponent picks best move at 0-ply, result evaluated at (N-1)-ply
+//   fast (default):     opponent picks best move at 1-ply, result evaluated at (N-1)-ply
 //   full_depth:         opponent evaluates all candidates at (N-1)-ply, picks the best
 //
 // Move filtering is applied in best_move_index() only (not in evaluate()):
-// candidates are first scored at 0-ply and pruned, then survivors are scored
+// candidates are first scored at 1-ply and pruned, then survivors are scored
 // at the full N-ply depth.
 class MultiPlyStrategy : public Strategy {
 public:
@@ -62,7 +62,7 @@ public:
     std::array<float, NUM_OUTPUTS> evaluate_probs(
         const Board& board, const Board& pre_move_board) const override;
 
-    // Filter candidates at 0-ply, then evaluate survivors at N-ply.
+    // Filter candidates at 1-ply, then evaluate survivors at N-ply.
     int best_move_index(const std::vector<Board>& candidates,
                         bool pre_move_is_race) const override;
     int best_move_index(const std::vector<Board>& candidates,
@@ -104,7 +104,7 @@ private:
     std::array<float, NUM_OUTPUTS> evaluate_probs_nply_impl(
         const Board& board, const Board& pre_move_board, int plies,
         bool allow_parallel) const;
-    int parallel_thread_count(int plies = 0) const;
+    int parallel_thread_count(int plies = 1) const;
 
     // Open-addressing position cache with power-of-2 sizing.
     // Each entry stores: hash (0 = empty), plies, and 5 output probabilities.

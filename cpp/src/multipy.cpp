@@ -182,7 +182,7 @@ MultiPlyStrategy::MultiPlyStrategy(std::shared_ptr<Strategy> base_strategy,
                                    int parallel_threads)
     : base_(std::move(base_strategy))
     , base_gps_(dynamic_cast<GamePlanStrategy*>(base_.get()))
-    , n_plies_(std::max(0, n_plies))
+    , n_plies_(std::max(1, n_plies))
     , filter_(filter)
     , full_depth_opponent_(full_depth_opponent)
     , parallel_evaluate_(parallel_evaluate)
@@ -237,9 +237,9 @@ int MultiPlyStrategy::parallel_thread_count(int plies) const {
         n_threads = 1;
     }
 
-    if (plies > 0) {
-        const int target_cores = 4 * std::max(1, plies);
-        const int effective_target = (plies >= 3) ? std::min(8, target_cores) : target_cores;
+    if (plies > 1) {
+        const int target_cores = 4 * std::max(1, plies - 1);
+        const int effective_target = (plies >= 4) ? std::min(8, target_cores) : target_cores;
         n_threads = std::min(n_threads, effective_target);
     }
 
@@ -271,15 +271,15 @@ std::array<float, NUM_OUTPUTS> MultiPlyStrategy::evaluate_probs_nply(
 {
     return evaluate_probs_nply_impl(
         board, pre_move_board, plies,
-        parallel_evaluate_ && plies == n_plies_ && plies > 1);
+        parallel_evaluate_ && plies == n_plies_ && plies > 2);
 }
 
 std::array<float, NUM_OUTPUTS> MultiPlyStrategy::evaluate_probs_nply_impl(
     const Board& board, const Board& pre_move_board, int plies,
     bool allow_parallel) const
 {
-    // Base case: 0-ply -> delegate to base strategy with proper pre-move context
-    if (plies <= 0) {
+    // Base case: 1-ply -> delegate to base strategy with proper pre-move context
+    if (plies <= 1) {
         return base_->evaluate_probs(board, pre_move_board);
     }
 
@@ -368,7 +368,7 @@ std::array<float, NUM_OUTPUTS> MultiPlyStrategy::evaluate_probs_nply_impl(
                 auto opp_probs = evaluate_probs_nply_impl(opp_best, opp_board, plies - 1, false);
                 p1_probs = invert_probs(opp_probs);
             }
-        } else if (full_depth_opponent_ && plies > 1) {
+        } else if (full_depth_opponent_ && plies > 2) {
             // Full-depth mode: opponent evaluates all candidates at (plies-1) depth.
             // Opponent picks the move that maximizes THEIR equity (minimizes current player's).
             const int n_opp = static_cast<int>(opp_candidates.size());
@@ -423,20 +423,20 @@ std::array<float, NUM_OUTPUTS> MultiPlyStrategy::evaluate_probs_nply_impl(
 
             p1_probs = best_p1_probs_for_opp;
         } else {
-            // Fast mode (default): opponent picks best move at 0-ply.
+            // Fast mode (default): opponent picks best move at 1-ply (raw NN).
             // Use evaluate_candidates_equity when available (classifies game plan
             // once for all candidates instead of per-candidate).
             int best_opp_idx;
 
-            // Optimization: when plies==1, the recursion would evaluate the best
-            // move at 0-ply (re-encoding + re-evaluating). Instead, use
+            // Optimization: when plies==2, the recursion would evaluate the best
+            // move at 1-ply (re-encoding + re-evaluating). Instead, use
             // batch_evaluate_candidates_best_prob to get only best equity and probs.
             // in one pass, avoiding the redundant re-evaluation.
-            if (plies == 1 && base_gps_) {
+            if (plies == 2 && base_gps_) {
                 std::array<float, NUM_OUTPUTS> best_probs{};
                 best_opp_idx = base_gps_->batch_evaluate_candidates_best_prob(
                     opp_candidates, opp_board, nullptr, &best_probs);
-                // At plies==1, evaluate_probs_nply(best, board, 0) would just
+                // At plies==2, evaluate_probs_nply(best, board, 1) would just
                 // return base_->evaluate_probs(best, board). We already have those
                 // probs from the batch evaluation. Use them directly.
                 p1_probs = invert_probs(best_probs);
@@ -536,7 +536,7 @@ std::array<float, NUM_OUTPUTS> MultiPlyStrategy::evaluate_probs_nply_impl(
 // ======================== Public Interface ========================
 
 double MultiPlyStrategy::evaluate(const Board& board, bool pre_move_is_race) const {
-    if (n_plies_ == 0) {
+    if (n_plies_ == 1) {
         return base_->evaluate(board, pre_move_is_race);
     }
     // For the bool overload, we don't have a real pre-move board.
@@ -548,7 +548,7 @@ double MultiPlyStrategy::evaluate(const Board& board, bool pre_move_is_race) con
 std::array<float, NUM_OUTPUTS> MultiPlyStrategy::evaluate_probs(
     const Board& board, bool pre_move_is_race) const
 {
-    if (n_plies_ == 0) {
+    if (n_plies_ == 1) {
         return base_->evaluate_probs(board, pre_move_is_race);
     }
     // Same proxy as evaluate(): use board itself when no pre-move board available.
@@ -558,7 +558,7 @@ std::array<float, NUM_OUTPUTS> MultiPlyStrategy::evaluate_probs(
 std::array<float, NUM_OUTPUTS> MultiPlyStrategy::evaluate_probs(
     const Board& board, const Board& pre_move_board) const
 {
-    if (n_plies_ == 0) {
+    if (n_plies_ == 1) {
         return base_->evaluate_probs(board, pre_move_board);
     }
     return evaluate_probs_nply(board, pre_move_board, n_plies_);
@@ -572,28 +572,28 @@ int MultiPlyStrategy::best_move_index_impl(
     const int n = static_cast<int>(candidates.size());
     if (n == 1) return 0;
 
-    // At 0-ply, just delegate to base strategy with proper pre-move board
-    if (n_plies_ == 0) {
+    // At 1-ply, just delegate to base strategy with proper pre-move board
+    if (n_plies_ == 1) {
         return base_->best_move_index(candidates, pre_move_board);
     }
 
-    // Step 1: Score all candidates at 0-ply using base strategy.
+    // Step 1: Score all candidates at 1-ply using base strategy.
     // Use evaluate_candidates_equity when available (classifies game plan once).
     std::vector<double> equities(n);
     std::vector<double> ranked_equities(n);
-    double best_0ply = -1e30;
+    double best_1ply = -1e30;
     if (base_gps_) {
         base_gps_->batch_evaluate_candidates_equity(candidates, pre_move_board, equities.data());
         for (int i = 0; i < n; ++i) {
             ranked_equities[i] = equities[i];
-            if (ranked_equities[i] > best_0ply) best_0ply = ranked_equities[i];
+            if (ranked_equities[i] > best_1ply) best_1ply = ranked_equities[i];
         }
     } else {
         for (int i = 0; i < n; ++i) {
             equities[i] = NeuralNetwork::compute_equity(
                 base_->evaluate_probs(candidates[i], pre_move_board));
             ranked_equities[i] = equities[i];
-            if (ranked_equities[i] > best_0ply) best_0ply = ranked_equities[i];
+            if (ranked_equities[i] > best_1ply) best_1ply = ranked_equities[i];
         }
     }
 
@@ -607,7 +607,7 @@ int MultiPlyStrategy::best_move_index_impl(
     survivors.reserve(std::min(n, filter_.max_moves));
     for (int idx : sorted_indices) {
         if (static_cast<int>(survivors.size()) >= filter_.max_moves) break;
-        if (best_0ply - ranked_equities[idx] > filter_.threshold) break;
+        if (best_1ply - ranked_equities[idx] > filter_.threshold) break;
         survivors.push_back(idx);
     }
     if (survivors.empty()) return sorted_indices[0];
@@ -620,7 +620,7 @@ int MultiPlyStrategy::best_move_index_impl(
     double best_nply = -1e30;
     int best_idx = survivors[0];
 
-    bool use_parallel = parallel_evaluate_ && n_plies_ > 1;
+    bool use_parallel = parallel_evaluate_ && n_plies_ > 2;
     if (use_parallel) {
         int n_threads = std::min<int>(parallel_thread_count(n_plies_),
                                       static_cast<int>(survivors.size()));
@@ -662,20 +662,20 @@ int MultiPlyStrategy::best_move_index(const std::vector<Board>& candidates,
     const int n = static_cast<int>(candidates.size());
     if (n <= 1) return 0;
 
-    if (n_plies_ == 0) {
+    if (n_plies_ == 1) {
         return base_->best_move_index(candidates, pre_move_is_race);
     }
 
     // Bool overload fallback: use the same filter + rescore pattern as the
-    // board overload, but with bool-context 0-ply scoring and post-move board
+    // board overload, but with bool-context 1-ply scoring and post-move board
     // proxy for N-ply pre-move context.
     std::vector<double> equities(n);
     std::vector<double> ranked_equities(n);
-    double best_0ply = -1e30;
+    double best_1ply = -1e30;
     for (int i = 0; i < n; ++i) {
         equities[i] = base_->evaluate(candidates[i], pre_move_is_race);
         ranked_equities[i] = equities[i];
-        if (ranked_equities[i] > best_0ply) best_0ply = ranked_equities[i];
+        if (ranked_equities[i] > best_1ply) best_1ply = ranked_equities[i];
     }
 
     std::vector<int> sorted_indices(n);
@@ -687,7 +687,7 @@ int MultiPlyStrategy::best_move_index(const std::vector<Board>& candidates,
     survivors.reserve(std::min(n, filter_.max_moves));
     for (int idx : sorted_indices) {
         if (static_cast<int>(survivors.size()) >= filter_.max_moves) break;
-        if (best_0ply - ranked_equities[idx] > filter_.threshold) break;
+        if (best_1ply - ranked_equities[idx] > filter_.threshold) break;
         survivors.push_back(idx);
     }
     if (survivors.empty()) return sorted_indices[0];

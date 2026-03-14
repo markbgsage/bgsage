@@ -103,7 +103,7 @@ def main():
         rollout_vr = bgbot_cpp.create_rollout_5nn(
             *weight_args(weights), NH_PR, NH_RC, NH_AT, NH_PM, NH_AN,
             n_trials=args.trials, truncation_depth=args.trunc,
-            decision_ply=0,
+            decision_ply=1,
             n_threads=args.threads, seed=seed)
         r_vr = rollout_vr.rollout_position(board)
 
@@ -111,7 +111,7 @@ def main():
         rollout_novr = bgbot_cpp.create_rollout_5nn(
             *weight_args(weights), NH_PR, NH_RC, NH_AT, NH_PM, NH_AN,
             n_trials=args.trials, truncation_depth=args.trunc,
-            decision_ply=0, enable_vr=False,
+            decision_ply=1, enable_vr=False,
             n_threads=args.threads, seed=seed)
         r_novr = rollout_novr.rollout_position(board)
 

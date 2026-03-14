@@ -7,7 +7,7 @@ Environment variables:
   BATCH_KEY       - S3 key for input positions JSON
   RESULT_KEY      - S3 key for output results JSON
   N_TRIALS        - Rollout trials per position (default: 1296)
-  DECISION_PLY    - Ply depth for move decisions in rollout (default: 1)
+  DECISION_PLY    - Ply depth for move decisions in rollout (default: 2)
   ROLLOUT_THREADS - Threads for rollout (default: 0 = auto)
 """
 
@@ -34,7 +34,7 @@ def main():
     batch_key = os.environ['BATCH_KEY']
     result_key = os.environ['RESULT_KEY']
     n_trials = int(os.environ.get('N_TRIALS', '1296'))
-    decision_ply = int(os.environ.get('DECISION_PLY', '1'))
+    decision_ply = int(os.environ.get('DECISION_PLY', '2'))
     n_threads = int(os.environ.get('ROLLOUT_THREADS', '0'))
 
     log(f"Worker starting: bucket={s3_bucket} batch={batch_key} "
@@ -69,7 +69,7 @@ def main():
         n_trials=n_trials, truncation_depth=0,
         decision_ply=decision_ply,
         n_threads=n_threads,
-        late_ply=0, late_threshold=3)
+        late_ply=1, late_threshold=3)
 
     # Run rollouts
     results = []

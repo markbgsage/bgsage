@@ -313,9 +313,9 @@ static PRResult score_pr_slice(const Strategy& strategy,
         Board best_move;
 
         if (base_strategy != nullptr) {
-            // N-ply mode: pre-filter at 0-ply, then score survivors at full depth
+            // N-ply mode: pre-filter at 1-ply, then score survivors at full depth
 
-            // Score all moves at 0-ply
+            // Score all moves at 1-ply
             struct MoveEq { double eq; int idx; };
             std::vector<MoveEq> move_eqs(all_moves.size());
             for (size_t i = 0; i < all_moves.size(); ++i) {
@@ -329,12 +329,12 @@ static PRResult score_pr_slice(const Strategy& strategy,
                 [](const MoveEq& a, const MoveEq& b) { return a.eq > b.eq; });
 
             // Apply TINY filter
-            double best_0ply = move_eqs[0].eq;
+            double best_1ply = move_eqs[0].eq;
             std::vector<int> survivor_indices;
             for (const auto& me : move_eqs) {
                 if (static_cast<int>(survivor_indices.size()) >= filter.max_moves)
                     break;
-                if (best_0ply - me.eq > filter.threshold)
+                if (best_1ply - me.eq > filter.threshold)
                     break;
                 survivor_indices.push_back(me.idx);
             }
@@ -353,7 +353,7 @@ static PRResult score_pr_slice(const Strategy& strategy,
             }
             best_move = all_moves[best_idx];
         } else {
-            // 0-ply mode: evaluate all moves directly
+            // 1-ply mode: evaluate all moves directly
             int best_idx = strategy.best_move_index(all_moves, dec.board);
             best_move = all_moves[best_idx];
         }
