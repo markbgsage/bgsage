@@ -23,6 +23,7 @@ struct CubeInfo {
     float cube_x_override = -1.0f;          // If >= 0, override auto-detected cube efficiency
     bool jacoby = false;                     // Jacoby rule (money games only)
     bool beaver = false;                     // Beaver rule (money games only)
+    int max_cube_value = 0;                  // 0 = unlimited, >0 = cap (1 = cubeless)
 
     bool is_money() const { return match.is_money(); }
 
@@ -43,11 +44,21 @@ inline CubeOwner flip_owner(CubeOwner o) {
 
 // Can the player on roll legally double?
 inline bool can_double(const CubeInfo& ci) {
+    // Cube at or above max → cannot double (max_cube_value=1 means cubeless)
+    if (ci.max_cube_value > 0 && ci.cube_value >= ci.max_cube_value)
+        return false;
     if (!ci.is_money()) {
         return can_double_match(ci.match.away1, ci.match.away2,
                                 ci.cube_value, ci.owner, ci.match.is_crawford);
     }
     return ci.owner == CubeOwner::CENTERED || ci.owner == CubeOwner::PLAYER;
+}
+
+// True when the cube can never be turned again.
+// Used to skip all cubeful overhead (Janowski, cubeful VR, cube checks).
+// Typical use: max_cube_value=1 makes the entire game cubeless.
+inline bool cube_is_dead(const CubeInfo& ci) {
+    return ci.max_cube_value > 0 && ci.cube_value >= ci.max_cube_value;
 }
 
 // Compute W (average win value) and L (average loss value) from cubeless probs.

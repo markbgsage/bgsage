@@ -377,6 +377,7 @@ to override. Scripts live in `scripts/`.
 | `score_benchmark_pr_gnubg.py` | GNUbg's Benchmark PR (parallel GNUbg CLI subprocesses) | `--plies N` |
 | `test_evaluate_probs.py` | Single position eval at 1-4 ply + GNUbg + rollouts | `--model`, `--checkers`, `--ply N` |
 | `test_cube_decision.py` | Cube decisions vs 3 reference positions at 1-4 ply + rollout | `--model` |
+| `test_unified_rollout.py` | Verify cubeful(max_cube=1) == cubeless at N-ply + rollout | `--model` |
 | `eval_position.py` | Side-by-side Stage 5 vs GNUbg evaluation (cube action or checker play, 1-4 ply + rollout, money or match play) | `cube`/`checker` subcommand, `--checkers`, `--dice`, `--match`, `--score`, `--cube-value`, `--cube-owner` |
 
 ```bash
@@ -512,7 +513,14 @@ on move 0 (stratified dice makes luck sum to exactly zero). N-ply strategies ins
 trials use serial evaluation (`parallel_evaluate=false`) — all parallelism is
 across trial paths.
 
-**Cubeful rollout** (for cube decisions): Two-branch simulation — ND (no double)
+**Unified trial function** (`run_trial_unified`): A single function handles both
+cubeless (`n_branches=0`) and cubeful (`n_branches>0`) rollout modes. The
+`start_post_move` flag controls starting convention: `true` for checker-play
+evaluation (flip board, opponent first), `false` for cube decisions (no flip,
+SP first). When all branches have dead cubes (`cube_is_dead()`), all cubeful
+overhead is skipped — zero performance cost compared to dedicated cubeless code.
+
+**Cubeful mode** (for cube decisions): Two-branch simulation — ND (no double)
 and DT (double/take) branches share the same board evolution and dice. Cube
 decisions via `cube_decision_1ply()` at each half-move; double/pass terminates
 the branch immediately. VR luck tracked in cubeful value space per-branch (1-ply).
@@ -638,6 +646,18 @@ decision layer on top.
 
 **Defaults:** Python public API defaults `beaver=True`. C++ bindings default
 `beaver=false`. Auto-disabled when match play params are present.
+
+### Max Cube Value (Cubeless Mode)
+
+`CubeInfo.max_cube_value` caps the cube at a given value (0 = unlimited). When
+`cube_is_dead(ci)` (max_cube_value > 0 && cube_value >= max_cube_value):
+- `can_double()` returns false
+- Janowski is bypassed (returns `cubeless_equity(probs)` directly)
+- Rollout skips all cubeful overhead (zero performance cost vs cubeless)
+- `should_double` is always false
+
+Setting `max_cube_value=1, jacoby=False` produces cubeless-equivalent equity.
+All cube decision bindings accept `max_cube_value` (default 0).
 
 ### Money Game
 

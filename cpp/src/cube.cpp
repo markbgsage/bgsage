@@ -466,6 +466,18 @@ float cl2cf_match(const std::array<float, NUM_OUTPUTS>& probs,
 float cl2cf(const std::array<float, NUM_OUTPUTS>& probs,
             const CubeInfo& cube, float cube_x)
 {
+    // Dead cube: return cubeless equity directly (no Janowski interpolation)
+    if (cube_is_dead(cube)) {
+        if (cube.is_money()) {
+            return cubeless_equity(probs);
+        }
+        // Match play: return cubeless MWC converted to equity
+        float mwc = cubeless_mwc(probs, cube.match.away1, cube.match.away2,
+                                  cube.cube_value, cube.match.is_crawford);
+        return mwc2eq(mwc, cube.match.away1, cube.match.away2,
+                      cube.cube_value, cube.match.is_crawford);
+    }
+
     if (cube.is_money()) {
         return cl2cf_money(probs, cube.owner, cube_x, cube.jacoby_active());
     }
@@ -497,6 +509,20 @@ static CubeDecision cube_decision_1ply_money(
 {
     CubeDecision result;
     result.equity_dp = 1.0f;  // Double/Pass: always +1.0 for money games
+
+    // When cube is dead (max_cube_value reached), no cube actions possible.
+    // ND = cubeless equity, DT/DP are degenerate, should_double = false.
+    if (cube_is_dead(cube)) {
+        float cl_eq = cubeless_equity(probs);
+        result.equity_nd = cl_eq;
+        result.equity_dt = cl_eq;  // Degenerate — can't double
+        result.equity_dp = 1.0f;
+        result.should_double = false;
+        result.should_take = true;
+        result.optimal_equity = cl_eq;
+        result.is_beaver = false;
+        return result;
+    }
 
     // No Double equity: cubeful equity with current cube state.
     // With Jacoby and centered cube, gammons are zeroed (W=1, L=1).
@@ -551,6 +577,20 @@ static CubeDecision cube_decision_1ply_match(
     bool craw = cube.match.is_crawford;
 
     CubeDecision result;
+
+    // When cube is dead via max_cube_value, return cubeless MWC as equity.
+    if (cube_is_dead(cube)) {
+        float mwc = cubeless_mwc(probs, away1, away2, cv, craw);
+        float eq = mwc2eq(mwc, away1, away2, cv, craw);
+        result.equity_nd = eq;
+        result.equity_dt = eq;
+        result.equity_dp = mwc2eq(dp_mwc(away1, away2, cv, craw), away1, away2, cv, craw);
+        result.should_double = false;
+        result.should_take = true;
+        result.optimal_equity = eq;
+        result.is_beaver = false;
+        return result;
+    }
 
     // DP MWC: opponent passes, player wins cv points
     float dp_m = dp_mwc(away1, away2, cv, craw);
@@ -715,6 +755,7 @@ static CubeInfo flip_cube_perspective(const CubeInfo& cube) {
     opp.cube_x_override = cube.cube_x_override;
     opp.jacoby = cube.jacoby;
     opp.beaver = cube.beaver;
+    opp.max_cube_value = cube.max_cube_value;
     return opp;
 }
 
@@ -846,6 +887,11 @@ static void cubeful_recursive_multi(
                 arCubeful[ici] = 0.0f;
                 continue;
             }
+            // Dead cube (max_cube_value reached): pure cubeless equity, gammons count
+            if (cube_is_dead(aciCubePos[ici])) {
+                arCubeful[ici] = cubeless_equity(t_probs);
+                continue;
+            }
             if (aciCubePos[ici].is_money()) {
                 if (aciCubePos[ici].jacoby_active()) {
                     arCubeful[ici] = 2.0f * t_probs[0] - 1.0f;  // Jacoby: gammons = 0
@@ -878,6 +924,11 @@ static void cubeful_recursive_multi(
         for (int i = 0; i < 2 * cci; i++) {
             if (aci[i].cube_value <= 0) {
                 arCf[i] = 0.0f;
+                continue;
+            }
+            // Dead cube: skip Janowski, return pure cubeless equity
+            if (cube_is_dead(aci[i])) {
+                arCf[i] = cubeless_equity(pre_roll_probs);
                 continue;
             }
             float x = (aci[i].cube_x_override >= 0.0f)
@@ -953,6 +1004,11 @@ static void cubeful_recursive_multi(
             for (int i = 0; i < expanded_cci; i++) {
                 if (aci[i].cube_value <= 0) {
                     arCfLocal[i] = 0.0f;
+                    continue;
+                }
+                // Dead cube: pure cubeless equity, gammons count
+                if (cube_is_dead(aci[i])) {
+                    arCfLocal[i] = roll.weight * cubeless_equity(tp);
                     continue;
                 }
                 if (aci[i].is_money()) {

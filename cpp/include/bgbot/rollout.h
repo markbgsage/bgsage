@@ -59,6 +59,11 @@ struct RolloutResult {
 // Parallelism: trials are distributed across threads (not scenarios).
 // N-ply strategies inside trials use serial evaluation (parallel_evaluate=false).
 // The base strategy is used read-only and must be thread-safe.
+//
+// Unified trial function: run_trial_unified handles both cubeless (n_branches=0)
+// and cubeful (n_branches>0) rollout modes. When all branches have dead cubes
+// (cube_is_dead), all cubeful overhead is skipped — zero performance cost
+// compared to a dedicated cubeless function.
 class RolloutStrategy : public Strategy {
 public:
     RolloutStrategy(std::shared_ptr<Strategy> base, RolloutConfig config);
@@ -75,8 +80,7 @@ public:
                         const Board& pre_move_board) const override;
 
     // Rollout a single post-move position.
-    RolloutResult rollout_position(const Board& board,
-                                   const Board& pre_move_board) const;
+    RolloutResult rollout_position(const Board& board) const;
 
     // Result of a cubeful cube decision rollout.
     struct CubefulRolloutResult {
@@ -150,20 +154,42 @@ private:
         }
     };
 
-    // Run a single trial from a post-move position.
-    // dice_seq has pairs (d1,d2) for each half-move.
-    // If move0_cache is non-null, move 0 decisions are shared across trials
-    // (all trials start from the same position, so only 21 unique first-roll
-    // decisions exist).
-    TrialResult run_trial(const Board& start_board,
-                          const Board& pre_move_board,
-                          const std::pair<int,int>* dice_seq,
-                          int max_moves,
-                          Move0Cache* move0_cache = nullptr) const;
+    // --- Cubeful rollout internals ---
+
+    // Per-branch state during a cubeful trial.
+    struct CubefulBranch {
+        CubeInfo cube;           // Current cube state (mover's perspective)
+        int basis_cube;          // For normalization (same for all branches)
+        double vr_luck;          // Accumulated VR luck (basis cube units, SP perspective)
+        bool finished;
+        double final_equity;     // Result (basis cube units, SP perspective)
+    };
+
+    // Unified trial function for both cubeless and cubeful rollout.
+    //
+    // When start_post_move=true: evaluates a post-move position (opponent first).
+    //   Board is flipped at start. SP parity: is_sp = (move_num % 2 == 1).
+    //   Used by: run_trials_parallel → rollout_position → evaluate_probs, best_move_index.
+    //
+    // When start_post_move=false: evaluates a pre-roll position (SP first).
+    //   No flip at start. SP parity: is_sp = (move_num % 2 == 0).
+    //   Used by: cubeful_cube_decision.
+    //
+    // When n_branches=0 (or all branches have dead cubes), all cubeful overhead
+    // is skipped — zero performance cost vs a dedicated cubeless function.
+    //
+    // Returns: TrialResult with cubeless VR-corrected probs and equity.
+    // Side effect: sets branches[b].final_equity for each active branch.
+    TrialResult run_trial_unified(
+        const Board& start_board,
+        bool start_post_move,
+        CubefulBranch branches[], int n_branches,
+        const std::pair<int,int>* dice_seq,
+        int max_moves,
+        Move0Cache* move0_cache = nullptr) const;
 
     // Run N trials in parallel for a position, return mean + std error.
-    RolloutResult run_trials_parallel(const Board& board,
-                                      const Board& pre_move_board) const;
+    RolloutResult run_trials_parallel(const Board& board) const;
 
     // GNUbg-style hierarchical permutation array for quasi-random dice.
     // 6 levels × 128 turns × 36 permutations.
@@ -192,30 +218,6 @@ private:
         const Board& board, const std::vector<Board>& candidates,
         const Strategy& strat,
         int* best_index = nullptr) const;
-
-    // --- Cubeful rollout internals ---
-
-    // Per-branch state during a cubeful trial.
-    struct CubefulBranch {
-        CubeInfo cube;           // Current cube state (mover's perspective)
-        int basis_cube;          // For normalization (same for all branches)
-        double vr_luck;          // Accumulated VR luck (basis cube units, SP perspective)
-        bool finished;
-        double final_equity;     // Result (basis cube units, SP perspective)
-    };
-
-    // Run a single cubeful trial with multiple branches sharing the same
-    // board evolution and dice. Sets final_equity on each branch.
-    // If cubeless_out is non-null, also produces VR-corrected cubeless probs
-    // from the player-on-roll's perspective (piggybacking on the same game).
-    // If move0_cache is non-null, move 0 decisions are shared across trials.
-    void run_cubeful_trial(
-        const Board& pre_roll_board,
-        CubefulBranch branches[], int n_branches,
-        const std::pair<int,int>* dice_seq,
-        int max_moves,
-        TrialResult* cubeless_out = nullptr,
-        Move0Cache* move0_cache = nullptr) const;
 };
 
 } // namespace bgbot

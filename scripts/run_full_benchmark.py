@@ -3,6 +3,10 @@
 Runs game plan benchmarks, old-style benchmarks, vs PubEval, and self-play
 outcome distribution. Supports 1-ply (direct NN) and N-ply (multi-ply search).
 
+Benchmark scoring is cubeless checker play evaluation. Rollout strategies
+use the unified trial function (run_trial_unified with n_branches=0),
+which skips all cubeful overhead -- equivalent to dedicated cubeless code.
+
 Usage:
   python bgsage/scripts/run_full_benchmark.py                     # 1-ply, production model
   python bgsage/scripts/run_full_benchmark.py --model stage3      # 1-ply, specific model

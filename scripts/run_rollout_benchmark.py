@@ -1,6 +1,10 @@
 """
 Rollout benchmark: find top-100 worst 1-ply errors, compare with 2-ply, 3-ply, and rollout.
 
+Benchmark scoring is cubeless checker play evaluation. Rollout strategies
+use the unified trial function (run_trial_unified with n_branches=0),
+which skips all cubeful overhead -- equivalent to dedicated cubeless code.
+
 Usage:
   python bgsage/scripts/run_rollout_benchmark.py [--top N] [--threads N] [--skip-3ply]
   python bgsage/scripts/run_rollout_benchmark.py --model stage3  # specific model

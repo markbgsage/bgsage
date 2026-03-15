@@ -1575,16 +1575,16 @@ PYBIND11_MODULE(bgbot_cpp, m) {
                                      const std::vector<int>& board_vec) {
             Board board = list_to_board(board_vec);
             py::gil_scoped_release release;
-            return self.rollout_position(board, board);
+            return self.rollout_position(board);
         }, "Rollout a single post-move position",
            py::arg("board"))
         .def("evaluate_board", [](RolloutStrategy& self,
-                                   const std::vector<int>& board,
+                                   const std::vector<int>& board_vec,
                                    const std::vector<int>& pre_move_board) {
-            auto b = list_to_board(board);
-            auto pmb = list_to_board(pre_move_board);
+            auto b = list_to_board(board_vec);
+            // pre_move_board is accepted for backward compatibility but no longer used
             py::gil_scoped_release release;
-            auto r = self.rollout_position(b, pmb);
+            auto r = self.rollout_position(b);
             py::gil_scoped_acquire acquire;
             py::dict result;
             result["probs"] = r.mean_probs;
@@ -1809,7 +1809,7 @@ PYBIND11_MODULE(bgbot_cpp, m) {
                                         int n_h_anchoring,
                                         int away1, int away2, bool is_crawford,
                                         float cube_x_override, bool jacoby,
-                                        bool beaver) {
+                                        bool beaver, int max_cube_value) {
         Board board = list_to_board(checkers);
         GamePlanStrategy strat(purerace_w, racing_w, attacking_w, priming_w, anchoring_w,
                                n_h_purerace, n_h_racing, n_h_attacking, n_h_priming, n_h_anchoring);
@@ -1824,7 +1824,7 @@ PYBIND11_MODULE(bgbot_cpp, m) {
         float x = (cube_x_override >= 0.0f) ? cube_x_override : cube_efficiency(board, race);
 
         // Cube decision
-        CubeInfo ci{cube_value, owner, {away1, away2, is_crawford}, cube_x_override, jacoby, beaver};
+        CubeInfo ci{cube_value, owner, {away1, away2, is_crawford}, cube_x_override, jacoby, beaver, max_cube_value};
         auto cd = cube_decision_1ply(pre_roll_probs, ci, x);
 
         // Cubeless equity
@@ -1860,7 +1860,7 @@ PYBIND11_MODULE(bgbot_cpp, m) {
        py::arg("n_hidden_anchoring") = 400,
        py::arg("away1") = 0, py::arg("away2") = 0, py::arg("is_crawford") = false,
        py::arg("cube_x_override") = -1.0f, py::arg("jacoby") = true,
-       py::arg("beaver") = true);
+       py::arg("beaver") = true, py::arg("max_cube_value") = 0);
 
     // N-ply cube decision (standalone — creates its own strategy, serial by default)
     m.def("cube_decision_nply", [](const std::vector<int>& checkers,
@@ -1881,11 +1881,11 @@ PYBIND11_MODULE(bgbot_cpp, m) {
                                     int n_threads,
                                     int away1, int away2, bool is_crawford,
                                     float cube_x_override, bool jacoby,
-                                    bool beaver) {
+                                    bool beaver, int max_cube_value) {
         Board board = list_to_board(checkers);
         GamePlanStrategy strat(purerace_w, racing_w, attacking_w, priming_w, anchoring_w,
                                n_h_purerace, n_h_racing, n_h_attacking, n_h_priming, n_h_anchoring);
-        CubeInfo ci{cube_value, owner, {away1, away2, is_crawford}, cube_x_override, jacoby, beaver};
+        CubeInfo ci{cube_value, owner, {away1, away2, is_crawford}, cube_x_override, jacoby, beaver, max_cube_value};
         MoveFilter filter{filter_max_moves, filter_threshold};
 
         CubeDecision cd;
@@ -1938,7 +1938,7 @@ PYBIND11_MODULE(bgbot_cpp, m) {
        py::arg("n_threads") = 1,
        py::arg("away1") = 0, py::arg("away2") = 0, py::arg("is_crawford") = false,
        py::arg("cube_x_override") = -1.0f, py::arg("jacoby") = true,
-       py::arg("beaver") = true);
+       py::arg("beaver") = true, py::arg("max_cube_value") = 0);
 
     // Cubeful rollout: simulates cube decisions during trial games.
     // Two branches (ND and DT) share the same board evolution and dice sequences.
@@ -1967,7 +1967,7 @@ PYBIND11_MODULE(bgbot_cpp, m) {
                                        int away1, int away2, bool is_crawford,
                                        float cube_x_override,
                                        bool enable_vr, bool jacoby,
-                                       bool beaver) {
+                                       bool beaver, int max_cube_value) {
         Board board = list_to_board(checkers);
         bool race = is_race(board);
 
@@ -1986,7 +1986,7 @@ PYBIND11_MODULE(bgbot_cpp, m) {
         config.late_threshold = late_threshold;
         auto rollout = std::make_shared<RolloutStrategy>(base, config);
 
-        CubeInfo ci{cube_value, owner, {away1, away2, is_crawford}, cube_x_override, jacoby, beaver};
+        CubeInfo ci{cube_value, owner, {away1, away2, is_crawford}, cube_x_override, jacoby, beaver, max_cube_value};
 
         RolloutStrategy::CubefulRolloutResult cfr;
         {
@@ -2105,7 +2105,8 @@ PYBIND11_MODULE(bgbot_cpp, m) {
        py::arg("cube_x_override") = -1.0f,
        py::arg("enable_vr") = true,
        py::arg("jacoby") = true,
-       py::arg("beaver") = true);
+       py::arg("beaver") = true,
+       py::arg("max_cube_value") = 0);
 
     // ======================== Batch position evaluation ========================
 
