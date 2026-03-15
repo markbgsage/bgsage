@@ -5,9 +5,12 @@
 #include "bgbot/multipy.h"
 #include <algorithm>
 #include <cmath>
+#include <cstdint>
 #include <limits>
 #include <cstdio>
 #include <array>
+#include <vector>
+#include <unordered_map>
 
 namespace bgbot {
 
@@ -702,6 +705,158 @@ static const DiceRoll ALL_ROLLS[21] = {
 
 // Max cube states supported. Doubles per ply level, so 64 supports 6+ ply.
 static constexpr int MAX_CCI = 64;
+static constexpr bool kEnableCubefulCache = true;
+static constexpr int MAX_CUBEFUL_CACHE_CCI = 16;
+
+static inline std::size_t hash_combine(std::size_t seed, std::size_t value) {
+    return seed ^ (value + 0x9e3779b97f4a7c15ULL + (seed << 6) + (seed >> 2));
+}
+
+struct CubefulCacheKey {
+    Board board;
+    const Strategy* strategy_ptr = nullptr;
+    int plies = 0;
+    int cci = 0;
+    bool fTop = false;
+    std::array<CubeInfo, MAX_CUBEFUL_CACHE_CCI> aci_cube{};
+};
+
+struct CubefulCacheValue {
+    std::array<float, MAX_CCI> values{};
+};
+
+struct CubefulCacheKeyEq {
+    bool operator()(const CubefulCacheKey& lhs, const CubefulCacheKey& rhs) const {
+        if (lhs.strategy_ptr != rhs.strategy_ptr) return false;
+        if (lhs.plies != rhs.plies) return false;
+        if (lhs.cci != rhs.cci) return false;
+        if (lhs.fTop != rhs.fTop) return false;
+        if (lhs.board != rhs.board) return false;
+        for (int i = 0; i < lhs.cci; ++i) {
+            const auto& a = lhs.aci_cube[i];
+            const auto& b = rhs.aci_cube[i];
+            if (a.cube_value != b.cube_value) return false;
+            if (a.owner != b.owner) return false;
+            if (a.match.away1 != b.match.away1) return false;
+            if (a.match.away2 != b.match.away2) return false;
+            if (a.match.is_crawford != b.match.is_crawford) return false;
+            if (a.cube_x_override != b.cube_x_override) return false;
+            if (a.jacoby != b.jacoby) return false;
+            if (a.beaver != b.beaver) return false;
+            if (a.max_cube_value != b.max_cube_value) return false;
+        }
+        return true;
+    }
+};
+
+struct CubefulCacheKeyHash {
+    std::size_t operator()(const CubefulCacheKey& key) const {
+        std::size_t h = std::hash<const void*>{}(key.strategy_ptr);
+        h = hash_combine(h, static_cast<std::size_t>(key.plies));
+        h = hash_combine(h, static_cast<std::size_t>(key.cci));
+        h = hash_combine(h, static_cast<std::size_t>(key.fTop));
+
+        for (int i = 0; i < 26; ++i) {
+            h = hash_combine(h, static_cast<std::size_t>(key.board[i]));
+        }
+        for (int i = 0; i < key.cci; ++i) {
+            const auto& ci = key.aci_cube[i];
+            h = hash_combine(h, static_cast<std::size_t>(ci.cube_value));
+            h = hash_combine(h, static_cast<std::size_t>(static_cast<int>(ci.owner)));
+            h = hash_combine(h, static_cast<std::size_t>(ci.match.away1));
+            h = hash_combine(h, static_cast<std::size_t>(ci.match.away2));
+            h = hash_combine(h, static_cast<std::size_t>(ci.match.is_crawford));
+            h = hash_combine(h, std::hash<float>{}(ci.cube_x_override));
+            h = hash_combine(h, static_cast<std::size_t>(ci.jacoby));
+            h = hash_combine(h, static_cast<std::size_t>(ci.beaver));
+            h = hash_combine(h, static_cast<std::size_t>(ci.max_cube_value));
+        }
+        return h;
+    }
+};
+
+using CubefulCacheMap = std::unordered_map<
+    CubefulCacheKey,
+    CubefulCacheValue,
+    CubefulCacheKeyHash,
+    CubefulCacheKeyEq>;
+
+struct CubefulRecCache {
+    bool initialized = false;
+    CubefulCacheMap map;
+};
+
+static thread_local CubefulRecCache g_cubeful_cache;
+
+static void begin_cubeful_cache_epoch() {
+    g_cubeful_cache.map.clear();
+    if (!g_cubeful_cache.initialized) {
+        g_cubeful_cache.map.reserve(4096);
+        g_cubeful_cache.map.max_load_factor(0.7f);
+        g_cubeful_cache.initialized = true;
+    }
+}
+
+static bool get_cached_cubeful(
+    const Board& board,
+    const CubeInfo aciCubePos[],
+    int cci,
+    const Strategy& strategy,
+    int plies,
+    bool fTop,
+    float arCubeful[])
+{
+    if (!kEnableCubefulCache || cci > MAX_CUBEFUL_CACHE_CCI || cci <= 0) return false;
+
+    CubefulCacheKey key;
+    key.board = board;
+    key.strategy_ptr = &strategy;
+    key.plies = plies;
+    key.cci = cci;
+    key.fTop = fTop;
+    for (int i = 0; i < cci; ++i) {
+        key.aci_cube[i] = aciCubePos[i];
+    }
+
+    auto it = g_cubeful_cache.map.find(key);
+    if (it == g_cubeful_cache.map.end()) {
+        return false;
+    }
+
+    for (int i = 0; i < cci; ++i) {
+        arCubeful[i] = it->second.values[i];
+    }
+    return true;
+}
+
+static void put_cached_cubeful(
+    const Board& board,
+    const CubeInfo aciCubePos[],
+    int cci,
+    const Strategy& strategy,
+    int plies,
+    bool fTop,
+    const float arCubeful[])
+{
+    if (!kEnableCubefulCache || cci > MAX_CUBEFUL_CACHE_CCI || cci <= 0) return;
+
+    CubefulCacheKey key;
+    key.board = board;
+    key.strategy_ptr = &strategy;
+    key.plies = plies;
+    key.cci = cci;
+    key.fTop = fTop;
+    for (int i = 0; i < cci; ++i) {
+        key.aci_cube[i] = aciCubePos[i];
+    }
+
+    CubefulCacheValue value{};
+    for (int i = 0; i < cci; ++i) {
+        value.values[i] = arCubeful[i];
+    }
+
+    g_cubeful_cache.map.emplace(std::move(key), std::move(value));
+}
 
 // Resolve cube efficiency: use override if set, otherwise auto-detect.
 static float resolve_cube_x(const CubeInfo& cube, const Board& board, bool race) {
@@ -867,6 +1022,7 @@ static void cubeful_recursive_multi(
     const CubeInfo aciCubePos[],
     int cci,
     const Strategy& strategy,
+    const GamePlanStrategy* base_gps,
     int plies,
     const MoveFilter& filter,
     int n_threads,
@@ -877,11 +1033,14 @@ static void cubeful_recursive_multi(
     bool is_money = (cci > 0 && aciCubePos[0].cube_value > 0)
                     ? aciCubePos[0].is_money() : true;
 
+    if (get_cached_cubeful(board, aciCubePos, cci, strategy, plies, fTop, arCubeful)) {
+        return;
+    }
+
     // Terminal check
-    Board flipped = flip(board);
-    GameResult result = check_game_over(flipped);
+    GameResult result = check_game_over(board);
     if (result != GameResult::NOT_OVER) {
-        auto t_probs = invert_probs(terminal_probs(result));
+        auto t_probs = terminal_probs(result);
         for (int ici = 0; ici < cci; ici++) {
             if (aciCubePos[ici].cube_value <= 0) {
                 arCubeful[ici] = 0.0f;
@@ -904,11 +1063,13 @@ static void cubeful_recursive_multi(
                     aciCubePos[ici].cube_value, aciCubePos[ici].match.is_crawford);
             }
         }
+        put_cached_cubeful(board, aciCubePos, cci, strategy, plies, fTop, arCubeful);
         return;
     }
 
     // --- Leaf node (1-ply): NN evaluation + Janowski ---
     if (plies <= 1) {
+        Board flipped = flip(board);
         bool race = is_race(board);
         auto post_probs = strategy.evaluate_probs(flipped, race);
         auto pre_roll_probs = invert_probs(post_probs);
@@ -943,6 +1104,7 @@ static void cubeful_recursive_multi(
 
         // Collapse 2*cci → cci
         get_ecf3(arCubeful, cci, arCf, aci);
+        put_cached_cubeful(board, aciCubePos, cci, strategy, plies, fTop, arCubeful);
         return;
     }
 
@@ -959,43 +1121,101 @@ static void cubeful_recursive_multi(
     // Lambda to evaluate a single dice roll
     auto evaluate_roll = [&](int roll_idx, float arCfLocal[]) {
         const auto& roll = ALL_ROLLS[roll_idx];
+        const bool child_allow_parallel = allow_parallel && (plies - 1 > 2);
 
         // Generate legal moves
-        std::vector<Board> candidates;
-        candidates.reserve(32);
+        thread_local std::vector<Board> candidates;
+        candidates.clear();
+        if (candidates.capacity() < 32) candidates.reserve(32);
         possible_boards(board, roll.d1, roll.d2, candidates);
         int n_cand = static_cast<int>(candidates.size());
 
         if (n_cand == 0) {
             // No legal moves: evaluate standing pat (flip board = opponent's turn)
-            Board opp_board = flip(flipped);  // same as board, but flip(board) = flipped
+            Board opp_board = flip(board);
             float arCfTemp[MAX_CCI * 2];
             cubeful_recursive_multi(opp_board, aci, expanded_cci,
-                                    strategy, plies - 1, filter,
-                                    n_threads, false, false, arCfTemp);
+                                    strategy, base_gps, plies - 1, filter,
+                                    n_threads, child_allow_parallel, false,
+                                    arCfTemp);
             for (int i = 0; i < expanded_cci; i++)
                 arCfLocal[i] = roll.weight * arCfTemp[i];
             return;
         }
 
+        // Special case: forced move, so no move-choice work is needed.
+        if (n_cand == 1) {
+            const Board& best_board = candidates[0];
+            GameResult post_result = check_game_over(best_board);
+            if (post_result != GameResult::NOT_OVER) {
+                // terminal_probs gives mover's perspective, but accumulated values
+                // are from the opponent of the mover's perspective (matching the
+                // recursive case). Invert to get the correct perspective.
+                auto tp = invert_probs(terminal_probs(post_result));
+                for (int i = 0; i < expanded_cci; i++) {
+                    if (aci[i].cube_value <= 0) {
+                        arCfLocal[i] = 0.0f;
+                        continue;
+                    }
+                    // Dead cube: pure cubeless equity, gammons count
+                    if (cube_is_dead(aci[i])) {
+                        arCfLocal[i] = roll.weight * cubeless_equity(tp);
+                        continue;
+                    }
+                    if (aci[i].is_money()) {
+                        if (aci[i].jacoby_active()) {
+                            arCfLocal[i] = roll.weight * (2.0f * tp[0] - 1.0f);
+                        } else {
+                            arCfLocal[i] = roll.weight * cubeless_equity(tp);
+                        }
+                    } else {
+                        arCfLocal[i] = roll.weight * cubeless_mwc(tp,
+                            aci[i].match.away1, aci[i].match.away2,
+                            aci[i].cube_value, aci[i].match.is_crawford);
+                    }
+                }
+                return;
+            }
+
+            Board opp_pre_roll = flip(best_board);
+            float arCfTemp[MAX_CCI * 2];
+            cubeful_recursive_multi(opp_pre_roll, aci, expanded_cci,
+                                    strategy, base_gps, plies - 1, filter,
+                                    n_threads, child_allow_parallel, false,
+                                    arCfTemp);
+            for (int i = 0; i < expanded_cci; i++) {
+                arCfLocal[i] = roll.weight * arCfTemp[i];
+            }
+            return;
+        }
+
         // Pick best move by cubeless 1-ply equity (shared across all cube states)
         int best_idx = 0;
-        float best_eq = -1e30f;
-        for (int c = 0; c < n_cand; c++) {
-            float eq;
-            GameResult gr = check_game_over(candidates[c]);
-            if (gr != GameResult::NOT_OVER) {
-                eq = cubeless_equity(terminal_probs(gr));
-            } else {
-                auto probs = strategy.evaluate_probs(candidates[c],
-                                                      is_race(candidates[c]));
-                eq = cubeless_equity(probs);
+        if (base_gps) {
+            best_idx = base_gps->batch_evaluate_candidates_best_prob(
+                candidates, board, nullptr, nullptr);
+        } else {
+            float best_eq = -1e30f;
+            for (int c = 0; c < n_cand; c++) {
+                float eq;
+                GameResult gr = check_game_over(candidates[c]);
+                if (gr != GameResult::NOT_OVER) {
+                    eq = cubeless_equity(terminal_probs(gr));
+                } else {
+                    auto probs = strategy.evaluate_probs(candidates[c],
+                                                       is_race(candidates[c]));
+                    eq = cubeless_equity(probs);
+                }
+                if (eq > best_eq) {
+                    best_eq = eq;
+                    best_idx = c;
+                }
             }
-            if (eq > best_eq) { best_eq = eq; best_idx = c; }
         }
 
         // Check if best move is terminal
-        GameResult post_result = check_game_over(candidates[best_idx]);
+        const Board& best_board = candidates[best_idx];
+        GameResult post_result = check_game_over(best_board);
         if (post_result != GameResult::NOT_OVER) {
             // terminal_probs gives mover's perspective, but accumulated values
             // are from the opponent of the mover's perspective (matching the
@@ -1027,12 +1247,13 @@ static void cubeful_recursive_multi(
         }
 
         // Flip to opponent's perspective and recurse
-        Board opp_pre_roll = flip(candidates[best_idx]);
+        Board opp_pre_roll = flip(best_board);
 
         float arCfTemp[MAX_CCI * 2];
         cubeful_recursive_multi(opp_pre_roll, aci, expanded_cci,
-                                strategy, plies - 1, filter,
-                                n_threads, false, false, arCfTemp);
+                                strategy, base_gps, plies - 1, filter,
+                                n_threads, child_allow_parallel, false,
+                                arCfTemp);
 
         for (int i = 0; i < expanded_cci; i++)
             arCfLocal[i] = roll.weight * arCfTemp[i];
@@ -1040,7 +1261,7 @@ static void cubeful_recursive_multi(
 
     // Execute rolls (serial or parallel)
     if (allow_parallel && n_threads > 1 && plies > 1) {
-        std::array<std::array<float, MAX_CCI * 2>, 21> roll_results{};
+        std::array<std::array<float, MAX_CCI * 2>, 21> roll_results;
         multipy_parallel_for(21, n_threads, [&](int idx) {
             evaluate_roll(idx, roll_results[idx].data());
         });
@@ -1050,7 +1271,6 @@ static void cubeful_recursive_multi(
     } else {
         float arCfLocal[MAX_CCI * 2];
         for (int r = 0; r < 21; r++) {
-            std::fill(arCfLocal, arCfLocal + expanded_cci, 0.0f);
             evaluate_roll(r, arCfLocal);
             for (int i = 0; i < expanded_cci; i++)
                 arCf[i] += arCfLocal[i];
@@ -1076,6 +1296,7 @@ static void cubeful_recursive_multi(
 
     // Collapse 2*cci → cci via optimal cube decisions
     get_ecf3(arCubeful, cci, arCf, aci);
+    put_cached_cubeful(board, aciCubePos, cci, strategy, plies, fTop, arCubeful);
 }
 
 float cubeful_equity_nply(
@@ -1093,14 +1314,17 @@ float cubeful_equity_nply(
         return eval_pre_roll_cubeful_1ply(board, cube, strategy);
     }
 
+    begin_cubeful_cache_epoch();
+
     CubeInfo aciCubePos[1];
     aciCubePos[0].cube_value = 1;
     aciCubePos[0].owner = owner;
     // match defaults to {0,0,false} = money game
 
+    const auto* base_gps = dynamic_cast<const GamePlanStrategy*>(&strategy);
     float arCubeful[1];
     bool allow_parallel = (n_threads > 1 && n_plies > 2);
-    cubeful_recursive_multi(board, aciCubePos, 1, strategy, n_plies, filter,
+    cubeful_recursive_multi(board, aciCubePos, 1, strategy, base_gps, n_plies, filter,
                             n_threads, allow_parallel, false, arCubeful);
     return arCubeful[0];
 }
@@ -1121,10 +1345,13 @@ float cubeful_equity_nply(
                       cube.cube_value, cube.match.is_crawford);
     }
 
+    begin_cubeful_cache_epoch();
+
     CubeInfo aciCubePos[1] = {cube};
+    const auto* base_gps = dynamic_cast<const GamePlanStrategy*>(&strategy);
     float arCubeful[1];
     bool allow_parallel = (n_threads > 1 && n_plies > 2);
-    cubeful_recursive_multi(board, aciCubePos, 1, strategy, n_plies, filter,
+    cubeful_recursive_multi(board, aciCubePos, 1, strategy, base_gps, n_plies, filter,
                             n_threads, allow_parallel, false, arCubeful);
 
     if (cube.is_money()) return arCubeful[0];
@@ -1150,6 +1377,8 @@ CubeDecision cube_decision_nply(
         return cube_decision_1ply(pre_roll_probs, cube, x);
     }
 
+    begin_cubeful_cache_epoch();
+
     bool is_money = cube.is_money();
     bool allow_parallel = (n_threads > 1 && n_plies > 2);
 
@@ -1160,8 +1389,9 @@ CubeDecision cube_decision_nply(
     aciCubePos[1].cube_value = 2 * cube.cube_value;
     aciCubePos[1].owner = CubeOwner::OPPONENT;
 
+    const auto* base_gps = dynamic_cast<const GamePlanStrategy*>(&strategy);
     float arCubeful[2];
-    cubeful_recursive_multi(board, aciCubePos, 2, strategy, n_plies, filter,
+    cubeful_recursive_multi(board, aciCubePos, 2, strategy, base_gps, n_plies, filter,
                             n_threads, allow_parallel, /*fTop=*/true, arCubeful);
 
     // arCubeful[0] = ND value, arCubeful[1] = DT value (at doubled cube scale)

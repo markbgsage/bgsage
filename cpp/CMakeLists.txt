@@ -70,6 +70,10 @@ target_link_libraries(bgbot_test_crash PRIVATE bgbot_lib)
 add_executable(bgbot_profile_1ply src/profile_0ply.cpp)
 target_link_libraries(bgbot_profile_1ply PRIVATE bgbot_lib)
 
+# 4-ply cube profiler
+add_executable(bgbot_profile_4ply src/profile_cube_4ply.cpp)
+target_link_libraries(bgbot_profile_4ply PRIVATE bgbot_lib)
+
 # pybind11 Python module
 find_package(pybind11 CONFIG REQUIRED)
 pybind11_add_module(bgbot_cpp pybind/bindings.cpp)
