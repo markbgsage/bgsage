@@ -43,8 +43,12 @@ struct RolloutResult {
 //   4. At truncation/game-end: VR result = outcome equity - accumulated luck
 //
 // VR always uses the SAME strategy as decision-making at each point in the game
-// (decision_strat_ before late_threshold, base_ after). This ensures the luck
-// tracking matches the actual game path.
+// (decision_strat_ before late_threshold, late_decision_strat_ after,
+// base_ for race positions). This ensures the luck tracking matches the
+// actual game path.
+//
+// Truncation evaluation always uses decision_strat_ (highest ply) for best
+// accuracy, regardless of late_threshold. Race positions use base_ at truncation.
 //
 // Both sides' luck is tracked (full XG-style VR).
 //

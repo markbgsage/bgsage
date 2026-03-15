@@ -139,3 +139,35 @@ Scripts: `python/generate_benchmark_pr.py`, `python/score_benchmark_pr.py`
 |--------|-------|--------------|--------------|
 | Contact ER | 10.47 | 8.71 | 7.19 |
 | Race ER | 1.03 | 0.84 | 0.48 |
+
+## XG Roller-Style Truncated Rollout Benchmark (Stage 5)
+
+Top-100 worst 1-ply scenarios from 207,484 total (contact + crashed).
+Higher ER = harder positions. Lower ER = better strategy.
+Script: `scripts/run_xgroller_benchmark.py`
+
+| Strategy | Settings | ER | Time |
+|----------|----------|------|------|
+| 1-ply | — | 541.10 | 0.0s |
+| 2-ply | TINY filter | 355.24 | 0.2s |
+| 3-ply | TINY filter | 338.78 | 8.3s |
+| 4-ply | TINY filter | 333.59 | 117.4s |
+| XGRoller | 42t, trunc=5, dp=1 | 336.12 | 25.3s |
+| XGRoller+ | 360t, trunc=7, dp=2, late=1@2 | 324.87 | 532.0s |
+| XGRoller++ Checker | 360t, trunc=5, dp=3, late=2@2 | — | too slow† |
+| XGRoller++ Cube | 360t, trunc=7, dp=3, late=2@2 | — | too slow† |
+
+†XGRoller++ with `decision_ply=3` is extremely expensive (~44 CPU-hours for 100
+positions before being terminated). Each of 360 trials requires 3-ply VR evaluation
+at every half-move. Not practical without early stopping (confidence-based termination).
+
+**Key observations:**
+- **XGRoller (1-ply decisions)** beats 3-ply (336.12 vs 338.78) at 3x the cost
+  of 3-ply — the Monte Carlo sampling helps even with 1-ply move selection.
+- **XGRoller+** is the strongest completed level at 324.87, beating 4-ply (333.59)
+  by a significant margin. Cost is ~532s vs 117s for 4-ply.
+- **2-ply decisions with truncated rollout** provides the best accuracy/speed sweet
+  spot for these worst-case positions.
+- **XGRoller++ is impractical** without early stopping — XG's confidence-based
+  termination (stop at 0.010 confidence, minimum 180 games) would dramatically
+  reduce computation for positions that converge quickly.

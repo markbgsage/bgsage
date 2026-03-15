@@ -319,6 +319,7 @@ class _RolloutAnalyzer(_CubelessBase):
     def __init__(
         self, weights, n_trials=1296, truncation_depth=0,
         decision_ply=1, n_threads=0, seed=42,
+        late_ply=-1, late_threshold=20,
     ):
         super().__init__(weights)
         self._rollout_config = {
@@ -327,6 +328,8 @@ class _RolloutAnalyzer(_CubelessBase):
             "decision_ply": decision_ply,
             "n_threads": n_threads,
             "seed": seed,
+            "late_ply": late_ply,
+            "late_threshold": late_threshold,
         }
         self._rollout_strategy = bgbot_cpp.create_rollout_5nn(
             *weights.weight_args,
@@ -335,6 +338,8 @@ class _RolloutAnalyzer(_CubelessBase):
             decision_ply=decision_ply,
             n_threads=n_threads,
             seed=seed,
+            late_ply=late_ply,
+            late_threshold=late_threshold,
         )
 
     def checker_play_analytics(
@@ -598,7 +603,8 @@ class BgBotAnalyzer:
 
     Args:
         weights: Weight file configuration (defaults to bundled Stage 5 models).
-        eval_level: ``'1ply'``, ``'2ply'``, ``'3ply'``, ``'4ply'``, or ``'rollout'``.
+        eval_level: ``'1ply'``, ``'2ply'``, ``'3ply'``, ``'4ply'``,
+            ``'truncated1'``, ``'truncated2'``, ``'truncated3'``, or ``'rollout'``.
         cubeful: If True, compute cubeful equities via Janowski.
         filter_max_moves: Max moves to carry through N-ply/rollout.
         filter_threshold: Equity threshold for move filter.
@@ -606,6 +612,9 @@ class BgBotAnalyzer:
         n_trials: Rollout trial count.
         truncation_depth: Rollout truncation (0 = play to completion).
         decision_ply: Ply depth for move selection during rollout trials.
+        late_ply: Ply for move selection after ``late_threshold`` half-moves
+            (-1 = same as ``decision_ply``).
+        late_threshold: Half-move index where decision ply switches to ``late_ply``.
         seed: RNG seed for rollout.
     """
 
@@ -621,6 +630,8 @@ class BgBotAnalyzer:
         n_trials: int = 1296,
         truncation_depth: int = 0,
         decision_ply: int = 1,
+        late_ply: int = -1,
+        late_threshold: int = 20,
         seed: int = 42,
     ):
         if weights is None:
@@ -636,6 +647,37 @@ class BgBotAnalyzer:
                 weights, n_plies=n_plies,
                 parallel_threads=parallel_threads,
             )
+        elif eval_level == "truncated1":
+            inner = _RolloutAnalyzer(
+                weights,
+                n_trials=42,
+                truncation_depth=5,
+                decision_ply=1,
+                n_threads=parallel_threads,
+                seed=seed,
+            )
+        elif eval_level == "truncated2":
+            inner = _RolloutAnalyzer(
+                weights,
+                n_trials=360,
+                truncation_depth=7,
+                decision_ply=2,
+                n_threads=parallel_threads,
+                seed=seed,
+                late_ply=1,
+                late_threshold=2,
+            )
+        elif eval_level == "truncated3":
+            inner = _RolloutAnalyzer(
+                weights,
+                n_trials=360,
+                truncation_depth=5,
+                decision_ply=3,
+                n_threads=parallel_threads,
+                seed=seed,
+                late_ply=2,
+                late_threshold=2,
+            )
         elif eval_level == "rollout":
             inner = _RolloutAnalyzer(
                 weights,
@@ -644,6 +686,8 @@ class BgBotAnalyzer:
                 decision_ply=decision_ply,
                 n_threads=parallel_threads,
                 seed=seed,
+                late_ply=late_ply,
+                late_threshold=late_threshold,
             )
         else:
             raise ValueError(f"Unknown eval_level: {eval_level!r}")

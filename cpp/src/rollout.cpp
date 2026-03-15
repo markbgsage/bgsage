@@ -297,12 +297,13 @@ RolloutStrategy::TrialResult RolloutStrategy::run_trial(
     for (int move_num = 0; move_num < truncation && move_num < max_moves; ++move_num) {
         bool is_starting_players_turn = (move_num % 2 == 1);
 
-        // Once contact is broken (pure race), 1-ply is nearly perfect.
-        // Use base strategy for both decisions and VR — much cheaper.
-        bool use_base = (move_num >= config_.late_threshold) || is_race(board);
-
-        // Pick the strategy for this half-move (used for BOTH decisions and VR).
-        const auto& current_strat = use_base ? *base_ : *decision_strat_;
+        // Strategy selection: race positions always use base (1-ply is nearly
+        // perfect for pure races). Otherwise, use decision_strat_ for early
+        // moves and late_decision_strat_ after late_threshold.
+        bool in_race = is_race(board);
+        bool is_late = (move_num >= config_.late_threshold);
+        const auto& current_strat = in_race ? *base_
+            : (is_late ? *late_decision_strat_ : *decision_strat_);
 
         // Step 1: VR mean — average best_move_probs across all 36 rolls.
         // best_move_probs returns probs from MOVER's perspective.
@@ -319,7 +320,9 @@ RolloutStrategy::TrialResult RolloutStrategy::run_trial(
         }
 
         // VR uses the SAME strategy as decision-making for consistency.
-        bool can_reuse_idx = vr_enabled && use_base && base_gps_;
+        // Index reuse optimization only works when using base_ (GamePlanStrategy).
+        bool using_base = (&current_strat == base_.get());
+        bool can_reuse_idx = vr_enabled && using_base && base_gps_;
 
         if (vr_enabled) {
             for (size_t i = 0; i < ALL_ROLLS.size(); ++i) {
@@ -439,14 +442,17 @@ RolloutStrategy::TrialResult RolloutStrategy::run_trial(
     // The correct evaluation: flip(board) = chosen = the LAST mover's post-move
     // board, evaluated from the last mover's perspective. This is exactly what
     // the NN expects — a position the player just moved to.
+    // Truncation: always use decision_strat_ (highest ply) for best accuracy.
+    // The truncation evaluation determines the final estimate for the game —
+    // using the strongest strategy maximizes rollout quality. Race positions
+    // still use base_ since 1-ply is nearly perfect for pure races.
     Board last_mover_board = flip(board);
-    int trunc_move = std::min(truncation, max_moves);
-    bool trunc_use_base = (trunc_move > config_.late_threshold) || is_race(last_mover_board);
-    const auto& trunc_strat = trunc_use_base ? *base_ : *decision_strat_;
+    const auto& trunc_strat = is_race(last_mover_board) ? *base_ : *decision_strat_;
     auto last_mover_probs = trunc_strat.evaluate_probs(last_mover_board, last_mover_board);
 
     // Convert to SP perspective. The last mover at truncation depth T moved
     // at move_num = T-1. is_sp = ((T-1) % 2 == 1) = (T % 2 == 0).
+    int trunc_move = std::min(truncation, max_moves);
     bool last_mover_is_sp = (trunc_move % 2 == 0);
     std::array<float, NUM_OUTPUTS> sp_probs;
     if (last_mover_is_sp) {
@@ -737,8 +743,8 @@ void RolloutStrategy::run_cubeful_trial(
     for (int move_num = 0; move_num < truncation && move_num < max_moves; ++move_num) {
         // move_num 0 = starting player's (SP) turn, 1 = opponent, 2 = SP, ...
         bool is_sp_turn = (move_num % 2 == 0);
-        bool use_base = (move_num >= config_.late_threshold) || is_race(board);
         bool race = is_race(board);
+        bool is_late = (move_num >= config_.late_threshold);
 
         // Phase 1: Cube check (skip on move 0 — top-level decision already made)
         if (move_num > 0) {
@@ -820,12 +826,14 @@ void RolloutStrategy::run_cubeful_trial(
         // Phase 3: VR — evaluate all 21 best-move probs (shared NN work)
         std::array<std::array<float, NUM_OUTPUTS>, 21> roll_best_probs;
         std::array<int, 21> best_candidate_idx{};
-        bool race_for_x = is_race(board);
-        float x = cube_efficiency(board, race_for_x);
+        float x = cube_efficiency(board, race);
 
         // Pick the strategy for this half-move (used for BOTH decisions and VR).
-        const auto& current_strat = use_base ? *base_ : *decision_strat_;
-        bool can_reuse_idx = vr_enabled && use_base && base_gps_;
+        // Race positions use base_ (1-ply), late moves use late_decision_strat_.
+        const auto& current_strat = race ? *base_
+            : (is_late ? *late_decision_strat_ : *decision_strat_);
+        bool using_base = (&current_strat == base_.get());
+        bool can_reuse_idx = vr_enabled && using_base && base_gps_;
 
         if (vr_enabled) {
             for (size_t i = 0; i < ALL_ROLLS.size(); ++i) {
@@ -1000,12 +1008,12 @@ void RolloutStrategy::run_cubeful_trial(
         }
     }
 
-    // Truncation: evaluate from last mover's perspective
+    // Truncation: always use decision_strat_ (highest ply) for best accuracy.
+    // Race positions still use base_ since 1-ply is nearly perfect.
     Board last_mover_board = flip(board);
     int trunc_move = std::min(truncation, max_moves);
     bool trunc_race = is_race(last_mover_board);
-    bool trunc_use_base = (trunc_move > config_.late_threshold) || trunc_race;
-    const auto& trunc_strat = trunc_use_base ? *base_ : *decision_strat_;
+    const auto& trunc_strat = trunc_race ? *base_ : *decision_strat_;
     auto last_mover_probs = trunc_strat.evaluate_probs(last_mover_board, last_mover_board);
     float trunc_x = cube_efficiency(last_mover_board, trunc_race);
 

@@ -512,6 +512,68 @@ with `away1/away2` swapped at each perspective flip. Money game branches use
 equity-based logic unchanged. Jacoby rule is propagated through `CubeInfo` on
 each branch; VR luck, terminal payoffs, and truncation all respect `jacoby_active()`.
 
+### Truncated Rollouts (XG Roller-style)
+
+Truncated rollouts are short Monte Carlo simulations truncated at a fixed depth
+with N-ply evaluation at the truncation point. They are stronger than pure N-ply
+search but faster than full rollouts, making them the best speed/accuracy tradeoff
+for position evaluation.
+
+**Key parameters:**
+- `n_trials`: Number of trial games (42-360 typical)
+- `truncation_depth`: Half-moves before truncating and evaluating with NN
+- `decision_ply`: Ply for move selection in early moves AND truncation evaluation
+- `late_ply`: Ply for move selection after `late_threshold` half-moves (-1 = same as `decision_ply`)
+- `late_threshold`: Half-move where decision ply switches from `decision_ply` to `late_ply`
+- `enable_vr`: Variance reduction (always true for truncated rollouts)
+
+**Strategy selection during trials:**
+- Before `late_threshold`: `decision_strat_` (N-ply)
+- After `late_threshold`: `late_decision_strat_` (lower ply, for speed)
+- Race positions: always `base_` (1-ply, nearly perfect for pure races)
+- Truncation evaluation: always `decision_strat_` (highest ply, for accuracy)
+
+**XG Roller equivalences** (XG uses XG ply convention = our convention):
+
+| XG Level | n_trials | truncation_depth | decision_ply | late_ply | late_threshold |
+|----------|----------|-------------------|-------------|----------|----------------|
+| XGRoller           | 42  | 5 | 1 | -1 | 20 |
+| XGRoller+          | 360 | 7 | 2 | 1  | 2  |
+| XGRoller++ Checker | 360 | 5 | 3 | 2  | 2  |
+| XGRoller++ Cube    | 360 | 7 | 3 | 2  | 2  |
+
+**App level names**: `truncated1` = XG Roller, `truncated2` = XG Roller+,
+`truncated3` = XG Roller++ Checker, `rollout` = full rollout (1296 trials,
+play to completion).
+
+```python
+from bgsage import BgBotAnalyzer
+
+# XGRoller equivalent
+analyzer = BgBotAnalyzer(eval_level="rollout",
+    n_trials=42, truncation_depth=5, decision_ply=1)
+
+# XGRoller+ equivalent
+analyzer = BgBotAnalyzer(eval_level="rollout",
+    n_trials=360, truncation_depth=7, decision_ply=2,
+    late_ply=1, late_threshold=2)
+
+# XGRoller++ Checker equivalent
+analyzer = BgBotAnalyzer(eval_level="rollout",
+    n_trials=360, truncation_depth=5, decision_ply=3,
+    late_ply=2, late_threshold=2)
+
+# XGRoller++ Cube equivalent
+analyzer = BgBotAnalyzer(eval_level="rollout",
+    n_trials=360, truncation_depth=7, decision_ply=3,
+    late_ply=2, late_threshold=2)
+```
+
+**Not yet implemented:**
+- Early stopping (XG Roller+ stops at 0.010 confidence, minimum 180 games)
+- Separate cube decision ply during trials (XG uses "2-ply cube" after late_threshold;
+  we use 1-ply Janowski for all cube decisions during rollout trials)
+
 ## Doubling Cube
 
 Janowski interpolation for both money games and match play. Optional Jacoby rule
