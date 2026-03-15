@@ -148,23 +148,23 @@ Script: `scripts/run_top100_all_strategies.py`
 
 | Strategy | Settings | ER | Time |
 |----------|----------|------|------|
-| 1-ply | — | 541.10 | 0.0s |
-| 2-ply | TINY filter | 355.24 | 0.2s |
-| 3-ply | TINY filter | 338.78 | 8.1s |
-| 4-ply | TINY filter | 333.59 | 45.3s |
-| XGRoller | 42t, trunc=5, dp=1 | 336.12 | 24.3s |
-| XGRoller+ | 360t, trunc=7, dp=2, late=1@2 | 322.01 | 264.1s |
-| XGRoller++ Checker | 360t, trunc=5, dp=3, late=2@2 | 336.03 | 974.4s |
+| 1-ply | - | 541.10 | 0.2s |
+| 2-ply | TINY filter | 355.24 | 0.7s |
+| 3-ply | TINY filter | 338.78 | 9.5s |
+| 4-ply | TINY filter | 333.59 | 54.0s |
+| XG Roller | 42t, trunc=5, dp=1 | 336.12 | 104.7s |
+| XG Roller+ | 360t, trunc=7, dp=2, late=1@2 | 322.01 | 353.1s |
+| XG Roller++ | 360t, trunc=5, dp=3, late=2@2 | 336.03 | 1078.0s |
 
 **Key observations:**
-- **XGRoller (1-ply decisions)** beats 3-ply (336.12 vs 338.78) at 3x the cost
-  of 3-ply — the Monte Carlo sampling helps even with 1-ply move selection.
-- **XGRoller+** is the strongest level at 322.01, beating 4-ply (333.59) by a
-  significant margin. Cost is ~264s vs 45s for 4-ply.
-- **XGRoller++ Checker** is now practical after rollout performance optimizations
+- **XG Roller (1-ply decisions)** beats 3-ply (336.12 vs 338.78) at about 2.3x the cost
+  of 3-ply -- the Monte Carlo sampling helps even with 1-ply move selection.
+- **XG Roller+** is the strongest level at 322.01, beating 4-ply (333.59) by a
+  significant margin. Cost is ~353s vs 54s for 4-ply.
+- **XG Roller++** is now practical after rollout performance optimizations
   (VR decoupled to 1-ply, move-0 shared cache). Previously impractical (~44 CPU-hours
-  for 100 positions). ER of 336.03 is comparable to 3-ply/XGRoller — the high
+  for 100 positions). ER of 336.03 is comparable to 3-ply/XG Roller, and the high
   variance of rollout evaluation on only 100 extreme positions limits accuracy
   differentiation at this sample size.
-- **2-ply decisions with truncated rollout** (XGRoller+) provides the best
+- **2-ply decisions with truncated rollout** (XG Roller+) provides the best
   accuracy/speed sweet spot for these worst-case positions.

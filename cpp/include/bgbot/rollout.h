@@ -17,6 +17,7 @@ struct RolloutConfig {
     int truncation_depth = 7;    // Half-moves before truncating (0 = play to completion)
     int decision_ply = 1;        // Ply depth for move selection during trials (1 = raw NN)
     bool enable_vr = true;       // Enable variance reduction (VR uses same ply as decision)
+    bool parallelize_trials = false;  // Allow parallel trial dispatch for truncated N-ply rollouts
     MoveFilter filter = MoveFilters::TINY;  // Filter for candidate selection at top level
     int n_threads = 0;           // Threads for parallelizing trials (0 = auto)
     uint32_t seed = 42;

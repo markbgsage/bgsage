@@ -168,7 +168,9 @@ int RolloutStrategy::rollout_thread_count(int n_trials) const
         // Truncated rollouts with N-ply move selection share many early-tree
         // subproblems. Keeping them on one worker preserves thread-local
         // MultiPly caches and is often faster than splitting the trials.
-        if (config_.truncation_depth > 0 && config_.decision_ply > 1) {
+        // Allow opt-in via config_.parallelize_trials; default stays serial
+        // to preserve cache locality and historical behavior.
+        if (!config_.parallelize_trials && config_.truncation_depth > 0 && config_.decision_ply > 1) {
             n_threads = 1;
         }
     }

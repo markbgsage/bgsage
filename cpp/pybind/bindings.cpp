@@ -1722,7 +1722,8 @@ PYBIND11_MODULE(bgbot_cpp, m) {
                                     uint32_t seed,
                                     int late_ply,
                                     int late_threshold,
-                                    bool enable_vr) {
+                                    bool enable_vr,
+                                    bool parallelize_trials) {
         auto base = std::make_shared<GamePlanStrategy>(
             purerace_w, racing_w, attacking_w, priming_w, anchoring_w,
             n_h_purerace, n_h_racing, n_h_attacking, n_h_priming, n_h_anchoring);
@@ -1731,6 +1732,7 @@ PYBIND11_MODULE(bgbot_cpp, m) {
         config.truncation_depth = truncation_depth;
         config.decision_ply = decision_ply;
         config.enable_vr = enable_vr;
+        config.parallelize_trials = parallelize_trials;
         config.filter = {filter_max_moves, filter_threshold};
         config.n_threads = n_threads;
         config.seed = seed;
@@ -1757,7 +1759,8 @@ PYBIND11_MODULE(bgbot_cpp, m) {
        py::arg("seed") = 42,
        py::arg("late_ply") = -1,
        py::arg("late_threshold") = 20,
-       py::arg("enable_vr") = true);
+       py::arg("enable_vr") = true,
+       py::arg("parallelize_trials") = false);
 
     // Score benchmarks using rollout strategy
     // n_threads=1 for outer loop because parallelism is within each scenario

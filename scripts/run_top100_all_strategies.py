@@ -17,6 +17,7 @@ script_dir = os.path.dirname(os.path.abspath(__file__))
 project_dir = os.path.dirname(os.path.dirname(script_dir))
 build_dirs = [
     os.path.join(project_dir, 'build_msvc'),
+    os.path.join(project_dir, 'build_cpu_build'),
     os.path.join(project_dir, 'build'),
 ]
 
@@ -182,7 +183,8 @@ def main():
         *w.weight_args,
         n_trials=360, truncation_depth=7,
         decision_ply=2, n_threads=rollout_threads,
-        late_ply=1, late_threshold=2)
+        late_ply=1, late_threshold=2,
+        parallelize_trials=(rollout_threads > 1))
     def score_roller_plus(ss):
         return bgbot_cpp.score_benchmarks_rollout(ss, roller_plus, 1)
     er, t = score_subset('XG Roller+ (360t, trunc=7, dp=2, late=1@2)', score_roller_plus)
@@ -193,7 +195,8 @@ def main():
         *w.weight_args,
         n_trials=360, truncation_depth=5,
         decision_ply=3, n_threads=rollout_threads,
-        late_ply=2, late_threshold=2)
+        late_ply=2, late_threshold=2,
+        parallelize_trials=(rollout_threads > 1))
     def score_roller_pp(ss):
         return bgbot_cpp.score_benchmarks_rollout(ss, roller_pp, 1)
     er, t = score_subset('XG Roller++ (360t, trunc=5, dp=3, late=2@2)', score_roller_pp)

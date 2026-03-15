@@ -320,13 +320,21 @@ class _RolloutAnalyzer(_CubelessBase):
         self, weights, n_trials=1296, truncation_depth=0,
         decision_ply=1, n_threads=0, seed=42,
         late_ply=-1, late_threshold=20,
+        parallelize_trials=True,
     ):
         super().__init__(weights)
+        requested_threads = n_threads
+        if n_threads <= 0:
+            requested_threads = _default_parallel_threads()
+        elif n_threads < 1:
+            requested_threads = 1
+        self._parallel_threads = max(1, requested_threads)
+        self._parallelize_trials = bool(parallelize_trials)
         self._rollout_config = {
             "n_trials": n_trials,
             "truncation_depth": truncation_depth,
             "decision_ply": decision_ply,
-            "n_threads": n_threads,
+            "n_threads": self._parallel_threads,
             "seed": seed,
             "late_ply": late_ply,
             "late_threshold": late_threshold,
@@ -336,10 +344,11 @@ class _RolloutAnalyzer(_CubelessBase):
             n_trials=n_trials,
             truncation_depth=truncation_depth,
             decision_ply=decision_ply,
-            n_threads=n_threads,
+            n_threads=self._parallel_threads,
             seed=seed,
             late_ply=late_ply,
             late_threshold=late_threshold,
+            parallelize_trials=parallelize_trials,
         )
 
     def checker_play_analytics(
