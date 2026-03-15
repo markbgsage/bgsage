@@ -503,10 +503,19 @@ cache, incremental delta evaluation, transposed weight matrix.
 Monte Carlo evaluation with variance reduction. Stratified first roll
 (36 dice pairs). Parallelized trial execution.
 
+**VR decoupled from decision ply:** VR always uses 1-ply (raw NN) for both mean
+and actual computations, regardless of the decision strategy's ply level. Move
+selection still uses the full N-ply decision strategy. Since VR tracks
+luck = (actual - mean) with both sides using the same ply, biases cancel. This
+eliminates ~90% of N-ply evaluations. When `n_trials % 36 == 0`, VR is skipped
+on move 0 (stratified dice makes luck sum to exactly zero). N-ply strategies inside
+trials use serial evaluation (`parallel_evaluate=false`) — all parallelism is
+across trial paths.
+
 **Cubeful rollout** (for cube decisions): Two-branch simulation — ND (no double)
 and DT (double/take) branches share the same board evolution and dice. Cube
 decisions via `cube_decision_1ply()` at each half-move; double/pass terminates
-the branch immediately. VR luck tracked in cubeful value space per-branch.
+the branch immediately. VR luck tracked in cubeful value space per-branch (1-ply).
 Match play works entirely in MWC space (`cl2cf_match`, `cubeless_mwc`, `dp_mwc`),
 with `away1/away2` swapped at each perspective flip. Money game branches use
 equity-based logic unchanged. Jacoby rule is propagated through `CubeInfo` on

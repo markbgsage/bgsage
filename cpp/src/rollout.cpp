@@ -296,7 +296,8 @@ RolloutStrategy::TrialResult RolloutStrategy::run_trial(
     const Board& start_board,
     const Board& pre_move_board,
     const std::pair<int,int>* dice_seq,
-    int max_moves) const
+    int max_moves,
+    Move0Cache* move0_cache) const
 {
     thread_local std::array<std::vector<Board>, ALL_ROLLS.size()> move_candidates;
     thread_local bool candidates_initialized = false;
@@ -381,24 +382,68 @@ RolloutStrategy::TrialResult RolloutStrategy::run_trial(
 
         // Move selection: uses the full decision strategy (may be N-ply).
         // When decision is 1-ply (using_base), reuse VR's best index.
+        //
+        // MOVE-0 CACHE: At move 0, all trials share the same starting position
+        // and there are only 21 possible first rolls. The first trial to encounter
+        // each dice combo computes the N-ply best move; subsequent trials reuse
+        // the cached result. This eliminates (n_trials - 21) redundant N-ply
+        // evaluations at move 0. The cache is thread-safe via CAS.
         const auto& candidates = move_candidates[actual_idx];
 
         Board chosen;
-        if (candidates.empty()) {
-            chosen = board;
-        } else if (candidates.size() == 1) {
-            chosen = candidates[0];
-        } else if (using_base) {
-            // 1-ply decision: reuse VR's best index if available
-            if (can_reuse_vr_idx && best_candidate_idx[actual_idx] >= 0 &&
-                best_candidate_idx[actual_idx] < static_cast<int>(candidates.size())) {
-                chosen = candidates[best_candidate_idx[actual_idx]];
+        bool used_move0_cache = false;
+        if (move0_cache && move_num == 0 && !using_base) {
+            // Try the shared move-0 cache for N-ply decisions
+            int s = move0_cache->state[actual_idx].load(std::memory_order_acquire);
+            if (s == 2) {
+                // Cache hit — use precomputed result
+                chosen = move0_cache->chosen[actual_idx];
+                used_move0_cache = true;
             } else {
-                chosen = candidates[base_->best_move_index(candidates, board)];
+                // Try to claim this slot (CAS 0→1)
+                int expected = 0;
+                if (move0_cache->state[actual_idx].compare_exchange_strong(
+                        expected, 1, std::memory_order_acq_rel)) {
+                    // We claimed it — compute normally
+                    if (candidates.empty()) {
+                        chosen = board;
+                    } else if (candidates.size() == 1) {
+                        chosen = candidates[0];
+                    } else {
+                        chosen = candidates[current_strat.best_move_index(candidates, board)];
+                    }
+                    // Store result and publish
+                    move0_cache->chosen[actual_idx] = chosen;
+                    move0_cache->state[actual_idx].store(2, std::memory_order_release);
+                    used_move0_cache = true;
+                } else {
+                    // Another thread is computing — spin-wait with yield
+                    while (move0_cache->state[actual_idx].load(std::memory_order_acquire) != 2) {
+                        std::this_thread::yield();
+                    }
+                    chosen = move0_cache->chosen[actual_idx];
+                    used_move0_cache = true;
+                }
             }
-        } else {
-            // N-ply decision: use the full decision strategy
-            chosen = candidates[current_strat.best_move_index(candidates, board)];
+        }
+
+        if (!used_move0_cache) {
+            if (candidates.empty()) {
+                chosen = board;
+            } else if (candidates.size() == 1) {
+                chosen = candidates[0];
+            } else if (using_base) {
+                // 1-ply decision: reuse VR's best index if available
+                if (can_reuse_vr_idx && best_candidate_idx[actual_idx] >= 0 &&
+                    best_candidate_idx[actual_idx] < static_cast<int>(candidates.size())) {
+                    chosen = candidates[best_candidate_idx[actual_idx]];
+                } else {
+                    chosen = candidates[base_->best_move_index(candidates, board)];
+                }
+            } else {
+                // N-ply decision: use the full decision strategy
+                chosen = candidates[current_strat.best_move_index(candidates, board)];
+            }
         }
 
         // VR luck: evaluate the chosen move at 1-ply for consistent VR.
@@ -541,6 +586,10 @@ RolloutResult RolloutStrategy::run_trials_parallel(
     n_threads = std::min(n_threads, n_trials);
     if (n_threads <= 0) n_threads = 1;
 
+    // Move-0 shared cache: all trials share the same starting position, so
+    // there are only 21 possible first-roll decisions. Cache N-ply results.
+    Move0Cache move0_cache;
+
     // Fast path: n_threads == 1 can accumulate directly without trial buffers.
     if (n_threads == 1) {
         RolloutResult result;
@@ -550,7 +599,7 @@ RolloutResult RolloutStrategy::run_trials_parallel(
         double sum_svr_eq = 0.0, sum_svr_eq_sq = 0.0;
 
         for (int t = 0; t < n_trials; ++t) {
-            auto r = run_trial(board, pre_move_board, all_dice[t].data(), max_moves);
+            auto r = run_trial(board, pre_move_board, all_dice[t].data(), max_moves, &move0_cache);
             double eq = r.equity;
             for (int k = 0; k < NUM_OUTPUTS; ++k) {
                 double v = r.probs[k];
@@ -599,6 +648,7 @@ RolloutResult RolloutStrategy::run_trials_parallel(
             const Board* pre_move_board;
             const std::vector<std::vector<std::pair<int, int>>>* all_dice;
             TrialResult* trial_results;
+            Move0Cache* move0_cache;
             int n_trials;
             int max_moves;
             int n_threads;
@@ -608,7 +658,7 @@ RolloutResult RolloutStrategy::run_trials_parallel(
         std::vector<ThreadArg> args(n_threads);
         for (int th = 0; th < n_threads; ++th) {
             args[th] = {this, &board, &pre_move_board, &all_dice,
-                        trial_results.data(), n_trials, max_moves,
+                        trial_results.data(), &move0_cache, n_trials, max_moves,
                         n_threads, th};
         }
 
@@ -621,7 +671,8 @@ RolloutResult RolloutStrategy::run_trials_parallel(
                     for (int t = a->thread_idx; t < a->n_trials; t += a->n_threads) {
                         a->trial_results[t] = a->self->run_trial(
                             *a->board, *a->pre_move_board,
-                            (*a->all_dice)[t].data(), a->max_moves);
+                            (*a->all_dice)[t].data(), a->max_moves,
+                            a->move0_cache);
                     }
                     return 0;
                 },
@@ -638,11 +689,11 @@ RolloutResult RolloutStrategy::run_trials_parallel(
 
         for (int th = 0; th < n_threads; ++th) {
             threads.emplace_back([this, &board, &pre_move_board, &all_dice,
-                                  &trial_results, n_threads, n_trials, max_moves, th]() {
+                                  &trial_results, &move0_cache, n_threads, n_trials, max_moves, th]() {
                 for (int t = th; t < n_trials; t += n_threads) {
                     trial_results[t] = run_trial(
                         board, pre_move_board,
-                        all_dice[t].data(), max_moves);
+                        all_dice[t].data(), max_moves, &move0_cache);
                 }
             });
         }
@@ -662,6 +713,7 @@ RolloutResult RolloutStrategy::run_trials_parallel(
             const Board* pre_move_board;
             const std::vector<std::vector<std::pair<int,int>>>* all_dice;
             TrialResult* trial_results;
+            Move0Cache* move0_cache;
             std::atomic<int>* next_trial;
             int n_trials;
             int max_moves;
@@ -669,7 +721,7 @@ RolloutResult RolloutStrategy::run_trials_parallel(
 
         std::vector<HANDLE> handles(n_threads);
         ThreadArg arg = {this, &board, &pre_move_board, &all_dice,
-                         trial_results.data(), &next_trial, n_trials, max_moves};
+                         trial_results.data(), &move0_cache, &next_trial, n_trials, max_moves};
 
         for (int th = 0; th < n_threads; ++th) {
             handles[th] = CreateThread(
@@ -680,7 +732,8 @@ RolloutResult RolloutStrategy::run_trials_parallel(
                     while ((t = a->next_trial->fetch_add(1, std::memory_order_relaxed)) < a->n_trials) {
                         a->trial_results[t] = a->self->run_trial(
                             *a->board, *a->pre_move_board,
-                            (*a->all_dice)[t].data(), a->max_moves);
+                            (*a->all_dice)[t].data(), a->max_moves,
+                            a->move0_cache);
                     }
                     return 0;
                 },
@@ -697,12 +750,12 @@ RolloutResult RolloutStrategy::run_trials_parallel(
 
         for (int th = 0; th < n_threads; ++th) {
             threads.emplace_back([this, &board, &pre_move_board, &all_dice,
-                                  &trial_results, &next_trial, n_trials, max_moves]() {
+                                  &trial_results, &move0_cache, &next_trial, n_trials, max_moves]() {
                 int t;
                 while ((t = next_trial.fetch_add(1, std::memory_order_relaxed)) < n_trials) {
                     trial_results[t] = run_trial(
                         board, pre_move_board,
-                        all_dice[t].data(), max_moves);
+                        all_dice[t].data(), max_moves, &move0_cache);
                 }
             });
         }
@@ -789,7 +842,8 @@ void RolloutStrategy::run_cubeful_trial(
     CubefulBranch branches[], int n_branches,
     const std::pair<int,int>* dice_seq,
     int max_moves,
-    TrialResult* cubeless_out) const
+    TrialResult* cubeless_out,
+    Move0Cache* move0_cache) const
 {
     thread_local std::array<std::vector<Board>, ALL_ROLLS.size()> move_candidates;
     thread_local bool candidates_initialized = false;
@@ -975,24 +1029,69 @@ void RolloutStrategy::run_cubeful_trial(
         // Move selection uses the full decision strategy (N-ply when applicable).
         // VR used 1-ply, so we can only reuse the VR index when the decision
         // strategy is also 1-ply (base_).
+        //
+        // MOVE-0 CACHE: At move 0, all trials share the same starting position
+        // and there are only 21 possible first rolls. The first trial to encounter
+        // each dice combo computes the N-ply best move; subsequent trials reuse
+        // the cached result. This eliminates (n_trials - 21) redundant N-ply
+        // evaluations at move 0. The cache is thread-safe via CAS.
         const auto& candidates = move_candidates[actual_idx];
 
         Board chosen;
-        if (candidates.empty()) {
-            chosen = board;
-        } else if (candidates.size() == 1) {
-            chosen = candidates[0];
-        } else if (using_base) {
-            // 1-ply decision (race or base strategy): reuse VR's index if available
-            if (can_reuse_vr_idx && best_candidate_idx[actual_idx] >= 0 &&
-                best_candidate_idx[actual_idx] < static_cast<int>(candidates.size())) {
-                chosen = candidates[best_candidate_idx[actual_idx]];
+        bool used_move0_cache = false;
+        if (move0_cache && move_num == 0 && !using_base) {
+            // Try the shared move-0 cache for N-ply decisions
+            int s = move0_cache->state[actual_idx].load(std::memory_order_acquire);
+            if (s == 2) {
+                // Cache hit — use precomputed result
+                chosen = move0_cache->chosen[actual_idx];
+                used_move0_cache = true;
             } else {
-                chosen = candidates[base_->best_move_index(candidates, board)];
+                // Try to claim this slot (CAS 0→1)
+                int expected = 0;
+                if (move0_cache->state[actual_idx].compare_exchange_strong(
+                        expected, 1, std::memory_order_acq_rel)) {
+                    // We claimed it — compute normally
+                    if (candidates.empty()) {
+                        chosen = board;
+                    } else if (candidates.size() == 1) {
+                        chosen = candidates[0];
+                    } else {
+                        chosen = candidates[current_strat.best_move_index(candidates, board)];
+                    }
+                    // Store result and publish
+                    move0_cache->chosen[actual_idx] = chosen;
+                    move0_cache->state[actual_idx].store(2, std::memory_order_release);
+                    used_move0_cache = true;
+                } else {
+                    // Another thread is computing — spin-wait with yield
+                    while (move0_cache->state[actual_idx].load(std::memory_order_acquire) != 2) {
+                        std::this_thread::yield();
+                    }
+                    chosen = move0_cache->chosen[actual_idx];
+                    used_move0_cache = true;
+                }
             }
-        } else {
-            // N-ply decision: use the full decision strategy
-            chosen = candidates[current_strat.best_move_index(candidates, board)];
+        }
+
+        if (!used_move0_cache) {
+            // Normal move selection (no cache, or cache not applicable)
+            if (candidates.empty()) {
+                chosen = board;
+            } else if (candidates.size() == 1) {
+                chosen = candidates[0];
+            } else if (using_base) {
+                // 1-ply decision (race or base strategy): reuse VR's index if available
+                if (can_reuse_vr_idx && best_candidate_idx[actual_idx] >= 0 &&
+                    best_candidate_idx[actual_idx] < static_cast<int>(candidates.size())) {
+                    chosen = candidates[best_candidate_idx[actual_idx]];
+                } else {
+                    chosen = candidates[base_->best_move_index(candidates, board)];
+                }
+            } else {
+                // N-ply decision: use the full decision strategy
+                chosen = candidates[current_strat.best_move_index(candidates, board)];
+            }
         }
 
         // Phase 4b: VR luck computation (after move selection).
@@ -1215,6 +1314,10 @@ RolloutStrategy::CubefulRolloutResult RolloutStrategy::cubeful_cube_decision(
     };
     std::vector<CubefulTrialResult> trial_results(n_trials);
 
+    // Move-0 shared cache: all trials share the same starting position, so
+    // there are only 21 possible first-roll decisions. Cache N-ply results.
+    Move0Cache move0_cache;
+
     // Determine thread count
     int n_threads = config_.n_threads;
     if (n_threads <= 0) {
@@ -1229,7 +1332,7 @@ RolloutStrategy::CubefulRolloutResult RolloutStrategy::cubeful_cube_decision(
             CubefulBranch branches[2] = {nd_template, dt_template};
             run_cubeful_trial(pre_roll_board, branches, 2,
                               all_dice[t].data(), max_moves,
-                              &trial_results[t].cubeless);
+                              &trial_results[t].cubeless, &move0_cache);
             trial_results[t].nd_equity = branches[0].final_equity;
             trial_results[t].dt_equity = branches[1].final_equity;
         }
@@ -1245,13 +1348,14 @@ RolloutStrategy::CubefulRolloutResult RolloutStrategy::cubeful_cube_decision(
             const CubefulBranch* dt_tmpl;
             const std::vector<std::vector<std::pair<int,int>>>* all_dice;
             CubefulTrialResult* results;
+            Move0Cache* move0_cache;
             std::atomic<int>* next_trial;
             int n_trials;
             int max_moves;
         };
 
         ThreadArg arg = {this, &pre_roll_board, &nd_template, &dt_template,
-                          &all_dice, trial_results.data(), &next_trial,
+                          &all_dice, trial_results.data(), &move0_cache, &next_trial,
                           n_trials, max_moves};
 
         std::vector<HANDLE> handles(n_threads);
@@ -1267,7 +1371,7 @@ RolloutStrategy::CubefulRolloutResult RolloutStrategy::cubeful_cube_decision(
                         a->self->run_cubeful_trial(
                             *a->board, branches, 2,
                             (*a->all_dice)[t].data(), a->max_moves,
-                            &a->results[t].cubeless);
+                            &a->results[t].cubeless, a->move0_cache);
                         a->results[t].nd_equity = branches[0].final_equity;
                         a->results[t].dt_equity = branches[1].final_equity;
                     }
@@ -1283,7 +1387,7 @@ RolloutStrategy::CubefulRolloutResult RolloutStrategy::cubeful_cube_decision(
 
         for (int th = 0; th < n_threads; ++th) {
             threads.emplace_back([this, &pre_roll_board, &nd_template, &dt_template,
-                                  &all_dice, &trial_results, &next_trial,
+                                  &all_dice, &trial_results, &move0_cache, &next_trial,
                                   n_trials, max_moves]() {
                 int t;
                 while ((t = next_trial.fetch_add(1, std::memory_order_relaxed))
@@ -1291,7 +1395,7 @@ RolloutStrategy::CubefulRolloutResult RolloutStrategy::cubeful_cube_decision(
                     CubefulBranch branches[2] = {nd_template, dt_template};
                     run_cubeful_trial(pre_roll_board, branches, 2,
                                       all_dice[t].data(), max_moves,
-                                      &trial_results[t].cubeless);
+                                      &trial_results[t].cubeless, &move0_cache);
                     trial_results[t].nd_equity = branches[0].final_equity;
                     trial_results[t].dt_equity = branches[1].final_equity;
                 }

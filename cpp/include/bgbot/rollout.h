@@ -8,6 +8,7 @@
 #include <array>
 #include <vector>
 #include <cstdint>
+#include <atomic>
 
 namespace bgbot {
 
@@ -37,22 +38,26 @@ struct RolloutResult {
 //
 // Wraps a base strategy and evaluates positions by playing out trial games
 // from the given position. At each half-move in a trial:
-//   1. Compute mean equity across all 36 dice outcomes — the "expected" equity
-//   2. Make the actual move with pre-determined dice
-//   3. Luck = actual equity - expected equity; accumulated from starting player's perspective
-//   4. At truncation/game-end: VR result = outcome equity - accumulated luck
+//   1. VR mean: evaluate best move for all 21 dice outcomes at 1-ply
+//   2. Move selection: pick best move for actual roll using N-ply decision strategy
+//   3. VR luck: evaluate chosen move at 1-ply, luck = actual(1-ply) - mean(1-ply)
+//   4. Accumulate luck from starting player's perspective
+//   5. At truncation/game-end: VR result = outcome - accumulated luck
 //
-// VR always uses the SAME strategy as decision-making at each point in the game
-// (decision_strat_ before late_threshold, late_decision_strat_ after,
-// base_ for race positions). This ensures the luck tracking matches the
-// actual game path.
+// VR is decoupled from the decision strategy: VR always uses base_ (1-ply)
+// regardless of decision ply. Move selection uses decision_strat_ (N-ply)
+// before late_threshold, late_decision_strat_ after, base_ for race positions.
+// Since VR tracks luck = (actual - mean) with both at 1-ply, biases cancel.
 //
 // Truncation evaluation always uses decision_strat_ (highest ply) for best
 // accuracy, regardless of late_threshold. Race positions use base_ at truncation.
 //
-// Both sides' luck is tracked (full XG-style VR).
+// Move-0 caching: all trials share the same starting position, so there are
+// only 21 possible first-roll decisions. These are computed once and shared
+// via Move0Cache, eliminating (n_trials - 21) redundant N-ply evaluations.
 //
 // Parallelism: trials are distributed across threads (not scenarios).
+// N-ply strategies inside trials use serial evaluation (parallel_evaluate=false).
 // The base strategy is used read-only and must be thread-safe.
 class RolloutStrategy : public Strategy {
 public:
@@ -125,12 +130,36 @@ private:
         double scalar_vr_equity;               // Scalar equity VR corrected, SP perspective
     };
 
+    // --- Move-0 shared cache ---
+    //
+    // All trials in a rollout share the same starting position. There are only
+    // 21 possible first rolls, so the move-0 N-ply decision can be computed
+    // once and shared across all trials with the same first roll. This avoids
+    // (n_trials - 21) redundant N-ply evaluations at move 0.
+    //
+    // Thread-safe: the first trial to encounter each dice combo computes the
+    // result (CAS state 0→1); others spin-wait briefly then read the cache.
+    struct Move0Cache {
+        static constexpr int N_ROLLS = 21;
+        std::atomic<int> state[N_ROLLS];  // 0=empty, 1=computing, 2=ready
+        Board chosen[N_ROLLS];            // The best post-move board for each roll
+
+        Move0Cache() {
+            for (int i = 0; i < N_ROLLS; ++i)
+                state[i].store(0, std::memory_order_relaxed);
+        }
+    };
+
     // Run a single trial from a post-move position.
     // dice_seq has pairs (d1,d2) for each half-move.
+    // If move0_cache is non-null, move 0 decisions are shared across trials
+    // (all trials start from the same position, so only 21 unique first-roll
+    // decisions exist).
     TrialResult run_trial(const Board& start_board,
                           const Board& pre_move_board,
                           const std::pair<int,int>* dice_seq,
-                          int max_moves) const;
+                          int max_moves,
+                          Move0Cache* move0_cache = nullptr) const;
 
     // Run N trials in parallel for a position, return mean + std error.
     RolloutResult run_trials_parallel(const Board& board,
@@ -179,12 +208,14 @@ private:
     // board evolution and dice. Sets final_equity on each branch.
     // If cubeless_out is non-null, also produces VR-corrected cubeless probs
     // from the player-on-roll's perspective (piggybacking on the same game).
+    // If move0_cache is non-null, move 0 decisions are shared across trials.
     void run_cubeful_trial(
         const Board& pre_roll_board,
         CubefulBranch branches[], int n_branches,
         const std::pair<int,int>* dice_seq,
         int max_moves,
-        TrialResult* cubeless_out = nullptr) const;
+        TrialResult* cubeless_out = nullptr,
+        Move0Cache* move0_cache = nullptr) const;
 };
 
 } // namespace bgbot
