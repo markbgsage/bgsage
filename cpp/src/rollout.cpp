@@ -271,6 +271,27 @@ std::array<float, NUM_OUTPUTS> RolloutStrategy::best_move_probs_for_candidates(
 
 // ======================== Single Trial ========================
 
+// Run a single cubeless trial from a post-move position.
+//
+// ALGORITHM OVERVIEW:
+// Simulates a game from start_board (post-move, SP perspective) by alternating
+// moves between the starting player (SP) and opponent. At each half-move:
+//   1. Generate legal moves for all 21 dice rolls (for VR) or just the actual roll
+//   2. VR mean: evaluate best move for each of 21 rolls at 1-ply, compute weighted avg
+//   3. Move selection: pick the best move using the decision strategy (may be N-ply)
+//   4. VR luck: evaluate the chosen move at 1-ply, compute luck = actual - mean
+//   5. Check terminal / flip board
+// At truncation: evaluate position using decision_strat_ (highest ply available).
+//
+// VR OPTIMIZATION: VR always uses 1-ply (base_) regardless of decision ply.
+// This is the key performance optimization: VR tracks luck = (actual - mean),
+// and both sides use 1-ply consistently, so biases cancel. This eliminates
+// ~90% of N-ply evaluations (21 rolls × N-ply → 21 rolls × 1-ply batch).
+//
+// STRATIFICATION OPTIMIZATION: When n_trials is a multiple of 36, the first
+// roll is fully stratified (each die combo appears equally), so VR luck at
+// move 0 sums to exactly zero — providing zero variance reduction. We skip
+// VR entirely on move 0 in this case.
 RolloutStrategy::TrialResult RolloutStrategy::run_trial(
     const Board& start_board,
     const Board& pre_move_board,
@@ -297,42 +318,53 @@ RolloutStrategy::TrialResult RolloutStrategy::run_trial(
     for (int move_num = 0; move_num < truncation && move_num < max_moves; ++move_num) {
         bool is_starting_players_turn = (move_num % 2 == 1);
 
-        // Strategy selection: race positions always use base (1-ply is nearly
+        // Decision strategy: race positions always use base (1-ply is nearly
         // perfect for pure races). Otherwise, use decision_strat_ for early
         // moves and late_decision_strat_ after late_threshold.
         bool in_race = is_race(board);
         bool is_late = (move_num >= config_.late_threshold);
         const auto& current_strat = in_race ? *base_
             : (is_late ? *late_decision_strat_ : *decision_strat_);
-
-        // Step 1: VR mean — average best_move_probs across all 36 rolls.
-        // best_move_probs returns probs from MOVER's perspective.
-        std::array<double, NUM_OUTPUTS> mean_mover_probs = {0, 0, 0, 0, 0};
-        std::array<int, ALL_ROLLS.size()> best_candidate_idx{};
-        double mean_mover_equity = 0.0;
+        bool using_base = (&current_strat == base_.get());
 
         int d1 = dice_seq[move_num].first;
         int d2 = dice_seq[move_num].second;
+        int a_die = d1, b_die = d2;
+        if (a_die > b_die) std::swap(a_die, b_die);
+        int actual_idx = kOrderedRollToIndex[a_die][b_die];
+        if (actual_idx < 0) actual_idx = 0;
 
-        for (size_t i = 0; i < ALL_ROLLS.size(); ++i) {
-            move_candidates[i].clear();
-            possible_boards(board, ALL_ROLLS[i].d1, ALL_ROLLS[i].d2, move_candidates[i]);
+        // Skip VR on move 0 when n_trials is a multiple of 36: the first roll
+        // is fully stratified, so VR luck sums to exactly zero across all trials.
+        bool skip_vr_this_move = (move_num == 0 && config_.n_trials % 36 == 0);
+        bool do_vr = vr_enabled && !skip_vr_this_move;
+
+        if (do_vr) {
+            // Generate moves for all 21 rolls (needed for VR mean computation)
+            for (size_t i = 0; i < ALL_ROLLS.size(); ++i) {
+                move_candidates[i].clear();
+                possible_boards(board, ALL_ROLLS[i].d1, ALL_ROLLS[i].d2, move_candidates[i]);
+            }
+        } else {
+            // Only generate moves for the actual roll (VR skipped)
+            move_candidates[actual_idx].clear();
+            possible_boards(board, d1, d2, move_candidates[actual_idx]);
         }
 
-        // VR uses the SAME strategy as decision-making for consistency.
-        // Index reuse optimization only works when using base_ (GamePlanStrategy).
-        bool using_base = (&current_strat == base_.get());
-        bool can_reuse_idx = vr_enabled && using_base && base_gps_;
+        // VR mean: evaluate best move for all 21 rolls using base_ (1-ply).
+        // VR always uses 1-ply for efficiency; decision strategy may use N-ply.
+        std::array<int, ALL_ROLLS.size()> best_candidate_idx{};
+        bool can_reuse_vr_idx = do_vr && base_gps_;
 
-        if (vr_enabled) {
+        std::array<double, NUM_OUTPUTS> mean_mover_probs = {0, 0, 0, 0, 0};
+        double mean_mover_equity = 0.0;
+
+        if (do_vr) {
             for (size_t i = 0; i < ALL_ROLLS.size(); ++i) {
                 int best_idx = -1;
                 auto mover_probs = best_move_probs_for_candidates(
-                    board, move_candidates[i], current_strat,
-                    can_reuse_idx ? &best_idx : nullptr);
-                if (can_reuse_idx) {
-                    best_candidate_idx[i] = best_idx;
-                }
+                    board, move_candidates[i], *base_, &best_idx);
+                best_candidate_idx[i] = best_idx;
                 for (int k = 0; k < NUM_OUTPUTS; ++k) {
                     mean_mover_probs[k] += ALL_ROLLS[i].weight * mover_probs[k];
                 }
@@ -347,14 +379,8 @@ RolloutStrategy::TrialResult RolloutStrategy::run_trial(
                 + mean_mover_probs[2] - mean_mover_probs[4];
         }
 
-        int a = d1;
-        int b = d2;
-        if (a > b) std::swap(a, b);
-        int actual_idx = kOrderedRollToIndex[a][b];
-        if (actual_idx < 0) {
-            actual_idx = 0;
-        }
-
+        // Move selection: uses the full decision strategy (may be N-ply).
+        // When decision is 1-ply (using_base), reuse VR's best index.
         const auto& candidates = move_candidates[actual_idx];
 
         Board chosen;
@@ -362,37 +388,55 @@ RolloutStrategy::TrialResult RolloutStrategy::run_trial(
             chosen = board;
         } else if (candidates.size() == 1) {
             chosen = candidates[0];
-        } else {
-            int idx = -1;
-            if (can_reuse_idx && best_candidate_idx[actual_idx] >= 0 &&
+        } else if (using_base) {
+            // 1-ply decision: reuse VR's best index if available
+            if (can_reuse_vr_idx && best_candidate_idx[actual_idx] >= 0 &&
                 best_candidate_idx[actual_idx] < static_cast<int>(candidates.size())) {
-                idx = best_candidate_idx[actual_idx];
+                chosen = candidates[best_candidate_idx[actual_idx]];
             } else {
-                idx = current_strat.best_move_index(candidates, board);
+                chosen = candidates[base_->best_move_index(candidates, board)];
             }
-            chosen = candidates[idx];
+        } else {
+            // N-ply decision: use the full decision strategy
+            chosen = candidates[current_strat.best_move_index(candidates, board)];
         }
 
-        // Step 3: VR luck — evaluate actual move from MOVER's perspective,
-        // compute luck in mover's space, then cross-map to SP.
-        if (vr_enabled) {
+        // VR luck: evaluate the chosen move at 1-ply for consistent VR.
+        // When decision used N-ply, the chosen move may differ from VR's 1-ply
+        // best. We evaluate the chosen board at 1-ply to keep VR consistent
+        // (luck = actual_1ply - mean_1ply).
+        if (do_vr) {
             std::array<float, NUM_OUTPUTS> actual_mover_probs;
-            GameResult r = check_game_over(chosen);
-            if (r != GameResult::NOT_OVER) {
-                actual_mover_probs = terminal_probs(r);
+            if (using_base) {
+                // Decision also used 1-ply — VR already computed the right probs
+                // for the actual roll's best move (which IS the chosen move)
+                GameResult r = check_game_over(chosen);
+                if (r != GameResult::NOT_OVER) {
+                    actual_mover_probs = terminal_probs(r);
+                } else {
+                    actual_mover_probs = base_->evaluate_probs(chosen, board);
+                }
             } else {
-                actual_mover_probs = current_strat.evaluate_probs(chosen, board);
+                // Decision used N-ply — evaluate chosen at 1-ply for VR
+                GameResult r = check_game_over(chosen);
+                if (r != GameResult::NOT_OVER) {
+                    actual_mover_probs = terminal_probs(r);
+                } else {
+                    actual_mover_probs = base_->evaluate_probs(chosen, board);
+                }
             }
             double actual_mover_eq = NeuralNetwork::compute_equity(actual_mover_probs);
 
-            // Luck in mover's space
+            // Luck in mover's probability space
             std::array<double, NUM_OUTPUTS> luck_mover;
             for (int k = 0; k < NUM_OUTPUTS; ++k) {
                 luck_mover[k] = actual_mover_probs[k] - mean_mover_probs[k];
             }
             double luck_eq = actual_mover_eq - mean_mover_equity;
 
-            // Cross-map luck to starting player's space
+            // Cross-map luck to starting player's perspective.
+            // SP turn: luck is in SP's prob space already.
+            // Opponent turn: cross-map (P(win)->-(P(win)), P(gw)<->P(gl), P(bw)<->P(bl)).
             if (is_starting_players_turn) {
                 for (int k = 0; k < NUM_OUTPUTS; ++k) {
                     accumulated_luck[k] += luck_mover[k];
@@ -408,7 +452,7 @@ RolloutStrategy::TrialResult RolloutStrategy::run_trial(
             }
         }
 
-        // Step 4: Check terminal
+        // Terminal check: if the game is over, return VR-corrected result
         GameResult result = check_game_over(chosen);
         if (result != GameResult::NOT_OVER) {
             // terminal_probs returns mover's perspective
@@ -442,10 +486,9 @@ RolloutStrategy::TrialResult RolloutStrategy::run_trial(
     // The correct evaluation: flip(board) = chosen = the LAST mover's post-move
     // board, evaluated from the last mover's perspective. This is exactly what
     // the NN expects — a position the player just moved to.
-    // Truncation: always use decision_strat_ (highest ply) for best accuracy.
-    // The truncation evaluation determines the final estimate for the game —
-    // using the strongest strategy maximizes rollout quality. Race positions
-    // still use base_ since 1-ply is nearly perfect for pure races.
+    //
+    // Truncation always uses decision_strat_ (highest ply) for best accuracy.
+    // Race positions use base_ since 1-ply is nearly perfect for pure races.
     Board last_mover_board = flip(board);
     const auto& trunc_strat = is_race(last_mover_board) ? *base_ : *decision_strat_;
     auto last_mover_probs = trunc_strat.evaluate_probs(last_mover_board, last_mover_board);
@@ -716,6 +759,30 @@ RolloutResult RolloutStrategy::run_trials_parallel(
 }
 
 // ======================== Cubeful Rollout Trial ========================
+//
+// Simulates two branches (ND and DT) sharing the same board evolution and
+// dice sequences. At each half-move:
+//   Phase 1: Cube check — 1-ply Janowski decides double/take/pass per branch
+//   Phase 2: Move generation — all 21 dice rolls (for VR) or just actual roll
+//   Phase 3: VR mean — evaluate best move for each of 21 rolls at 1-ply,
+//            compute weighted average cubeful value per branch
+//   Phase 4: Move selection — pick best move using N-ply decision strategy
+//   Phase 4b: VR luck — evaluate chosen move at 1-ply, compute per-branch luck
+//   Phase 5: Terminal check
+//   Phase 6: Flip board + cube ownership for next mover
+//
+// VR OPTIMIZATION: VR always uses base_ (1-ply) regardless of decision ply.
+// This eliminates ~90% of N-ply evaluations. VR tracks luck = (actual - mean)
+// where both actual and mean use 1-ply consistently, so biases cancel.
+// The decision strategy still uses full N-ply for move selection.
+//
+// STRATIFICATION OPTIMIZATION: When n_trials % 36 == 0, the first roll is
+// fully stratified (each die combo appears equally), so VR luck at move 0
+// sums to exactly zero — we skip VR entirely for move 0.
+//
+// VR luck is tracked in cubeful value space per-branch (equity × cube_value
+// for money games, MWC for match play). Cubeless VR is piggybacked in
+// probability space when cubeless_out is non-null.
 
 void RolloutStrategy::run_cubeful_trial(
     const Board& pre_roll_board,
@@ -814,41 +881,65 @@ void RolloutStrategy::run_cubeful_trial(
             }
         }
 
-        // Phase 2: Generate moves for all 21 rolls + get actual dice
+        // Phase 2: Generate moves + compute actual dice index
         int d1 = dice_seq[move_num].first;
         int d2 = dice_seq[move_num].second;
+        int a_die = d1, b_die = d2;
+        if (a_die > b_die) std::swap(a_die, b_die);
+        int actual_idx = kOrderedRollToIndex[a_die][b_die];
+        if (actual_idx < 0) actual_idx = 0;
 
-        for (size_t i = 0; i < ALL_ROLLS.size(); ++i) {
-            move_candidates[i].clear();
-            possible_boards(board, ALL_ROLLS[i].d1, ALL_ROLLS[i].d2, move_candidates[i]);
+        // Determine whether VR is needed for this half-move.
+        // Skip VR on move 0 when n_trials is a multiple of 36: the first roll
+        // is fully stratified, so VR luck sums to exactly zero across all trials
+        // and provides zero variance reduction.
+        bool skip_vr_this_move = (move_num == 0 && config_.n_trials % 36 == 0);
+        bool do_vr = vr_enabled && !skip_vr_this_move;
+
+        if (do_vr) {
+            // Generate moves for all 21 rolls (needed for VR mean computation)
+            for (size_t i = 0; i < ALL_ROLLS.size(); ++i) {
+                move_candidates[i].clear();
+                possible_boards(board, ALL_ROLLS[i].d1, ALL_ROLLS[i].d2, move_candidates[i]);
+            }
+        } else {
+            // Only generate moves for the actual roll (VR skipped)
+            move_candidates[actual_idx].clear();
+            possible_boards(board, d1, d2, move_candidates[actual_idx]);
         }
 
-        // Phase 3: VR — evaluate all 21 best-move probs (shared NN work)
+        // Phase 3: VR — always use base_ (1-ply) for efficiency.
+        // VR at 1-ply is effective because luck=(actual-mean) is internally
+        // consistent: both sides use the same 1-ply evaluation, so systematic
+        // biases cancel in the luck computation. This eliminates ~90% of
+        // N-ply evaluations (21 rolls × N-ply → 21 rolls × 1-ply batch).
         std::array<std::array<float, NUM_OUTPUTS>, 21> roll_best_probs;
         std::array<int, 21> best_candidate_idx{};
         float x = cube_efficiency(board, race);
 
-        // Pick the strategy for this half-move (used for BOTH decisions and VR).
-        // Race positions use base_ (1-ply), late moves use late_decision_strat_.
+        // Decision strategy for move selection (may be N-ply, independent of VR)
         const auto& current_strat = race ? *base_
             : (is_late ? *late_decision_strat_ : *decision_strat_);
         bool using_base = (&current_strat == base_.get());
-        bool can_reuse_idx = vr_enabled && using_base && base_gps_;
 
-        if (vr_enabled) {
+        // VR always uses base_ (1-ply GamePlanStrategy) for the fast batch path
+        bool can_reuse_vr_idx = do_vr && base_gps_;
+
+        // Per-branch VR mean (saved for luck computation after move selection)
+        double mean_cf_branch[2] = {0.0, 0.0};
+        std::array<double, NUM_OUTPUTS> cl_mean_probs = {0, 0, 0, 0, 0};
+        double cl_mean_eq = 0.0;
+
+        if (do_vr) {
+            // Evaluate all 21 rolls at 1-ply (fast batch path via base_)
             for (size_t i = 0; i < ALL_ROLLS.size(); ++i) {
                 int idx = -1;
                 roll_best_probs[i] = best_move_probs_for_candidates(
-                    board, move_candidates[i], current_strat,
-                    can_reuse_idx ? &idx : nullptr);
-                if (can_reuse_idx) best_candidate_idx[i] = idx;
+                    board, move_candidates[i], *base_, &idx);
+                best_candidate_idx[i] = idx;
             }
 
-            // Per-branch cubeful equity VR
-            int a = d1, b_die = d2;
-            if (a > b_die) std::swap(a, b_die);
-            int actual_idx = kOrderedRollToIndex[a][b_die];
-
+            // Per-branch cubeful VR mean
             for (int b = 0; b < n_branches; ++b) {
                 if (branches[b].finished) continue;
 
@@ -865,21 +956,78 @@ void RolloutStrategy::run_cubeful_trial(
                     }
                     mean_cf += ALL_ROLLS[i].weight * val;
                 }
-                mean_cf /= 36.0;
+                mean_cf_branch[b] = mean_cf / 36.0;
+            }
+
+            // Cubeless VR mean (piggybacking on roll_best_probs)
+            if (cubeless_out) {
+                for (size_t i = 0; i < ALL_ROLLS.size(); ++i) {
+                    for (int k = 0; k < NUM_OUTPUTS; ++k)
+                        cl_mean_probs[k] += ALL_ROLLS[i].weight * roll_best_probs[i][k];
+                }
+                for (int k = 0; k < NUM_OUTPUTS; ++k) cl_mean_probs[k] /= 36.0;
+                cl_mean_eq = 2*cl_mean_probs[0]-1 + cl_mean_probs[1]-cl_mean_probs[3]
+                             + cl_mean_probs[2]-cl_mean_probs[4];
+            }
+        }
+
+        // Phase 4: Pick best move for actual roll.
+        // Move selection uses the full decision strategy (N-ply when applicable).
+        // VR used 1-ply, so we can only reuse the VR index when the decision
+        // strategy is also 1-ply (base_).
+        const auto& candidates = move_candidates[actual_idx];
+
+        Board chosen;
+        if (candidates.empty()) {
+            chosen = board;
+        } else if (candidates.size() == 1) {
+            chosen = candidates[0];
+        } else if (using_base) {
+            // 1-ply decision (race or base strategy): reuse VR's index if available
+            if (can_reuse_vr_idx && best_candidate_idx[actual_idx] >= 0 &&
+                best_candidate_idx[actual_idx] < static_cast<int>(candidates.size())) {
+                chosen = candidates[best_candidate_idx[actual_idx]];
+            } else {
+                chosen = candidates[base_->best_move_index(candidates, board)];
+            }
+        } else {
+            // N-ply decision: use the full decision strategy
+            chosen = candidates[current_strat.best_move_index(candidates, board)];
+        }
+
+        // Phase 4b: VR luck computation (after move selection).
+        // When decision used N-ply, the chosen move may differ from VR's 1-ply
+        // best. We evaluate the chosen board at 1-ply for VR consistency.
+        if (do_vr) {
+            std::array<float, NUM_OUTPUTS> actual_probs;
+            if (using_base) {
+                // Decision also used 1-ply — VR already has the right probs
+                actual_probs = roll_best_probs[actual_idx];
+            } else {
+                // Decision used N-ply — evaluate chosen at 1-ply for VR
+                GameResult r = check_game_over(chosen);
+                if (r != GameResult::NOT_OVER) {
+                    actual_probs = terminal_probs(r);
+                } else {
+                    actual_probs = base_->evaluate_probs(chosen, board);
+                }
+            }
+
+            // Per-branch cubeful VR luck
+            for (int b = 0; b < n_branches; ++b) {
+                if (branches[b].finished) continue;
 
                 double actual_val;
                 if (is_match) {
-                    actual_val = cl2cf_match(
-                        roll_best_probs[actual_idx], branches[b].cube, x);
+                    actual_val = cl2cf_match(actual_probs, branches[b].cube, x);
                 } else {
-                    float actual_cf = cl2cf_money(
-                        roll_best_probs[actual_idx], branches[b].cube.owner, x,
-                        branches[b].cube.jacoby_active());
-                    actual_val = actual_cf * branches[b].cube.cube_value
-                                           / branches[b].basis_cube;
+                    float cf = cl2cf_money(actual_probs, branches[b].cube.owner, x,
+                                           branches[b].cube.jacoby_active());
+                    actual_val = cf * branches[b].cube.cube_value
+                                    / branches[b].basis_cube;
                 }
 
-                double luck = actual_val - mean_cf;
+                double luck = actual_val - mean_cf_branch[b];
                 if (is_sp_turn) {
                     branches[b].vr_luck += luck;
                 } else {
@@ -887,23 +1035,13 @@ void RolloutStrategy::run_cubeful_trial(
                 }
             }
 
-            // Cubeless VR in probability space (piggybacking on roll_best_probs)
+            // Cubeless VR luck (piggybacking)
             if (cubeless_out) {
-                std::array<double, NUM_OUTPUTS> mean_probs = {0,0,0,0,0};
-                for (size_t i = 0; i < ALL_ROLLS.size(); ++i) {
-                    for (int k = 0; k < NUM_OUTPUTS; ++k)
-                        mean_probs[k] += ALL_ROLLS[i].weight * roll_best_probs[i][k];
-                }
-                for (int k = 0; k < NUM_OUTPUTS; ++k) mean_probs[k] /= 36.0;
-
-                // Luck = actual - mean, in mover's prob space
                 std::array<double, NUM_OUTPUTS> luck_mover;
                 for (int k = 0; k < NUM_OUTPUTS; ++k)
-                    luck_mover[k] = roll_best_probs[actual_idx][k] - mean_probs[k];
-                double mean_eq = 2*mean_probs[0]-1 + mean_probs[1]-mean_probs[3]
-                                 + mean_probs[2]-mean_probs[4];
-                double actual_eq = NeuralNetwork::compute_equity(roll_best_probs[actual_idx]);
-                double luck_eq = actual_eq - mean_eq;
+                    luck_mover[k] = actual_probs[k] - cl_mean_probs[k];
+                double actual_eq = NeuralNetwork::compute_equity(actual_probs);
+                double luck_eq = actual_eq - cl_mean_eq;
 
                 // Cross-map to SP perspective
                 if (is_sp_turn) {
@@ -919,30 +1057,6 @@ void RolloutStrategy::run_cubeful_trial(
                     cl_scalar_eq_luck -= luck_eq;
                 }
             }
-        }
-
-        // Phase 4: Pick best move for actual roll (cubeless, shared)
-        int a = d1, b_die = d2;
-        if (a > b_die) std::swap(a, b_die);
-        int actual_idx = kOrderedRollToIndex[a][b_die];
-        if (actual_idx < 0) actual_idx = 0;
-
-        const auto& candidates = move_candidates[actual_idx];
-
-        Board chosen;
-        if (candidates.empty()) {
-            chosen = board;
-        } else if (candidates.size() == 1) {
-            chosen = candidates[0];
-        } else {
-            int idx;
-            if (can_reuse_idx && best_candidate_idx[actual_idx] >= 0 &&
-                best_candidate_idx[actual_idx] < static_cast<int>(candidates.size())) {
-                idx = best_candidate_idx[actual_idx];
-            } else {
-                idx = current_strat.best_move_index(candidates, board);
-            }
-            chosen = candidates[idx];
         }
 
         // Phase 5: Terminal check
