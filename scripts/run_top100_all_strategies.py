@@ -7,6 +7,7 @@ use the unified trial function (run_trial_unified with n_branches=0),
 which skips all cubeful overhead -- equivalent to dedicated cubeless code.
 """
 
+import argparse
 import os
 import sys
 import time
@@ -14,16 +15,22 @@ import time
 # Setup import paths
 script_dir = os.path.dirname(os.path.abspath(__file__))
 project_dir = os.path.dirname(os.path.dirname(script_dir))
-build_dir = os.path.join(project_dir, 'build')
+build_dirs = [
+    os.path.join(project_dir, 'build_msvc'),
+    os.path.join(project_dir, 'build'),
+]
 
 if sys.platform == 'win32':
     cuda_x64 = r'C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v13.1\bin\x64'
     if os.path.isdir(cuda_x64):
         os.add_dll_directory(cuda_x64)
-    if os.path.isdir(build_dir):
-        os.add_dll_directory(build_dir)
+    for build_dir in build_dirs:
+        if os.path.isdir(build_dir):
+            os.add_dll_directory(build_dir)
 
-sys.path.insert(0, build_dir)
+for build_dir in reversed(build_dirs):
+    if os.path.isdir(build_dir):
+        sys.path.insert(0, build_dir)
 sys.path.insert(0, os.path.join(project_dir, 'bgsage', 'python'))
 
 import bgbot_cpp
@@ -34,6 +41,16 @@ DATA_DIR = os.path.join(project_dir, 'bgsage', 'data')
 
 
 def main():
+    parser = argparse.ArgumentParser(
+        description='Top-100 worst 1-ply positions scored at 1-4 ply and truncated rollout levels.'
+    )
+    parser.add_argument(
+        '--threads', type=int, default=0,
+        help='Threads used inside multi-ply / rollout evaluations (0=auto)'
+    )
+    args = parser.parse_args()
+    rollout_threads = args.threads if args.threads > 0 else max(1, os.cpu_count() or 1)
+
     bgbot_cpp.init_escape_tables()
 
     w = WeightConfig.default()
@@ -121,26 +138,32 @@ def main():
     results.append(('1-ply', er, t))
 
     # 2-ply
-    multipy_2 = bgbot_cpp.create_multipy_5nn(*w.weight_args, n_plies=2)
+    multipy_2 = bgbot_cpp.create_multipy_5nn(
+        *w.weight_args, n_plies=2,
+        parallel_evaluate=True, parallel_threads=args.threads)
     def score_2ply(ss):
         multipy_2.clear_cache()
-        return bgbot_cpp.score_benchmarks_multipy(ss, multipy_2, 0)
+        return bgbot_cpp.score_benchmarks_multipy(ss, multipy_2, 1)
     er, t = score_subset('2-ply', score_2ply)
     results.append(('2-ply', er, t))
 
     # 3-ply
-    multipy_3 = bgbot_cpp.create_multipy_5nn(*w.weight_args, n_plies=3)
+    multipy_3 = bgbot_cpp.create_multipy_5nn(
+        *w.weight_args, n_plies=3,
+        parallel_evaluate=True, parallel_threads=args.threads)
     def score_3ply(ss):
         multipy_3.clear_cache()
-        return bgbot_cpp.score_benchmarks_multipy(ss, multipy_3, 0)
+        return bgbot_cpp.score_benchmarks_multipy(ss, multipy_3, 1)
     er, t = score_subset('3-ply', score_3ply)
     results.append(('3-ply', er, t))
 
     # 4-ply
-    multipy_4 = bgbot_cpp.create_multipy_5nn(*w.weight_args, n_plies=4)
+    multipy_4 = bgbot_cpp.create_multipy_5nn(
+        *w.weight_args, n_plies=4,
+        parallel_evaluate=True, parallel_threads=args.threads)
     def score_4ply(ss):
         multipy_4.clear_cache()
-        return bgbot_cpp.score_benchmarks_multipy(ss, multipy_4, 0)
+        return bgbot_cpp.score_benchmarks_multipy(ss, multipy_4, 1)
     er, t = score_subset('4-ply', score_4ply)
     results.append(('4-ply', er, t))
 
@@ -148,7 +171,7 @@ def main():
     roller = bgbot_cpp.create_rollout_5nn(
         *w.weight_args,
         n_trials=42, truncation_depth=5,
-        decision_ply=1, n_threads=0)
+        decision_ply=1, n_threads=rollout_threads)
     def score_roller(ss):
         return bgbot_cpp.score_benchmarks_rollout(ss, roller, 1)
     er, t = score_subset('XG Roller (42t, trunc=5, dp=1)', score_roller)
@@ -158,7 +181,7 @@ def main():
     roller_plus = bgbot_cpp.create_rollout_5nn(
         *w.weight_args,
         n_trials=360, truncation_depth=7,
-        decision_ply=2, n_threads=0,
+        decision_ply=2, n_threads=rollout_threads,
         late_ply=1, late_threshold=2)
     def score_roller_plus(ss):
         return bgbot_cpp.score_benchmarks_rollout(ss, roller_plus, 1)
@@ -169,7 +192,7 @@ def main():
     roller_pp = bgbot_cpp.create_rollout_5nn(
         *w.weight_args,
         n_trials=360, truncation_depth=5,
-        decision_ply=3, n_threads=0,
+        decision_ply=3, n_threads=rollout_threads,
         late_ply=2, late_threshold=2)
     def score_roller_pp(ss):
         return bgbot_cpp.score_benchmarks_rollout(ss, roller_pp, 1)

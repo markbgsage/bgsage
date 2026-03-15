@@ -158,6 +158,25 @@ std::array<float, NUM_OUTPUTS> RolloutStrategy::best_move_probs(
     return best_move_probs_for_candidates(board, candidates, strat);
 }
 
+int RolloutStrategy::rollout_thread_count(int n_trials) const
+{
+    int n_threads = config_.n_threads;
+    if (n_threads <= 0) {
+        n_threads = static_cast<int>(std::thread::hardware_concurrency());
+        if (n_threads <= 0) n_threads = 1;
+
+        // Truncated rollouts with N-ply move selection share many early-tree
+        // subproblems. Keeping them on one worker preserves thread-local
+        // MultiPly caches and is often faster than splitting the trials.
+        if (config_.truncation_depth > 0 && config_.decision_ply > 1) {
+            n_threads = 1;
+        }
+    }
+
+    n_threads = std::min(n_threads, n_trials);
+    return std::max(1, n_threads);
+}
+
 std::array<float, NUM_OUTPUTS> RolloutStrategy::best_move_probs_for_candidates(
     const Board& board, const std::vector<Board>& candidates,
     const Strategy& strat, int* best_index) const
@@ -269,6 +288,137 @@ std::array<float, NUM_OUTPUTS> RolloutStrategy::best_move_probs_for_candidates(
     return best_probs;
 }
 
+void RolloutStrategy::prefill_move0_cache(
+    const Board& start_board, Move0Cache& cache, int n_threads) const
+{
+    const bool race = is_race(start_board);
+    const bool is_late = (0 >= config_.late_threshold);
+    const auto& current_strat = race ? *base_
+        : (is_late ? *late_decision_strat_ : *decision_strat_);
+    const bool using_base = (&current_strat == base_.get());
+
+    auto compute_roll = [&](int roll_idx) {
+        thread_local std::vector<Board> candidates;
+        candidates.clear();
+        possible_boards(start_board,
+                        ALL_ROLLS[roll_idx].d1,
+                        ALL_ROLLS[roll_idx].d2,
+                        candidates);
+
+        Board chosen;
+        if (candidates.empty()) {
+            chosen = start_board;
+        } else if (candidates.size() == 1) {
+            chosen = candidates[0];
+        } else if (using_base) {
+            chosen = candidates[base_->best_move_index(candidates, start_board)];
+        } else {
+            chosen = candidates[current_strat.best_move_index(candidates, start_board)];
+        }
+
+        cache.chosen[roll_idx] = chosen;
+        cache.state[roll_idx].store(2, std::memory_order_release);
+    };
+
+    const int workers = std::min<int>(Move0Cache::N_ROLLS, std::max(1, n_threads));
+    if (workers <= 1) {
+        for (int i = 0; i < Move0Cache::N_ROLLS; ++i) {
+            compute_roll(i);
+        }
+    } else {
+        multipy_parallel_for(Move0Cache::N_ROLLS, workers, compute_roll);
+    }
+}
+
+void RolloutStrategy::populate_move1_cache_entry(
+    const Move0Cache& move0_cache, int first_roll_idx, Move1Cache::Entry& entry) const
+{
+    thread_local std::vector<Board> candidates;
+
+    const Board& move0_chosen = move0_cache.chosen[first_roll_idx];
+    const Board move1_board = flip(move0_chosen);
+    entry.race = is_race(move1_board);
+    entry.cube_x = cube_efficiency(move1_board, entry.race);
+
+    const bool is_late = (1 >= config_.late_threshold);
+    const auto& current_strat = entry.race ? *base_
+        : (is_late ? *late_decision_strat_ : *decision_strat_);
+    const bool using_base = (&current_strat == base_.get());
+
+    const Board opp_board = flip(move1_board);
+    entry.mover_probs = invert_probs(base_->evaluate_probs(opp_board, opp_board));
+
+    for (size_t second_roll = 0; second_roll < ALL_ROLLS.size(); ++second_roll) {
+        candidates.clear();
+        possible_boards(move1_board,
+                        ALL_ROLLS[second_roll].d1,
+                        ALL_ROLLS[second_roll].d2,
+                        candidates);
+
+        int best_idx = -1;
+        entry.roll_best_probs[second_roll] = best_move_probs_for_candidates(
+            move1_board, candidates, *base_, &best_idx);
+        entry.best_candidate_idx[second_roll] = best_idx;
+
+        Board chosen;
+        if (candidates.empty()) {
+            chosen = move1_board;
+        } else if (candidates.size() == 1) {
+            chosen = candidates[0];
+        } else if (using_base) {
+            if (best_idx >= 0 && best_idx < static_cast<int>(candidates.size())) {
+                chosen = candidates[best_idx];
+            } else {
+                chosen = candidates[base_->best_move_index(candidates, move1_board)];
+            }
+        } else {
+            chosen = candidates[current_strat.best_move_index(candidates, move1_board)];
+        }
+        entry.chosen[second_roll] = chosen;
+
+        GameResult r = check_game_over(chosen);
+        if (r != GameResult::NOT_OVER) {
+            entry.actual_probs[second_roll] = terminal_probs(r);
+        } else if (using_base) {
+            entry.actual_probs[second_roll] = entry.roll_best_probs[second_roll];
+        } else {
+            entry.actual_probs[second_roll] = base_->evaluate_probs(chosen, move1_board);
+        }
+    }
+
+    entry.cl_mean_probs = {0, 0, 0, 0, 0};
+    for (size_t i = 0; i < ALL_ROLLS.size(); ++i) {
+        for (int k = 0; k < NUM_OUTPUTS; ++k) {
+            entry.cl_mean_probs[k] += ALL_ROLLS[i].weight * entry.roll_best_probs[i][k];
+        }
+    }
+    for (int k = 0; k < NUM_OUTPUTS; ++k) {
+        entry.cl_mean_probs[k] /= 36.0;
+    }
+    entry.cl_mean_eq =
+        2.0 * entry.cl_mean_probs[0] - 1.0 +
+        entry.cl_mean_probs[1] - entry.cl_mean_probs[3] +
+        entry.cl_mean_probs[2] - entry.cl_mean_probs[4];
+}
+
+void RolloutStrategy::prefill_move1_cache(
+    const Move0Cache& move0_cache, Move1Cache& cache, int n_threads) const
+{
+    auto populate_entry = [&](int roll_idx) {
+        populate_move1_cache_entry(move0_cache, roll_idx, cache.entries[roll_idx]);
+        cache.state[roll_idx].store(2, std::memory_order_release);
+    };
+
+    const int workers = std::min<int>(Move0Cache::N_ROLLS, std::max(1, n_threads));
+    if (workers <= 1) {
+        for (int i = 0; i < Move0Cache::N_ROLLS; ++i) {
+            populate_entry(i);
+        }
+    } else {
+        multipy_parallel_for(Move0Cache::N_ROLLS, workers, populate_entry);
+    }
+}
+
 // ======================== Unified Trial Function ========================
 //
 // Single function for both cubeless (n_branches=0) and cubeful (n_branches>0)
@@ -298,7 +448,8 @@ RolloutStrategy::TrialResult RolloutStrategy::run_trial_unified(
     CubefulBranch branches[], int n_branches,
     const std::pair<int,int>* dice_seq,
     int max_moves,
-    Move0Cache* move0_cache) const
+    Move0Cache* move0_cache,
+    Move1Cache* move1_cache) const
 {
     thread_local std::array<std::vector<Board>, ALL_ROLLS.size()> move_candidates;
     thread_local bool candidates_initialized = false;
@@ -331,24 +482,58 @@ RolloutStrategy::TrialResult RolloutStrategy::run_trial_unified(
     double cl_scalar_eq_luck = 0.0;
     bool vr_enabled = vr_enabled_;
     int truncation = (config_.truncation_depth > 0) ? config_.truncation_depth : 9999;
+    int move0_roll_idx = -1;
 
     for (int move_num = 0; move_num < truncation && move_num < max_moves; ++move_num) {
+        const Move1Cache::Entry* move1_entry = nullptr;
+        if (move1_cache && move_num == 1 && move0_roll_idx >= 0 &&
+            move0_roll_idx < Move0Cache::N_ROLLS) {
+            int s = move1_cache->state[move0_roll_idx].load(std::memory_order_acquire);
+            if (s == 2) {
+                move1_entry = &move1_cache->entries[move0_roll_idx];
+            } else {
+                int expected = 0;
+                if (move1_cache->state[move0_roll_idx].compare_exchange_strong(
+                        expected, 1, std::memory_order_acq_rel)) {
+                    populate_move1_cache_entry(*move0_cache, move0_roll_idx,
+                                               move1_cache->entries[move0_roll_idx]);
+                    move1_cache->state[move0_roll_idx].store(2, std::memory_order_release);
+                    move1_entry = &move1_cache->entries[move0_roll_idx];
+                } else {
+                    while (move1_cache->state[move0_roll_idx].load(std::memory_order_acquire) != 2) {
+                        std::this_thread::yield();
+                    }
+                    move1_entry = &move1_cache->entries[move0_roll_idx];
+                }
+            }
+        }
+
         bool is_sp_turn = (move_num % 2 == sp_parity_offset);
-        bool race = is_race(board);
+        bool race = move1_entry ? move1_entry->race : is_race(board);
         bool is_late = (move_num >= config_.late_threshold);
+        float cube_x = 0.0f;
+        bool cube_x_ready = false;
 
         // Phase 1: Cube check (cubeful only, skip on move 0)
         if (cube_active && move_num > 0) {
-            Board opp_board = flip(board);
-            auto opp_probs = base_->evaluate_probs(opp_board, opp_board);
-            auto mover_probs = invert_probs(opp_probs);
-            float x = cube_efficiency(board, race);
+            std::array<float, NUM_OUTPUTS> mover_probs;
+            if (move1_entry) {
+                mover_probs = move1_entry->mover_probs;
+                cube_x = move1_entry->cube_x;
+                cube_x_ready = true;
+            } else {
+                Board opp_board = flip(board);
+                auto opp_probs = base_->evaluate_probs(opp_board, opp_board);
+                mover_probs = invert_probs(opp_probs);
+                cube_x = cube_efficiency(board, race);
+                cube_x_ready = true;
+            }
 
             for (int b = 0; b < n_branches; ++b) {
                 if (branches[b].finished) continue;
                 if (!can_double(branches[b].cube)) continue;
 
-                CubeDecision cd = cube_decision_1ply(mover_probs, branches[b].cube, x);
+                CubeDecision cd = cube_decision_1ply(mover_probs, branches[b].cube, cube_x);
                 if (cd.should_double) {
                     if (cd.is_beaver) {
                         branches[b].cube.cube_value *= 4;
@@ -410,7 +595,9 @@ RolloutStrategy::TrialResult RolloutStrategy::run_trial_unified(
         bool skip_vr_this_move = (move_num == 0 && config_.n_trials % 36 == 0);
         bool do_vr = vr_enabled && !skip_vr_this_move;
 
-        if (do_vr) {
+        if (move1_entry) {
+            // Fully precomputed for move 1.
+        } else if (do_vr) {
             for (size_t i = 0; i < ALL_ROLLS.size(); ++i) {
                 move_candidates[i].clear();
                 possible_boards(board, ALL_ROLLS[i].d1, ALL_ROLLS[i].d2, move_candidates[i]);
@@ -428,8 +615,10 @@ RolloutStrategy::TrialResult RolloutStrategy::run_trial_unified(
 
         std::array<std::array<float, NUM_OUTPUTS>, 21> roll_best_probs;
         std::array<int, 21> best_candidate_idx{};
-        float x = 0.0f;
-        if (cube_active) x = cube_efficiency(board, race);
+        if (cube_active && !cube_x_ready) {
+            cube_x = move1_entry ? move1_entry->cube_x : cube_efficiency(board, race);
+            cube_x_ready = true;
+        }
 
         // Per-branch cubeful VR mean (only when cube_active)
         double mean_cf_branch[2] = {0.0, 0.0};
@@ -438,22 +627,29 @@ RolloutStrategy::TrialResult RolloutStrategy::run_trial_unified(
         double cl_mean_eq = 0.0;
 
         if (do_vr) {
-            // Evaluate all 21 rolls at 1-ply (fast batch path via base_)
-            for (size_t i = 0; i < ALL_ROLLS.size(); ++i) {
-                int idx = -1;
-                roll_best_probs[i] = best_move_probs_for_candidates(
-                    board, move_candidates[i], *base_, &idx);
-                best_candidate_idx[i] = idx;
-            }
+            if (move1_entry) {
+                roll_best_probs = move1_entry->roll_best_probs;
+                best_candidate_idx = move1_entry->best_candidate_idx;
+                cl_mean_probs = move1_entry->cl_mean_probs;
+                cl_mean_eq = move1_entry->cl_mean_eq;
+            } else {
+                // Evaluate all 21 rolls at 1-ply (fast batch path via base_)
+                for (size_t i = 0; i < ALL_ROLLS.size(); ++i) {
+                    int idx = -1;
+                    roll_best_probs[i] = best_move_probs_for_candidates(
+                        board, move_candidates[i], *base_, &idx);
+                    best_candidate_idx[i] = idx;
+                }
 
-            // Cubeless VR mean (always computed)
-            for (size_t i = 0; i < ALL_ROLLS.size(); ++i) {
-                for (int k = 0; k < NUM_OUTPUTS; ++k)
-                    cl_mean_probs[k] += ALL_ROLLS[i].weight * roll_best_probs[i][k];
+                // Cubeless VR mean (always computed)
+                for (size_t i = 0; i < ALL_ROLLS.size(); ++i) {
+                    for (int k = 0; k < NUM_OUTPUTS; ++k)
+                        cl_mean_probs[k] += ALL_ROLLS[i].weight * roll_best_probs[i][k];
+                }
+                for (int k = 0; k < NUM_OUTPUTS; ++k) cl_mean_probs[k] /= 36.0;
+                cl_mean_eq = 2.0*cl_mean_probs[0]-1.0 + cl_mean_probs[1]-cl_mean_probs[3]
+                             + cl_mean_probs[2]-cl_mean_probs[4];
             }
-            for (int k = 0; k < NUM_OUTPUTS; ++k) cl_mean_probs[k] /= 36.0;
-            cl_mean_eq = 2.0*cl_mean_probs[0]-1.0 + cl_mean_probs[1]-cl_mean_probs[3]
-                         + cl_mean_probs[2]-cl_mean_probs[4];
 
             // Per-branch cubeful VR mean (only when cube_active)
             if (cube_active) {
@@ -463,9 +659,9 @@ RolloutStrategy::TrialResult RolloutStrategy::run_trial_unified(
                     for (size_t i = 0; i < ALL_ROLLS.size(); ++i) {
                         double val;
                         if (is_match) {
-                            val = cl2cf_match(roll_best_probs[i], branches[b].cube, x);
+                            val = cl2cf_match(roll_best_probs[i], branches[b].cube, cube_x);
                         } else {
-                            float cf = cl2cf_money(roll_best_probs[i], branches[b].cube.owner, x,
+                            float cf = cl2cf_money(roll_best_probs[i], branches[b].cube.owner, cube_x,
                                                     branches[b].cube.jacoby_active());
                             val = cf * branches[b].cube.cube_value
                                      / branches[b].basis_cube;
@@ -484,11 +680,13 @@ RolloutStrategy::TrialResult RolloutStrategy::run_trial_unified(
         // and there are only 21 possible first rolls. The first trial to encounter
         // each dice combo computes the N-ply best move; subsequent trials reuse
         // the cached result via CAS.
-        const auto& candidates = move_candidates[actual_idx];
-
         Board chosen;
         bool used_move0_cache = false;
-        if (move0_cache && move_num == 0 && !using_base) {
+        if (move1_entry) {
+            chosen = move1_entry->chosen[actual_idx];
+        } else {
+            const auto& candidates = move_candidates[actual_idx];
+            if (move0_cache && move_num == 0 && !using_base) {
             int s = move0_cache->state[actual_idx].load(std::memory_order_acquire);
             if (s == 2) {
                 chosen = move0_cache->chosen[actual_idx];
@@ -517,27 +715,31 @@ RolloutStrategy::TrialResult RolloutStrategy::run_trial_unified(
             }
         }
 
-        if (!used_move0_cache) {
-            if (candidates.empty()) {
-                chosen = board;
-            } else if (candidates.size() == 1) {
-                chosen = candidates[0];
-            } else if (using_base) {
-                if (can_reuse_vr_idx && best_candidate_idx[actual_idx] >= 0 &&
-                    best_candidate_idx[actual_idx] < static_cast<int>(candidates.size())) {
-                    chosen = candidates[best_candidate_idx[actual_idx]];
+            if (!used_move0_cache) {
+                if (candidates.empty()) {
+                    chosen = board;
+                } else if (candidates.size() == 1) {
+                    chosen = candidates[0];
+                } else if (using_base) {
+                    if (can_reuse_vr_idx && best_candidate_idx[actual_idx] >= 0 &&
+                        best_candidate_idx[actual_idx] < static_cast<int>(candidates.size())) {
+                        chosen = candidates[best_candidate_idx[actual_idx]];
+                    } else {
+                        chosen = candidates[base_->best_move_index(candidates, board)];
+                    }
                 } else {
-                    chosen = candidates[base_->best_move_index(candidates, board)];
+                    chosen = candidates[current_strat.best_move_index(candidates, board)];
                 }
-            } else {
-                chosen = candidates[current_strat.best_move_index(candidates, board)];
             }
         }
+        if (move_num == 0) move0_roll_idx = actual_idx;
 
         // Phase 4b: VR luck computation
         if (do_vr) {
             std::array<float, NUM_OUTPUTS> actual_probs;
-            if (using_base) {
+            if (move1_entry) {
+                actual_probs = move1_entry->actual_probs[actual_idx];
+            } else if (using_base) {
                 // Decision also used 1-ply — reuse VR's stored probs
                 actual_probs = roll_best_probs[actual_idx];
             } else {
@@ -556,9 +758,9 @@ RolloutStrategy::TrialResult RolloutStrategy::run_trial_unified(
                     if (branches[b].finished) continue;
                     double actual_val;
                     if (is_match) {
-                        actual_val = cl2cf_match(actual_probs, branches[b].cube, x);
+                        actual_val = cl2cf_match(actual_probs, branches[b].cube, cube_x);
                     } else {
-                        float cf = cl2cf_money(actual_probs, branches[b].cube.owner, x,
+                        float cf = cl2cf_money(actual_probs, branches[b].cube.owner, cube_x,
                                                 branches[b].cube.jacoby_active());
                         actual_val = cf * branches[b].cube.cube_value
                                         / branches[b].basis_cube;
@@ -749,17 +951,12 @@ RolloutResult RolloutStrategy::run_trials_parallel(
     const auto& all_dice = cached_dice_;
 
     // Determine thread count
-    int n_threads = config_.n_threads;
-    if (n_threads <= 0) {
-        n_threads = static_cast<int>(std::thread::hardware_concurrency());
-        if (n_threads <= 0) n_threads = 1;
-    }
-    n_threads = std::min(n_threads, n_trials);
-    if (n_threads <= 0) n_threads = 1;
+    int n_threads = rollout_thread_count(n_trials);
 
     // Move-0 shared cache: all trials share the same starting position, so
     // there are only 21 possible first-roll decisions. Cache N-ply results.
     Move0Cache move0_cache;
+    prefill_move0_cache(flip(board), move0_cache, n_threads);
 
     // Fast path: n_threads == 1 can accumulate directly without trial buffers.
     if (n_threads == 1) {
@@ -1017,25 +1214,27 @@ RolloutStrategy::CubefulRolloutResult RolloutStrategy::cubeful_cube_decision(
     };
     std::vector<CubefulTrialResult> trial_results(n_trials);
 
+    // Determine thread count
+    int n_threads = rollout_thread_count(n_trials);
+
     // Move-0 shared cache: all trials share the same starting position, so
     // there are only 21 possible first-roll decisions. Cache N-ply results.
     Move0Cache move0_cache;
+    prefill_move0_cache(pre_roll_board, move0_cache, n_threads);
 
-    // Determine thread count
-    int n_threads = config_.n_threads;
-    if (n_threads <= 0) {
-        n_threads = static_cast<int>(std::thread::hardware_concurrency());
-        if (n_threads <= 0) n_threads = 1;
+    Move1Cache move1_cache;
+    const bool uses_move1_cache =
+        (config_.truncation_depth == 0) || (config_.truncation_depth > 1);
+    if (n_threads > 1 && uses_move1_cache) {
+        prefill_move1_cache(move0_cache, move1_cache, n_threads);
     }
-    n_threads = std::min(n_threads, n_trials);
-    if (n_threads <= 0) n_threads = 1;
 
     if (n_threads == 1) {
         for (int t = 0; t < n_trials; ++t) {
             CubefulBranch branches[2] = {nd_template, dt_template};
             trial_results[t].cubeless = run_trial_unified(
                 pre_roll_board, false, branches, 2,
-                all_dice[t].data(), max_moves, &move0_cache);
+                all_dice[t].data(), max_moves, &move0_cache, &move1_cache);
             trial_results[t].nd_equity = branches[0].final_equity;
             trial_results[t].dt_equity = branches[1].final_equity;
         }
@@ -1052,13 +1251,14 @@ RolloutStrategy::CubefulRolloutResult RolloutStrategy::cubeful_cube_decision(
             const std::vector<std::vector<std::pair<int,int>>>* all_dice;
             CubefulTrialResult* results;
             Move0Cache* move0_cache;
+            Move1Cache* move1_cache;
             std::atomic<int>* next_trial;
             int n_trials;
             int max_moves;
         };
 
         ThreadArg arg = {this, &pre_roll_board, &nd_template, &dt_template,
-                          &all_dice, trial_results.data(), &move0_cache, &next_trial,
+                          &all_dice, trial_results.data(), &move0_cache, &move1_cache, &next_trial,
                           n_trials, max_moves};
 
         std::vector<HANDLE> handles(n_threads);
@@ -1074,7 +1274,7 @@ RolloutStrategy::CubefulRolloutResult RolloutStrategy::cubeful_cube_decision(
                         a->results[t].cubeless = a->self->run_trial_unified(
                             *a->board, false, branches, 2,
                             (*a->all_dice)[t].data(), a->max_moves,
-                            a->move0_cache);
+                            a->move0_cache, a->move1_cache);
                         a->results[t].nd_equity = branches[0].final_equity;
                         a->results[t].dt_equity = branches[1].final_equity;
                     }
@@ -1090,7 +1290,7 @@ RolloutStrategy::CubefulRolloutResult RolloutStrategy::cubeful_cube_decision(
 
         for (int th = 0; th < n_threads; ++th) {
             threads.emplace_back([this, &pre_roll_board, &nd_template, &dt_template,
-                                  &all_dice, &trial_results, &move0_cache, &next_trial,
+                                  &all_dice, &trial_results, &move0_cache, &move1_cache, &next_trial,
                                   n_trials, max_moves]() {
                 int t;
                 while ((t = next_trial.fetch_add(1, std::memory_order_relaxed))
@@ -1098,7 +1298,7 @@ RolloutStrategy::CubefulRolloutResult RolloutStrategy::cubeful_cube_decision(
                     CubefulBranch branches[2] = {nd_template, dt_template};
                     trial_results[t].cubeless = run_trial_unified(
                         pre_roll_board, false, branches, 2,
-                        all_dice[t].data(), max_moves, &move0_cache);
+                        all_dice[t].data(), max_moves, &move0_cache, &move1_cache);
                     trial_results[t].nd_equity = branches[0].final_equity;
                     trial_results[t].dt_equity = branches[1].final_equity;
                 }

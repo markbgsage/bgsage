@@ -403,9 +403,8 @@ class _RolloutAnalyzer(_CubelessBase):
         away1=0, away2=0, is_crawford=False, jacoby=True, beaver=True,
     ) -> dict:
         owner = resolve_owner(cube_owner)
-        r = bgbot_cpp.cube_decision_rollout(
-            board, cube_value, owner, *self._weights.weight_args,
-            **self._rollout_config,
+        r = self._rollout_strategy.cube_decision(
+            board, cube_value, owner,
             away1=away1, away2=away2, is_crawford=is_crawford,
             jacoby=jacoby, beaver=beaver,
         )

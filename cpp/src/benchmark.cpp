@@ -2,6 +2,7 @@
 #include "bgbot/board.h"
 #include "bgbot/moves.h"
 #include "bgbot/neural_net.h"
+#include "bgbot/rollout.h"
 #include <thread>
 #include <algorithm>
 
@@ -11,6 +12,20 @@
 #endif
 
 namespace bgbot {
+
+namespace {
+
+int min_scenarios_per_thread(const Strategy& strategy) {
+    if (dynamic_cast<const RolloutStrategy*>(&strategy)) {
+        return 4;
+    }
+    if (dynamic_cast<const MultiPlyStrategy*>(&strategy)) {
+        return 8;
+    }
+    return 64;
+}
+
+} // namespace
 
 // Score a contiguous slice of scenarios. Pure function — no shared state.
 static BenchmarkResult score_slice(const Strategy& strategy,
@@ -84,10 +99,10 @@ BenchmarkResult score_benchmarks(const Strategy& strategy,
         // Hyperthreading can still help due to memory latency hiding.
     }
 
-    // Don't use more threads than scenarios, and ensure a minimum chunk size
-    // to avoid thread creation overhead dominating for small workloads.
-    const int MIN_SCENARIOS_PER_THREAD = 64;
-    int max_useful_threads = std::max(1, n / MIN_SCENARIOS_PER_THREAD);
+    // Heavy strategies (rollout / N-ply) benefit from parallelizing much
+    // smaller scenario batches than cheap 1-ply evaluation does.
+    const int min_per_thread = min_scenarios_per_thread(strategy);
+    int max_useful_threads = std::max(1, n / min_per_thread);
     n_threads = std::min(n_threads, max_useful_threads);
 
     // Serial path: avoid thread overhead for single-threaded case
@@ -218,8 +233,8 @@ void score_benchmarks_per_scenario(const Strategy& strategy,
         if (n_threads <= 0) n_threads = 1;
     }
 
-    const int MIN_SCENARIOS_PER_THREAD = 64;
-    int max_useful_threads = std::max(1, n / MIN_SCENARIOS_PER_THREAD);
+    const int min_per_thread = min_scenarios_per_thread(strategy);
+    int max_useful_threads = std::max(1, n / min_per_thread);
     n_threads = std::min(n_threads, max_useful_threads);
 
     if (n_threads == 1) {

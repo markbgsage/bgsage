@@ -1595,7 +1595,112 @@ PYBIND11_MODULE(bgbot_cpp, m) {
             result["scalar_vr_se"] = r.scalar_vr_se;
             return result;
         }, "Evaluate board via rollout, returns probs, equity, std_error, prob_std_errors, scalar_vr_equity/se",
-           py::arg("board"), py::arg("pre_move_board"));
+           py::arg("board"), py::arg("pre_move_board"))
+        .def("cube_decision", [](RolloutStrategy& self,
+                                  const std::vector<int>& checkers,
+                                  int cube_value,
+                                  CubeOwner owner,
+                                  int away1,
+                                  int away2,
+                                  bool is_crawford,
+                                  float cube_x_override,
+                                  bool jacoby,
+                                  bool beaver,
+                                  int max_cube_value) {
+            Board board = list_to_board(checkers);
+            bool race = is_race(board);
+            CubeInfo ci{cube_value, owner, {away1, away2, is_crawford},
+                        cube_x_override, jacoby, beaver, max_cube_value};
+
+            RolloutStrategy::CubefulRolloutResult cfr;
+            {
+                py::gil_scoped_release release;
+                cfr = self.cubeful_cube_decision(board, ci);
+            }
+
+            const auto& cl = cfr.cubeless;
+            auto pre_roll_probs = cl.mean_probs;
+            float cl_eq = cl.equity;
+            double cl_se = cl.std_error;
+
+            float equity_nd, equity_dt, equity_dp;
+            bool should_double, should_take;
+            float optimal_equity;
+
+            if (!ci.is_money()) {
+                int a1 = ci.match.away1, a2 = ci.match.away2;
+                int cv = ci.cube_value;
+                bool craw = ci.match.is_crawford;
+
+                float nd_m = static_cast<float>(cfr.nd_equity);
+                float dt_m = static_cast<float>(cfr.dt_equity);
+                float dp_m = dp_mwc(a1, a2, cv, craw);
+
+                bool auto_double = (!craw && a1 > 1 && a2 == 1);
+                if (auto_double) {
+                    should_double = true;
+                    should_take = (dt_m <= dp_m);
+                } else {
+                    float best_mwc = std::min(dt_m, dp_m);
+                    should_double = (best_mwc > nd_m);
+                    should_take = (dt_m <= dp_m);
+                }
+
+                equity_nd = mwc2eq(nd_m, a1, a2, cv, craw);
+                equity_dt = mwc2eq(dt_m, a1, a2, cv, craw);
+                equity_dp = mwc2eq(dp_m, a1, a2, cv, craw);
+                optimal_equity = should_double ? std::min(equity_dt, equity_dp)
+                                               : equity_nd;
+            } else {
+                equity_dp = 1.0f;
+                float actual_dt = static_cast<float>(cfr.dt_equity);
+                equity_nd = static_cast<float>(cfr.nd_equity);
+
+                if (ci.beaver && actual_dt < 0.0f) {
+                    equity_dt = 2.0f * actual_dt;
+                } else {
+                    equity_dt = actual_dt;
+                }
+
+                float best_double = std::min(equity_dt, equity_dp);
+                should_double = (best_double > equity_nd);
+                should_take = (equity_dt <= equity_dp);
+                optimal_equity = should_double ? best_double : equity_nd;
+            }
+
+            bool is_beaver_result = false;
+            if (ci.is_money() && ci.beaver) {
+                float actual_dt_check = static_cast<float>(cfr.dt_equity);
+                is_beaver_result = (actual_dt_check < 0.0f);
+            }
+
+            py::dict result;
+            result["probs"] = pre_roll_probs;
+            result["prob_std_errors"] = cl.prob_std_errors;
+            result["cubeless_equity"] = cl_eq;
+            result["cubeless_se"] = cl_se;
+            result["equity_nd"] = equity_nd;
+            result["equity_nd_se"] = cfr.nd_se;
+            result["equity_dt"] = equity_dt;
+            result["equity_dt_se"] = cfr.dt_se;
+            result["equity_dp"] = equity_dp;
+            result["should_double"] = should_double;
+            result["should_take"] = should_take;
+            result["optimal_equity"] = optimal_equity;
+            result["is_beaver"] = is_beaver_result;
+            result["is_race"] = race;
+            return result;
+        }, "Cubeful cube-action rollout using an existing rollout strategy",
+           py::arg("checkers"),
+           py::arg("cube_value") = 1,
+           py::arg("owner"),
+           py::arg("away1") = 0,
+           py::arg("away2") = 0,
+           py::arg("is_crawford") = false,
+           py::arg("cube_x_override") = -1.0f,
+           py::arg("jacoby") = true,
+           py::arg("beaver") = true,
+           py::arg("max_cube_value") = 0);
 
     // Create rollout strategy wrapping a 5-NN GamePlanStrategy
     m.def("create_rollout_5nn", [](const std::string& purerace_w,
@@ -2064,6 +2169,7 @@ PYBIND11_MODULE(bgbot_cpp, m) {
 
         py::dict result;
         result["probs"] = pre_roll_probs;
+        result["prob_std_errors"] = cl.prob_std_errors;
         result["cubeless_equity"] = cl_eq;
         result["cubeless_se"] = cl_se;
         result["equity_nd"] = equity_nd;

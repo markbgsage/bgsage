@@ -154,6 +154,32 @@ private:
         }
     };
 
+    // Precomputed move-1 data for cubeful pre-roll rollouts.
+    // After move 0 there are only 21 possible boards (one per first roll), so
+    // we can share the entire move-1 VR table and actual-roll decision across
+    // all trials that hit the same first roll.
+    struct Move1Cache {
+        struct Entry {
+            bool race = false;
+            float cube_x = 0.0f;
+            std::array<float, NUM_OUTPUTS> mover_probs = {};
+            std::array<std::array<float, NUM_OUTPUTS>, Move0Cache::N_ROLLS> roll_best_probs = {};
+            std::array<int, Move0Cache::N_ROLLS> best_candidate_idx = {};
+            std::array<double, NUM_OUTPUTS> cl_mean_probs = {0, 0, 0, 0, 0};
+            double cl_mean_eq = 0.0;
+            std::array<Board, Move0Cache::N_ROLLS> chosen = {};
+            std::array<std::array<float, NUM_OUTPUTS>, Move0Cache::N_ROLLS> actual_probs = {};
+        };
+
+        std::atomic<int> state[Move0Cache::N_ROLLS];  // 0=empty, 1=computing, 2=ready
+        std::array<Entry, Move0Cache::N_ROLLS> entries = {};
+
+        Move1Cache() {
+            for (int i = 0; i < Move0Cache::N_ROLLS; ++i)
+                state[i].store(0, std::memory_order_relaxed);
+        }
+    };
+
     // --- Cubeful rollout internals ---
 
     // Per-branch state during a cubeful trial.
@@ -186,7 +212,8 @@ private:
         CubefulBranch branches[], int n_branches,
         const std::pair<int,int>* dice_seq,
         int max_moves,
-        Move0Cache* move0_cache = nullptr) const;
+        Move0Cache* move0_cache = nullptr,
+        Move1Cache* move1_cache = nullptr) const;
 
     // Run N trials in parallel for a position, return mean + std error.
     RolloutResult run_trials_parallel(const Board& board) const;
@@ -212,12 +239,31 @@ private:
         const Board& board, int d1, int d2,
         const Strategy& strat) const;
 
+    // Resolve the worker count for trial parallelism. When n_threads=0, we
+    // choose a conservative default that preserves cache locality for
+    // truncated N-ply rollouts.
+    int rollout_thread_count(int n_trials) const;
+
     // Internal helper: evaluate the best move among pre-generated candidate
     // boards (used by both VR mean computation and internal move loops).
     std::array<float, NUM_OUTPUTS> best_move_probs_for_candidates(
         const Board& board, const std::vector<Board>& candidates,
         const Strategy& strat,
         int* best_index = nullptr) const;
+
+    // Precompute the move-0 choice for each opening roll.
+    void prefill_move0_cache(const Board& start_board, Move0Cache& cache,
+                             int n_threads = 1) const;
+
+    // Compute the move-1 cache entry for a specific first roll.
+    void populate_move1_cache_entry(const Move0Cache& move0_cache,
+                                    int first_roll_idx,
+                                    Move1Cache::Entry& entry) const;
+
+    // Precompute all move-1 cache entries. This is especially important for
+    // cubeful rollouts, where move 1 is the first expensive opponent turn.
+    void prefill_move1_cache(const Move0Cache& move0_cache, Move1Cache& cache,
+                             int n_threads) const;
 };
 
 } // namespace bgbot
