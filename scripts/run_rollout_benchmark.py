@@ -34,7 +34,7 @@ import bgbot_cpp
 from bgsage.data import load_benchmark_file, load_benchmark_scenarios_by_indices
 from bgsage.weights import WeightConfig
 
-DATA_DIR = os.path.join(project_dir, 'data')
+DATA_DIR = os.path.join(project_dir, 'bgsage', 'data')
 
 
 def main():

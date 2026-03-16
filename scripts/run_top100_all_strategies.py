@@ -45,6 +45,7 @@ def main():
     parser = argparse.ArgumentParser(
         description='Top-100 worst 1-ply positions scored at 1-4 ply and truncated rollout levels.'
     )
+    WeightConfig.add_model_arg(parser)
     parser.add_argument(
         '--threads', type=int, default=0,
         help='Threads used inside multi-ply / rollout evaluations (0=auto)'
@@ -54,9 +55,9 @@ def main():
 
     bgbot_cpp.init_escape_tables()
 
-    w = WeightConfig.default()
+    w = WeightConfig.from_args(args)
     w.validate()
-    w.print_summary('Model: stage5')
+    w.print_summary(f'Model: {args.model}')
 
     # Step 1: Load and score all scenarios at 1-ply
     print("Loading benchmarks...")
@@ -123,7 +124,7 @@ def main():
             total_count += r.count
         elapsed = time.perf_counter() - t0
         mean_err = (total_err / total_count * 1000) if total_count > 0 else 0
-        print(f"  {label:<50} {mean_err:>8.2f}  {elapsed:>9.1f}s")
+        print(f"  {label:<50} {mean_err:>8.2f}  {elapsed:>9.1f}s", flush=True)
         return mean_err, elapsed
 
     print()
@@ -191,12 +192,12 @@ def main():
     results.append(('XG Roller+', er, t))
 
     # XG Roller++ Checker: 360 trials, trunc=5, dp=3, late=2@2
+    # parallelize_trials disabled for dp=3 (crashes with parallel trial dispatch)
     roller_pp = bgbot_cpp.create_rollout_5nn(
         *w.weight_args,
         n_trials=360, truncation_depth=5,
         decision_ply=3, n_threads=rollout_threads,
-        late_ply=2, late_threshold=2,
-        parallelize_trials=(rollout_threads > 1))
+        late_ply=2, late_threshold=2)
     def score_roller_pp(ss):
         return bgbot_cpp.score_benchmarks_rollout(ss, roller_pp, 1)
     er, t = score_subset('XG Roller++ (360t, trunc=5, dp=3, late=2@2)', score_roller_pp)
