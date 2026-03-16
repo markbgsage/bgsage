@@ -989,10 +989,7 @@ RolloutResult RolloutStrategy::run_trials_parallel(
     // at the start of run_trial_unified. Prefill with the flipped board.
     prefill_move0_cache(flip(board), move0_cache, n_threads);
     if (uses_move1_cache) {
-        for (int i = 0; i < Move0Cache::N_ROLLS; ++i) {
-            populate_move1_cache_entry(move0_cache, i, move1_cache.entries[i]);
-            move1_cache.state[i].store(2, std::memory_order_release);
-        }
+        prefill_move1_cache(move0_cache, move1_cache, n_threads);
     }
 
     // Fast path: n_threads == 1 can accumulate directly without trial buffers.
