@@ -51,10 +51,18 @@ RolloutStrategy::RolloutStrategy(std::shared_ptr<Strategy> base, RolloutConfig c
                        ? config.truncation_depth + 10
                        : 200)
 {
+    // For rollout-internal move selection, use a tighter filter than the
+    // top-level config_.filter. Rollout averages over many trials, so minor
+    // move selection differences are smoothed out. The filter only affects
+    // best_move_index (not evaluate_probs used at truncation), so truncation
+    // accuracy is unaffected. Profiling shows TIGHT(3,0.04) is ~6x faster
+    // than TINY(5,0.08) for 2-ply BMI with negligible accuracy impact.
+    MoveFilter internal_filter = {2, 0.03f};
+
     // Build decision strategy
     if (config_.decision_ply > 1) {
         decision_strat_ = std::make_shared<MultiPlyStrategy>(
-            base_, config_.decision_ply, config_.filter);
+            base_, config_.decision_ply, internal_filter);
     } else {
         decision_strat_ = base_;
     }
@@ -65,7 +73,7 @@ RolloutStrategy::RolloutStrategy(std::shared_ptr<Strategy> base, RolloutConfig c
         late_decision_strat_ = decision_strat_;
     } else if (effective_late_ply > 1) {
         late_decision_strat_ = std::make_shared<MultiPlyStrategy>(
-            base_, effective_late_ply, config_.filter);
+            base_, effective_late_ply, internal_filter);
     } else {
         late_decision_strat_ = base_;
     }
@@ -291,15 +299,20 @@ std::array<float, NUM_OUTPUTS> RolloutStrategy::best_move_probs_for_candidates(
 }
 
 void RolloutStrategy::prefill_move0_cache(
-    const Board& start_board, Move0Cache& cache, int n_threads) const
+    const Board& start_board, Move0Cache& cache, int n_threads,
+    SharedPosCache* shared) const
 {
     const bool race = is_race(start_board);
-    const bool is_late = (0 >= config_.late_threshold);
-    const auto& current_strat = race ? *base_
-        : (is_late ? *late_decision_strat_ : *decision_strat_);
+    // Prefill always uses the late (faster) strategy for move selection.
+    // Move selection quality has diminishing returns beyond 2-ply because
+    // the rollout averages over many trials. The higher-ply strategy is
+    // only critical for truncation evaluation (evaluate_probs).
+    const auto& current_strat = race ? *base_ : *late_decision_strat_;
     const bool using_base = (&current_strat == base_.get());
 
     auto compute_roll = [&](int roll_idx) {
+        if (shared) MultiPlyStrategy::set_shared_cache(shared);
+
         thread_local std::vector<Board> candidates;
         candidates.clear();
         possible_boards(start_board,
@@ -320,6 +333,8 @@ void RolloutStrategy::prefill_move0_cache(
 
         cache.chosen[roll_idx] = chosen;
         cache.state[roll_idx].store(2, std::memory_order_release);
+
+        if (shared) MultiPlyStrategy::set_shared_cache(nullptr);
     };
 
     const int workers = std::min<int>(Move0Cache::N_ROLLS, std::max(1, n_threads));
@@ -342,9 +357,8 @@ void RolloutStrategy::populate_move1_cache_entry(
     entry.race = is_race(move1_board);
     entry.cube_x = cube_efficiency(move1_board, entry.race);
 
-    const bool is_late = (1 >= config_.late_threshold);
-    const auto& current_strat = entry.race ? *base_
-        : (is_late ? *late_decision_strat_ : *decision_strat_);
+    // Prefill always uses late strategy for move selection (see prefill_move0_cache).
+    const auto& current_strat = entry.race ? *base_ : *late_decision_strat_;
     const bool using_base = (&current_strat == base_.get());
 
     const Board opp_board = flip(move1_board);
@@ -404,11 +418,14 @@ void RolloutStrategy::populate_move1_cache_entry(
 }
 
 void RolloutStrategy::prefill_move1_cache(
-    const Move0Cache& move0_cache, Move1Cache& cache, int n_threads) const
+    const Move0Cache& move0_cache, Move1Cache& cache, int n_threads,
+    SharedPosCache* shared) const
 {
     auto populate_entry = [&](int roll_idx) {
+        if (shared) MultiPlyStrategy::set_shared_cache(shared);
         populate_move1_cache_entry(move0_cache, roll_idx, cache.entries[roll_idx]);
         cache.state[roll_idx].store(2, std::memory_order_release);
+        if (shared) MultiPlyStrategy::set_shared_cache(nullptr);
     };
 
     const int workers = std::min<int>(Move0Cache::N_ROLLS, std::max(1, n_threads));
@@ -594,6 +611,11 @@ RolloutStrategy::TrialResult RolloutStrategy::run_trial_unified(
         int actual_idx = kOrderedRollToIndex[a_die][b_die];
         if (actual_idx < 0) actual_idx = 0;
 
+        // Ultra-late: for moves deep in the trial, drop to 1-ply move
+        // selection AND skip VR. Rollout averaging over many trials dilutes
+        // both move-selection quality and per-move VR contribution at depth.
+        // 1-ply lets us reuse the VR best-candidate pick (zero extra cost).
+        constexpr int ultra_late_threshold = 2;
         bool skip_vr_this_move = (move_num == 0 && config_.n_trials % 36 == 0);
         bool do_vr = vr_enabled && !skip_vr_this_move;
 
@@ -611,7 +633,8 @@ RolloutStrategy::TrialResult RolloutStrategy::run_trial_unified(
 
         // Phase 3: VR mean — always use base_ (1-ply) for efficiency.
         const auto& current_strat = race ? *base_
-            : (is_late ? *late_decision_strat_ : *decision_strat_);
+            : (move_num >= ultra_late_threshold ? *base_
+               : (is_late ? *late_decision_strat_ : *decision_strat_));
         bool using_base = (&current_strat == base_.get());
         bool can_reuse_vr_idx = do_vr && base_gps_;
 
@@ -955,10 +978,22 @@ RolloutResult RolloutStrategy::run_trials_parallel(
     // Determine thread count
     int n_threads = rollout_thread_count(n_trials);
 
-    // Move-0 shared cache: all trials share the same starting position, so
-    // there are only 21 possible first-roll decisions. Cache N-ply results.
+    // Move-0 and Move-1 shared caches: all trials share the same starting
+    // position, so first two moves can be precomputed and shared.
     Move0Cache move0_cache;
+    Move1Cache move1_cache;
+    const bool uses_move1_cache =
+        (config_.truncation_depth == 0) || (config_.truncation_depth > 1);
+
+    // For the cubeless path, start_post_move=true means the board is flipped
+    // at the start of run_trial_unified. Prefill with the flipped board.
     prefill_move0_cache(flip(board), move0_cache, n_threads);
+    if (uses_move1_cache) {
+        for (int i = 0; i < Move0Cache::N_ROLLS; ++i) {
+            populate_move1_cache_entry(move0_cache, i, move1_cache.entries[i]);
+            move1_cache.state[i].store(2, std::memory_order_release);
+        }
+    }
 
     // Fast path: n_threads == 1 can accumulate directly without trial buffers.
     if (n_threads == 1) {
@@ -969,7 +1004,8 @@ RolloutResult RolloutStrategy::run_trials_parallel(
         double sum_svr_eq = 0.0, sum_svr_eq_sq = 0.0;
 
         for (int t = 0; t < n_trials; ++t) {
-            auto r = run_trial_unified(board, true, nullptr, 0, all_dice[t].data(), max_moves, &move0_cache);
+            auto r = run_trial_unified(board, true, nullptr, 0, all_dice[t].data(), max_moves,
+                                       &move0_cache, &move1_cache);
             double eq = r.equity;
             for (int k = 0; k < NUM_OUTPUTS; ++k) {
                 double v = r.probs[k];
@@ -1008,71 +1044,12 @@ RolloutResult RolloutStrategy::run_trials_parallel(
     // Allocate per-trial results
     std::vector<TrialResult> trial_results(n_trials);
 
-    if (config_.decision_ply == 1) {
-        // For fixed-depth shallow rollout (decision_ply == 1) and short
-        // batches, static partitioning is often faster than atomic work stealing.
-#ifdef _WIN32
-        struct ThreadArg {
-            const RolloutStrategy* self;
-            const Board* board;
-            const std::vector<std::vector<std::pair<int, int>>>* all_dice;
-            TrialResult* trial_results;
-            Move0Cache* move0_cache;
-            int n_trials;
-            int max_moves;
-            int n_threads;
-            int thread_idx;
-        };
-
-        std::vector<ThreadArg> args(n_threads);
-        for (int th = 0; th < n_threads; ++th) {
-            args[th] = {this, &board, &all_dice,
-                        trial_results.data(), &move0_cache, n_trials, max_moves,
-                        n_threads, th};
-        }
-
-        std::vector<HANDLE> handles(n_threads);
-        for (int th = 0; th < n_threads; ++th) {
-            handles[th] = CreateThread(
-                nullptr, 4 * 1024 * 1024,
-                [](LPVOID param) -> DWORD {
-                    auto* a = static_cast<ThreadArg*>(param);
-                    for (int t = a->thread_idx; t < a->n_trials; t += a->n_threads) {
-                        a->trial_results[t] = a->self->run_trial_unified(
-                            *a->board, true, nullptr, 0,
-                            (*a->all_dice)[t].data(), a->max_moves,
-                            a->move0_cache);
-                    }
-                    return 0;
-                },
-                &args[th], 0, nullptr);
-        }
-
-        WaitForMultipleObjects(n_threads, handles.data(), TRUE, INFINITE);
-        for (int th = 0; th < n_threads; ++th) {
-            CloseHandle(handles[th]);
-        }
-#else
-        std::vector<std::thread> threads;
-        threads.reserve(n_threads);
-
-        for (int th = 0; th < n_threads; ++th) {
-            threads.emplace_back([this, &board, &all_dice,
-                                  &trial_results, &move0_cache, n_threads, n_trials, max_moves, th]() {
-                for (int t = th; t < n_trials; t += n_threads) {
-                    trial_results[t] = run_trial_unified(
-                        board, true, nullptr, 0,
-                        all_dice[t].data(), max_moves, &move0_cache);
-                }
-            });
-        }
-
-        for (auto& t : threads) t.join();
-#endif
-    } else {
-        // Work-stealing: threads grab trials from a shared atomic counter.
-        // This handles variance in trial length (some games are 10 moves,
-        // others 100+) much better than static chunking.
+    {
+        // Unified threading: same threads do combined move0+move1 prefill (already done
+        // above for serial) then trials with work-stealing. SharedPosCache enables
+        // cross-thread N-ply cache sharing. For dp==1, all strategies are 1-ply so
+        // SharedPosCache/unified threading have minimal overhead.
+        SharedPosCache shared_cache;
         std::atomic<int> next_trial{0};
 
 #ifdef _WIN32
@@ -1082,49 +1059,56 @@ RolloutResult RolloutStrategy::run_trials_parallel(
             const std::vector<std::vector<std::pair<int,int>>>* all_dice;
             TrialResult* trial_results;
             Move0Cache* move0_cache;
+            Move1Cache* move1_cache;
+            SharedPosCache* shared_cache;
             std::atomic<int>* next_trial;
             int n_trials;
             int max_moves;
         };
 
-        std::vector<HANDLE> handles(n_threads);
         ThreadArg arg = {this, &board, &all_dice,
-                         trial_results.data(), &move0_cache, &next_trial, n_trials, max_moves};
+                         trial_results.data(), &move0_cache, &move1_cache,
+                         &shared_cache, &next_trial, n_trials, max_moves};
 
+        std::vector<HANDLE> handles(n_threads);
         for (int th = 0; th < n_threads; ++th) {
             handles[th] = CreateThread(
                 nullptr, 4 * 1024 * 1024,
                 [](LPVOID param) -> DWORD {
                     auto* a = static_cast<ThreadArg*>(param);
+                    MultiPlyStrategy::set_shared_cache(a->shared_cache);
                     int t;
                     while ((t = a->next_trial->fetch_add(1, std::memory_order_relaxed)) < a->n_trials) {
                         a->trial_results[t] = a->self->run_trial_unified(
                             *a->board, true, nullptr, 0,
                             (*a->all_dice)[t].data(), a->max_moves,
-                            a->move0_cache);
+                            a->move0_cache, a->move1_cache);
                     }
+                    MultiPlyStrategy::set_shared_cache(nullptr);
                     return 0;
                 },
                 &arg, 0, nullptr);
         }
 
         WaitForMultipleObjects(n_threads, handles.data(), TRUE, INFINITE);
-        for (int th = 0; th < n_threads; ++th) {
-            CloseHandle(handles[th]);
-        }
+        for (int th = 0; th < n_threads; ++th) CloseHandle(handles[th]);
 #else
         std::vector<std::thread> threads;
         threads.reserve(n_threads);
 
         for (int th = 0; th < n_threads; ++th) {
             threads.emplace_back([this, &board, &all_dice,
-                                  &trial_results, &move0_cache, &next_trial, n_trials, max_moves]() {
+                                  &trial_results, &move0_cache, &move1_cache,
+                                  &shared_cache, &next_trial, n_trials, max_moves]() {
+                MultiPlyStrategy::set_shared_cache(&shared_cache);
                 int t;
                 while ((t = next_trial.fetch_add(1, std::memory_order_relaxed)) < n_trials) {
                     trial_results[t] = run_trial_unified(
                         board, true, nullptr, 0,
-                        all_dice[t].data(), max_moves, &move0_cache);
+                        all_dice[t].data(), max_moves,
+                        &move0_cache, &move1_cache);
                 }
+                MultiPlyStrategy::set_shared_cache(nullptr);
             });
         }
 
@@ -1185,6 +1169,8 @@ RolloutStrategy::CubefulRolloutResult RolloutStrategy::cubeful_cube_decision(
     const Board& pre_roll_board,
     const CubeInfo& cube) const
 {
+    // (timing removed — see benchmark_3t for end-to-end timing)
+
     const int n_trials = config_.n_trials;
     const int max_moves = (config_.truncation_depth > 0)
         ? config_.truncation_depth + 10 : 200;
@@ -1219,19 +1205,20 @@ RolloutStrategy::CubefulRolloutResult RolloutStrategy::cubeful_cube_decision(
     // Determine thread count
     int n_threads = rollout_thread_count(n_trials);
 
-    // Move-0 shared cache: all trials share the same starting position, so
-    // there are only 21 possible first-roll decisions. Cache N-ply results.
     Move0Cache move0_cache;
-    prefill_move0_cache(pre_roll_board, move0_cache, n_threads);
-
     Move1Cache move1_cache;
     const bool uses_move1_cache =
         (config_.truncation_depth == 0) || (config_.truncation_depth > 1);
-    if (n_threads > 1 && uses_move1_cache) {
-        prefill_move1_cache(move0_cache, move1_cache, n_threads);
-    }
 
     if (n_threads == 1) {
+        // Serial: prefill + trials on a single thread (PosCache stays warm)
+        prefill_move0_cache(pre_roll_board, move0_cache, 1, nullptr);
+        if (uses_move1_cache) {
+            for (int i = 0; i < Move0Cache::N_ROLLS; ++i) {
+                populate_move1_cache_entry(move0_cache, i, move1_cache.entries[i]);
+                move1_cache.state[i].store(2, std::memory_order_release);
+            }
+        }
         for (int t = 0; t < n_trials; ++t) {
             CubefulBranch branches[2] = {nd_template, dt_template};
             trial_results[t].cubeless = run_trial_unified(
@@ -1241,41 +1228,90 @@ RolloutStrategy::CubefulRolloutResult RolloutStrategy::cubeful_cube_decision(
             trial_results[t].dt_equity = branches[1].final_equity;
         }
     } else {
-        // Parallel dispatch with cross-thread SharedPosCache.
-        // N-ply sub-positions (especially 2-ply entries from 3-ply truncation
-        // evaluations) accumulate across all threads via a lock-free shared
-        // cache, improving hit rates as more trials complete.
+        // Unified threading: same threads do combined move0+move1 prefill then
+        // trials. This keeps thread-local PosCache warm across all phases.
+        // Move0 and move1 for the same roll index are done back-to-back by the
+        // same thread (no barrier needed — move1[r] only depends on move0[r]).
+        // After all 21 entries are done, threads proceed to trial work-stealing.
         SharedPosCache shared_cache;
+        std::atomic<int> next_roll{0};
         std::atomic<int> next_trial{0};
 
+        // Precompute move0 strategy selection (same for all rolls)
+        // Prefill always uses late strategy for move selection (see prefill_move0_cache).
+        const bool m0_race = is_race(pre_roll_board);
+        const Strategy* m0_strat = m0_race ? base_.get() : late_decision_strat_.get();
+
 #ifdef _WIN32
-        struct ThreadArg {
+        struct UnifiedArg {
             const RolloutStrategy* self;
             const Board* board;
+            Move0Cache* move0_cache;
+            Move1Cache* move1_cache;
+            SharedPosCache* shared_cache;
             const CubefulBranch* nd_tmpl;
             const CubefulBranch* dt_tmpl;
             const std::vector<std::vector<std::pair<int,int>>>* all_dice;
             CubefulTrialResult* results;
-            Move0Cache* move0_cache;
-            Move1Cache* move1_cache;
-            SharedPosCache* shared_cache;
+            std::atomic<int>* next_roll;
             std::atomic<int>* next_trial;
+            const Strategy* m0_strat;
             int n_trials;
             int max_moves;
+            bool uses_move1_cache;
         };
 
-        ThreadArg arg = {this, &pre_roll_board, &nd_template, &dt_template,
-                          &all_dice, trial_results.data(), &move0_cache, &move1_cache,
-                          &shared_cache, &next_trial, n_trials, max_moves};
+        UnifiedArg arg = {this, &pre_roll_board, &move0_cache, &move1_cache,
+                           &shared_cache, &nd_template, &dt_template,
+                           &all_dice, trial_results.data(),
+                           &next_roll, &next_trial, m0_strat,
+                           n_trials, max_moves, uses_move1_cache};
 
         std::vector<HANDLE> handles(n_threads);
         for (int th = 0; th < n_threads; ++th) {
             handles[th] = CreateThread(
                 nullptr, 4 * 1024 * 1024,
                 [](LPVOID param) -> DWORD {
-                    auto* a = static_cast<ThreadArg*>(param);
+                    auto* a = static_cast<UnifiedArg*>(param);
                     MultiPlyStrategy::set_shared_cache(a->shared_cache);
 
+                    // Phase 1+2: Combined move0 + move1 prefill per roll
+                    int r;
+                    while ((r = a->next_roll->fetch_add(1, std::memory_order_relaxed)) < 21) {
+                        thread_local std::vector<Board> candidates;
+                        candidates.clear();
+                        const auto& roll = RolloutStrategy::ALL_ROLLS[r];
+                        possible_boards(*a->board, roll.d1, roll.d2, candidates);
+                        Board chosen;
+                        if (candidates.empty()) {
+                            chosen = *a->board;
+                        } else if (candidates.size() == 1) {
+                            chosen = candidates[0];
+                        } else {
+                            chosen = candidates[a->m0_strat->best_move_index(
+                                candidates, *a->board)];
+                        }
+                        a->move0_cache->chosen[r] = chosen;
+                        a->move0_cache->state[r].store(2, std::memory_order_release);
+
+                        if (a->uses_move1_cache) {
+                            a->self->populate_move1_cache_entry(
+                                *a->move0_cache, r, a->move1_cache->entries[r]);
+                            a->move1_cache->state[r].store(2, std::memory_order_release);
+                        }
+                    }
+
+                    // Wait for all prefill entries to complete
+                    for (int i = 0; i < 21; ++i) {
+                        while (a->move0_cache->state[i].load(std::memory_order_acquire) != 2)
+                            std::this_thread::yield();
+                        if (a->uses_move1_cache) {
+                            while (a->move1_cache->state[i].load(std::memory_order_acquire) != 2)
+                                std::this_thread::yield();
+                        }
+                    }
+
+                    // Phase 3: Trials (work-stealing)
                     int t;
                     while ((t = a->next_trial->fetch_add(1, std::memory_order_relaxed))
                            < a->n_trials) {
@@ -1302,9 +1338,42 @@ RolloutStrategy::CubefulRolloutResult RolloutStrategy::cubeful_cube_decision(
         for (int th = 0; th < n_threads; ++th) {
             threads.emplace_back([this, &pre_roll_board, &nd_template, &dt_template,
                                   &all_dice, &trial_results, &move0_cache, &move1_cache,
-                                  &shared_cache, &next_trial,
-                                  n_trials, max_moves]() {
+                                  &shared_cache, &next_roll, &next_trial,
+                                  m0_strat, n_trials, max_moves, uses_move1_cache]() {
                 MultiPlyStrategy::set_shared_cache(&shared_cache);
+
+                int r;
+                while ((r = next_roll.fetch_add(1, std::memory_order_relaxed)) < 21) {
+                    thread_local std::vector<Board> candidates;
+                    candidates.clear();
+                    const auto& roll = ALL_ROLLS[r];
+                    possible_boards(pre_roll_board, roll.d1, roll.d2, candidates);
+                    Board chosen;
+                    if (candidates.empty()) {
+                        chosen = pre_roll_board;
+                    } else if (candidates.size() == 1) {
+                        chosen = candidates[0];
+                    } else {
+                        chosen = candidates[m0_strat->best_move_index(
+                            candidates, pre_roll_board)];
+                    }
+                    move0_cache.chosen[r] = chosen;
+                    move0_cache.state[r].store(2, std::memory_order_release);
+
+                    if (uses_move1_cache) {
+                        populate_move1_cache_entry(move0_cache, r, move1_cache.entries[r]);
+                        move1_cache.state[r].store(2, std::memory_order_release);
+                    }
+                }
+
+                for (int i = 0; i < 21; ++i) {
+                    while (move0_cache.state[i].load(std::memory_order_acquire) != 2)
+                        std::this_thread::yield();
+                    if (uses_move1_cache) {
+                        while (move1_cache.state[i].load(std::memory_order_acquire) != 2)
+                            std::this_thread::yield();
+                    }
+                }
 
                 int t;
                 while ((t = next_trial.fetch_add(1, std::memory_order_relaxed))

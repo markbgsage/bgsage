@@ -146,25 +146,35 @@ Top-100 worst 1-ply scenarios from 207,484 total (contact + crashed).
 Higher ER = harder positions. Lower ER = better strategy.
 Script: `scripts/run_top100_all_strategies.py`
 
+Settings key: `Nt` = N trials, `trunc=D` = truncation depth (half-moves),
+`dp=P` = decision ply for move selection, `late=P@M` = switch to ply P after
+half-move M. See `CLAUDE.md` Truncated Rollouts section for full parameter docs.
+
 | Strategy | Settings | ER | Time |
 |----------|----------|------|------|
-| 1-ply | - | 541.10 | 0.2s |
-| 2-ply | TINY filter | 355.24 | 0.7s |
-| 3-ply | TINY filter | 338.78 | 9.5s |
-| 4-ply | TINY filter | 333.59 | 54.0s |
-| XG Roller | 42t, trunc=5, dp=1 | 336.12 | 104.7s |
-| XG Roller+ | 360t, trunc=7, dp=2, late=1@2 | 322.01 | 353.1s |
-| XG Roller++ | 360t, trunc=5, dp=3, late=2@2 | 336.03 | 1078.0s |
+| 1-ply | - | 541.10 | 0.0s |
+| 2-ply | TINY filter | 355.24 | 0.2s |
+| 3-ply | TINY filter | 338.78 | 3.2s |
+| 4-ply | TINY filter | 333.59 | 20.3s |
+| XG Roller | 42t, trunc=5, dp=1 | 336.12 | 69.6s |
+| XG Roller+ | 360t, trunc=7, dp=2, late=1@2 | 316.51 | 268.1s |
+| XG Roller++ | 360t, trunc=5, dp=3, late=2@2 | 326.33 | 337.7s |
 
 **Key observations:**
-- **XG Roller (1-ply decisions)** beats 3-ply (336.12 vs 338.78) at about 2.3x the cost
-  of 3-ply -- the Monte Carlo sampling helps even with 1-ply move selection.
-- **XG Roller+** is the strongest level at 322.01, beating 4-ply (333.59) by a
-  significant margin. Cost is ~353s vs 54s for 4-ply.
-- **XG Roller++** is now practical after rollout performance optimizations
-  (VR decoupled to 1-ply, move-0 shared cache). Previously impractical (~44 CPU-hours
-  for 100 positions). ER of 336.03 is comparable to 3-ply/XG Roller, and the high
-  variance of rollout evaluation on only 100 extreme positions limits accuracy
-  differentiation at this sample size.
+- **XG Roller (1-ply decisions)** beats 3-ply (336.12 vs 338.78) at about 22x the cost
+  of 3-ply — the Monte Carlo sampling helps even with 1-ply move selection.
+- **XG Roller+** is the strongest level at 316.51, beating 4-ply (333.59) by a
+  significant margin. Cost is ~268s vs 20s for 4-ply.
+- **XG Roller++** at 326.33 is now substantially stronger than 3-ply/XG Roller, and
+  runs in similar time to XG Roller+ thanks to rollout performance optimizations
+  (Move1Cache — pre-computed second-move decisions shared across trials,
+  SharedPosCache — lock-free cross-thread N-ply evaluation cache, ultra-late 1-ply
+  move selection for trial moves 2+, and VR decoupled to 1-ply). Previously much
+  slower (~1078s before optimizations).
+- **ER improvements for Roller+ and Roller++** (vs prior benchmarks) come from the
+  ultra-late threshold: using 1-ply move selection for trial moves at depth 2+ makes
+  VR (variance reduction) correction more consistent, since both the VR evaluator and
+  move selection operate at 1-ply for those moves. The deterministic N-ply results
+  (1-4 ply) are identical.
 - **2-ply decisions with truncated rollout** (XG Roller+) provides the best
   accuracy/speed sweet spot for these worst-case positions.

@@ -254,7 +254,8 @@ private:
 
     // Precompute the move-0 choice for each opening roll.
     void prefill_move0_cache(const Board& start_board, Move0Cache& cache,
-                             int n_threads = 1) const;
+                             int n_threads = 1,
+                             SharedPosCache* shared = nullptr) const;
 
     // Compute the move-1 cache entry for a specific first roll.
     void populate_move1_cache_entry(const Move0Cache& move0_cache,
@@ -264,7 +265,8 @@ private:
     // Precompute all move-1 cache entries. This is especially important for
     // cubeful rollouts, where move 1 is the first expensive opponent turn.
     void prefill_move1_cache(const Move0Cache& move0_cache, Move1Cache& cache,
-                             int n_threads) const;
+                             int n_threads,
+                             SharedPosCache* shared = nullptr) const;
 };
 
 } // namespace bgbot

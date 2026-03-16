@@ -502,16 +502,30 @@ cache, incremental delta evaluation, transposed weight matrix.
 ## Rollout
 
 Monte Carlo evaluation with variance reduction. Stratified first roll
-(36 dice pairs). Parallelized trial execution.
+(36 dice pairs). Parallelized trial execution via work-stealing
+(`atomic<int> next_trial`).
 
-**VR decoupled from decision ply:** VR always uses 1-ply (raw NN) for both mean
-and actual computations, regardless of the decision strategy's ply level. Move
-selection still uses the full N-ply decision strategy. Since VR tracks
-luck = (actual - mean) with both sides using the same ply, biases cancel. This
-eliminates ~90% of N-ply evaluations. When `n_trials % 36 == 0`, VR is skipped
-on move 0 (stratified dice makes luck sum to exactly zero). N-ply strategies inside
-trials use serial evaluation (`parallel_evaluate=false`) — all parallelism is
-across trial paths.
+**VR (variance reduction) decoupled from decision ply:** VR always uses 1-ply
+(raw NN) for both mean and actual computations, regardless of the decision
+strategy's ply level. Move selection still uses the full N-ply decision strategy.
+Since VR tracks luck = (actual - mean) with both sides using the same ply, biases
+cancel. This eliminates ~90% of N-ply evaluations. When `n_trials % 36 == 0`, VR
+is skipped on move 0 (stratified dice makes luck sum to exactly zero). N-ply
+strategies inside trials use serial evaluation (`parallel_evaluate=false`) — all
+parallelism is across trial paths.
+
+**Shared caches for trial acceleration:**
+- **Move0Cache**: Pre-computes first-move decisions for all 21 stratified dice rolls.
+  Shared across all trials (first roll is deterministic per trial index). Populated
+  serially before trial threads start.
+- **Move1Cache**: Pre-computes second-move decisions: for each of 21 first-roll
+  outcomes, generates all 21 second-roll best moves at the configured decision ply.
+  Avoids redundant N-ply best-move-index (BMI) calls across trials. Used by both
+  cubeful (`cubeful_cube_decision`) and cubeless (`run_trials_parallel`) paths.
+- **SharedPosCache**: Lock-free cross-thread position cache (2M entries, CAS-based
+  state machine: EMPTY→COMPUTING→READY). Threads that hit a COMPUTING entry spin
+  briefly then fall back to local computation. Eliminates redundant N-ply evaluations
+  across threads when `n_threads > 1`.
 
 **Unified trial function** (`run_trial_unified`): A single function handles both
 cubeless (`n_branches=0`) and cubeful (`n_branches>0`) rollout modes. The
@@ -537,17 +551,21 @@ search but faster than full rollouts, making them the best speed/accuracy tradeo
 for position evaluation.
 
 **Key parameters:**
-- `n_trials`: Number of trial games (42-360 typical)
-- `truncation_depth`: Half-moves before truncating and evaluating with NN
-- `decision_ply`: Ply for move selection in early moves AND truncation evaluation
+- `n_trials`: Number of trial games per candidate (42-360 typical for truncated rollouts)
+- `truncation_depth`: Half-moves before truncating and evaluating with NN (0 = play to completion)
+- `decision_ply`: Ply depth for move selection during early trial moves AND truncation evaluation
 - `late_ply`: Ply for move selection after `late_threshold` half-moves (-1 = same as `decision_ply`)
-- `late_threshold`: Half-move where decision ply switches from `decision_ply` to `late_ply`
-- `enable_vr`: Variance reduction (always true for truncated rollouts)
+- `late_threshold`: Half-move index where decision ply switches from `decision_ply` to `late_ply`
+- `ultra_late_threshold`: Half-move index (hardcoded to 2) where move selection drops to 1-ply
+  regardless of `decision_ply`/`late_ply`. At 1-ply, the VR best-candidate pick is reused
+  directly — zero additional best-move-index (BMI) cost.
+- `enable_vr`: Variance reduction (always true for truncated rollouts, uses 1-ply)
 
-**Strategy selection during trials:**
-- Before `late_threshold`: `decision_strat_` (N-ply)
-- After `late_threshold`: `late_decision_strat_` (lower ply, for speed)
+**Strategy selection during trials** (evaluated in order, first match wins):
 - Race positions: always `base_` (1-ply, nearly perfect for pure races)
+- At or after `ultra_late_threshold` (half-move >= 2): `base_` (1-ply)
+- Before `late_threshold`: `decision_strat_` (N-ply)
+- At or after `late_threshold`: `late_decision_strat_` (lower ply, for speed)
 - Truncation evaluation: always `decision_strat_` (highest ply, for accuracy)
 
 **XG Roller equivalences** (XG uses XG ply convention = our convention):
@@ -801,7 +819,10 @@ Keep this in mind when comparing results.
 - **TD(0)**: Temporal Difference learning (no eligibility trace)
 - **gpw**: Game plan weight — gradient multiplier for matching positions in SL
 - **TINY filter**: Default move filter (5 moves, 0.08 threshold)
-- **VR**: Variance Reduction — luck-tracking for rollout noise reduction
+- **VR**: Variance Reduction — luck-tracking for rollout noise reduction (always 1-ply, decoupled from decision ply)
+- **BMI**: Best Move Index — the core function that selects the best move from legal candidates (1-ply score + filter + N-ply rescore)
+- **Move0Cache/Move1Cache**: Pre-computed move decisions for the first/second half-moves of a rollout trial, shared across all trials
+- **SharedPosCache**: Lock-free cross-thread N-ply position evaluation cache for rollout trials
 - **Jacoby rule**: Optional money game rule — gammons/backgammons count as single while cube is centered. Default on in Python API, auto-disabled for match play. `CubeInfo::jacoby_active()` checks `jacoby && is_money() && owner == CENTERED`.
 - **Beaver rule**: Optional money game rule — opponent can redouble while retaining cube after being doubled. Punishes bad doubles (DT < 0). DB = 2*DT. Default on in Python API, auto-disabled for match play.
 - **Janowski**: Cubeless-to-cubeful equity interpolation

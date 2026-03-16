@@ -78,6 +78,22 @@ target_link_libraries(bgbot_profile_4ply PRIVATE bgbot_lib)
 add_executable(benchmark_truncated_rollout src/benchmark_truncated_rollout.cpp)
 target_link_libraries(benchmark_truncated_rollout PRIVATE bgbot_lib)
 
+# 3T benchmark (XG Roller++ Cube)
+add_executable(benchmark_3t src/benchmark_3t.cpp)
+target_link_libraries(benchmark_3t PRIVATE bgbot_lib)
+
+# 4-ply cube benchmark
+add_executable(benchmark_4ply src/benchmark_4ply.cpp)
+target_link_libraries(benchmark_4ply PRIVATE bgbot_lib)
+
+# 3T profiler
+add_executable(profile_3t src/profile_3t.cpp)
+target_link_libraries(profile_3t PRIVATE bgbot_lib)
+
+# 3T detailed profiler
+add_executable(profile_3t_detailed src/profile_3t_detailed.cpp)
+target_link_libraries(profile_3t_detailed PRIVATE bgbot_lib)
+
 # pybind11 Python module
 find_package(pybind11 CONFIG REQUIRED)
 pybind11_add_module(bgbot_cpp pybind/bindings.cpp)
