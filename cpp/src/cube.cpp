@@ -145,51 +145,120 @@ static int get_cube_prime_value(int away_i, int away_j, int cv) {
     return cv;
 }
 
-// Compute dead-cube cash point (take point) in P(win) space using MET values
-// at the doubled cube value. This is where the opponent is indifferent between
-// taking and passing the double. Following GNUbg's GetPoints approach.
+// Compute live-cube cash points for both players simultaneously using
+// GNUbg's recursive GetPoints algorithm.
 //
-// CP = (rDTL - rDP) / (rDTL - rDTW)
-// where:
-//   rDTW = weighted MWC if double-taken and doubler wins (at effective cube)
-//   rDTL = weighted MWC if double-taken and doubler loses (at effective cube)
-//   rDP  = MWC if opponent passes (doubler wins cv points)
+// The algorithm works from the "dead" cube level (highest level where at
+// least one player can't survive a recube) DOWN to the current cube level,
+// computing cash points recursively.
 //
-// Effective cube accounts for automatic redoubles: when a player is close
-// enough (away < 2*dcv), losing at dcv or 2*dcv is equivalent, so they
-// always take a recube. This changes the DTW/DTL MET lookups.
-static float match_cash_point(
+// At dead cube levels: CP = (DTL - DP) / (DTL - DTW)
+//   with the doubler's own prime for BOTH DTW and DTL.
+// At live cube levels: CP = 1 - opp_CP_above * (DP - DTW) / (rRDP - DTW)
+//   where rRDP = MWC after losing at the doubled value (recube-drop payoff).
+//
+// Parameters use 1-indexed away values. Gammon ratios are from the player's
+// perspective: rG0/rBG0 for player's wins, rG1/rBG1 for player's losses.
+static void get_match_points(
     int away1, int away2, int cv, bool craw,
-    float rG, float rBG,          // gammon/bg ratios for the doubler's wins
-    float rG_opp, float rBG_opp)  // gammon/bg ratios for the doubler's losses
+    float rG0, float rBG0,        // gammon/bg ratios for player's wins
+    float rG1, float rBG1,        // gammon/bg ratios for player's losses
+    float& player_cp,             // out: player's cash point
+    float& opp_cp)                // out: opponent's cash point
 {
-    // MWC when opponent passes (doubler wins cv points)
-    float rDP = get_met_after(away1, away2, cv, true, craw);
+    // 0-indexed away values (GNUbg convention)
+    int idx0 = away1 - 1;
+    int idx1 = away2 - 1;
 
-    // Nominal doubled cube value
-    int dcv = 2 * cv;
+    // Gammon/bg ratios per side (0=player, 1=opponent)
+    float arG[2] = {rG0, rG1};
+    float arBG[2] = {rBG0, rBG1};
 
-    // Auto-redouble: effective cube may be higher than dcv
-    int prime_doubler = get_cube_prime_value(away1, away2, dcv);
-    int prime_taker = get_cube_prime_value(away2, away1, dcv);
+    // Find the dead cube level: highest cube where both can survive a recube
+    int nDead = cv;
+    int nMax = 0;
+    while (idx0 >= 2 * nDead && idx1 >= 2 * nDead) {
+        nMax++;
+        nDead *= 2;
+    }
 
-    // DTW: doubler wins at prime_doubler effective cube
-    float dtw_s = get_met_after(away1, away2, prime_doubler, true, craw);
-    float dtw_g = get_met_after(away1, away2, 2*prime_doubler, true, craw);
-    float dtw_b = get_met_after(away1, away2, 3*prime_doubler, true, craw);
+    // Cash points at each level (k=0: player, k=1: opponent)
+    constexpr int MAX_LEVELS = 16;
+    float arCPLive[2][MAX_LEVELS] = {};
 
-    // DTL: doubler loses at prime_taker effective cube
-    float dtl_s = get_met_after(away1, away2, prime_taker, false, craw);
-    float dtl_g = get_met_after(away1, away2, 2*prime_taker, false, craw);
-    float dtl_b = get_met_after(away1, away2, 3*prime_taker, false, craw);
+    for (int nCubeValue = nDead, n = nMax; nCubeValue >= cv;
+         nCubeValue >>= 1, n--) {
+        // Auto-redouble primes at this cube level (0-indexed comparisons)
+        int prime[2];
+        prime[0] = (idx0 < 2*nCubeValue && idx1 >= 2*nCubeValue)
+                   ? 2*nCubeValue : nCubeValue;
+        prime[1] = (idx1 < 2*nCubeValue && idx0 >= 2*nCubeValue)
+                   ? 2*nCubeValue : nCubeValue;
 
-    // Weighted MWC for double-take outcomes
-    float rDTW = (1.0f - rG - rBG) * dtw_s + rG * dtw_g + rBG * dtw_b;
-    float rDTL = (1.0f - rG_opp - rBG_opp) * dtl_s + rG_opp * dtl_g + rBG_opp * dtl_b;
+        for (int k = 0; k < 2; k++) {
+            // k=0: player doubles, k=1: opponent doubles
+            int away_d = (k == 0) ? away1 : away2;
+            int away_t = (k == 0) ? away2 : away1;
+            int id = (k == 0) ? idx0 : idx1;
+            int it = (k == 0) ? idx1 : idx0;
 
-    float denom = rDTL - rDTW;
-    if (std::abs(denom) < 1e-10f) return 0.5f;
-    return std::clamp((rDTL - rDP) / denom, 0.0f, 1.0f);
+            float gW = arG[k], bgW = arBG[k];       // doubler's wins
+            float gL = arG[1-k], bgL = arBG[1-k];   // doubler's losses
+
+            if (id < 2*nCubeValue || it < 2*nCubeValue) {
+                // Dead cube: at least one player can't survive a recube.
+                // Use doubler's own prime for BOTH DTW and DTL.
+                // The effective cube after DT (with possible auto-redouble) is
+                // 2*prime[k], so outcomes are at 2*p, 4*p, 6*p (not p, 2p, 3p).
+                int p = prime[k];
+                int dp = 2 * p;  // effective cube level after DT + auto-redouble
+
+                float rDP = get_met_after(away_d, away_t, nCubeValue, true, craw);
+
+                float rDTW = (1.0f - gW - bgW)
+                                * get_met_after(away_d, away_t, dp, true, craw)
+                           + gW * get_met_after(away_d, away_t, 2*dp, true, craw)
+                           + bgW * get_met_after(away_d, away_t, 3*dp, true, craw);
+
+                float rDTL = (1.0f - gL - bgL)
+                                * get_met_after(away_d, away_t, dp, false, craw)
+                           + gL * get_met_after(away_d, away_t, 2*dp, false, craw)
+                           + bgL * get_met_after(away_d, away_t, 3*dp, false, craw);
+
+                float denom = rDTL - rDTW;
+                if (std::abs(denom) < 1e-10f)
+                    arCPLive[k][n] = 0.5f;
+                else
+                    arCPLive[k][n] = std::clamp(
+                        (rDTL - rDP) / denom, 0.0f, 1.0f);
+            } else {
+                // Live cube: both players can survive a recube.
+                // Use standard doubled value, recursive formula.
+                int dcv = 2 * nCubeValue;
+
+                float rDP = get_met_after(away_d, away_t,
+                                          nCubeValue, true, craw);
+                float rRDP = get_met_after(away_d, away_t,
+                                           dcv, false, craw);
+
+                float rDTW = (1.0f - gW - bgW)
+                                * get_met_after(away_d, away_t, dcv, true, craw)
+                           + gW * get_met_after(away_d, away_t, 2*dcv, true, craw)
+                           + bgW * get_met_after(away_d, away_t, 3*dcv, true, craw);
+
+                float denom = rRDP - rDTW;
+                if (std::abs(denom) < 1e-10f)
+                    arCPLive[k][n] = 0.5f;
+                else
+                    arCPLive[k][n] = std::clamp(
+                        1.0f - arCPLive[1-k][n+1] * (rDP - rDTW) / denom,
+                        0.0f, 1.0f);
+            }
+        }
+    }
+
+    player_cp = arCPLive[0][0];
+    opp_cp = arCPLive[1][0];
 }
 
 static float cl2cf_match_centered(
@@ -243,11 +312,10 @@ static float cl2cf_match_centered(
     float mwc_lose_all = (1.0f - rG1 - rBG1) * mwc_lose_s
                        + rG1 * mwc_lose_g + rBG1 * mwc_lose_b;
 
-    // Compute take/cash points using MET at doubled cube value (GNUbg approach).
-    // Player's cash point: P(win) above which player plays on for gammon
-    float player_cp = match_cash_point(away1, away2, cv, craw, rG0, rBG0, rG1, rBG1);
-    // Opponent's cash point: compute from opponent's perspective (flip away/gammon ratios)
-    float opp_cp = match_cash_point(away2, away1, cv, craw, rG1, rBG1, rG0, rBG0);
+    // Compute live-cube cash points using recursive algorithm (GNUbg GetPoints).
+    float player_cp, opp_cp;
+    get_match_points(away1, away2, cv, craw, rG0, rBG0, rG1, rBG1,
+                     player_cp, opp_cp);
 
     // Convert to the thresholds used in the piecewise interpolation
     float opp_tg = 1.0f - opp_cp;   // Below this P(win), opponent is too good
@@ -340,8 +408,11 @@ static float cl2cf_match_owned(
     float mwc_lose_all = (1.0f - rG1 - rBG1) * mwc_lose_s
                        + rG1 * mwc_lose_g + rBG1 * mwc_lose_b;
 
-    // Player's cash point using MET at doubled cube value
-    float player_tg = match_cash_point(away1, away2, cv, craw, rG0, rBG0, rG1, rBG1);
+    // Player's cash point using recursive algorithm (GNUbg GetPoints)
+    float player_cp_val, opp_cp_val;
+    get_match_points(away1, away2, cv, craw, rG0, rBG0, rG1, rBG1,
+                     player_cp_val, opp_cp_val);
+    float player_tg = player_cp_val;
 
     float mwc_live;
     if (p_win <= player_tg) {
@@ -418,9 +489,11 @@ static float cl2cf_match_unavailable(
     float mwc_lose_all = (1.0f - rG1 - rBG1) * mwc_lose_s
                        + rG1 * mwc_lose_g + rBG1 * mwc_lose_b;
 
-    // Opponent's cash point using MET at doubled cube value (from opponent's perspective)
-    float opp_cp = match_cash_point(away2, away1, cv, craw, rG1, rBG1, rG0, rBG0);
-    float opp_tg = 1.0f - opp_cp;
+    // Opponent's cash point using recursive algorithm (GNUbg GetPoints)
+    float player_cp_val, opp_cp_val;
+    get_match_points(away1, away2, cv, craw, rG0, rBG0, rG1, rBG1,
+                     player_cp_val, opp_cp_val);
+    float opp_tg = 1.0f - opp_cp_val;
 
     float mwc_live;
     if (p_win <= opp_tg) {
