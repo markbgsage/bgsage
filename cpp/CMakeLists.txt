@@ -74,6 +74,10 @@ target_link_libraries(bgbot_profile_1ply PRIVATE bgbot_lib)
 add_executable(bgbot_profile_4ply src/profile_cube_4ply.cpp)
 target_link_libraries(bgbot_profile_4ply PRIVATE bgbot_lib)
 
+# Truncated rollout benchmark
+add_executable(benchmark_truncated_rollout src/benchmark_truncated_rollout.cpp)
+target_link_libraries(benchmark_truncated_rollout PRIVATE bgbot_lib)
+
 # pybind11 Python module
 find_package(pybind11 CONFIG REQUIRED)
 pybind11_add_module(bgbot_cpp pybind/bindings.cpp)

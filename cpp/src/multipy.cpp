@@ -157,6 +157,18 @@ std::atomic<std::size_t> MultiPlyStrategy::PosCache::global_hits{0};
 std::atomic<std::size_t> MultiPlyStrategy::PosCache::global_misses{0};
 std::atomic<std::uint64_t> MultiPlyStrategy::next_cache_salt_{1};
 
+// ======================== Shared Cache ========================
+
+static thread_local SharedPosCache* tl_shared_cache = nullptr;
+
+void MultiPlyStrategy::set_shared_cache(SharedPosCache* cache) {
+    tl_shared_cache = cache;
+}
+
+SharedPosCache* MultiPlyStrategy::get_shared_cache() {
+    return tl_shared_cache;
+}
+
 // ======================== Helpers ========================
 
 MultiPlyStrategy::PosCache& MultiPlyStrategy::get_cache() {
@@ -187,7 +199,7 @@ MultiPlyStrategy::MultiPlyStrategy(std::shared_ptr<Strategy> base_strategy,
     , full_depth_opponent_(full_depth_opponent)
     , parallel_evaluate_(parallel_evaluate)
     , parallel_threads_(parallel_threads)
-    , cache_salt_(next_cache_salt_.fetch_add(1, std::memory_order_relaxed))
+    , cache_salt_(std::hash<const void*>{}(static_cast<const void*>(base_.get())))
 {
     if (filter_.max_moves < 1) filter_.max_moves = 1;
     if (filter_.threshold < 0.0f) filter_.threshold = 0.0f;
@@ -197,9 +209,8 @@ MultiPlyStrategy::MultiPlyStrategy(std::shared_ptr<Strategy> base_strategy,
 
 void MultiPlyStrategy::clear_cache() const {
     get_cache().clear();
-    cache_salt_.store(
-        next_cache_salt_.fetch_add(1, std::memory_order_relaxed),
-        std::memory_order_relaxed);
+    // Salt is derived from base strategy pointer — no need to bump.
+    // Clearing the cache (memset to 0) is sufficient to prevent stale lookups.
     // Also reset global atomic counters
     PosCache::global_hits.store(0, std::memory_order_relaxed);
     PosCache::global_misses.store(0, std::memory_order_relaxed);
@@ -295,6 +306,15 @@ std::array<float, NUM_OUTPUTS> MultiPlyStrategy::evaluate_probs_nply_impl(
     const auto* cached = cache.lookup(bh, /*plies folded into key*/ 0);
     if (cached) {
         return *cached;
+    }
+
+    // Check shared cross-thread cache (active during parallel rollouts)
+    if (tl_shared_cache) {
+        const auto* shared_result = tl_shared_cache->lookup(bh, 0);
+        if (shared_result) {
+            cache.insert(bh, 0, *shared_result);  // promote to thread-local
+            return *shared_result;
+        }
     }
 
     // Flip to opponent's perspective. The opponent is now "player 1" on this board.
@@ -528,6 +548,11 @@ std::array<float, NUM_OUTPUTS> MultiPlyStrategy::evaluate_probs_nply_impl(
 
     // Store in cache (auto-clears at 75% load)
     cache.insert(bh, /*plies folded into key*/ 0, avg);
+
+    // Also insert into shared cross-thread cache if active
+    if (tl_shared_cache) {
+        tl_shared_cache->insert(bh, 0, avg);
+    }
 
     return avg;
 }

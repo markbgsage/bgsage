@@ -13,6 +13,70 @@
 
 namespace bgbot {
 
+// Lock-free shared position cache for cross-thread sharing during rollouts.
+// Multiple threads read/write concurrently using a per-entry state machine:
+// 0=empty, 1=writing (CAS-protected), 2=ready (safe to read).
+struct SharedPosCache {
+    static constexpr std::size_t CAPACITY = 2 * 1024 * 1024;
+    static constexpr std::size_t MASK = CAPACITY - 1;
+    static constexpr int MAX_PROBE = 8;
+
+    struct Entry {
+        std::atomic<int> state{0};   // 0=empty, 1=writing, 2=ready
+        std::size_t hash = 0;
+        int plies = 0;
+        std::array<float, NUM_OUTPUTS> probs = {};
+    };
+
+    std::vector<Entry> entries;
+    mutable std::atomic<std::size_t> hits{0};
+    mutable std::atomic<std::size_t> misses{0};
+    mutable std::atomic<std::size_t> inserts{0};
+
+    SharedPosCache() : entries(CAPACITY) {}
+
+    const std::array<float, NUM_OUTPUTS>* lookup(std::size_t h, int plies) const {
+        std::size_t key = h | 1;
+        std::size_t idx = key & MASK;
+        for (int probe = 0; probe < MAX_PROBE; ++probe) {
+            int s = entries[idx].state.load(std::memory_order_acquire);
+            if (s == 0) return nullptr;
+            if (s == 2 && entries[idx].hash == key && entries[idx].plies == plies) {
+                hits.fetch_add(1, std::memory_order_relaxed);
+                return &entries[idx].probs;
+            }
+            idx = (idx + 1) & MASK;
+        }
+        misses.fetch_add(1, std::memory_order_relaxed);
+        return nullptr;
+    }
+
+    void insert(std::size_t h, int plies, const std::array<float, NUM_OUTPUTS>& probs) {
+        std::size_t key = h | 1;
+        std::size_t idx = key & MASK;
+        for (int probe = 0; probe < MAX_PROBE; ++probe) {
+            auto& e = entries[idx];
+            int s = e.state.load(std::memory_order_relaxed);
+            if (s == 0) {
+                int expected = 0;
+                if (e.state.compare_exchange_strong(expected, 1, std::memory_order_acq_rel)) {
+                    e.hash = key;
+                    e.plies = plies;
+                    e.probs = probs;
+                    e.state.store(2, std::memory_order_release);
+                    inserts.fetch_add(1, std::memory_order_relaxed);
+                    return;
+                }
+                s = expected;
+            }
+            if (s == 2 && e.hash == key && e.plies == plies) {
+                return;  // already cached
+            }
+            idx = (idx + 1) & MASK;
+        }
+    }
+};
+
 // Move filtering parameters for N-ply search.
 // After scoring all candidates at 1-ply, keep up to `max_moves` that are
 // within `threshold` equity of the best.
@@ -73,6 +137,12 @@ public:
     size_t cache_size() const;
     size_t cache_hits() const;
     size_t cache_misses() const;
+
+    // Set/get a shared cross-thread cache for parallel rollouts.
+    // When set, evaluate_probs_nply_impl checks the shared cache on miss
+    // and inserts computed results into it.
+    static void set_shared_cache(SharedPosCache* cache);
+    static SharedPosCache* get_shared_cache();
 
     // Accessors.
     int n_plies() const { return n_plies_; }

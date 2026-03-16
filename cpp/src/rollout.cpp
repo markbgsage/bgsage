@@ -1241,7 +1241,11 @@ RolloutStrategy::CubefulRolloutResult RolloutStrategy::cubeful_cube_decision(
             trial_results[t].dt_equity = branches[1].final_equity;
         }
     } else {
-        // Work-stealing parallel dispatch
+        // Parallel dispatch with cross-thread SharedPosCache.
+        // N-ply sub-positions (especially 2-ply entries from 3-ply truncation
+        // evaluations) accumulate across all threads via a lock-free shared
+        // cache, improving hit rates as more trials complete.
+        SharedPosCache shared_cache;
         std::atomic<int> next_trial{0};
 
 #ifdef _WIN32
@@ -1254,14 +1258,15 @@ RolloutStrategy::CubefulRolloutResult RolloutStrategy::cubeful_cube_decision(
             CubefulTrialResult* results;
             Move0Cache* move0_cache;
             Move1Cache* move1_cache;
+            SharedPosCache* shared_cache;
             std::atomic<int>* next_trial;
             int n_trials;
             int max_moves;
         };
 
         ThreadArg arg = {this, &pre_roll_board, &nd_template, &dt_template,
-                          &all_dice, trial_results.data(), &move0_cache, &move1_cache, &next_trial,
-                          n_trials, max_moves};
+                          &all_dice, trial_results.data(), &move0_cache, &move1_cache,
+                          &shared_cache, &next_trial, n_trials, max_moves};
 
         std::vector<HANDLE> handles(n_threads);
         for (int th = 0; th < n_threads; ++th) {
@@ -1269,6 +1274,8 @@ RolloutStrategy::CubefulRolloutResult RolloutStrategy::cubeful_cube_decision(
                 nullptr, 4 * 1024 * 1024,
                 [](LPVOID param) -> DWORD {
                     auto* a = static_cast<ThreadArg*>(param);
+                    MultiPlyStrategy::set_shared_cache(a->shared_cache);
+
                     int t;
                     while ((t = a->next_trial->fetch_add(1, std::memory_order_relaxed))
                            < a->n_trials) {
@@ -1280,6 +1287,8 @@ RolloutStrategy::CubefulRolloutResult RolloutStrategy::cubeful_cube_decision(
                         a->results[t].nd_equity = branches[0].final_equity;
                         a->results[t].dt_equity = branches[1].final_equity;
                     }
+
+                    MultiPlyStrategy::set_shared_cache(nullptr);
                     return 0;
                 },
                 &arg, 0, nullptr);
@@ -1292,8 +1301,11 @@ RolloutStrategy::CubefulRolloutResult RolloutStrategy::cubeful_cube_decision(
 
         for (int th = 0; th < n_threads; ++th) {
             threads.emplace_back([this, &pre_roll_board, &nd_template, &dt_template,
-                                  &all_dice, &trial_results, &move0_cache, &move1_cache, &next_trial,
+                                  &all_dice, &trial_results, &move0_cache, &move1_cache,
+                                  &shared_cache, &next_trial,
                                   n_trials, max_moves]() {
+                MultiPlyStrategy::set_shared_cache(&shared_cache);
+
                 int t;
                 while ((t = next_trial.fetch_add(1, std::memory_order_relaxed))
                        < n_trials) {
@@ -1304,6 +1316,8 @@ RolloutStrategy::CubefulRolloutResult RolloutStrategy::cubeful_cube_decision(
                     trial_results[t].nd_equity = branches[0].final_equity;
                     trial_results[t].dt_equity = branches[1].final_equity;
                 }
+
+                MultiPlyStrategy::set_shared_cache(nullptr);
             });
         }
         for (auto& t : threads) t.join();
