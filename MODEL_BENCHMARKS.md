@@ -150,31 +150,30 @@ Settings key: `Nt` = N trials, `trunc=D` = truncation depth (half-moves),
 `dp=P` = decision ply for move selection, `late=P@M` = switch to ply P after
 half-move M. See `CLAUDE.md` Truncated Rollouts section for full parameter docs.
 
+Benchmark run: 2026-03-16, 32 threads (AMD), Stage 5 production model.
+
 | Strategy | Settings | ER | Time |
 |----------|----------|------|------|
-| 1-ply | - | 541.10 | 0.0s |
-| 2-ply | TINY filter | 355.24 | 0.2s |
-| 3-ply | TINY filter | 338.78 | 3.2s |
-| 4-ply | TINY filter | 333.59 | 20.3s |
-| XG Roller | 42t, trunc=5, dp=1 | 336.12 | 69.6s |
-| XG Roller+ | 360t, trunc=7, dp=2, late=1@2 | 316.51 | 268.1s |
-| XG Roller++ | 360t, trunc=5, dp=3, late=2@2 | 326.33 | 337.7s |
+| 1-ply | - | 541.10 | 0.1s |
+| 2-ply | TINY filter | 355.24 | 0.3s |
+| 3-ply | TINY filter | 338.78 | 4.6s |
+| 4-ply | TINY filter | 333.59 | 27.3s |
+| XG Roller | 42t, trunc=5, dp=1 | 336.12 | 33.6s |
+| XG Roller+ | 360t, trunc=7, dp=2, late=1@2 | 316.51 | 260.0s |
+| XG Roller++ | 360t, trunc=5, dp=3, late=2@2 | **crashes** | — |
+
+**Known issue:** XG Roller++ (dp=3 truncated rollout) crashes on certain crashed
+positions. The crash occurs even with serial execution (n_threads=1), ruling out
+threading issues. This is a regression introduced during rollout performance
+optimizations (Move1Cache, SharedPosCache, ultra-late threshold). The previous
+Roller++ result was 326.33 in 337.7s. Debugging this is tracked as a TODO.
 
 **Key observations:**
-- **XG Roller (1-ply decisions)** beats 3-ply (336.12 vs 338.78) at about 22x the cost
+- **XG Roller (1-ply decisions)** beats 3-ply (336.12 vs 338.78) at about 8x the cost
   of 3-ply — the Monte Carlo sampling helps even with 1-ply move selection.
-- **XG Roller+** is the strongest level at 316.51, beating 4-ply (333.59) by a
-  significant margin. Cost is ~268s vs 20s for 4-ply.
-- **XG Roller++** at 326.33 is now substantially stronger than 3-ply/XG Roller, and
-  runs in similar time to XG Roller+ thanks to rollout performance optimizations
-  (Move1Cache — pre-computed second-move decisions shared across trials,
-  SharedPosCache — lock-free cross-thread N-ply evaluation cache, ultra-late 1-ply
-  move selection for trial moves 2+, and VR decoupled to 1-ply). Previously much
-  slower (~1078s before optimizations).
-- **ER improvements for Roller+ and Roller++** (vs prior benchmarks) come from the
-  ultra-late threshold: using 1-ply move selection for trial moves at depth 2+ makes
-  VR (variance reduction) correction more consistent, since both the VR evaluator and
-  move selection operate at 1-ply for those moves. The deterministic N-ply results
-  (1-4 ply) are identical.
+- **XG Roller+** is the strongest working level at 316.51, beating 4-ply (333.59) by a
+  significant margin. Cost is ~260s vs 27s for 4-ply.
 - **2-ply decisions with truncated rollout** (XG Roller+) provides the best
   accuracy/speed sweet spot for these worst-case positions.
+- **ER values are fully deterministic** across runs (same positions, same model,
+  same algorithms). Only timing varies with system load and thread count.

@@ -180,12 +180,12 @@ def main():
     results.append(('XG Roller', er, t))
 
     # XG Roller+: 360 trials, trunc=7, dp=2, late=1@2
+    # parallelize_trials disabled (deadlocks on Windows with high thread count)
     roller_plus = bgbot_cpp.create_rollout_5nn(
         *w.weight_args,
         n_trials=360, truncation_depth=7,
         decision_ply=2, n_threads=rollout_threads,
-        late_ply=1, late_threshold=2,
-        parallelize_trials=(rollout_threads > 1))
+        late_ply=1, late_threshold=2)
     def score_roller_plus(ss):
         return bgbot_cpp.score_benchmarks_rollout(ss, roller_plus, 1)
     er, t = score_subset('XG Roller+ (360t, trunc=7, dp=2, late=1@2)', score_roller_plus)
