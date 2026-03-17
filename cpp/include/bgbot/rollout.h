@@ -104,6 +104,10 @@ public:
 
     const RolloutConfig& config() const { return config_; }
 
+    // Clear thread-local N-ply caches. Call between independent positions
+    // when reusing the same strategy to prevent state accumulation.
+    void clear_internal_caches() const;
+
 private:
     mutable std::vector<std::vector<std::pair<int, int>>> cached_dice_;
     mutable int cached_max_moves_ = 0;

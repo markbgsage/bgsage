@@ -1571,6 +1571,8 @@ PYBIND11_MODULE(bgbot_cpp, m) {
 
     py::class_<RolloutStrategy, std::shared_ptr<RolloutStrategy>>(m, "RolloutStrategy")
         .def("config", &RolloutStrategy::config, py::return_value_policy::reference_internal)
+        .def("clear_internal_caches", &RolloutStrategy::clear_internal_caches,
+             "Clear thread-local N-ply caches to prevent state accumulation")
         .def("rollout_position", [](const RolloutStrategy& self,
                                      const std::vector<int>& board_vec) {
             Board board = list_to_board(board_vec);

@@ -41,6 +41,19 @@ constexpr std::array<std::array<int, 7>, 7> kOrderedRollToIndex = {{
 
 } // namespace
 
+// ======================== Cache Management ========================
+
+void RolloutStrategy::clear_internal_caches() const {
+    // Clear thread-local PosCache (shared by all MultiPlyStrategy instances
+    // on this thread). This prevents state accumulation across independent
+    // positions that could lead to memory corruption with deep decision plies.
+    if (auto* mps = dynamic_cast<MultiPlyStrategy*>(decision_strat_.get())) {
+        mps->clear_cache();
+    }
+    // late_decision_strat_ shares the same thread_local cache, but clearing
+    // it separately is a no-op since clear_cache() memsets the shared cache.
+}
+
 // ======================== Constructor ========================
 
 RolloutStrategy::RolloutStrategy(std::shared_ptr<Strategy> base, RolloutConfig config)
@@ -1484,6 +1497,15 @@ int RolloutStrategy::best_move_index(const std::vector<Board>& candidates,
 {
     const int n = static_cast<int>(candidates.size());
     if (n <= 1) return 0;
+
+    // Clear thread-local N-ply caches between positions.
+    // With deep decision plies (dp>=3), accumulated cache state across many
+    // independent best_move_index calls can cause memory corruption. Clearing
+    // the cache is cheap relative to the rollout cost (64MB memset vs minutes
+    // of N-ply evaluation per position).
+    if (config_.decision_ply >= 3) {
+        clear_internal_caches();
+    }
 
     // Step 1: Score all candidates at 1-ply for filtering
     std::vector<double> equities(n);
