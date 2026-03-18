@@ -308,13 +308,16 @@ std::array<float, NUM_OUTPUTS> MultiPlyStrategy::evaluate_probs_nply_impl(
         return *cached;
     }
 
+    SharedPosCache::Entry* shared_reservation = nullptr;
+
     // Check shared cross-thread cache (active during parallel rollouts)
     if (tl_shared_cache) {
-        const auto* shared_result = tl_shared_cache->lookup(bh, 0);
-        if (shared_result) {
-            cache.insert(bh, 0, *shared_result);  // promote to thread-local
-            return *shared_result;
+        auto shared_result = tl_shared_cache->lookup_or_reserve(bh, 0);
+        if (shared_result.probs) {
+            cache.insert(bh, 0, *shared_result.probs);  // promote to thread-local
+            return *shared_result.probs;
         }
+        shared_reservation = shared_result.reservation;
     }
 
     // Flip to opponent's perspective. The opponent is now "player 1" on this board.
@@ -551,7 +554,11 @@ std::array<float, NUM_OUTPUTS> MultiPlyStrategy::evaluate_probs_nply_impl(
 
     // Also insert into shared cross-thread cache if active
     if (tl_shared_cache) {
-        tl_shared_cache->insert(bh, 0, avg);
+        if (shared_reservation) {
+            tl_shared_cache->publish(shared_reservation, avg);
+        } else {
+            tl_shared_cache->insert(bh, 0, avg);
+        }
     }
 
     return avg;

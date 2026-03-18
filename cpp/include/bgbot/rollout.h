@@ -115,6 +115,7 @@ private:
     std::shared_ptr<Strategy> base_;
     GamePlanStrategy* base_gps_;   // Cached downcast (null if not GPS)
     RolloutConfig config_;
+    mutable std::unique_ptr<SharedPosCache> shared_pos_cache_;
 
     // Decision-making strategy for move selection during trials.
     // If decision_ply > 0, this wraps base_ in a MultiPlyStrategy.

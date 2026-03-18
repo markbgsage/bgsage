@@ -5,6 +5,8 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
+option(BGBOT_BUILD_PYTHON "Build the pybind11 Python extension" ON)
+
 # Optimization flags — compiler-specific
 if(MSVC)
     set(BGBOT_OPT_FLAGS /O2 /fp:fast /GL /arch:AVX2)
@@ -50,7 +52,24 @@ target_link_libraries(bgbot_cuda_stub PUBLIC bgbot_lib)
 add_executable(bgbot_profile_4ply src/profile_cube_4ply.cpp)
 target_link_libraries(bgbot_profile_4ply PRIVATE bgbot_lib)
 
-# pybind11 Python module
-find_package(pybind11 CONFIG REQUIRED)
-pybind11_add_module(bgbot_cpp pybind/bindings.cpp)
-target_link_libraries(bgbot_cpp PRIVATE bgbot_lib bgbot_cuda_stub)
+# Truncated rollout benchmark/profilers
+add_executable(benchmark_truncated_rollout src/benchmark_truncated_rollout.cpp)
+target_link_libraries(benchmark_truncated_rollout PRIVATE bgbot_lib)
+
+add_executable(benchmark_3t src/benchmark_3t.cpp)
+target_link_libraries(benchmark_3t PRIVATE bgbot_lib)
+
+add_executable(benchmark_4ply src/benchmark_4ply.cpp)
+target_link_libraries(benchmark_4ply PRIVATE bgbot_lib)
+
+add_executable(profile_3t src/profile_3t.cpp)
+target_link_libraries(profile_3t PRIVATE bgbot_lib)
+
+add_executable(profile_3t_detailed src/profile_3t_detailed.cpp)
+target_link_libraries(profile_3t_detailed PRIVATE bgbot_lib)
+
+if(BGBOT_BUILD_PYTHON)
+    find_package(pybind11 CONFIG REQUIRED)
+    pybind11_add_module(bgbot_cpp pybind/bindings.cpp)
+    target_link_libraries(bgbot_cpp PRIVATE bgbot_lib bgbot_cuda_stub)
+endif()

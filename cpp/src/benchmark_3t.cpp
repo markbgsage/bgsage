@@ -96,10 +96,13 @@ int main(int argc, char* argv[]) {
     printf("DT equity:       %+.6f  SE: %.6f\n", cfr.dt_equity, cfr.dt_se);
     printf("DP equity:       %+.6f\n", 1.0);
     printf("CL equity:       %+.6f  SE: %.6f\n", cfr.cubeless.equity, cfr.cubeless.std_error);
-    printf("CL probs:        W=%.4f  Gw=%.4f  Bw=%.4f  Gl=%.4f  Bl=%.4f\n",
-           cfr.cubeless.mean_probs[0], cfr.cubeless.mean_probs[1],
-           cfr.cubeless.mean_probs[2], cfr.cubeless.mean_probs[3],
-           cfr.cubeless.mean_probs[4]);
+    const char* prob_names[] = {"P(win)", "P(gw)", "P(bw)", "P(gl)", "P(bl)"};
+    for (int i = 0; i < 5; ++i) {
+        printf("%-16s %.6f  SE: %.6f\n",
+               prob_names[i],
+               cfr.cubeless.mean_probs[i],
+               cfr.cubeless.prob_std_errors[i]);
+    }
 
     bool should_double = (std::min(cfr.dt_equity, 1.0) > cfr.nd_equity);
     bool should_take = (cfr.dt_equity <= 1.0);

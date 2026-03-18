@@ -1,11 +1,11 @@
-// Benchmark: 4-ply cube action analytics (parallel).
+// Benchmark: N-ply cube action analytics (parallel).
 //
 // Reference position: checkers=[0,0,0,2,2,-2,3,2,2,0,0,0,-3,4,0,0,0,-3,0,-3,-2,-2,0,0,0,0]
 // Cube centered at 1, money game, jacoby on, beavers on.
 //
 // Usage:
-//   benchmark_4ply [n_threads] [model_dir]
-//   Defaults: n_threads=12, model_dir=<exe_dir>/../models
+//   benchmark_4ply [n_threads] [n_ply] [model_dir]
+//   Defaults: n_threads=12, n_ply=4, model_dir=<exe_dir>/../models
 
 #include "bgbot/cube.h"
 #include "bgbot/encoding.h"
@@ -24,14 +24,19 @@ using Clock = std::chrono::high_resolution_clock;
 
 int main(int argc, char* argv[]) {
     int n_threads = 12;
+    int n_ply = 4;
     if (argc > 1) {
         int t = std::atoi(argv[1]);
         if (t > 0) n_threads = t;
     }
+    if (argc > 2) {
+        int p = std::atoi(argv[2]);
+        if (p >= 2) n_ply = p;
+    }
 
     std::filesystem::path model_dir;
-    if (argc > 2) {
-        model_dir = std::filesystem::path(argv[2]);
+    if (argc > 3) {
+        model_dir = std::filesystem::path(argv[3]);
     } else {
         model_dir = std::filesystem::absolute(
             std::filesystem::path(argv[0])).parent_path().parent_path() / "models";
@@ -57,17 +62,17 @@ int main(int argc, char* argv[]) {
     cube.jacoby = true;
     cube.beaver = true;
 
-    printf("=== 4-ply Cube Benchmark ===\n");
+    printf("=== %d-ply Cube Benchmark ===\n", n_ply);
     printf("Position: ");
     for (int i = 0; i < 26; i++) printf("%d%s", board[i], i < 25 ? "," : "\n");
     printf("Threads: %d\n", n_threads);
     printf("Model dir: %s\n", model_dir.string().c_str());
 
     // Warm-up run
-    (void)cube_decision_nply(board, cube, strategy, 4, MoveFilters::TINY, n_threads);
+    (void)cube_decision_nply(board, cube, strategy, n_ply, MoveFilters::TINY, n_threads);
 
     auto start = Clock::now();
-    auto decision = cube_decision_nply(board, cube, strategy, 4, MoveFilters::TINY, n_threads);
+    auto decision = cube_decision_nply(board, cube, strategy, n_ply, MoveFilters::TINY, n_threads);
     auto end = Clock::now();
 
     double elapsed = std::chrono::duration<double>(end - start).count();

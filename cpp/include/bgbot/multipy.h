@@ -10,6 +10,7 @@
 #include <atomic>
 #include <cstdint>
 #include <functional>
+#include <thread>
 
 namespace bgbot {
 
@@ -20,12 +21,22 @@ struct SharedPosCache {
     static constexpr std::size_t CAPACITY = 2 * 1024 * 1024;
     static constexpr std::size_t MASK = CAPACITY - 1;
     static constexpr int MAX_PROBE = 8;
+    static constexpr int STATE_EMPTY = 0;
+    static constexpr int STATE_CLAIMED = 1;
+    static constexpr int STATE_COMPUTING = 2;
+    static constexpr int STATE_READY = 3;
+    static constexpr int WAIT_SPINS = 256;
 
     struct Entry {
-        std::atomic<int> state{0};   // 0=empty, 1=writing, 2=ready
+        std::atomic<int> state{STATE_EMPTY};
         std::size_t hash = 0;
         int plies = 0;
         std::array<float, NUM_OUTPUTS> probs = {};
+    };
+
+    struct LookupResult {
+        const std::array<float, NUM_OUTPUTS>* probs = nullptr;
+        Entry* reservation = nullptr;
     };
 
     std::vector<Entry> entries;
@@ -35,13 +46,24 @@ struct SharedPosCache {
 
     SharedPosCache() : entries(CAPACITY) {}
 
+    void clear() {
+        for (auto& e : entries) {
+            e.hash = 0;
+            e.plies = 0;
+            e.state.store(STATE_EMPTY, std::memory_order_relaxed);
+        }
+        hits.store(0, std::memory_order_relaxed);
+        misses.store(0, std::memory_order_relaxed);
+        inserts.store(0, std::memory_order_relaxed);
+    }
+
     const std::array<float, NUM_OUTPUTS>* lookup(std::size_t h, int plies) const {
         std::size_t key = h | 1;
         std::size_t idx = key & MASK;
         for (int probe = 0; probe < MAX_PROBE; ++probe) {
             int s = entries[idx].state.load(std::memory_order_acquire);
-            if (s == 0) return nullptr;
-            if (s == 2 && entries[idx].hash == key && entries[idx].plies == plies) {
+            if (s == STATE_EMPTY) return nullptr;
+            if (s == STATE_READY && entries[idx].hash == key && entries[idx].plies == plies) {
                 hits.fetch_add(1, std::memory_order_relaxed);
                 return &entries[idx].probs;
             }
@@ -51,25 +73,87 @@ struct SharedPosCache {
         return nullptr;
     }
 
+    LookupResult lookup_or_reserve(std::size_t h, int plies) {
+        std::size_t key = h | 1;
+        std::size_t idx = key & MASK;
+        for (int probe = 0; probe < MAX_PROBE; ++probe) {
+            auto& e = entries[idx];
+            int s = e.state.load(std::memory_order_acquire);
+            if (s == STATE_EMPTY) {
+                int expected = STATE_EMPTY;
+                if (e.state.compare_exchange_strong(expected, STATE_CLAIMED,
+                                                    std::memory_order_acq_rel)) {
+                    e.hash = key;
+                    e.plies = plies;
+                    std::atomic_thread_fence(std::memory_order_release);
+                    e.state.store(STATE_COMPUTING, std::memory_order_release);
+                    inserts.fetch_add(1, std::memory_order_relaxed);
+                    return {nullptr, &e};
+                }
+                s = expected;
+            }
+
+            if ((s == STATE_COMPUTING || s == STATE_READY) &&
+                e.hash == key && e.plies == plies) {
+                if (s == STATE_READY) {
+                    hits.fetch_add(1, std::memory_order_relaxed);
+                    return {&e.probs, nullptr};
+                }
+
+                for (int spin = 0; spin < WAIT_SPINS; ++spin) {
+                    std::this_thread::yield();
+                    int ready = e.state.load(std::memory_order_acquire);
+                    if (ready == STATE_READY && e.hash == key && e.plies == plies) {
+                        hits.fetch_add(1, std::memory_order_relaxed);
+                        return {&e.probs, nullptr};
+                    }
+                    if (ready == STATE_EMPTY) break;
+                }
+                misses.fetch_add(1, std::memory_order_relaxed);
+                return {};
+            }
+
+            idx = (idx + 1) & MASK;
+        }
+
+        misses.fetch_add(1, std::memory_order_relaxed);
+        return {};
+    }
+
+    void publish(Entry* entry, const std::array<float, NUM_OUTPUTS>& probs) {
+        if (!entry) return;
+        entry->probs = probs;
+        entry->state.store(STATE_READY, std::memory_order_release);
+    }
+
+    void abandon(Entry* entry) {
+        if (!entry) return;
+        entry->hash = 0;
+        entry->plies = 0;
+        entry->state.store(STATE_EMPTY, std::memory_order_release);
+    }
+
     void insert(std::size_t h, int plies, const std::array<float, NUM_OUTPUTS>& probs) {
         std::size_t key = h | 1;
         std::size_t idx = key & MASK;
         for (int probe = 0; probe < MAX_PROBE; ++probe) {
             auto& e = entries[idx];
             int s = e.state.load(std::memory_order_relaxed);
-            if (s == 0) {
-                int expected = 0;
-                if (e.state.compare_exchange_strong(expected, 1, std::memory_order_acq_rel)) {
+            if (s == STATE_EMPTY) {
+                int expected = STATE_EMPTY;
+                if (e.state.compare_exchange_strong(expected, STATE_CLAIMED,
+                                                    std::memory_order_acq_rel)) {
                     e.hash = key;
                     e.plies = plies;
                     e.probs = probs;
-                    e.state.store(2, std::memory_order_release);
+                    e.state.store(STATE_READY, std::memory_order_release);
                     inserts.fetch_add(1, std::memory_order_relaxed);
                     return;
                 }
                 s = expected;
             }
-            if (s == 2 && e.hash == key && e.plies == plies) {
+            if ((s == STATE_COMPUTING || s == STATE_READY) &&
+                e.hash == key && e.plies == plies) {
                 return;  // already cached
             }
             idx = (idx + 1) & MASK;

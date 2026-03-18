@@ -39,6 +39,8 @@ constexpr std::array<std::array<int, 7>, 7> kOrderedRollToIndex = {{
     {-1, 10, 14, 17, 19, 20,  5},
 }};
 
+constexpr int kTrialChunkSize = 4;
+
 } // namespace
 
 // ======================== Cache Management ========================
@@ -97,6 +99,10 @@ RolloutStrategy::RolloutStrategy(std::shared_ptr<Strategy> base, RolloutConfig c
     if (config_.n_trials > 0 && cached_max_moves_ > 0) {
         generate_stratified_dice(
             config_.n_trials, cached_max_moves_, config_.seed, cached_dice_);
+    }
+
+    if (rollout_thread_count(config_.n_trials) > 1) {
+        shared_pos_cache_ = std::make_unique<SharedPosCache>();
     }
 }
 
@@ -409,6 +415,10 @@ void RolloutStrategy::populate_move1_cache_entry(
         if (r != GameResult::NOT_OVER) {
             entry.actual_probs[second_roll] = terminal_probs(r);
         } else if (using_base) {
+            entry.actual_probs[second_roll] = entry.roll_best_probs[second_roll];
+        } else if (best_idx >= 0 &&
+                   best_idx < static_cast<int>(candidates.size()) &&
+                   chosen == candidates[best_idx]) {
             entry.actual_probs[second_roll] = entry.roll_best_probs[second_roll];
         } else {
             entry.actual_probs[second_roll] = base_->evaluate_probs(chosen, move1_board);
@@ -1059,7 +1069,14 @@ RolloutResult RolloutStrategy::run_trials_parallel(
         // above for serial) then trials with work-stealing. SharedPosCache enables
         // cross-thread N-ply cache sharing. For dp==1, all strategies are 1-ply so
         // SharedPosCache/unified threading have minimal overhead.
-        SharedPosCache shared_cache;
+        if (!shared_pos_cache_) {
+            shared_pos_cache_ = std::make_unique<SharedPosCache>();
+        }
+        if (shared_pos_cache_->inserts.load(std::memory_order_relaxed) >=
+            (SharedPosCache::CAPACITY * 3) / 4) {
+            shared_pos_cache_->clear();
+        }
+        SharedPosCache* shared_cache = shared_pos_cache_.get();
         std::atomic<int> next_trial{0};
 
 #ifdef _WIN32
@@ -1078,7 +1095,7 @@ RolloutResult RolloutStrategy::run_trials_parallel(
 
         ThreadArg arg = {this, &board, &all_dice,
                          trial_results.data(), &move0_cache, &move1_cache,
-                         &shared_cache, &next_trial, n_trials, max_moves};
+                         shared_cache, &next_trial, n_trials, max_moves};
 
         std::vector<HANDLE> handles(n_threads);
         for (int th = 0; th < n_threads; ++th) {
@@ -1087,12 +1104,16 @@ RolloutResult RolloutStrategy::run_trials_parallel(
                 [](LPVOID param) -> DWORD {
                     auto* a = static_cast<ThreadArg*>(param);
                     MultiPlyStrategy::set_shared_cache(a->shared_cache);
-                    int t;
-                    while ((t = a->next_trial->fetch_add(1, std::memory_order_relaxed)) < a->n_trials) {
-                        a->trial_results[t] = a->self->run_trial_unified(
-                            *a->board, true, nullptr, 0,
-                            (*a->all_dice)[t].data(), a->max_moves,
-                            a->move0_cache, a->move1_cache);
+                    int start;
+                    while ((start = a->next_trial->fetch_add(kTrialChunkSize, std::memory_order_relaxed))
+                           < a->n_trials) {
+                        int end = std::min(start + kTrialChunkSize, a->n_trials);
+                        for (int t = start; t < end; ++t) {
+                            a->trial_results[t] = a->self->run_trial_unified(
+                                *a->board, true, nullptr, 0,
+                                (*a->all_dice)[t].data(), a->max_moves,
+                                a->move0_cache, a->move1_cache);
+                        }
                     }
                     MultiPlyStrategy::set_shared_cache(nullptr);
                     return 0;
@@ -1109,14 +1130,18 @@ RolloutResult RolloutStrategy::run_trials_parallel(
         for (int th = 0; th < n_threads; ++th) {
             threads.emplace_back([this, &board, &all_dice,
                                   &trial_results, &move0_cache, &move1_cache,
-                                  &shared_cache, &next_trial, n_trials, max_moves]() {
-                MultiPlyStrategy::set_shared_cache(&shared_cache);
-                int t;
-                while ((t = next_trial.fetch_add(1, std::memory_order_relaxed)) < n_trials) {
-                    trial_results[t] = run_trial_unified(
-                        board, true, nullptr, 0,
-                        all_dice[t].data(), max_moves,
-                        &move0_cache, &move1_cache);
+                                  shared_cache, &next_trial, n_trials, max_moves]() {
+                MultiPlyStrategy::set_shared_cache(shared_cache);
+                int start;
+                while ((start = next_trial.fetch_add(kTrialChunkSize, std::memory_order_relaxed))
+                       < n_trials) {
+                    int end = std::min(start + kTrialChunkSize, n_trials);
+                    for (int t = start; t < end; ++t) {
+                        trial_results[t] = run_trial_unified(
+                            board, true, nullptr, 0,
+                            all_dice[t].data(), max_moves,
+                            &move0_cache, &move1_cache);
+                    }
                 }
                 MultiPlyStrategy::set_shared_cache(nullptr);
             });
@@ -1243,7 +1268,14 @@ RolloutStrategy::CubefulRolloutResult RolloutStrategy::cubeful_cube_decision(
         // Move0 and move1 for the same roll index are done back-to-back by the
         // same thread (no barrier needed — move1[r] only depends on move0[r]).
         // After all 21 entries are done, threads proceed to trial work-stealing.
-        SharedPosCache shared_cache;
+        if (!shared_pos_cache_) {
+            shared_pos_cache_ = std::make_unique<SharedPosCache>();
+        }
+        if (shared_pos_cache_->inserts.load(std::memory_order_relaxed) >=
+            (SharedPosCache::CAPACITY * 3) / 4) {
+            shared_pos_cache_->clear();
+        }
+        SharedPosCache* shared_cache = shared_pos_cache_.get();
         std::atomic<int> next_roll{0};
         std::atomic<int> next_trial{0};
 
@@ -1272,7 +1304,7 @@ RolloutStrategy::CubefulRolloutResult RolloutStrategy::cubeful_cube_decision(
         };
 
         UnifiedArg arg = {this, &pre_roll_board, &move0_cache, &move1_cache,
-                           &shared_cache, &nd_template, &dt_template,
+                           shared_cache, &nd_template, &dt_template,
                            &all_dice, trial_results.data(),
                            &next_roll, &next_trial, m0_strat,
                            n_trials, max_moves, uses_move1_cache};
@@ -1322,16 +1354,19 @@ RolloutStrategy::CubefulRolloutResult RolloutStrategy::cubeful_cube_decision(
                     }
 
                     // Phase 3: Trials (work-stealing)
-                    int t;
-                    while ((t = a->next_trial->fetch_add(1, std::memory_order_relaxed))
+                    int start;
+                    while ((start = a->next_trial->fetch_add(kTrialChunkSize, std::memory_order_relaxed))
                            < a->n_trials) {
-                        CubefulBranch branches[2] = {*a->nd_tmpl, *a->dt_tmpl};
-                        a->results[t].cubeless = a->self->run_trial_unified(
-                            *a->board, false, branches, 2,
-                            (*a->all_dice)[t].data(), a->max_moves,
-                            a->move0_cache, a->move1_cache);
-                        a->results[t].nd_equity = branches[0].final_equity;
-                        a->results[t].dt_equity = branches[1].final_equity;
+                        int end = std::min(start + kTrialChunkSize, a->n_trials);
+                        for (int t = start; t < end; ++t) {
+                            CubefulBranch branches[2] = {*a->nd_tmpl, *a->dt_tmpl};
+                            a->results[t].cubeless = a->self->run_trial_unified(
+                                *a->board, false, branches, 2,
+                                (*a->all_dice)[t].data(), a->max_moves,
+                                a->move0_cache, a->move1_cache);
+                            a->results[t].nd_equity = branches[0].final_equity;
+                            a->results[t].dt_equity = branches[1].final_equity;
+                        }
                     }
 
                     MultiPlyStrategy::set_shared_cache(nullptr);
@@ -1348,9 +1383,9 @@ RolloutStrategy::CubefulRolloutResult RolloutStrategy::cubeful_cube_decision(
         for (int th = 0; th < n_threads; ++th) {
             threads.emplace_back([this, &pre_roll_board, &nd_template, &dt_template,
                                   &all_dice, &trial_results, &move0_cache, &move1_cache,
-                                  &shared_cache, &next_roll, &next_trial,
+                                  shared_cache, &next_roll, &next_trial,
                                   m0_strat, n_trials, max_moves, uses_move1_cache]() {
-                MultiPlyStrategy::set_shared_cache(&shared_cache);
+                MultiPlyStrategy::set_shared_cache(shared_cache);
 
                 int r;
                 while ((r = next_roll.fetch_add(1, std::memory_order_relaxed)) < 21) {
@@ -1385,15 +1420,18 @@ RolloutStrategy::CubefulRolloutResult RolloutStrategy::cubeful_cube_decision(
                     }
                 }
 
-                int t;
-                while ((t = next_trial.fetch_add(1, std::memory_order_relaxed))
+                int start;
+                while ((start = next_trial.fetch_add(kTrialChunkSize, std::memory_order_relaxed))
                        < n_trials) {
-                    CubefulBranch branches[2] = {nd_template, dt_template};
-                    trial_results[t].cubeless = run_trial_unified(
-                        pre_roll_board, false, branches, 2,
-                        all_dice[t].data(), max_moves, &move0_cache, &move1_cache);
-                    trial_results[t].nd_equity = branches[0].final_equity;
-                    trial_results[t].dt_equity = branches[1].final_equity;
+                    int end = std::min(start + kTrialChunkSize, n_trials);
+                    for (int t = start; t < end; ++t) {
+                        CubefulBranch branches[2] = {nd_template, dt_template};
+                        trial_results[t].cubeless = run_trial_unified(
+                            pre_roll_board, false, branches, 2,
+                            all_dice[t].data(), max_moves, &move0_cache, &move1_cache);
+                        trial_results[t].nd_equity = branches[0].final_equity;
+                        trial_results[t].dt_equity = branches[1].final_equity;
+                    }
                 }
 
                 MultiPlyStrategy::set_shared_cache(nullptr);
