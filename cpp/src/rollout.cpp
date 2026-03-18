@@ -10,6 +10,42 @@
 #include <thread>
 #include <atomic>
 
+// Define ROLLOUT_PROFILE to enable lightweight per-phase timing counters.
+// #define ROLLOUT_PROFILE
+#ifdef ROLLOUT_PROFILE
+#include <chrono>
+namespace rollout_profile {
+    static std::atomic<int64_t> vr_time_ns{0};
+    static std::atomic<int64_t> trunc_time_ns{0};
+    static std::atomic<int64_t> cube_time_ns{0};
+    static std::atomic<int64_t> movegen_time_ns{0};
+    static std::atomic<int64_t> trial_count{0};
+
+    void reset() {
+        vr_time_ns = 0; trunc_time_ns = 0; cube_time_ns = 0;
+        movegen_time_ns = 0; trial_count = 0;
+    }
+    void print() {
+        int64_t n = trial_count.load();
+        printf("  Profile: vr=%.1fms trunc=%.1fms cube=%.1fms movegen=%.1fms trials=%lld\n",
+               vr_time_ns / 1e6, trunc_time_ns / 1e6, cube_time_ns / 1e6,
+               movegen_time_ns / 1e6, (long long)n);
+    }
+}
+#define ROLLOUT_TIMER_START auto _rp_timer = std::chrono::high_resolution_clock::now()
+#define ROLLOUT_TIMER_ADD(counter) rollout_profile::counter.fetch_add( \
+    std::chrono::duration_cast<std::chrono::nanoseconds>( \
+        std::chrono::high_resolution_clock::now() - _rp_timer).count(), \
+    std::memory_order_relaxed)
+#else
+namespace rollout_profile {
+    inline void reset() {}
+    inline void print() {}
+}
+#define ROLLOUT_TIMER_START (void)0
+#define ROLLOUT_TIMER_ADD(counter) (void)0
+#endif
+
 #ifdef _WIN32
 #define NOMINMAX
 #include <windows.h>
@@ -39,7 +75,7 @@ constexpr std::array<std::array<int, 7>, 7> kOrderedRollToIndex = {{
     {-1, 10, 14, 17, 19, 20,  5},
 }};
 
-constexpr int kTrialChunkSize = 4;
+constexpr int kTrialChunkSize = 8;
 
 } // namespace
 
@@ -91,6 +127,17 @@ RolloutStrategy::RolloutStrategy(std::shared_ptr<Strategy> base, RolloutConfig c
             base_, effective_late_ply, internal_filter);
     } else {
         late_decision_strat_ = base_;
+    }
+
+    // Build truncation evaluation strategy
+    int effective_trunc_ply = (config_.truncation_ply >= 1) ? config_.truncation_ply : config_.decision_ply;
+    if (effective_trunc_ply == config_.decision_ply) {
+        truncation_strat_ = decision_strat_;
+    } else if (effective_trunc_ply > 1) {
+        truncation_strat_ = std::make_shared<MultiPlyStrategy>(
+            base_, effective_trunc_ply, internal_filter);
+    } else {
+        truncation_strat_ = base_;
     }
 
     // VR enabled flag
@@ -322,10 +369,8 @@ void RolloutStrategy::prefill_move0_cache(
     SharedPosCache* shared) const
 {
     const bool race = is_race(start_board);
-    // Prefill always uses the late (faster) strategy for move selection.
-    // Move selection quality has diminishing returns beyond 2-ply because
-    // the rollout averages over many trials. The higher-ply strategy is
-    // only critical for truncation evaluation (evaluate_probs).
+    // Move0 uses late strategy (2-ply for non-race) for move selection.
+    // This also warms the thread-local PosCache for truncation evaluation.
     const auto& current_strat = race ? *base_ : *late_decision_strat_;
     const bool using_base = (&current_strat == base_.get());
 
@@ -376,9 +421,10 @@ void RolloutStrategy::populate_move1_cache_entry(
     entry.race = is_race(move1_board);
     entry.cube_x = cube_efficiency(move1_board, entry.race);
 
-    // Prefill always uses late strategy for move selection (see prefill_move0_cache).
-    const auto& current_strat = entry.race ? *base_ : *late_decision_strat_;
-    const bool using_base = (&current_strat == base_.get());
+    // Move1 uses 1-ply (base_) for move selection. The VR averaging over many
+    // trials makes higher-ply move selection unnecessary here.
+    const auto& current_strat = *base_;
+    const bool using_base = true;
 
     const Board opp_board = flip(move1_board);
     entry.mover_probs = invert_probs(base_->evaluate_probs(opp_board, opp_board));
@@ -639,15 +685,55 @@ RolloutStrategy::TrialResult RolloutStrategy::run_trial_unified(
         // both move-selection quality and per-move VR contribution at depth.
         // 1-ply lets us reuse the VR best-candidate pick (zero extra cost).
         constexpr int ultra_late_threshold = 2;
-        bool skip_vr_this_move = (move_num == 0 && config_.n_trials % 36 == 0);
+        // Skip VR at move 0 (stratified) and at ultra-late moves that aren't
+        // multiples of 2 (thinned VR). Compute VR at moves 1,2,4,6 only (skip 3,5).
+        // Since E[luck] = 0, skipping moves doesn't bias the estimate, just increases
+        // variance slightly.
+        bool skip_vr_this_move = (move_num == 0 && config_.n_trials % 36 == 0)
+                               || (move_num >= ultra_late_threshold && (move_num % 2 == 1));
         bool do_vr = vr_enabled && !skip_vr_this_move;
 
+        ROLLOUT_TIMER_START;
         if (move1_entry) {
             // Fully precomputed for move 1.
         } else if (do_vr) {
             for (size_t i = 0; i < ALL_ROLLS.size(); ++i) {
                 move_candidates[i].clear();
                 possible_boards(board, ALL_ROLLS[i].d1, ALL_ROLLS[i].d2, move_candidates[i]);
+            }
+            // Pre-filter rolls with many candidates for VR (only approximate
+            // best-move probs needed). Preserve actual roll's full list for
+            // move selection.
+            constexpr int VR_PREFILTER_MAX = 20;
+            if (move_num >= ultra_late_threshold) {
+                thread_local std::vector<std::pair<int, int>> vr_ranking;
+                thread_local std::vector<Board> vr_filtered;
+                for (size_t i = 0; i < ALL_ROLLS.size(); ++i) {
+                    if (static_cast<int>(i) == actual_idx) continue;  // keep actual roll unfiltered
+                    auto& cands = move_candidates[i];
+                    if (static_cast<int>(cands.size()) > VR_PREFILTER_MAX) {
+                        vr_ranking.clear();
+                        vr_ranking.reserve(cands.size());
+                        for (int ci = 0; ci < static_cast<int>(cands.size()); ++ci) {
+                            int p_pips = 0, blots = 0;
+                            for (int pt = 1; pt <= 24; ++pt) {
+                                int p = cands[ci][pt];
+                                if (p > 0) { p_pips += pt * p; if (p == 1) ++blots; }
+                            }
+                            vr_ranking.push_back({p_pips + 8 * blots + 20 * cands[ci][25], ci});
+                        }
+                        std::nth_element(vr_ranking.begin(),
+                                         vr_ranking.begin() + VR_PREFILTER_MAX,
+                                         vr_ranking.end());
+                        vr_ranking.resize(VR_PREFILTER_MAX);
+                        vr_filtered.clear();
+                        vr_filtered.reserve(VR_PREFILTER_MAX);
+                        for (auto& [score, idx] : vr_ranking) {
+                            vr_filtered.push_back(cands[idx]);
+                        }
+                        cands.swap(vr_filtered);
+                    }
+                }
             }
         } else {
             move_candidates[actual_idx].clear();
@@ -720,6 +806,8 @@ RolloutStrategy::TrialResult RolloutStrategy::run_trial_unified(
                 }
             }
         }
+
+        ROLLOUT_TIMER_ADD(vr_time_ns);
 
         // Phase 4: Pick best move for actual roll.
         // Move selection uses the full decision strategy (N-ply when applicable).
@@ -917,11 +1005,16 @@ RolloutStrategy::TrialResult RolloutStrategy::run_trial_unified(
 
     // Truncation: evaluate from the LAST MOVER's perspective.
     // flip(board) = chosen = the last mover's post-move board.
+    ROLLOUT_TIMER_START;
     Board last_mover_board = flip(board);
     int trunc_move = std::min(truncation, max_moves);
     bool trunc_race = is_race(last_mover_board);
-    const auto& trunc_strat = trunc_race ? *base_ : *decision_strat_;
+    const auto& trunc_strat = trunc_race ? *base_ : *truncation_strat_;
     auto last_mover_probs = trunc_strat.evaluate_probs(last_mover_board, last_mover_board);
+    ROLLOUT_TIMER_ADD(trunc_time_ns);
+#ifdef ROLLOUT_PROFILE
+    rollout_profile::trial_count.fetch_add(1, std::memory_order_relaxed);
+#endif
 
     // SP parity at truncation: last mover at trunc_move-1.
     bool last_mover_is_sp = ((trunc_move - 1) % 2 == sp_parity_offset);
@@ -1100,7 +1193,7 @@ RolloutResult RolloutStrategy::run_trials_parallel(
         std::vector<HANDLE> handles(n_threads);
         for (int th = 0; th < n_threads; ++th) {
             handles[th] = CreateThread(
-                nullptr, 4 * 1024 * 1024,
+                nullptr, 8 * 1024 * 1024,
                 [](LPVOID param) -> DWORD {
                     auto* a = static_cast<ThreadArg*>(param);
                     MultiPlyStrategy::set_shared_cache(a->shared_cache);
@@ -1279,8 +1372,8 @@ RolloutStrategy::CubefulRolloutResult RolloutStrategy::cubeful_cube_decision(
         std::atomic<int> next_roll{0};
         std::atomic<int> next_trial{0};
 
-        // Precompute move0 strategy selection (same for all rolls)
-        // Prefill always uses late strategy for move selection (see prefill_move0_cache).
+        // Precompute move0 strategy selection (same for all rolls).
+        // Uses late strategy (warms cache for truncation evaluation).
         const bool m0_race = is_race(pre_roll_board);
         const Strategy* m0_strat = m0_race ? base_.get() : late_decision_strat_.get();
 
@@ -1312,7 +1405,7 @@ RolloutStrategy::CubefulRolloutResult RolloutStrategy::cubeful_cube_decision(
         std::vector<HANDLE> handles(n_threads);
         for (int th = 0; th < n_threads; ++th) {
             handles[th] = CreateThread(
-                nullptr, 4 * 1024 * 1024,
+                nullptr, 8 * 1024 * 1024,
                 [](LPVOID param) -> DWORD {
                     auto* a = static_cast<UnifiedArg*>(param);
                     MultiPlyStrategy::set_shared_cache(a->shared_cache);
@@ -1343,15 +1436,9 @@ RolloutStrategy::CubefulRolloutResult RolloutStrategy::cubeful_cube_decision(
                         }
                     }
 
-                    // Wait for all prefill entries to complete
-                    for (int i = 0; i < 21; ++i) {
-                        while (a->move0_cache->state[i].load(std::memory_order_acquire) != 2)
-                            std::this_thread::yield();
-                        if (a->uses_move1_cache) {
-                            while (a->move1_cache->state[i].load(std::memory_order_acquire) != 2)
-                                std::this_thread::yield();
-                        }
-                    }
+                    // No barrier: trials can start immediately. run_trial_unified
+                    // handles missing cache entries via CAS (compute on demand).
+                    // Threads that finish prefill early begin trials sooner.
 
                     // Phase 3: Trials (work-stealing)
                     int start;
@@ -1411,14 +1498,7 @@ RolloutStrategy::CubefulRolloutResult RolloutStrategy::cubeful_cube_decision(
                     }
                 }
 
-                for (int i = 0; i < 21; ++i) {
-                    while (move0_cache.state[i].load(std::memory_order_acquire) != 2)
-                        std::this_thread::yield();
-                    if (uses_move1_cache) {
-                        while (move1_cache.state[i].load(std::memory_order_acquire) != 2)
-                            std::this_thread::yield();
-                    }
-                }
+                // No barrier: trials start immediately, cache entries computed on demand.
 
                 int start;
                 while ((start = next_trial.fetch_add(kTrialChunkSize, std::memory_order_relaxed))

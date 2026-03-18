@@ -90,6 +90,14 @@ target_link_libraries(benchmark_4ply PRIVATE bgbot_lib)
 add_executable(profile_3t src/profile_3t.cpp)
 target_link_libraries(profile_3t PRIVATE bgbot_lib)
 
+# 3T component profiler
+add_executable(benchmark_3t_profile src/benchmark_3t_profile.cpp)
+target_link_libraries(benchmark_3t_profile PRIVATE bgbot_lib)
+
+# 3T experiment (truncation ply comparison)
+add_executable(benchmark_3t_experiment src/benchmark_3t_experiment.cpp)
+target_link_libraries(benchmark_3t_experiment PRIVATE bgbot_lib)
+
 # 3T detailed profiler
 add_executable(profile_3t_detailed src/profile_3t_detailed.cpp)
 target_link_libraries(profile_3t_detailed PRIVATE bgbot_lib)

@@ -21,6 +21,7 @@
 #include <filesystem>
 #include <string>
 
+
 using namespace bgbot;
 using Clock = std::chrono::high_resolution_clock;
 
@@ -69,6 +70,7 @@ int main(int argc, char* argv[]) {
     config.n_trials = 360;
     config.truncation_depth = 7;
     config.decision_ply = 3;
+    config.truncation_ply = 2;
     config.enable_vr = true;
     config.filter = MoveFilters::TINY;
     config.n_threads = n_threads;

@@ -16,6 +16,7 @@ struct RolloutConfig {
     int n_trials = 36;           // Number of trial games per candidate
     int truncation_depth = 7;    // Half-moves before truncating (0 = play to completion)
     int decision_ply = 1;        // Ply depth for move selection during trials (1 = raw NN)
+    int truncation_ply = -1;     // Ply for truncation evaluation (-1 = same as decision_ply)
     bool enable_vr = true;       // Enable variance reduction (VR uses same ply as decision)
     bool parallelize_trials = false;  // Allow parallel trial dispatch for truncated N-ply rollouts
     MoveFilter filter = MoveFilters::TINY;  // Filter for candidate selection at top level
@@ -50,8 +51,8 @@ struct RolloutResult {
 // before late_threshold, late_decision_strat_ after, base_ for race positions.
 // Since VR tracks luck = (actual - mean) with both at 1-ply, biases cancel.
 //
-// Truncation evaluation always uses decision_strat_ (highest ply) for best
-// accuracy, regardless of late_threshold. Race positions use base_ at truncation.
+// Truncation evaluation uses truncation_strat_ (truncation_ply, defaults to
+// decision_ply). Race positions use base_ at truncation.
 //
 // Move-0 caching: all trials share the same starting position, so there are
 // only 21 possible first-roll decisions. These are computed once and shared
@@ -125,6 +126,11 @@ private:
     // Late-game decision strategy (used after late_threshold half-moves).
     // If late_ply < 0, same as decision_strat_.
     std::shared_ptr<Strategy> late_decision_strat_;
+
+    // Truncation evaluation strategy. If truncation_ply < 0, same as decision_strat_.
+    // Allows using a lower ply for truncation evaluation (faster) while keeping
+    // a higher ply for move selection (move0 BMI).
+    std::shared_ptr<Strategy> truncation_strat_;
 
     // Whether VR is enabled (from config_.enable_vr).
     bool vr_enabled_;

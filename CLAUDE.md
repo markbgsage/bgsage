@@ -553,7 +553,10 @@ for position evaluation.
 **Key parameters:**
 - `n_trials`: Number of trial games per candidate (42-360 typical for truncated rollouts)
 - `truncation_depth`: Half-moves before truncating and evaluating with NN (0 = play to completion)
-- `decision_ply`: Ply depth for move selection during early trial moves AND truncation evaluation
+- `decision_ply`: Ply depth for move selection during early trial moves
+- `truncation_ply`: Ply depth for evaluation at the truncation point (-1 = same as `decision_ply`).
+  Using a lower ply here (e.g. 2-ply when `decision_ply=3`) gives a large speed improvement
+  with small accuracy tradeoff, since truncation evaluation is the dominant cost.
 - `late_ply`: Ply for move selection after `late_threshold` half-moves (-1 = same as `decision_ply`)
 - `late_threshold`: Half-move index where decision ply switches from `decision_ply` to `late_ply`
 - `ultra_late_threshold`: Half-move index (hardcoded to 2) where move selection drops to 1-ply
@@ -566,7 +569,7 @@ for position evaluation.
 - At or after `ultra_late_threshold` (half-move >= 2): `base_` (1-ply)
 - Before `late_threshold`: `decision_strat_` (N-ply)
 - At or after `late_threshold`: `late_decision_strat_` (lower ply, for speed)
-- Truncation evaluation: always `decision_strat_` (highest ply, for accuracy)
+- Truncation evaluation: `truncation_strat_` (defaults to `decision_ply`, configurable via `truncation_ply`)
 
 **XG Roller equivalences** (XG uses XG ply convention = our convention):
 
@@ -603,6 +606,22 @@ analyzer = BgBotAnalyzer(eval_level="rollout",
     n_trials=360, truncation_depth=7, decision_ply=3,
     late_ply=2, late_threshold=2)
 ```
+
+**VR speed optimizations:**
+- **Thinned VR**: At ultra-late moves (>= 2), VR is computed only at even moves
+  (2, 4, 6...). Odd ultra-late moves skip VR entirely. Since E[luck] = 0, this
+  doesn't bias the estimate — just increases variance slightly (~2x SE increase).
+  Halves VR cost at ultra-late moves.
+- **VR candidate prefilter**: When a roll generates >20 legal moves (common for
+  doubles), candidates are pre-filtered to the top 20 by pip heuristic before
+  1-ply evaluation. The actual roll's candidates are kept unfiltered for move
+  selection. Reduces encoding cost for doubles with 50-96 candidates.
+- **1-ply move1 selection**: Move1Cache uses 1-ply (base_) for move selection
+  instead of late_decision_strat_. The VR averaging over many trials makes
+  higher-ply move selection unnecessary in the move1 cache.
+- **No prefill barrier**: Trials start immediately after each thread finishes its
+  prefill work, without waiting for all 21 entries. run_trial_unified handles
+  missing cache entries via CAS (compute on demand).
 
 **Not yet implemented:**
 - Early stopping (XG Roller+ stops at 0.010 confidence, minimum 180 games)

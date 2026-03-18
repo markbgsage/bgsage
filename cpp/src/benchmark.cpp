@@ -141,7 +141,7 @@ BenchmarkResult score_benchmarks(const Strategy& strategy,
         offset += chunk_size;
 
         handles[t] = CreateThread(
-            nullptr, 4 * 1024 * 1024,  // 4 MB stack
+            nullptr, 8 * 1024 * 1024,  // 4 MB stack
             [](LPVOID param) -> DWORD {
                 auto* a = static_cast<ThreadArg*>(param);
                 *a->result = score_slice(*a->strategy, a->scenarios, a->count);
@@ -264,7 +264,7 @@ void score_benchmarks_per_scenario(const Strategy& strategy,
         offset += chunk_size;
 
         handles[t] = CreateThread(
-            nullptr, 4 * 1024 * 1024,
+            nullptr, 8 * 1024 * 1024,
             [](LPVOID param) -> DWORD {
                 auto* a = static_cast<ThreadArg*>(param);
                 score_slice_per_scenario(*a->strategy, a->scenarios,
@@ -457,7 +457,7 @@ PRResult score_benchmark_pr(const Strategy& strategy,
         offset += chunk_size;
 
         handles[t] = CreateThread(
-            nullptr, 4 * 1024 * 1024,
+            nullptr, 8 * 1024 * 1024,
             [](LPVOID param) -> DWORD {
                 auto* a = static_cast<ThreadArg*>(param);
                 *a->result = score_pr_slice(*a->strategy, a->base_strategy,
