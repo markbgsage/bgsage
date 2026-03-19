@@ -63,6 +63,12 @@ target_link_libraries(benchmark_3t PRIVATE bgbot_lib)
 add_executable(benchmark_4ply src/benchmark_4ply.cpp)
 target_link_libraries(benchmark_4ply PRIVATE bgbot_lib)
 
+add_executable(benchmark_4ply_opt src/benchmark_4ply_opt.cpp)
+target_link_libraries(benchmark_4ply_opt PRIVATE bgbot_lib)
+
+add_executable(test_4ply_accuracy src/test_4ply_accuracy.cpp)
+target_link_libraries(test_4ply_accuracy PRIVATE bgbot_lib)
+
 add_executable(profile_3t src/profile_3t.cpp)
 target_link_libraries(profile_3t PRIVATE bgbot_lib)
 

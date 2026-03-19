@@ -196,4 +196,8 @@ inline CubeDecision cube_decision_from_probs(
     return cube_decision_1ply(cubeless_probs, cube, board, is_race_pos);
 }
 
+// Profiling counters for cubeful recursion (debug only)
+void reset_cubeful_counters();
+void print_cubeful_counters();
+
 } // namespace bgbot

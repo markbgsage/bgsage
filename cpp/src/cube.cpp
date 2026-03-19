@@ -11,8 +11,36 @@
 #include <array>
 #include <vector>
 #include <unordered_map>
+#include <atomic>
 
 namespace bgbot {
+
+// Profiling counters for cubeful recursion (for diagnostics)
+static std::atomic<int64_t> g_leaf_count{0};
+static std::atomic<int64_t> g_internal_count{0};
+static std::atomic<int64_t> g_cache_hit_count{0};
+static std::atomic<int64_t> g_move_gen_count{0};
+static std::atomic<int64_t> g_total_candidates{0};
+
+void reset_cubeful_counters() {
+    g_leaf_count = 0;
+    g_internal_count = 0;
+    g_cache_hit_count = 0;
+    g_move_gen_count = 0;
+    g_total_candidates = 0;
+}
+
+void print_cubeful_counters() {
+    printf("  Leaf evaluations: %lld\n", (long long)g_leaf_count.load());
+    printf("  Internal nodes:   %lld\n", (long long)g_internal_count.load());
+    printf("  Cache hits:       %lld\n", (long long)g_cache_hit_count.load());
+    printf("  Move gen calls:   %lld\n", (long long)g_move_gen_count.load());
+    printf("  Total candidates: %lld (avg %.1f)\n",
+           (long long)g_total_candidates.load(),
+           g_move_gen_count.load() > 0
+               ? (double)g_total_candidates.load() / g_move_gen_count.load()
+               : 0.0);
+}
 
 void compute_WL(const std::array<float, NUM_OUTPUTS>& probs, float& W, float& L) {
     float p_win = probs[0];
@@ -785,89 +813,87 @@ static inline std::size_t hash_combine(std::size_t seed, std::size_t value) {
     return seed ^ (value + 0x9e3779b97f4a7c15ULL + (seed << 6) + (seed >> 2));
 }
 
-struct CubefulCacheKey {
+// Open-addressing cubeful cache: fixed-size table with linear probing.
+// Much faster than unordered_map for this workload.
+struct CubefulCacheEntry {
     Board board;
-    const Strategy* strategy_ptr = nullptr;
-    int plies = 0;
-    int cci = 0;
-    bool fTop = false;
-    std::array<CubeInfo, MAX_CUBEFUL_CACHE_CCI> aci_cube{};
+    int plies;
+    int cci;
+    bool fTop;
+    bool occupied;
+    float values[MAX_CCI];
 };
 
-struct CubefulCacheValue {
-    std::array<float, MAX_CCI> values{};
-};
+static constexpr int CUBEFUL_CACHE_SIZE = 8192;   // must be power of 2
+static constexpr int CUBEFUL_CACHE_MASK = CUBEFUL_CACHE_SIZE - 1;
+static_assert((CUBEFUL_CACHE_SIZE & (CUBEFUL_CACHE_SIZE - 1)) == 0, "Must be power of 2");
 
-struct CubefulCacheKeyEq {
-    bool operator()(const CubefulCacheKey& lhs, const CubefulCacheKey& rhs) const {
-        if (lhs.strategy_ptr != rhs.strategy_ptr) return false;
-        if (lhs.plies != rhs.plies) return false;
-        if (lhs.cci != rhs.cci) return false;
-        if (lhs.fTop != rhs.fTop) return false;
-        if (lhs.board != rhs.board) return false;
-        for (int i = 0; i < lhs.cci; ++i) {
-            const auto& a = lhs.aci_cube[i];
-            const auto& b = rhs.aci_cube[i];
-            if (a.cube_value != b.cube_value) return false;
-            if (a.owner != b.owner) return false;
-            if (a.match.away1 != b.match.away1) return false;
-            if (a.match.away2 != b.match.away2) return false;
-            if (a.match.is_crawford != b.match.is_crawford) return false;
-            if (a.cube_x_override != b.cube_x_override) return false;
-            if (a.jacoby != b.jacoby) return false;
-            if (a.beaver != b.beaver) return false;
-            if (a.max_cube_value != b.max_cube_value) return false;
-        }
-        return true;
+struct CubefulOpenCache {
+    CubefulCacheEntry entries[CUBEFUL_CACHE_SIZE];
+    bool initialized = false;
+
+    void clear() {
+        // Zero-fill sets all occupied=false
+        std::memset(entries, 0, sizeof(entries));
     }
-};
 
-struct CubefulCacheKeyHash {
-    std::size_t operator()(const CubefulCacheKey& key) const {
-        std::size_t h = std::hash<const void*>{}(key.strategy_ptr);
-        h = hash_combine(h, static_cast<std::size_t>(key.plies));
-        h = hash_combine(h, static_cast<std::size_t>(key.cci));
-        h = hash_combine(h, static_cast<std::size_t>(key.fTop));
-
+    static std::size_t hash_board(const Board& board, int plies, int cci, bool fTop) {
+        // Fast hash: XOR board values with rotations + plies/cci/fTop
+        std::size_t h = static_cast<std::size_t>(plies) * 0x9e3779b97f4a7c15ULL;
+        h ^= static_cast<std::size_t>(cci) * 0x517cc1b727220a95ULL;
+        h ^= static_cast<std::size_t>(fTop) * 0x6c62272e07bb0142ULL;
         for (int i = 0; i < 26; ++i) {
-            h = hash_combine(h, static_cast<std::size_t>(key.board[i]));
-        }
-        for (int i = 0; i < key.cci; ++i) {
-            const auto& ci = key.aci_cube[i];
-            h = hash_combine(h, static_cast<std::size_t>(ci.cube_value));
-            h = hash_combine(h, static_cast<std::size_t>(static_cast<int>(ci.owner)));
-            h = hash_combine(h, static_cast<std::size_t>(ci.match.away1));
-            h = hash_combine(h, static_cast<std::size_t>(ci.match.away2));
-            h = hash_combine(h, static_cast<std::size_t>(ci.match.is_crawford));
-            h = hash_combine(h, std::hash<float>{}(ci.cube_x_override));
-            h = hash_combine(h, static_cast<std::size_t>(ci.jacoby));
-            h = hash_combine(h, static_cast<std::size_t>(ci.beaver));
-            h = hash_combine(h, static_cast<std::size_t>(ci.max_cube_value));
+            h ^= static_cast<std::size_t>(static_cast<unsigned int>(board[i]))
+                 * (0x9e3779b97f4a7c15ULL + static_cast<std::size_t>(i) * 7);
+            h = (h << 7) | (h >> 57);  // rotate
         }
         return h;
     }
+
+    bool get(const Board& board, int plies, int cci, bool fTop, float* out) const {
+        std::size_t idx = hash_board(board, plies, cci, fTop) & CUBEFUL_CACHE_MASK;
+        // Linear probe up to 4 slots
+        for (int probe = 0; probe < 4; ++probe) {
+            const auto& e = entries[(idx + probe) & CUBEFUL_CACHE_MASK];
+            if (!e.occupied) return false;
+            if (e.plies == plies && e.cci == cci && e.fTop == fTop && e.board == board) {
+                for (int i = 0; i < cci; ++i) out[i] = e.values[i];
+                return true;
+            }
+        }
+        return false;
+    }
+
+    void put(const Board& board, int plies, int cci, bool fTop, const float* values) {
+        std::size_t idx = hash_board(board, plies, cci, fTop) & CUBEFUL_CACHE_MASK;
+        // Linear probe up to 4 slots, replace first empty or matching slot
+        for (int probe = 0; probe < 4; ++probe) {
+            auto& e = entries[(idx + probe) & CUBEFUL_CACHE_MASK];
+            if (!e.occupied || (e.plies == plies && e.cci == cci && e.fTop == fTop && e.board == board)) {
+                e.board = board;
+                e.plies = plies;
+                e.cci = cci;
+                e.fTop = fTop;
+                e.occupied = true;
+                for (int i = 0; i < cci; ++i) e.values[i] = values[i];
+                return;
+            }
+        }
+        // All 4 probe slots occupied by different entries: evict first
+        auto& e = entries[idx & CUBEFUL_CACHE_MASK];
+        e.board = board;
+        e.plies = plies;
+        e.cci = cci;
+        e.fTop = fTop;
+        e.occupied = true;
+        for (int i = 0; i < cci; ++i) e.values[i] = values[i];
+    }
 };
 
-using CubefulCacheMap = std::unordered_map<
-    CubefulCacheKey,
-    CubefulCacheValue,
-    CubefulCacheKeyHash,
-    CubefulCacheKeyEq>;
-
-struct CubefulRecCache {
-    bool initialized = false;
-    CubefulCacheMap map;
-};
-
-static thread_local CubefulRecCache g_cubeful_cache;
+static thread_local CubefulOpenCache g_cubeful_cache;
 
 static void begin_cubeful_cache_epoch() {
-    g_cubeful_cache.map.clear();
-    if (!g_cubeful_cache.initialized) {
-        g_cubeful_cache.map.reserve(4096);
-        g_cubeful_cache.map.max_load_factor(0.7f);
-        g_cubeful_cache.initialized = true;
-    }
+    g_cubeful_cache.clear();
 }
 
 static bool get_cached_cubeful(
@@ -879,27 +905,8 @@ static bool get_cached_cubeful(
     bool fTop,
     float arCubeful[])
 {
-    if (!kEnableCubefulCache || cci > MAX_CUBEFUL_CACHE_CCI || cci <= 0) return false;
-
-    CubefulCacheKey key;
-    key.board = board;
-    key.strategy_ptr = &strategy;
-    key.plies = plies;
-    key.cci = cci;
-    key.fTop = fTop;
-    for (int i = 0; i < cci; ++i) {
-        key.aci_cube[i] = aciCubePos[i];
-    }
-
-    auto it = g_cubeful_cache.map.find(key);
-    if (it == g_cubeful_cache.map.end()) {
-        return false;
-    }
-
-    for (int i = 0; i < cci; ++i) {
-        arCubeful[i] = it->second.values[i];
-    }
-    return true;
+    if (!kEnableCubefulCache || cci <= 0) return false;
+    return g_cubeful_cache.get(board, plies, cci, fTop, arCubeful);
 }
 
 static void put_cached_cubeful(
@@ -911,24 +918,8 @@ static void put_cached_cubeful(
     bool fTop,
     const float arCubeful[])
 {
-    if (!kEnableCubefulCache || cci > MAX_CUBEFUL_CACHE_CCI || cci <= 0) return;
-
-    CubefulCacheKey key;
-    key.board = board;
-    key.strategy_ptr = &strategy;
-    key.plies = plies;
-    key.cci = cci;
-    key.fTop = fTop;
-    for (int i = 0; i < cci; ++i) {
-        key.aci_cube[i] = aciCubePos[i];
-    }
-
-    CubefulCacheValue value{};
-    for (int i = 0; i < cci; ++i) {
-        value.values[i] = arCubeful[i];
-    }
-
-    g_cubeful_cache.map.emplace(std::move(key), std::move(value));
+    if (!kEnableCubefulCache || cci <= 0) return;
+    g_cubeful_cache.put(board, plies, cci, fTop, arCubeful);
 }
 
 // Resolve cube efficiency: use override if set, otherwise auto-detect.
@@ -1107,6 +1098,7 @@ static void cubeful_recursive_multi(
                     ? aciCubePos[0].is_money() : true;
 
     if (get_cached_cubeful(board, aciCubePos, cci, strategy, plies, fTop, arCubeful)) {
+        g_cache_hit_count.fetch_add(1, std::memory_order_relaxed);
         return;
     }
 
@@ -1141,6 +1133,7 @@ static void cubeful_recursive_multi(
     }
 
     // --- Leaf node (1-ply): NN evaluation + Janowski ---
+    g_leaf_count.fetch_add(1, std::memory_order_relaxed);
     if (plies <= 1) {
         Board flipped = flip(board);
         bool race = is_race(board);
@@ -1182,6 +1175,7 @@ static void cubeful_recursive_multi(
     }
 
     // --- Internal node (plies > 0): recurse over 21 rolls ---
+    g_internal_count.fetch_add(1, std::memory_order_relaxed);
 
     // Expand cube states for recursion (fInvert=true: flip to opponent's perspective)
     CubeInfo aci[MAX_CCI * 2];
@@ -1202,6 +1196,8 @@ static void cubeful_recursive_multi(
         if (candidates.capacity() < 32) candidates.reserve(32);
         possible_boards(board, roll.d1, roll.d2, candidates);
         int n_cand = static_cast<int>(candidates.size());
+        g_move_gen_count.fetch_add(1, std::memory_order_relaxed);
+        g_total_candidates.fetch_add(n_cand, std::memory_order_relaxed);
 
         if (n_cand == 0) {
             // No legal moves: evaluate standing pat (flip board = opponent's turn)
@@ -1262,9 +1258,53 @@ static void cubeful_recursive_multi(
             return;
         }
 
-        // Pick best move by cubeless 1-ply equity (shared across all cube states)
+        // Pick best move by cubeless 1-ply equity (shared across all cube states).
+        // For large candidate sets (common with doubles), pre-filter using a
+        // quick heuristic to avoid expensive NN evaluation of weak moves.
+        static constexpr int PREFILTER_THRESHOLD = 60;
+        static constexpr int PREFILTER_KEEP = 50;
+
         int best_idx = 0;
-        if (base_gps) {
+        if (n_cand > PREFILTER_THRESHOLD && base_gps) {
+            // Quick heuristic: pip differential + hitting bonus + made-point bonus.
+            auto [orig_p1, orig_p2] = pip_counts(board);
+
+            thread_local std::vector<std::pair<float, int>> scores;
+            scores.clear();
+            scores.reserve(n_cand);
+            for (int c = 0; c < n_cand; c++) {
+                const Board& cb = candidates[c];
+                auto [p1, p2] = pip_counts(cb);
+                // Pip reduction (higher = better): (orig_p1 - p1) - (orig_p2 - p2)
+                float pip_diff = static_cast<float>((orig_p1 - p1) - (orig_p2 - p2));
+                // Hitting bonus: each checker on opponent's bar = 25 pips penalty
+                float hit_bonus = static_cast<float>(cb[0] - board[0]) * 25.0f;
+                // Made points bonus (points with 2+ checkers in home board)
+                float made_pts = 0.0f;
+                for (int pt = 1; pt <= 6; pt++) {
+                    if (cb[pt] >= 2 && board[pt] < 2) made_pts += 3.0f;
+                }
+                scores.push_back({-(pip_diff + hit_bonus + made_pts), c});
+            }
+
+            int keep = std::min(PREFILTER_KEEP, n_cand);
+            std::partial_sort(scores.begin(), scores.begin() + keep, scores.end());
+
+            thread_local std::vector<Board> filtered;
+            filtered.clear();
+            filtered.reserve(keep);
+            thread_local std::vector<int> orig_indices;
+            orig_indices.clear();
+            orig_indices.reserve(keep);
+            for (int k = 0; k < keep; k++) {
+                filtered.push_back(candidates[scores[k].second]);
+                orig_indices.push_back(scores[k].second);
+            }
+
+            int filtered_best = base_gps->batch_evaluate_candidates_best_prob(
+                filtered, board, nullptr, nullptr);
+            best_idx = orig_indices[filtered_best];
+        } else if (base_gps) {
             best_idx = base_gps->batch_evaluate_candidates_best_prob(
                 candidates, board, nullptr, nullptr);
         } else {
