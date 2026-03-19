@@ -364,4 +364,10 @@ private:
 void multipy_parallel_for(int n_items, int n_threads,
                           const std::function<void(int)>& fn);
 
+// Dispatch n_workers copies of fn() to the persistent thread pool. The caller
+// runs one copy; the remaining (n_workers - 1) run on pool threads. Blocks
+// until all workers complete. Useful for work-stealing patterns where each
+// worker pulls items from a shared atomic counter.
+void multipy_parallel_run(int n_workers, const std::function<void()>& fn);
+
 } // namespace bgbot

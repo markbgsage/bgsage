@@ -23,6 +23,7 @@
 #include "bgbot/multipy.h"
 #include "bgbot/rollout.h"
 #include "bgbot/cube.h"
+#include "bgbot/bearoff.h"
 
 #include "bgbot/cuda_nn.h"
 
@@ -1863,16 +1864,28 @@ PYBIND11_MODULE(bgbot_cpp, m) {
                                      int n_threads,
                                      int cube_value,
                                      int away1, int away2, bool is_crawford,
-                                     bool jacoby, bool beaver) {
+                                     bool jacoby, bool beaver,
+                                     const BearoffDB* bearoff_db) {
         Board board = list_to_board(board_vec);
         MoveFilter filter{filter_max_moves, filter_threshold};
+
+        // Wrap in BearoffStrategy if DB available
+        std::shared_ptr<Strategy> wrapped;
+        if (bearoff_db && bearoff_db->is_loaded()) {
+            auto gps_ptr = std::shared_ptr<GamePlanStrategy>(&strategy, [](auto*){});
+            wrapped = std::make_shared<BearoffStrategy>(gps_ptr, bearoff_db);
+        }
+        const Strategy& eval_strat = wrapped
+            ? static_cast<const Strategy&>(*wrapped)
+            : static_cast<const Strategy&>(strategy);
+
         py::gil_scoped_release release;
         if (away1 > 0 && away2 > 0) {
             CubeInfo ci{cube_value, owner, {away1, away2, is_crawford}, -1.0f, jacoby, beaver};
-            return cubeful_equity_nply(board, ci, strategy, n_plies, filter, n_threads);
+            return cubeful_equity_nply(board, ci, eval_strat, n_plies, filter, n_threads);
         }
         CubeInfo ci{cube_value, owner, {0, 0, false}, -1.0f, jacoby, beaver};
-        return cubeful_equity_nply(board, ci, strategy, n_plies, filter, n_threads);
+        return cubeful_equity_nply(board, ci, eval_strat, n_plies, filter, n_threads);
     }, "Compute cubeful equity for a pre-roll position at N-ply depth.\n"
        "Uses recursive cube decision modeling (Janowski only at 1-ply leaves).\n"
        "Returns cubeful equity normalized to cube value 1.",
@@ -1884,7 +1897,8 @@ PYBIND11_MODULE(bgbot_cpp, m) {
        py::arg("n_threads") = 1,
        py::arg("cube_value") = 1,
        py::arg("away1") = 0, py::arg("away2") = 0, py::arg("is_crawford") = false,
-       py::arg("jacoby") = true, py::arg("beaver") = true);
+       py::arg("jacoby") = true, py::arg("beaver") = true,
+       py::arg("bearoff_db") = nullptr);
 
     m.def("cube_efficiency", [](const std::vector<int>& board, bool is_race_pos) {
         return cube_efficiency(list_to_board(board), is_race_pos);
@@ -1919,15 +1933,21 @@ PYBIND11_MODULE(bgbot_cpp, m) {
                                         int n_h_anchoring,
                                         int away1, int away2, bool is_crawford,
                                         float cube_x_override, bool jacoby,
-                                        bool beaver, int max_cube_value) {
+                                        bool beaver, int max_cube_value,
+                                        const BearoffDB* bearoff_db) {
         Board board = list_to_board(checkers);
-        GamePlanStrategy strat(purerace_w, racing_w, attacking_w, priming_w, anchoring_w,
-                               n_h_purerace, n_h_racing, n_h_attacking, n_h_priming, n_h_anchoring);
+        auto gps = std::make_shared<GamePlanStrategy>(
+            purerace_w, racing_w, attacking_w, priming_w, anchoring_w,
+            n_h_purerace, n_h_racing, n_h_attacking, n_h_priming, n_h_anchoring);
+        std::shared_ptr<Strategy> strat = gps;
+        if (bearoff_db && bearoff_db->is_loaded()) {
+            strat = std::make_shared<BearoffStrategy>(gps, bearoff_db);
+        }
 
         // Pre-roll probs: flip → evaluate → invert
         Board flipped = flip(board);
         bool race = is_race(board);
-        auto post_move_probs = strat.evaluate_probs(flipped, race);
+        auto post_move_probs = strat->evaluate_probs(flipped, race);
         auto pre_roll_probs = invert_probs(post_move_probs);
 
         // Cube efficiency (use override if provided)
@@ -1970,7 +1990,8 @@ PYBIND11_MODULE(bgbot_cpp, m) {
        py::arg("n_hidden_anchoring") = 400,
        py::arg("away1") = 0, py::arg("away2") = 0, py::arg("is_crawford") = false,
        py::arg("cube_x_override") = -1.0f, py::arg("jacoby") = true,
-       py::arg("beaver") = true, py::arg("max_cube_value") = 0);
+       py::arg("beaver") = true, py::arg("max_cube_value") = 0,
+       py::arg("bearoff_db") = nullptr);
 
     // N-ply cube decision (standalone — creates its own strategy, serial by default)
     m.def("cube_decision_nply", [](const std::vector<int>& checkers,
@@ -1991,10 +2012,19 @@ PYBIND11_MODULE(bgbot_cpp, m) {
                                     int n_threads,
                                     int away1, int away2, bool is_crawford,
                                     float cube_x_override, bool jacoby,
-                                    bool beaver, int max_cube_value) {
+                                    bool beaver, int max_cube_value,
+                                    const BearoffDB* bearoff_db) {
         Board board = list_to_board(checkers);
-        GamePlanStrategy strat(purerace_w, racing_w, attacking_w, priming_w, anchoring_w,
-                               n_h_purerace, n_h_racing, n_h_attacking, n_h_priming, n_h_anchoring);
+        auto gps = std::make_shared<GamePlanStrategy>(
+            purerace_w, racing_w, attacking_w, priming_w, anchoring_w,
+            n_h_purerace, n_h_racing, n_h_attacking, n_h_priming, n_h_anchoring);
+
+        // Wrap in BearoffStrategy if DB is available
+        std::shared_ptr<Strategy> base_strat = gps;
+        if (bearoff_db && bearoff_db->is_loaded()) {
+            base_strat = std::make_shared<BearoffStrategy>(gps, bearoff_db);
+        }
+
         CubeInfo ci{cube_value, owner, {away1, away2, is_crawford}, cube_x_override, jacoby, beaver, max_cube_value};
         MoveFilter filter{filter_max_moves, filter_threshold};
 
@@ -2003,12 +2033,14 @@ PYBIND11_MODULE(bgbot_cpp, m) {
         float cl_eq;
         {
             py::gil_scoped_release release;
-            cd = cube_decision_nply(board, ci, strat, n_plies, filter, n_threads);
+            cd = cube_decision_nply(board, ci, *base_strat, n_plies, filter, n_threads);
 
             // Get N-ply cubeless pre-roll probs: flip board, evaluate at N-ply, invert.
             Board flipped = flip(board);
-            MultiPlyStrategy multipy(
-                std::make_shared<GamePlanStrategy>(strat), n_plies, filter);
+            MultiPlyStrategy multipy(base_strat, n_plies, filter);
+            if (bearoff_db && bearoff_db->is_loaded()) {
+                multipy.set_bearoff_db(bearoff_db);
+            }
             auto post_probs = multipy.evaluate_probs(flipped, flipped);
             multipy.clear_cache();
             pre_roll_probs = invert_probs(post_probs);
@@ -2048,7 +2080,8 @@ PYBIND11_MODULE(bgbot_cpp, m) {
        py::arg("n_threads") = 1,
        py::arg("away1") = 0, py::arg("away2") = 0, py::arg("is_crawford") = false,
        py::arg("cube_x_override") = -1.0f, py::arg("jacoby") = true,
-       py::arg("beaver") = true, py::arg("max_cube_value") = 0);
+       py::arg("beaver") = true, py::arg("max_cube_value") = 0,
+       py::arg("bearoff_db") = nullptr);
 
     // Cubeful rollout: simulates cube decisions during trial games.
     // Two branches (ND and DT) share the same board evolution and dice sequences.
@@ -3113,4 +3146,73 @@ PYBIND11_MODULE(bgbot_cpp, m) {
        py::arg("n_threads") = 0,
        py::arg("jacoby") = true,
        py::arg("beaver") = true);
+
+    // ======================== Bearoff Database ========================
+
+    py::class_<BearoffDB, std::shared_ptr<BearoffDB>>(m, "BearoffDB")
+        .def(py::init<>())
+        .def("load", &BearoffDB::load, "Load bearoff database from file",
+             py::arg("path"))
+        .def("save", &BearoffDB::save, "Save bearoff database to file",
+             py::arg("path"))
+        .def("generate", [](BearoffDB& self) {
+            py::gil_scoped_release release;
+            self.generate();
+        }, "Generate the database via backward induction")
+        .def("is_loaded", &BearoffDB::is_loaded)
+        .def("is_bearoff", [](const BearoffDB& self, const std::vector<int>& board_vec) {
+            return self.is_bearoff(list_to_board(board_vec));
+        }, "Check if a board position is covered by the bearoff DB",
+           py::arg("board"))
+        .def("lookup_probs", [](const BearoffDB& self, const std::vector<int>& board_vec,
+                                bool post_move) {
+            auto probs = self.lookup_probs(list_to_board(board_vec), post_move);
+            return std::vector<float>(probs.begin(), probs.end());
+        }, "Compute exact cubeless probabilities for a bearoff position.\n"
+           "post_move=False: player on points 1-6 rolls first (on-roll/pre-roll).\n"
+           "post_move=True: opponent rolls first (post-move, matches NN semantics).",
+           py::arg("board"), py::arg("post_move") = false)
+        .def("lookup_epc", [](const BearoffDB& self, const std::vector<int>& board_vec,
+                               int player) {
+            return self.lookup_epc(list_to_board(board_vec), player);
+        }, "Get EPC (Effective Pip Count) for one side",
+           py::arg("board"), py::arg("player") = 0)
+        .def("get_mean_rolls", [](const BearoffDB& self, const std::vector<int>& board_vec,
+                                   int player) {
+            Board board = list_to_board(board_vec);
+            unsigned int idx = (player == 0)
+                ? BearoffDB::board_to_player_index(board)
+                : BearoffDB::board_to_opponent_index(board);
+            return self.get_mean_rolls(idx);
+        }, "Get expected rolls to bear off for one side",
+           py::arg("board"), py::arg("player") = 0)
+        .def_static("position_index", [](const std::vector<int>& checkers) {
+            if (checkers.size() != 6)
+                throw std::runtime_error("checkers must have exactly 6 elements");
+            return BearoffDB::position_index(checkers.data());
+        }, "Map a 6-element checker array to a position index",
+           py::arg("checkers"))
+        .def_static("index_to_position", [](unsigned int index) {
+            int checkers[6];
+            BearoffDB::index_to_position(index, checkers);
+            return std::vector<int>(checkers, checkers + 6);
+        }, "Map a position index back to a 6-element checker array",
+           py::arg("index"));
+
+    py::class_<BearoffStrategy, std::shared_ptr<BearoffStrategy>>(m, "BearoffStrategy")
+        .def(py::init<std::shared_ptr<Strategy>, const BearoffDB*>(),
+             py::arg("base"), py::arg("db"),
+             py::keep_alive<1, 3>());  // BearoffStrategy keeps db alive
+
+    // Setter for MultiPlyStrategy bearoff DB
+    m.def("multipy_set_bearoff_db", [](MultiPlyStrategy& strat, const BearoffDB* db) {
+        strat.set_bearoff_db(db);
+    }, "Set bearoff DB on a MultiPlyStrategy for exact bearoff evaluation",
+       py::arg("strategy"), py::arg("db"));
+
+    // Setter for RolloutStrategy bearoff DB
+    m.def("rollout_set_bearoff_db", [](RolloutStrategy& strat, const BearoffDB* db) {
+        strat.set_bearoff_db(db);
+    }, "Set bearoff DB on a RolloutStrategy for exact bearoff evaluation",
+       py::arg("strategy"), py::arg("db"));
 }

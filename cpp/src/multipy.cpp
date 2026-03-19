@@ -13,6 +13,11 @@
 #include <deque>
 #include <mutex>
 
+#ifdef _WIN32
+#define NOMINMAX
+#include <windows.h>
+#endif
+
 namespace bgbot {
 
 // ======================== Static Data ========================
@@ -35,10 +40,26 @@ public:
     explicit MultiPlyThreadPool(int n_threads) {
         constexpr int kMinThreads = 1;
         n_threads_ = std::max(kMinThreads, n_threads);
+#ifdef _WIN32
+        // Use 8 MB stacks on Windows to handle deep N-ply recursion on
+        // crashed positions (90+ legal moves, 3+ ply depth).
+        handles_.reserve(n_threads_);
+        for (int i = 0; i < n_threads_; ++i) {
+            HANDLE h = CreateThread(
+                nullptr, 8 * 1024 * 1024,
+                [](LPVOID param) -> DWORD {
+                    static_cast<MultiPlyThreadPool*>(param)->worker_loop();
+                    return 0;
+                },
+                this, 0, nullptr);
+            handles_.push_back(h);
+        }
+#else
         threads_.reserve(n_threads_);
         for (int i = 0; i < n_threads_; ++i) {
             threads_.emplace_back([this]() { worker_loop(); });
         }
+#endif
     }
 
     ~MultiPlyThreadPool() {
@@ -47,9 +68,18 @@ public:
             stopping_ = true;
         }
         queue_cv_.notify_all();
+#ifdef _WIN32
+        if (!handles_.empty()) {
+            WaitForMultipleObjects(
+                static_cast<DWORD>(handles_.size()),
+                handles_.data(), TRUE, INFINITE);
+            for (HANDLE h : handles_) CloseHandle(h);
+        }
+#else
         for (auto& t : threads_) {
             if (t.joinable()) t.join();
         }
+#endif
     }
 
     template<typename F>
@@ -62,7 +92,6 @@ public:
         }
 
         const int workers = std::min(n_threads, n_items);
-        std::atomic<int> completed_workers{0};
         const auto task_fn = std::forward<F>(fn);
 
         struct JobState {
@@ -93,6 +122,45 @@ public:
             std::unique_lock<std::mutex> lock(state.done_mutex);
             state.done_cv.wait(lock, [&state, workers]() {
                 return state.completed_workers.load(std::memory_order_acquire) == workers;
+            });
+        }
+    }
+
+    // Dispatch n_workers copies of fn() — caller runs one, pool runs the rest.
+    // Each worker runs the same function; callers use shared atomics for
+    // work-stealing coordination.
+    void parallel_run(int n_workers, const std::function<void()>& fn) const {
+        if (n_workers <= 1) {
+            fn();
+            return;
+        }
+
+        struct JobState {
+            std::atomic<int> completed_workers{0};
+            std::mutex done_mutex;
+            std::condition_variable done_cv;
+        };
+
+        JobState state;
+
+        auto run_worker = [&]() {
+            fn();
+            if (state.completed_workers.fetch_add(1, std::memory_order_acq_rel) + 1 == n_workers) {
+                std::lock_guard<std::mutex> lock(state.done_mutex);
+                state.done_cv.notify_one();
+            }
+        };
+
+        for (int t = 1; t < n_workers; ++t) {
+            enqueue([run_worker]() mutable { run_worker(); });
+        }
+
+        run_worker();  // caller is worker 0
+
+        if (state.completed_workers.load(std::memory_order_acquire) != n_workers) {
+            std::unique_lock<std::mutex> lock(state.done_mutex);
+            state.done_cv.wait(lock, [&state, n_workers]() {
+                return state.completed_workers.load(std::memory_order_acquire) == n_workers;
             });
         }
     }
@@ -129,7 +197,11 @@ private:
     }
 
     int n_threads_;
+#ifdef _WIN32
+    std::vector<HANDLE> handles_;
+#else
     mutable std::vector<std::thread> threads_;
+#endif
     mutable std::mutex queue_mutex_;
     mutable std::condition_variable queue_cv_;
     mutable std::deque<WorkItem> queue_;
@@ -149,6 +221,10 @@ MultiPlyThreadPool& get_multipy_executor() {
 void multipy_parallel_for(int n_items, int n_threads,
                           const std::function<void(int)>& fn) {
     get_multipy_executor().parallel_for(n_items, n_threads, fn);
+}
+
+void multipy_parallel_run(int n_workers, const std::function<void()>& fn) {
+    get_multipy_executor().parallel_run(n_workers, fn);
 }
 
 // ======================== Static Members ========================

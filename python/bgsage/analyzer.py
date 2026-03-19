@@ -30,7 +30,7 @@ from .types import (
     PostMoveAnalysis,
     Probabilities,
 )
-from .weights import WeightConfig
+from .weights import WeightConfig, bearoff_db_path
 
 # ---------------------------------------------------------------------------
 # Cube owner mapping
@@ -78,6 +78,7 @@ class _CubelessBase:
     def __init__(self, weights: WeightConfig):
         self._weights = weights
         self._strategy_1ply = bgbot_cpp.GamePlanStrategy(*weights.weight_args)
+        self._bearoff_db = None  # Set by BgBotAnalyzer after construction
 
     def _score_candidates_1ply(
         self,
@@ -202,6 +203,7 @@ class _OnePlyAnalyzer(_CubelessBase):
             board, cube_value, owner, *self._weights.weight_args,
             away1=away1, away2=away2, is_crawford=is_crawford,
             jacoby=jacoby, beaver=beaver,
+            bearoff_db=self._bearoff_db,
         )
         return self._format_cube_result(r, eval_level="1-ply")
 
@@ -287,27 +289,32 @@ class _MultiPlyAnalyzer(_CubelessBase):
             n_threads=self._parallel_threads,
             away1=away1, away2=away2, is_crawford=is_crawford,
             jacoby=jacoby, beaver=beaver,
+            bearoff_db=self._bearoff_db,
         )
         result = self._format_cube_result(r, eval_level=f"{self._n_plies}-ply")
 
-        flipped = bgbot_cpp.flip_board(board)
-        nply_eval = self._strategy_nply.evaluate_board(flipped, board)
-        nply_probs = list(nply_eval["probs"])
-        nply_pre_roll = [
-            1.0 - nply_probs[0],
-            nply_probs[3],
-            nply_probs[4],
-            nply_probs[1],
-            nply_probs[2],
-        ]
-        result["probs"] = nply_pre_roll
-        result["cubeless_equity"] = (
-            2.0 * nply_pre_roll[0] - 1.0
-            + nply_pre_roll[1] - nply_pre_roll[3]
-            + nply_pre_roll[2] - nply_pre_roll[4]
-        )
+        # The C++ binding already computes N-ply cubeless probs (with bearoff DB
+        # when applicable). Only override if the binding didn't use bearoff DB,
+        # to get N-ply probs instead of 1-ply probs for the cubeless display.
+        if self._bearoff_db is None or not self._bearoff_db.is_bearoff(board):
+            flipped = bgbot_cpp.flip_board(board)
+            nply_eval = self._strategy_nply.evaluate_board(flipped, board)
+            nply_probs = list(nply_eval["probs"])
+            nply_pre_roll = [
+                1.0 - nply_probs[0],
+                nply_probs[3],
+                nply_probs[4],
+                nply_probs[1],
+                nply_probs[2],
+            ]
+            result["probs"] = nply_pre_roll
+            result["cubeless_equity"] = (
+                2.0 * nply_pre_roll[0] - 1.0
+                + nply_pre_roll[1] - nply_pre_roll[3]
+                + nply_pre_roll[2] - nply_pre_roll[4]
+            )
+            self._strategy_nply.clear_cache()
 
-        self._strategy_nply.clear_cache()
         return result
 
 
@@ -428,6 +435,12 @@ class _CubefulAnalyzer:
         self._weights = inner._weights
         if isinstance(inner, _MultiPlyAnalyzer):
             self._cubeful_ply = inner._n_plies
+        elif isinstance(inner, _RolloutAnalyzer):
+            # Use the rollout's decision_ply for cubeful equity per-move.
+            # This gives N-ply cubeful evaluation matching the rollout's strength,
+            # rather than falling back to crude 1-ply Janowski.
+            dp = inner._rollout_config["decision_ply"]
+            self._cubeful_ply = max(dp, 1)
         else:
             self._cubeful_ply = 1
 
@@ -453,6 +466,7 @@ class _CubefulAnalyzer:
         else:
             opp_pre_roll = bgbot_cpp.flip_board(post_move_board)
             opp_owner = _FLIP_OWNER[owner]
+            db = getattr(self._inner, '_bearoff_db', None)
             if is_match:
                 opp_eq = bgbot_cpp.cubeful_equity_nply(
                     opp_pre_roll, opp_owner,
@@ -460,12 +474,14 @@ class _CubefulAnalyzer:
                     cube_value=cube_value,
                     away1=away2, away2=away1, is_crawford=is_crawford,
                     jacoby=jacoby, beaver=beaver,
+                    bearoff_db=db,
                 )
             else:
                 opp_eq = bgbot_cpp.cubeful_equity_nply(
                     opp_pre_roll, opp_owner,
                     self._inner._strategy_1ply, self._cubeful_ply,
                     jacoby=jacoby, beaver=beaver,
+                    bearoff_db=db,
                 )
             return -opp_eq
 
@@ -641,11 +657,21 @@ class BgBotAnalyzer:
         late_ply: int = -1,
         late_threshold: int = 20,
         seed: int = 42,
+        bearoff_db: bool | str = True,
     ):
         if weights is None:
             weights = WeightConfig.default()
         self._weights = weights
         self._eval_level = eval_level
+
+        # Load bearoff database
+        self._bearoff_db = None
+        if bearoff_db:
+            db_path = bearoff_db if isinstance(bearoff_db, str) else bearoff_db_path()
+            if db_path:
+                self._bearoff_db = bgbot_cpp.BearoffDB()
+                if not self._bearoff_db.load(db_path):
+                    self._bearoff_db = None
 
         if eval_level == "1ply":
             inner: _CubelessBase = _OnePlyAnalyzer(weights)
@@ -700,10 +726,35 @@ class BgBotAnalyzer:
         else:
             raise ValueError(f"Unknown eval_level: {eval_level!r}")
 
+        # Set bearoff DB on inner analyzer and its C++ strategies
+        if self._bearoff_db is not None:
+            inner._bearoff_db = self._bearoff_db
+            if isinstance(inner, _MultiPlyAnalyzer):
+                bgbot_cpp.multipy_set_bearoff_db(inner._strategy_nply, self._bearoff_db)
+            elif isinstance(inner, _RolloutAnalyzer):
+                bgbot_cpp.rollout_set_bearoff_db(inner._rollout_strategy, self._bearoff_db)
+
         if cubeful:
             self._analyzer = _CubefulAnalyzer(inner)
         else:
             self._analyzer = inner
+
+    def epc(self, board: list[int], player: int = 0) -> float | None:
+        """Return Effective Pip Count for a player in a bearoff position.
+
+        EPC = mean_rolls × (49/6), where mean_rolls is the expected number
+        of rolls to bear off all checkers (including the upcoming roll).
+
+        Args:
+            board: 26-element board array.
+            player: 0 = player on roll, 1 = opponent.
+
+        Returns:
+            EPC as a float, or None if the position is not in the bearoff DB.
+        """
+        if self._bearoff_db is None or not self._bearoff_db.is_bearoff(board):
+            return None
+        return self._bearoff_db.lookup_epc(board, player)
 
     def checker_play(
         self,

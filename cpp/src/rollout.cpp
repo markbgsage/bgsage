@@ -1,4 +1,5 @@
 #include "bgbot/rollout.h"
+#include "bgbot/multipy.h"
 #include "bgbot/board.h"
 #include "bgbot/moves.h"
 #include "bgbot/encoding.h"

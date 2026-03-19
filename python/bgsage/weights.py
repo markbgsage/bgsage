@@ -38,12 +38,28 @@ PRODUCTION_MODEL: str = "stage5"
 
 _PLANS = ("purerace", "racing", "attacking", "priming", "anchoring")
 
+# Bearoff database filename (stored in data/ directory)
+BEAROFF_DB_FILENAME = "bearoff_1sided.db"
+
 
 def _models_dir() -> str:
     """Return the absolute path to bgsage/models/."""
     return os.path.normpath(
         os.path.join(os.path.dirname(__file__), os.pardir, os.pardir, "models")
     )
+
+
+def _data_dir() -> str:
+    """Return the absolute path to bgsage/data/."""
+    return os.path.normpath(
+        os.path.join(os.path.dirname(__file__), os.pardir, os.pardir, "data")
+    )
+
+
+def bearoff_db_path() -> str | None:
+    """Return the path to the bearoff database file, or None if not found."""
+    path = os.path.join(_data_dir(), BEAROFF_DB_FILENAME)
+    return path if os.path.exists(path) else None
 
 
 @dataclass

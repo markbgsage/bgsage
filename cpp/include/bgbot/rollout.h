@@ -105,6 +105,12 @@ public:
 
     const RolloutConfig& config() const { return config_; }
 
+    // Bearoff DB: when set, positions in the DB are evaluated exactly.
+    // Input positions that are bearoff get immediate results (no simulation).
+    // Truncation evaluations also use the DB when applicable.
+    void set_bearoff_db(const BearoffDB* db) { bearoff_db_ = db; }
+    const BearoffDB* bearoff_db() const { return bearoff_db_; }
+
     // Clear thread-local N-ply caches. Call between independent positions
     // when reusing the same strategy to prevent state accumulation.
     void clear_internal_caches() const;
@@ -115,6 +121,7 @@ private:
 
     std::shared_ptr<Strategy> base_;
     GamePlanStrategy* base_gps_;   // Cached downcast (null if not GPS)
+    const BearoffDB* bearoff_db_ = nullptr;
     RolloutConfig config_;
     mutable std::unique_ptr<SharedPosCache> shared_pos_cache_;
 
