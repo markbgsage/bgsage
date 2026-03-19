@@ -1,15 +1,11 @@
 #include "bgbot/benchmark.h"
+#include "bgbot/multipy.h"
 #include "bgbot/board.h"
 #include "bgbot/moves.h"
 #include "bgbot/neural_net.h"
 #include "bgbot/rollout.h"
 #include <thread>
 #include <algorithm>
-
-#ifdef _WIN32
-#define NOMINMAX
-#include <windows.h>
-#endif
 
 namespace bgbot {
 
@@ -117,61 +113,24 @@ BenchmarkResult score_benchmarks(const Strategy& strategy,
     };
     std::vector<PaddedResult> thread_results(n_threads);
 
-    const int base_chunk = n / n_threads;
-    const int remainder = n % n_threads;
-    int offset = 0;
-
-#ifdef _WIN32
-    // On Windows, use native threads with explicit 4MB stack size.
-    // The default 1MB stack can overflow with deep move generation recursion.
-    std::vector<HANDLE> handles(n_threads);
-
-    struct ThreadArg {
-        const Strategy* strategy;
-        const BenchmarkScenario* scenarios;
-        int count;
-        BenchmarkResult* result;
-    };
-    std::vector<ThreadArg> args(n_threads);
-
-    for (int t = 0; t < n_threads; ++t) {
-        const int chunk_size = base_chunk + (t < remainder ? 1 : 0);
-        args[t] = {&strategy, scenarios.data() + offset, chunk_size,
-                   &thread_results[t].result};
-        offset += chunk_size;
-
-        handles[t] = CreateThread(
-            nullptr, 8 * 1024 * 1024,  // 4 MB stack
-            [](LPVOID param) -> DWORD {
-                auto* a = static_cast<ThreadArg*>(param);
-                *a->result = score_slice(*a->strategy, a->scenarios, a->count);
-                return 0;
-            },
-            &args[t], 0, nullptr);
+    struct ChunkInfo { int offset; int count; };
+    std::vector<ChunkInfo> chunks(n_threads);
+    {
+        const int base_chunk = n / n_threads;
+        const int remainder = n % n_threads;
+        int offset = 0;
+        for (int t = 0; t < n_threads; ++t) {
+            chunks[t].count = base_chunk + (t < remainder ? 1 : 0);
+            chunks[t].offset = offset;
+            offset += chunks[t].count;
+        }
     }
 
-    WaitForMultipleObjects(n_threads, handles.data(), TRUE, INFINITE);
-    for (int t = 0; t < n_threads; ++t) {
-        CloseHandle(handles[t]);
-    }
-#else
-    std::vector<std::thread> threads;
-    threads.reserve(n_threads);
-
-    for (int t = 0; t < n_threads; ++t) {
-        const int chunk_size = base_chunk + (t < remainder ? 1 : 0);
-
-        threads.emplace_back([&strategy, &scenarios, &thread_results, t, offset, chunk_size]() {
-            thread_results[t].result = score_slice(strategy, scenarios.data() + offset, chunk_size);
+    multipy_parallel_for(n_threads, n_threads,
+        [&strategy, &scenarios, &thread_results, &chunks](int t) {
+            thread_results[t].result = score_slice(
+                strategy, scenarios.data() + chunks[t].offset, chunks[t].count);
         });
-
-        offset += chunk_size;
-    }
-
-    for (int t = 0; t < n_threads; ++t) {
-        threads[t].join();
-    }
-#endif
 
     // Merge results
     BenchmarkResult result;
@@ -242,59 +201,25 @@ void score_benchmarks_per_scenario(const Strategy& strategy,
         return;
     }
 
-    const int base_chunk = n / n_threads;
-    const int remainder = n % n_threads;
-    int offset = 0;
-
-#ifdef _WIN32
-    std::vector<HANDLE> handles(n_threads);
-
-    struct ThreadArg {
-        const Strategy* strategy;
-        const BenchmarkScenario* scenarios;
-        int count;
-        double* errors_out;
-    };
-    std::vector<ThreadArg> args(n_threads);
-
-    for (int t = 0; t < n_threads; ++t) {
-        const int chunk_size = base_chunk + (t < remainder ? 1 : 0);
-        args[t] = {&strategy, scenarios.data() + offset, chunk_size,
-                   errors_out + offset};
-        offset += chunk_size;
-
-        handles[t] = CreateThread(
-            nullptr, 8 * 1024 * 1024,
-            [](LPVOID param) -> DWORD {
-                auto* a = static_cast<ThreadArg*>(param);
-                score_slice_per_scenario(*a->strategy, a->scenarios,
-                                        a->count, a->errors_out);
-                return 0;
-            },
-            &args[t], 0, nullptr);
+    struct ChunkInfo { int offset; int count; };
+    std::vector<ChunkInfo> chunks(n_threads);
+    {
+        const int base_chunk = n / n_threads;
+        const int remainder = n % n_threads;
+        int offset = 0;
+        for (int t = 0; t < n_threads; ++t) {
+            chunks[t].count = base_chunk + (t < remainder ? 1 : 0);
+            chunks[t].offset = offset;
+            offset += chunks[t].count;
+        }
     }
 
-    WaitForMultipleObjects(n_threads, handles.data(), TRUE, INFINITE);
-    for (int t = 0; t < n_threads; ++t) {
-        CloseHandle(handles[t]);
-    }
-#else
-    std::vector<std::thread> threads;
-    threads.reserve(n_threads);
-
-    for (int t = 0; t < n_threads; ++t) {
-        const int chunk_size = base_chunk + (t < remainder ? 1 : 0);
-
-        threads.emplace_back([&strategy, &scenarios, errors_out, offset, chunk_size]() {
-            score_slice_per_scenario(strategy, scenarios.data() + offset,
-                                    chunk_size, errors_out + offset);
+    multipy_parallel_for(n_threads, n_threads,
+        [&strategy, &scenarios, errors_out, &chunks](int t) {
+            score_slice_per_scenario(
+                strategy, scenarios.data() + chunks[t].offset,
+                chunks[t].count, errors_out + chunks[t].offset);
         });
-
-        offset += chunk_size;
-    }
-
-    for (auto& t : threads) t.join();
-#endif
 }
 
 // --- Benchmark PR scoring ---
@@ -433,63 +358,25 @@ PRResult score_benchmark_pr(const Strategy& strategy,
     };
     std::vector<PaddedResult> thread_results(n_threads);
 
-    const int base_chunk = n / n_threads;
-    const int remainder = n % n_threads;
-    int offset = 0;
-
-#ifdef _WIN32
-    std::vector<HANDLE> handles(n_threads);
-
-    struct ThreadArg {
-        const Strategy* strategy;
-        const Strategy* base_strategy;
-        const PRDecision* decisions;
-        int count;
-        const MoveFilter* filter;
-        PRResult* result;
-    };
-    std::vector<ThreadArg> args(n_threads);
-
-    for (int t = 0; t < n_threads; ++t) {
-        const int chunk_size = base_chunk + (t < remainder ? 1 : 0);
-        args[t] = {&strategy, base_strategy, decisions.data() + offset,
-                   chunk_size, &filter, &thread_results[t].result};
-        offset += chunk_size;
-
-        handles[t] = CreateThread(
-            nullptr, 8 * 1024 * 1024,
-            [](LPVOID param) -> DWORD {
-                auto* a = static_cast<ThreadArg*>(param);
-                *a->result = score_pr_slice(*a->strategy, a->base_strategy,
-                                            a->decisions, a->count, *a->filter);
-                return 0;
-            },
-            &args[t], 0, nullptr);
+    struct ChunkInfo { int offset; int count; };
+    std::vector<ChunkInfo> chunks(n_threads);
+    {
+        const int base_chunk = n / n_threads;
+        const int remainder = n % n_threads;
+        int offset = 0;
+        for (int t = 0; t < n_threads; ++t) {
+            chunks[t].count = base_chunk + (t < remainder ? 1 : 0);
+            chunks[t].offset = offset;
+            offset += chunks[t].count;
+        }
     }
 
-    WaitForMultipleObjects(n_threads, handles.data(), TRUE, INFINITE);
-    for (int t = 0; t < n_threads; ++t) {
-        CloseHandle(handles[t]);
-    }
-#else
-    std::vector<std::thread> threads;
-    threads.reserve(n_threads);
-
-    for (int t = 0; t < n_threads; ++t) {
-        const int chunk_size = base_chunk + (t < remainder ? 1 : 0);
-
-        threads.emplace_back([&strategy, base_strategy, &decisions, &filter,
-                              &thread_results, t, offset, chunk_size]() {
+    multipy_parallel_for(n_threads, n_threads,
+        [&strategy, base_strategy, &decisions, &filter, &thread_results, &chunks](int t) {
             thread_results[t].result = score_pr_slice(
-                strategy, base_strategy, decisions.data() + offset,
-                chunk_size, filter);
+                strategy, base_strategy, decisions.data() + chunks[t].offset,
+                chunks[t].count, filter);
         });
-
-        offset += chunk_size;
-    }
-
-    for (auto& t : threads) t.join();
-#endif
 
     PRResult result;
     for (int t = 0; t < n_threads; ++t) {

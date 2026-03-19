@@ -47,11 +47,6 @@ namespace rollout_profile {
 #define ROLLOUT_TIMER_ADD(counter) (void)0
 #endif
 
-#ifdef _WIN32
-#define NOMINMAX
-#include <windows.h>
-#endif
-
 namespace bgbot {
 
 // ======================== Static Data ========================
@@ -1173,76 +1168,24 @@ RolloutResult RolloutStrategy::run_trials_parallel(
         SharedPosCache* shared_cache = shared_pos_cache_.get();
         std::atomic<int> next_trial{0};
 
-#ifdef _WIN32
-        struct ThreadArg {
-            const RolloutStrategy* self;
-            const Board* board;
-            const std::vector<std::vector<std::pair<int,int>>>* all_dice;
-            TrialResult* trial_results;
-            Move0Cache* move0_cache;
-            Move1Cache* move1_cache;
-            SharedPosCache* shared_cache;
-            std::atomic<int>* next_trial;
-            int n_trials;
-            int max_moves;
-        };
-
-        ThreadArg arg = {this, &board, &all_dice,
-                         trial_results.data(), &move0_cache, &move1_cache,
-                         shared_cache, &next_trial, n_trials, max_moves};
-
-        std::vector<HANDLE> handles(n_threads);
-        for (int th = 0; th < n_threads; ++th) {
-            handles[th] = CreateThread(
-                nullptr, 8 * 1024 * 1024,
-                [](LPVOID param) -> DWORD {
-                    auto* a = static_cast<ThreadArg*>(param);
-                    MultiPlyStrategy::set_shared_cache(a->shared_cache);
-                    int start;
-                    while ((start = a->next_trial->fetch_add(kTrialChunkSize, std::memory_order_relaxed))
-                           < a->n_trials) {
-                        int end = std::min(start + kTrialChunkSize, a->n_trials);
-                        for (int t = start; t < end; ++t) {
-                            a->trial_results[t] = a->self->run_trial_unified(
-                                *a->board, true, nullptr, 0,
-                                (*a->all_dice)[t].data(), a->max_moves,
-                                a->move0_cache, a->move1_cache);
-                        }
-                    }
-                    MultiPlyStrategy::set_shared_cache(nullptr);
-                    return 0;
-                },
-                &arg, 0, nullptr);
-        }
-
-        WaitForMultipleObjects(n_threads, handles.data(), TRUE, INFINITE);
-        for (int th = 0; th < n_threads; ++th) CloseHandle(handles[th]);
-#else
-        std::vector<std::thread> threads;
-        threads.reserve(n_threads);
-
-        for (int th = 0; th < n_threads; ++th) {
-            threads.emplace_back([this, &board, &all_dice,
-                                  &trial_results, &move0_cache, &move1_cache,
-                                  shared_cache, &next_trial, n_trials, max_moves]() {
-                MultiPlyStrategy::set_shared_cache(shared_cache);
-                int start;
-                while ((start = next_trial.fetch_add(kTrialChunkSize, std::memory_order_relaxed))
-                       < n_trials) {
-                    int end = std::min(start + kTrialChunkSize, n_trials);
-                    for (int t = start; t < end; ++t) {
-                        trial_results[t] = run_trial_unified(
-                            board, true, nullptr, 0,
-                            all_dice[t].data(), max_moves,
-                            &move0_cache, &move1_cache);
-                    }
+        // Use persistent thread pool to avoid thread churn. Creating
+        // ephemeral threads per rollout exhausts Windows TLS slots and
+        // fragments memory after thousands of create/destroy cycles.
+        multipy_parallel_run(n_threads, [&]() {
+            MultiPlyStrategy::set_shared_cache(shared_cache);
+            int start;
+            while ((start = next_trial.fetch_add(kTrialChunkSize, std::memory_order_relaxed))
+                   < n_trials) {
+                int end = std::min(start + kTrialChunkSize, n_trials);
+                for (int t = start; t < end; ++t) {
+                    trial_results[t] = run_trial_unified(
+                        board, true, nullptr, 0,
+                        all_dice[t].data(), max_moves,
+                        &move0_cache, &move1_cache);
                 }
-                MultiPlyStrategy::set_shared_cache(nullptr);
-            });
-        }
-
-        for (auto& t : threads) t.join();
-#endif
+            }
+            MultiPlyStrategy::set_shared_cache(nullptr);
+        });
     }
 
     RolloutResult result;
@@ -1378,148 +1321,54 @@ RolloutStrategy::CubefulRolloutResult RolloutStrategy::cubeful_cube_decision(
         const bool m0_race = is_race(pre_roll_board);
         const Strategy* m0_strat = m0_race ? base_.get() : late_decision_strat_.get();
 
-#ifdef _WIN32
-        struct UnifiedArg {
-            const RolloutStrategy* self;
-            const Board* board;
-            Move0Cache* move0_cache;
-            Move1Cache* move1_cache;
-            SharedPosCache* shared_cache;
-            const CubefulBranch* nd_tmpl;
-            const CubefulBranch* dt_tmpl;
-            const std::vector<std::vector<std::pair<int,int>>>* all_dice;
-            CubefulTrialResult* results;
-            std::atomic<int>* next_roll;
-            std::atomic<int>* next_trial;
-            const Strategy* m0_strat;
-            int n_trials;
-            int max_moves;
-            bool uses_move1_cache;
-        };
+        // Use persistent thread pool — same rationale as cubeless path.
+        multipy_parallel_run(n_threads, [&]() {
+            MultiPlyStrategy::set_shared_cache(shared_cache);
 
-        UnifiedArg arg = {this, &pre_roll_board, &move0_cache, &move1_cache,
-                           shared_cache, &nd_template, &dt_template,
-                           &all_dice, trial_results.data(),
-                           &next_roll, &next_trial, m0_strat,
-                           n_trials, max_moves, uses_move1_cache};
-
-        std::vector<HANDLE> handles(n_threads);
-        for (int th = 0; th < n_threads; ++th) {
-            handles[th] = CreateThread(
-                nullptr, 8 * 1024 * 1024,
-                [](LPVOID param) -> DWORD {
-                    auto* a = static_cast<UnifiedArg*>(param);
-                    MultiPlyStrategy::set_shared_cache(a->shared_cache);
-
-                    // Phase 1+2: Combined move0 + move1 prefill per roll
-                    int r;
-                    while ((r = a->next_roll->fetch_add(1, std::memory_order_relaxed)) < 21) {
-                        thread_local std::vector<Board> candidates;
-                        candidates.clear();
-                        const auto& roll = RolloutStrategy::ALL_ROLLS[r];
-                        possible_boards(*a->board, roll.d1, roll.d2, candidates);
-                        Board chosen;
-                        if (candidates.empty()) {
-                            chosen = *a->board;
-                        } else if (candidates.size() == 1) {
-                            chosen = candidates[0];
-                        } else {
-                            chosen = candidates[a->m0_strat->best_move_index(
-                                candidates, *a->board)];
-                        }
-                        a->move0_cache->chosen[r] = chosen;
-                        a->move0_cache->state[r].store(2, std::memory_order_release);
-
-                        if (a->uses_move1_cache) {
-                            a->self->populate_move1_cache_entry(
-                                *a->move0_cache, r, a->move1_cache->entries[r]);
-                            a->move1_cache->state[r].store(2, std::memory_order_release);
-                        }
-                    }
-
-                    // No barrier: trials can start immediately. run_trial_unified
-                    // handles missing cache entries via CAS (compute on demand).
-                    // Threads that finish prefill early begin trials sooner.
-
-                    // Phase 3: Trials (work-stealing)
-                    int start;
-                    while ((start = a->next_trial->fetch_add(kTrialChunkSize, std::memory_order_relaxed))
-                           < a->n_trials) {
-                        int end = std::min(start + kTrialChunkSize, a->n_trials);
-                        for (int t = start; t < end; ++t) {
-                            CubefulBranch branches[2] = {*a->nd_tmpl, *a->dt_tmpl};
-                            a->results[t].cubeless = a->self->run_trial_unified(
-                                *a->board, false, branches, 2,
-                                (*a->all_dice)[t].data(), a->max_moves,
-                                a->move0_cache, a->move1_cache);
-                            a->results[t].nd_equity = branches[0].final_equity;
-                            a->results[t].dt_equity = branches[1].final_equity;
-                        }
-                    }
-
-                    MultiPlyStrategy::set_shared_cache(nullptr);
-                    return 0;
-                },
-                &arg, 0, nullptr);
-        }
-        WaitForMultipleObjects(n_threads, handles.data(), TRUE, INFINITE);
-        for (int th = 0; th < n_threads; ++th) CloseHandle(handles[th]);
-#else
-        std::vector<std::thread> threads;
-        threads.reserve(n_threads);
-
-        for (int th = 0; th < n_threads; ++th) {
-            threads.emplace_back([this, &pre_roll_board, &nd_template, &dt_template,
-                                  &all_dice, &trial_results, &move0_cache, &move1_cache,
-                                  shared_cache, &next_roll, &next_trial,
-                                  m0_strat, n_trials, max_moves, uses_move1_cache]() {
-                MultiPlyStrategy::set_shared_cache(shared_cache);
-
-                int r;
-                while ((r = next_roll.fetch_add(1, std::memory_order_relaxed)) < 21) {
-                    thread_local std::vector<Board> candidates;
-                    candidates.clear();
-                    const auto& roll = ALL_ROLLS[r];
-                    possible_boards(pre_roll_board, roll.d1, roll.d2, candidates);
-                    Board chosen;
-                    if (candidates.empty()) {
-                        chosen = pre_roll_board;
-                    } else if (candidates.size() == 1) {
-                        chosen = candidates[0];
-                    } else {
-                        chosen = candidates[m0_strat->best_move_index(
-                            candidates, pre_roll_board)];
-                    }
-                    move0_cache.chosen[r] = chosen;
-                    move0_cache.state[r].store(2, std::memory_order_release);
-
-                    if (uses_move1_cache) {
-                        populate_move1_cache_entry(move0_cache, r, move1_cache.entries[r]);
-                        move1_cache.state[r].store(2, std::memory_order_release);
-                    }
+            // Phase 1+2: Combined move0 + move1 prefill per roll
+            int r;
+            while ((r = next_roll.fetch_add(1, std::memory_order_relaxed)) < 21) {
+                thread_local std::vector<Board> candidates;
+                candidates.clear();
+                const auto& roll = ALL_ROLLS[r];
+                possible_boards(pre_roll_board, roll.d1, roll.d2, candidates);
+                Board chosen;
+                if (candidates.empty()) {
+                    chosen = pre_roll_board;
+                } else if (candidates.size() == 1) {
+                    chosen = candidates[0];
+                } else {
+                    chosen = candidates[m0_strat->best_move_index(
+                        candidates, pre_roll_board)];
                 }
+                move0_cache.chosen[r] = chosen;
+                move0_cache.state[r].store(2, std::memory_order_release);
 
-                // No barrier: trials start immediately, cache entries computed on demand.
-
-                int start;
-                while ((start = next_trial.fetch_add(kTrialChunkSize, std::memory_order_relaxed))
-                       < n_trials) {
-                    int end = std::min(start + kTrialChunkSize, n_trials);
-                    for (int t = start; t < end; ++t) {
-                        CubefulBranch branches[2] = {nd_template, dt_template};
-                        trial_results[t].cubeless = run_trial_unified(
-                            pre_roll_board, false, branches, 2,
-                            all_dice[t].data(), max_moves, &move0_cache, &move1_cache);
-                        trial_results[t].nd_equity = branches[0].final_equity;
-                        trial_results[t].dt_equity = branches[1].final_equity;
-                    }
+                if (uses_move1_cache) {
+                    populate_move1_cache_entry(move0_cache, r, move1_cache.entries[r]);
+                    move1_cache.state[r].store(2, std::memory_order_release);
                 }
+            }
 
-                MultiPlyStrategy::set_shared_cache(nullptr);
-            });
-        }
-        for (auto& t : threads) t.join();
-#endif
+            // No barrier: trials start immediately, cache entries computed on demand.
+
+            // Phase 3: Trials (work-stealing)
+            int start;
+            while ((start = next_trial.fetch_add(kTrialChunkSize, std::memory_order_relaxed))
+                   < n_trials) {
+                int end = std::min(start + kTrialChunkSize, n_trials);
+                for (int t = start; t < end; ++t) {
+                    CubefulBranch branches[2] = {nd_template, dt_template};
+                    trial_results[t].cubeless = run_trial_unified(
+                        pre_roll_board, false, branches, 2,
+                        all_dice[t].data(), max_moves, &move0_cache, &move1_cache);
+                    trial_results[t].nd_equity = branches[0].final_equity;
+                    trial_results[t].dt_equity = branches[1].final_equity;
+                }
+            }
+
+            MultiPlyStrategy::set_shared_cache(nullptr);
+        });
     }
 
     // Aggregate results: cubeful equities + cubeless probs (all from same trials)

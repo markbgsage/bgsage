@@ -182,3 +182,43 @@ pre-existing issues: (1) PosCache at 2M entries (64MB/thread) caused OOM when
 16+ threads accumulated thread-local caches — reduced to 512K entries (16MB).
 (2) 4MB thread stacks overflowed on deep 3-ply recursion with crashed positions
 generating 90+ legal moves — increased to 8MB.
+
+## Contact Benchmark by Evaluation Level (Stage 5)
+
+Full contact.bm benchmark (107,484 scenarios) for N-ply evaluators. Truncated
+rollout levels use subsampled data (step=100, 1,075 scenarios) due to per-process
+memory limits — N-ply calibration on the same subsample shown for comparison.
+
+Benchmark run: 2026-03-19, 16 threads (N-ply) / 8 threads (1T) / 4 threads (2T),
+RTX 4070S / Windows, Stage 5 production model.
+
+### Full Dataset (107,484 scenarios)
+
+| Level | Contact ER | Time |
+|-------|-----------|------|
+| 1-ply | 9.87 | 0.8s |
+| 2-ply | 8.42 | 16s |
+| 3-ply | 7.65 | 1,628s |
+
+### Subsampled (1,075 scenarios, step=100)
+
+| Level | Contact ER | Time | Notes |
+|-------|-----------|------|-------|
+| 1-ply | 10.64 | 0.0s | calibration |
+| 2-ply | 8.72 | 0.2s | calibration |
+| 3-ply | 7.33 | 4.2s | calibration |
+| 4-ply | 7.80 | 85s | calibration |
+| **1T (XG Roller)** | **9.24** | **160s** | 42t, trunc=5, dp=1 |
+| **2T (XG Roller+)** | **6.77** | **1,028s** | 360t, trunc=7, dp=2, late=1@2 |
+
+**Key observations:**
+- **2T (XG Roller+)** at ER=6.77 is the strongest evaluator tested, beating 3-ply
+  (7.33 on same subsample) by 8% and even beating the 4-ply subsample (7.80).
+- **1T (XG Roller)** at ER=9.24 is between 1-ply (10.64) and 2-ply (8.72) on the
+  subsample, consistent with its dp=1 move selection.
+- **4-ply subsample anomaly:** 4-ply (7.80) is weaker than 3-ply (7.33) on this
+  small subsample, likely due to sampling variance (1,075 scenarios). The full
+  107k 4-ply benchmark was not run due to time constraints (~24h estimated).
+- **Subsample tracking:** N-ply ERs on the step=100 subsample track within ~10% of
+  full-dataset values (1-ply: 10.64 vs 9.87, 2-ply: 8.72 vs 8.42, 3-ply: 7.33
+  vs 7.65), validating the subsample as representative for rollout comparison.

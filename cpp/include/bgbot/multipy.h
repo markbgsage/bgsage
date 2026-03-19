@@ -14,6 +14,8 @@
 
 namespace bgbot {
 
+class BearoffDB;  // forward declaration
+
 // Lock-free shared position cache for cross-thread sharing during rollouts.
 // Multiple threads read/write concurrently using a per-entry state machine:
 // 0=empty, 1=writing (CAS-protected), 2=ready (safe to read).
@@ -228,6 +230,11 @@ public:
     static void set_shared_cache(SharedPosCache* cache);
     static SharedPosCache* get_shared_cache();
 
+    // Bearoff DB: when set, positions in the DB are evaluated exactly
+    // instead of via NN evaluation / recursion.
+    void set_bearoff_db(const BearoffDB* db) { bearoff_db_ = db; }
+    const BearoffDB* bearoff_db() const { return bearoff_db_; }
+
     // Accessors.
     int n_plies() const { return n_plies_; }
     const MoveFilter& move_filter() const { return filter_; }
@@ -238,6 +245,7 @@ private:
 
     std::shared_ptr<Strategy> base_;
     GamePlanStrategy* base_gps_;  // Cached downcast (null if base isn't GamePlanStrategy)
+    const BearoffDB* bearoff_db_ = nullptr;
     int n_plies_;
     MoveFilter filter_;
     bool full_depth_opponent_;

@@ -12,6 +12,8 @@
 
 namespace bgbot {
 
+class BearoffDB;  // forward declaration
+
 struct RolloutConfig {
     int n_trials = 36;           // Number of trial games per candidate
     int truncation_depth = 7;    // Half-moves before truncating (0 = play to completion)
