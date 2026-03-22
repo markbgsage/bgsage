@@ -527,9 +527,11 @@ SupervisedTrainResult cuda_supervised_train(const SupervisedTrainConfig& config)
         CUDA_CHECK(cudaMemcpy(ob_flat.data(), gpu.d_output_bias,
                                no * sizeof(float), cudaMemcpyDeviceToHost));
 
-        // Merge into NeuralNetwork format
+        // Merge into NeuralNetwork format and invalidate transposed weight cache
+        // so benchmark scoring via forward() uses the updated weights.
         merge_weights_and_bias(nn->hidden_weights(), nh, ni + 1, hw_flat, hb_flat);
         merge_weights_and_bias(nn->output_weights(), no, nh + 1, ow_flat, ob_flat);
+        nn->invalidate_transposed_weights();
 
         // Benchmark
         auto t_now = std::chrono::steady_clock::now();
