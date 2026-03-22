@@ -789,6 +789,9 @@ void NeuralNetwork::td_update(
         }
         w[ni] += scale;
     }
+
+    // Mark transposed weight cache as stale — will be rebuilt on next forward().
+    transposed_weights_valid_ = false;
 }
 
 // ======================== Persistence ========================
@@ -827,6 +830,7 @@ bool NeuralNetwork::load_weights(const std::string& filepath) {
 
     if (f.good()) {
         build_transposed_weights();
+        transposed_weights_valid_ = true;
         return true;
     }
     return false;

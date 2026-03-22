@@ -63,12 +63,22 @@ public:
     std::array<float, NN_OUTPUTS> forward_from_base(
         const float* inputs, const float* saved_base, const float* saved_inputs) const;
 
-    // Ensure transposed hidden weights are initialized for incremental inference.
+    // Ensure transposed hidden weights are up-to-date for forward().
+    // Rebuilt lazily after td_update() invalidates them.
+    // Thread-safe: multiple threads may call this concurrently during benchmark
+    // scoring; the mutex ensures only one thread rebuilds.
     void ensure_transposed_weights() const {
-        std::call_once(transposed_weights_init_, [this] {
-            build_transposed_weights();
-        });
+        if (!transposed_weights_valid_) {
+            std::lock_guard<std::mutex> lock(transposed_weights_mutex_);
+            if (!transposed_weights_valid_) {  // double-check after acquiring lock
+                build_transposed_weights();
+                transposed_weights_valid_ = true;
+            }
+        }
     }
+
+    // Mark transposed weights as stale (call after modifying hidden_weights_).
+    void invalidate_transposed_weights() { transposed_weights_valid_ = false; }
 
     // Legacy overload for std::array<float, 196>
     void forward_batch(
@@ -132,7 +142,8 @@ private:
     // Column i of hidden_weights_ (stride n_inputs_+1) becomes row i of this.
     // Built lazily on first forward_from_base call, or after load_weights.
     mutable std::vector<float> hidden_weights_T_;
-    mutable std::once_flag transposed_weights_init_;
+    mutable volatile bool transposed_weights_valid_ = false;
+    mutable std::mutex transposed_weights_mutex_;
     void build_transposed_weights() const;
 
     // ----- Cached state for training (set by forward_with_gradients) -----
