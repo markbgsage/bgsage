@@ -97,25 +97,28 @@ print(f'Rollout created. contact={{tc.size()}}, crashed={{tk.size()}}', file=_sy
 t0 = time.perf_counter()
 total_err = 0.0
 total_count = 0
-if tc.size() > 0:
-    print(f'Scoring contact...', file=_sys.stderr, flush=True)
-    r = bgbot_cpp.score_benchmarks_rollout(tc, strat, 1)
-    total_err += r.total_error
-    total_count += r.count
-    print(f'Contact done: {{r.count}} scenarios', file=_sys.stderr, flush=True)
-if tk.size() > 0:
-    print(f'Scoring crashed...', file=_sys.stderr, flush=True)
-    r = bgbot_cpp.score_benchmarks_rollout(tk, strat, 1)
-    total_err += r.total_error
-    total_count += r.count
-    print(f'Crashed done: {{r.count}} scenarios', file=_sys.stderr, flush=True)
+# Score one scenario at a time, clearing caches between positions to prevent
+# thread-local PosCache accumulation that causes access violations on large runs.
+for label, indices, bm_file in [('contact', ci, contact_file), ('crashed', ki, crashed_file)]:
+    if not indices:
+        continue
+    print(f'Scoring {{label}} ({{len(indices)}})...', file=_sys.stderr, flush=True)
+    for i, idx in enumerate(indices):
+        ss = load_benchmark_scenarios_by_indices(bm_file, [idx])
+        r = bgbot_cpp.score_benchmarks_rollout(ss, strat, 1)
+        total_err += r.total_error
+        total_count += r.count
+        strat.clear_internal_caches()
+        if (i + 1) % 20 == 0:
+            print(f'  {{label}}: {{i+1}}/{{len(indices)}}', file=_sys.stderr, flush=True)
+    print(f'{{label}} done: {{len(indices)}} scenarios', file=_sys.stderr, flush=True)
 elapsed = time.perf_counter() - t0
 er = total_err / total_count * 1000 if total_count > 0 else 0
 print(json.dumps({{"er": er, "elapsed": elapsed}}))
 '''
     result = subprocess.run(
         [sys.executable, '-c', code],
-        capture_output=True, text=True, timeout=600,
+        capture_output=True, text=True, timeout=1200,
         cwd=project_dir
     )
     if result.returncode != 0:

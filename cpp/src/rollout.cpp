@@ -86,6 +86,11 @@ void RolloutStrategy::clear_internal_caches() const {
     }
     // late_decision_strat_ shares the same thread_local cache, but clearing
     // it separately is a no-op since clear_cache() memsets the shared cache.
+
+    // Also clear the cross-thread shared position cache.
+    if (shared_pos_cache_) {
+        shared_pos_cache_->clear();
+    }
 }
 
 // ======================== Constructor ========================
