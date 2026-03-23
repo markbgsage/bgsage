@@ -90,6 +90,61 @@ void RolloutStrategy::clear_internal_caches() const {
 
 // ======================== Constructor ========================
 
+// Helper: build multi-ply strategies for rollout internals.
+// If filter_base is provided, creates hybrid MultiPlyStrategy (fast filter + accurate leaf).
+static void build_rollout_strategies(
+    const std::shared_ptr<Strategy>& base,
+    const std::shared_ptr<Strategy>& filter_base,
+    const RolloutConfig& config,
+    std::shared_ptr<Strategy>& decision_strat,
+    std::shared_ptr<Strategy>& late_decision_strat,
+    std::shared_ptr<Strategy>& truncation_strat)
+{
+    MoveFilter internal_filter = {2, 0.03f};
+
+    auto make_multipy = [&](int ply) -> std::shared_ptr<MultiPlyStrategy> {
+        if (filter_base) {
+            return std::make_shared<MultiPlyStrategy>(
+                base, filter_base, ply, internal_filter);
+        } else {
+            return std::make_shared<MultiPlyStrategy>(
+                base, ply, internal_filter);
+        }
+    };
+
+    // Build decision strategy
+    if (config.decision_ply > 1) {
+        decision_strat = make_multipy(config.decision_ply);
+    } else {
+        decision_strat = base;
+    }
+
+    // Build late-game decision strategy
+    int effective_late_ply = (config.late_ply >= 1) ? config.late_ply : config.decision_ply;
+    if (effective_late_ply == config.decision_ply) {
+        late_decision_strat = decision_strat;
+    } else if (effective_late_ply > 1) {
+        late_decision_strat = make_multipy(effective_late_ply);
+    } else {
+        late_decision_strat = base;
+    }
+
+    // Build truncation evaluation strategy
+    int effective_trunc_ply = (config.truncation_ply >= 1) ? config.truncation_ply : config.decision_ply;
+    if (effective_trunc_ply == config.decision_ply) {
+        truncation_strat = decision_strat;
+    } else if (effective_trunc_ply > 1) {
+        truncation_strat = make_multipy(effective_trunc_ply);
+    } else {
+        truncation_strat = base;
+    }
+}
+
+// Common post-construction init for both RolloutStrategy constructors.
+void RolloutStrategy_common_init(RolloutStrategy& self,
+                                  const RolloutConfig& config,
+                                  int cached_max_moves);
+
 RolloutStrategy::RolloutStrategy(std::shared_ptr<Strategy> base, RolloutConfig config)
     : base_(std::move(base))
     , base_gps_(dynamic_cast<GamePlanStrategy*>(base_.get()))
@@ -98,43 +153,34 @@ RolloutStrategy::RolloutStrategy(std::shared_ptr<Strategy> base, RolloutConfig c
                        ? config.truncation_depth + 10
                        : 200)
 {
-    // For rollout-internal move selection, use a tighter filter than the
-    // top-level config_.filter. Rollout averages over many trials, so minor
-    // move selection differences are smoothed out. The filter only affects
-    // best_move_index (not evaluate_probs used at truncation), so truncation
-    // accuracy is unaffected. Profiling shows TIGHT(3,0.04) is ~6x faster
-    // than TINY(5,0.08) for 2-ply BMI with negligible accuracy impact.
-    MoveFilter internal_filter = {2, 0.03f};
+    build_rollout_strategies(base_, nullptr, config_,
+                             decision_strat_, late_decision_strat_, truncation_strat_);
 
-    // Build decision strategy
-    if (config_.decision_ply > 1) {
-        decision_strat_ = std::make_shared<MultiPlyStrategy>(
-            base_, config_.decision_ply, internal_filter);
-    } else {
-        decision_strat_ = base_;
+    // VR enabled flag
+    vr_enabled_ = config_.enable_vr;
+
+    if (config_.n_trials > 0 && cached_max_moves_ > 0) {
+        generate_stratified_dice(
+            config_.n_trials, cached_max_moves_, config_.seed, cached_dice_);
     }
 
-    // Build late-game decision strategy
-    int effective_late_ply = (config_.late_ply >= 1) ? config_.late_ply : config_.decision_ply;
-    if (effective_late_ply == config_.decision_ply) {
-        late_decision_strat_ = decision_strat_;
-    } else if (effective_late_ply > 1) {
-        late_decision_strat_ = std::make_shared<MultiPlyStrategy>(
-            base_, effective_late_ply, internal_filter);
-    } else {
-        late_decision_strat_ = base_;
+    if (rollout_thread_count(config_.n_trials) > 1) {
+        shared_pos_cache_ = std::make_unique<SharedPosCache>();
     }
+}
 
-    // Build truncation evaluation strategy
-    int effective_trunc_ply = (config_.truncation_ply >= 1) ? config_.truncation_ply : config_.decision_ply;
-    if (effective_trunc_ply == config_.decision_ply) {
-        truncation_strat_ = decision_strat_;
-    } else if (effective_trunc_ply > 1) {
-        truncation_strat_ = std::make_shared<MultiPlyStrategy>(
-            base_, effective_trunc_ply, internal_filter);
-    } else {
-        truncation_strat_ = base_;
-    }
+RolloutStrategy::RolloutStrategy(std::shared_ptr<Strategy> base,
+                                 std::shared_ptr<Strategy> filter_base,
+                                 RolloutConfig config)
+    : base_(std::move(base))
+    , base_gps_(dynamic_cast<GamePlanStrategy*>(base_.get()))
+    , config_(config)
+    , cached_max_moves_((config.truncation_depth > 0)
+                       ? config.truncation_depth + 10
+                       : 200)
+{
+    build_rollout_strategies(base_, filter_base, config_,
+                             decision_strat_, late_decision_strat_, truncation_strat_);
 
     // VR enabled flag
     vr_enabled_ = config_.enable_vr;

@@ -72,6 +72,12 @@ class RolloutStrategy : public Strategy {
 public:
     RolloutStrategy(std::shared_ptr<Strategy> base, RolloutConfig config);
 
+    // Hybrid constructor: uses filter_base for 1-ply filtering/opponent move
+    // selection within multi-ply strategies, base for leaf evaluations and VR.
+    RolloutStrategy(std::shared_ptr<Strategy> base,
+                    std::shared_ptr<Strategy> filter_base,
+                    RolloutConfig config);
+
     // Strategy interface
     double evaluate(const Board& board, bool pre_move_is_race) const override;
     std::array<float, NUM_OUTPUTS> evaluate_probs(

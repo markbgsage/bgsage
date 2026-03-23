@@ -23,6 +23,10 @@ MODELS: dict[str, dict[str, Any]] = {
         "hidden": (200, 400, 400, 400, 400),
         "pattern": "sl_s5_{plan}.weights.best",
     },
+    "stage5small": {
+        "hidden": (100, 200, 200, 200, 200),
+        "pattern": "sl_s5s_{plan}.weights.best",
+    },
     "stage4": {
         "hidden": (120, 250, 250, 250, 250),
         "pattern": "sl_s4_{plan}.weights.best",

@@ -171,13 +171,50 @@ struct MoveFilter {
     float threshold = 0.16f;
 };
 
-// Predefined filter presets (matching GNUbg named settings).
+// Predefined filter presets.
 namespace MoveFilters {
     constexpr MoveFilter TINY    = {5,  0.08f};
     constexpr MoveFilter NARROW  = {8,  0.12f};
     constexpr MoveFilter NORMAL  = {8,  0.16f};
     constexpr MoveFilter LARGE   = {16, 0.32f};
     constexpr MoveFilter HUGE_   = {20, 0.44f};  // trailing underscore avoids macOS math.h HUGE macro
+}
+
+// A single step in the iterative deepening filter chain.
+// Candidates are scored at `ply` depth, then the top `max_moves` within
+// `threshold` equity of the best are kept. Steps are applied in sequence
+// before the final full-depth evaluation.
+struct MoveFilterStep {
+    int ply;            // Ply level to score at (1 = raw NN)
+    int max_moves;      // Keep up to this many survivors
+    float threshold;    // Within this equity of the best
+};
+
+// Build a default iterative deepening filter chain for a given preset
+// and target ply depth. Returns the intermediate filter steps (the final
+// full-depth evaluation is implicit and not included in the chain).
+//
+// Pattern for TINY preset:
+//   2-ply: [{ply=1, max=5, thresh=0.08}] → 2-ply final
+//   3-ply: [{ply=1, max=5, thresh=0.08}, {ply=2, max=2, thresh=0.02}] → 3-ply final
+//   4-ply: [{ply=1, max=5, thresh=0.08}, {ply=3, max=2, thresh=0.02}] → 4-ply final
+inline std::vector<MoveFilterStep> build_filter_chain(const MoveFilter& base, int n_plies) {
+    std::vector<MoveFilterStep> chain;
+    if (n_plies < 2) return chain;
+
+    // Step 1: always filter at 1-ply with the base preset
+    chain.push_back({1, base.max_moves, base.threshold});
+
+    if (n_plies >= 3) {
+        // Step 2: tighter filter at (n_plies - 1) ply
+        // Scale threshold: ~1/4 of base threshold, min 0.01
+        float tight_threshold = std::max(0.01f, base.threshold * 0.25f);
+        // Scale max_moves: ~2/5 of base, min 2
+        int tight_max = std::max(2, base.max_moves * 2 / 5);
+        chain.push_back({n_plies - 1, tight_max, tight_threshold});
+    }
+
+    return chain;
 }
 
 // N-ply lookahead strategy that wraps any base strategy.
@@ -197,6 +234,16 @@ namespace MoveFilters {
 class MultiPlyStrategy : public Strategy {
 public:
     MultiPlyStrategy(std::shared_ptr<Strategy> base_strategy,
+                     int n_plies,
+                     MoveFilter filter = MoveFilters::TINY,
+                     bool full_depth_opponent = false,
+                     bool parallel_evaluate = false,
+                     int parallel_threads = 0);
+
+    // Hybrid constructor: uses filter_strategy for 1-ply filtering and opponent
+    // move selection, base_strategy for leaf evaluations (plies=0).
+    MultiPlyStrategy(std::shared_ptr<Strategy> base_strategy,
+                     std::shared_ptr<Strategy> filter_strategy,
                      int n_plies,
                      MoveFilter filter = MoveFilters::TINY,
                      bool full_depth_opponent = false,
@@ -235,9 +282,14 @@ public:
     void set_bearoff_db(const BearoffDB* db) { bearoff_db_ = db; }
     const BearoffDB* bearoff_db() const { return bearoff_db_; }
 
+    // Enable/disable position cache (for profiling).
+    void set_cache_enabled(bool enabled) { cache_enabled_ = enabled; }
+    bool cache_enabled() const { return cache_enabled_; }
+
     // Accessors.
     int n_plies() const { return n_plies_; }
-    const MoveFilter& move_filter() const { return filter_; }
+    const MoveFilter& move_filter() const { return move_filter_; }
+    const std::vector<MoveFilterStep>& filter_chain() const { return filter_chain_; }
     const Strategy& base_strategy() const { return *base_; }
 
 private:
@@ -245,12 +297,18 @@ private:
 
     std::shared_ptr<Strategy> base_;
     GamePlanStrategy* base_gps_;  // Cached downcast (null if base isn't GamePlanStrategy)
+    // Optional separate filter strategy (for hybrid mode: fast filter + accurate leaf).
+    // When null, base_ is used for filtering (standard behavior).
+    std::shared_ptr<Strategy> filter_strat_;
+    GamePlanStrategy* filter_gps_ = nullptr;  // Cached downcast
     const BearoffDB* bearoff_db_ = nullptr;
     int n_plies_;
-    MoveFilter filter_;
+    MoveFilter move_filter_;
+    std::vector<MoveFilterStep> filter_chain_;
     bool full_depth_opponent_;
     bool parallel_evaluate_;
     int parallel_threads_;
+    bool cache_enabled_ = true;
     mutable std::atomic<std::uint64_t> cache_salt_;
 
     // The 21 unique dice rolls with probability weights.

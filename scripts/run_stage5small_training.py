@@ -1,76 +1,78 @@
 """
-Stage 5 Training: Larger hidden layers (200h purerace, 400h contact NNs).
+Stage 5 Small Training: Half hidden layers (100h purerace, 200h contact NNs).
 
-Same architecture and training pipeline as Stage 4, but with:
-  - PureRace: 200 hidden (was 120), 196 Tesauro inputs
-  - Racing/Attacking/Priming/Anchoring: 400 hidden (was 250), 244 extended inputs
+Same architecture and training pipeline as Stage 5, but with half the hidden nodes:
+  - PureRace: 100 hidden (was 200), 196 Tesauro inputs
+  - Racing/Attacking/Priming/Anchoring: 200 hidden (was 400), 244 extended inputs
 
-Uses optimal per-NN game plan weights from gpw experiment:
+Uses same per-NN game plan weights as Stage 5:
   gpw=5.0 for racing/attacking/priming, gpw=1.5 for anchoring.
 
 Training pipeline:
   TD: 200k@0.1 + 1M@0.02 (from scratch)
-  SL: Racing/Attacking/Priming: 100ep@a=20 -> 200ep@a=10 -> 200ep@a=3.1 -> 2000ep@a=1.0
-      Anchoring:                200ep@a=20 -> 200ep@a=6.3 -> 1000ep@a=2.0
-      PureRace:                 200ep@a=20 -> 500ep@a=6.3 -> 500ep@a=2.0
+  SL: Racing/Attacking/Priming/Anchoring: 100ep@a=20 -> 200ep@a=10 -> 200ep@a=3.1 -> 500ep@a=1.0
+      PureRace:                           200ep@a=20 -> 500ep@a=6.3 -> 500ep@a=2.0
 
 Usage:
-    python python/run_stage5_training.py                  # Full pipeline: TD + SL + score
-    python python/run_stage5_training.py --sl-only        # Skip TD, use existing TD weights
-    python python/run_stage5_training.py --score-only     # Just score existing weights
-    python python/run_stage5_training.py --nn racing anchoring  # Train only specific NNs
+    python scripts/run_stage5small_training.py                  # Full pipeline: TD + SL + score
+    python scripts/run_stage5small_training.py --sl-only        # Skip TD, use existing TD weights
+    python scripts/run_stage5small_training.py --score-only     # Just score existing weights
+    python scripts/run_stage5small_training.py --nn racing anchoring  # Train only specific NNs
 """
 
 import os
 import sys
 import json
 import time
-import shutil
 import numpy as np
 from datetime import datetime
 
 script_dir = os.path.dirname(os.path.abspath(__file__))
 project_dir = os.path.dirname(os.path.dirname(script_dir))
 
-# Use isolated copy of .pyd so the main build/ is not locked by this process.
-isolated_build_dir = os.path.join(project_dir, 'experiments', 'gpw_sensitivity', 'isolated_build')
-build_dir = isolated_build_dir if os.path.isdir(isolated_build_dir) else os.path.join(project_dir, 'build')
+build_dirs = [
+    os.path.join(project_dir, 'build_msvc'),
+    os.path.join(project_dir, 'build'),
+]
 
 if sys.platform == 'win32':
     cuda_bin = r'C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v13.1\bin\x64'
     if os.path.isdir(cuda_bin):
         os.add_dll_directory(cuda_bin)
-    if os.path.isdir(build_dir):
-        os.add_dll_directory(build_dir)
+    for d in build_dirs:
+        if os.path.isdir(d):
+            os.add_dll_directory(d)
 
-sys.path.insert(0, build_dir)
+for d in reversed(build_dirs):
+    if os.path.isdir(d):
+        sys.path.insert(0, d)
 sys.path.insert(0, os.path.join(project_dir, 'bgsage', 'python'))
 
 import bgbot_cpp
 from bgsage.data import load_benchmark_file, load_gnubg_training_data
 
-DATA_DIR = os.path.join(project_dir, 'data')
-MODELS_DIR = os.path.join(project_dir, 'models')
+DATA_DIR = os.path.join(project_dir, 'bgsage', 'data')
+MODELS_DIR = os.path.join(project_dir, 'bgsage', 'models')
 
-# Stage 5 network config — larger hidden layers
+# Stage 5 Small: half the hidden layers of Stage 5
 N_INPUTS = 244
-N_HIDDEN = 400            # was 250 in Stage 4
-N_HIDDEN_PURERACE = 200   # was 120 in Stage 4
+N_HIDDEN = 200            # was 400 in Stage 5
+N_HIDDEN_PURERACE = 100   # was 200 in Stage 5
 N_INPUTS_PURERACE = 196
 
-MODEL_PREFIX = 'sl_s5'    # Stage 5
-TD_MODEL_NAME = 'td_s5'   # TD weight prefix
+MODEL_PREFIX = 'sl_s5s'    # Stage 5 Small
+TD_MODEL_NAME = 'td_s5s'   # TD weight prefix
 
 GAMEPLAN_IDS = {'racing': 1, 'attacking': 2, 'priming': 3, 'anchoring': 4}
 
-# Per-NN training configs (same schedules as Stage 4)
+# Same per-NN training configs as Stage 5
 CONFIGS = {
     'purerace': {
         'gpw': 1.0,
         'phases': [(200, 20.0), (200, 6.3), (1000, 2.0)],
     },
     'racing': {
-        'gpw': 5.0,
+        'gpw': 2.0,  # gpw=5.0 destabilizes Racing at 200h (74% gradient concentration)
         'phases': [(100, 20.0), (200, 10.0), (200, 3.1), (500, 1.0)],
     },
     'attacking': {
@@ -92,7 +94,7 @@ def run_td_training():
     """Run TD self-play training: 200k@0.1 + 1M@0.02."""
 
     print(f'\n{"="*60}')
-    print(f'  TD SELF-PLAY TRAINING (Stage 5)')
+    print(f'  TD SELF-PLAY TRAINING (Stage 5 Small)')
     print(f'  PureRace: {N_HIDDEN_PURERACE}h, {N_INPUTS_PURERACE} inputs')
     print(f'  Contact NNs: {N_HIDDEN}h, {N_INPUTS} inputs')
     print(f'{"="*60}\n')
@@ -328,8 +330,8 @@ def train_one_nn(nn_type, config, boards, targets, gp_ids, benchmark_scenarios,
     }
 
 
-def score_stage5():
-    """Score the Stage 5 trained models."""
+def score_stage5small():
+    """Score the Stage 5 Small trained models."""
     purerace_w = os.path.join(MODELS_DIR, f'{MODEL_PREFIX}_purerace.weights.best')
     racing_w = os.path.join(MODELS_DIR, f'{MODEL_PREFIX}_racing.weights.best')
     attacking_w = os.path.join(MODELS_DIR, f'{MODEL_PREFIX}_attacking.weights.best')
@@ -346,7 +348,7 @@ def score_stage5():
     scores = {}
 
     print(f'\n{"="*60}')
-    print(f'  STAGE 5 BENCHMARKS')
+    print(f'  STAGE 5 SMALL BENCHMARKS')
     print(f'{"="*60}\n')
     print(f'  PureRace:  {purerace_w} ({N_HIDDEN_PURERACE}h)')
     print(f'  Racing:    {racing_w} ({N_HIDDEN}h)')
@@ -423,7 +425,7 @@ def score_stage5():
 
 def main():
     import argparse
-    parser = argparse.ArgumentParser(description='Stage 5 Training (200h purerace, 400h contact NNs)')
+    parser = argparse.ArgumentParser(description='Stage 5 Small Training (100h purerace, 200h contact NNs)')
     parser.add_argument('--score-only', action='store_true',
                         help='Skip training, just score existing weight files')
     parser.add_argument('--sl-only', action='store_true',
@@ -447,7 +449,6 @@ def main():
             td_model_name = run_td_training()
         else:
             print(f'Skipping TD training, using existing weights: {td_model_name}')
-            # Verify TD weights exist
             for nn_type in ['purerace', 'racing', 'attacking', 'priming', 'anchoring']:
                 td_path = os.path.join(MODELS_DIR, f'{td_model_name}_{nn_type}.weights')
                 if not os.path.exists(td_path):
@@ -503,10 +504,9 @@ def main():
         print(f'\n  Total SL training time: {total_time:.0f}s ({total_time/60:.1f}m)')
 
     # Score
-    scores = score_stage5()
+    scores = score_stage5small()
     if scores:
-        # Save results
-        results_dir = os.path.join(project_dir, 'experiments', 'stage5')
+        results_dir = os.path.join(project_dir, 'experiments', 'stage5small')
         os.makedirs(results_dir, exist_ok=True)
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
         results_path = os.path.join(results_dir, f'results_{timestamp}.json')

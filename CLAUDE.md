@@ -562,17 +562,156 @@ unnatural minima. TD gives realistic probability distributions that SL refines.
 - Narrow subsets cause catastrophic regression
 - Game plan weight (`--gameplan-weight`) specializes each NN during SL
 
-### Key Training Scripts
+### Training a New Model from Scratch
 
-```bash
-# TD self-play (5-NN)
-python scripts/run_td_gameplan_training.py --games 200000 --alpha 0.1
+To train a new 5-NN model (e.g., with different hidden sizes), follow these steps.
+The process is long-running (~25-30 hours total for the current production schedule).
 
-# GPU supervised learning
-python scripts/run_gpu_sl_training.py --type racing --epochs 500 --alpha 2.0
+**Step 1: Create a training script** based on `scripts/run_stage5_training.py`.
+Key parameters to customize:
+- `N_HIDDEN` / `N_HIDDEN_PURERACE`: hidden layer sizes for contact / purerace NNs
+- `MODEL_PREFIX` / `TD_MODEL_NAME`: file naming prefix (e.g., `sl_s5s` / `td_s5s`)
+- `CONFIGS`: per-NN SL schedule (epochs, learning rates, game plan weights)
+
+**Step 2: Register the model** in `python/bgsage/weights.py`:
+```python
+MODELS["stage5small"] = {
+    "hidden": (100, 200, 200, 200, 200),
+    "pattern": "sl_s5s_{plan}.weights.best",
+}
 ```
 
+**Step 3: Launch training as a detached process** (Windows).
+Training is long-running and must survive past Claude Code's ~1h timeout:
+```bash
+# IMPORTANT: Use python -u for unbuffered output, full path to python
+powershell -Command "Start-Process -FilePath 'C:\Users\mghig\AppData\Local\Programs\Python\Python314\python.exe' -ArgumentList '-u','bgsage\scripts\run_stage5small_training.py' -WorkingDirectory 'C:\Users\mghig\Dropbox\agents\bgbot' -WindowStyle Hidden -RedirectStandardOutput 'C:\Users\mghig\Dropbox\agents\bgbot\logs\training.log' -RedirectStandardError 'C:\Users\mghig\Dropbox\agents\bgbot\logs\training_err.log'"
+```
+
+**Output buffering note:** Even with `-u`, C++ stdout from `bgbot_cpp` functions
+(TD training, SL training) is internally buffered until the C++ function returns.
+The TD benchmark_interval (default 10k games) triggers a benchmark + CSV write.
+To monitor progress during TD training, check:
+- `models/<td_model>_<plan>.weights` file timestamps (updated every benchmark_interval)
+- `models/<td_model>.history.csv` (updated every benchmark_interval with game count +
+  elapsed time + benchmark score). Note: CSV writes may also be delayed by OS buffering.
+
+TD training prints benchmark scores every `benchmark_interval` games (default 10k).
+SL training prints loss and benchmark scores every `print_interval` epochs (auto-set
+to ~20 prints per phase, e.g., every 10 epochs for a 200-epoch phase).
+
+**Step 4: Monitor training progress:**
+```bash
+# Check if process is alive
+powershell -Command "Get-Process python* | Select-Object Id, CPU, StartTime"
+
+# Check weight file timestamps (updated every benchmark_interval)
+stat -c '%Y' bgsage/models/td_s5s_racing.weights && date +%s
+
+# Check history CSV
+cat bgsage/models/td_s5s.history.csv
+
+# Check log output (may be delayed due to C++ internal buffering)
+powershell -Command "Get-Content 'logs\training.log' -Tail 20"
+```
+
+**Step 5: After training completes**, run benchmarks:
+```bash
+python bgsage/scripts/run_stage5small_benchmarks.py
+```
+
+**Estimated timing** (Stage 5 Small — 100h/200h hidden, Windows RTX 4070S):
+- TD Phase 1 (200k games @ α=0.1): ~3.9 hours
+- TD Phase 2 (1M games @ α=0.02): ~19 hours
+- SL (5 NNs, ~2500 epochs each): ~2-4 hours (GPU)
+- Total: ~25-27 hours
+
+For reference, Stage 5 (200h/400h) TD training at the larger hidden size is ~2x
+slower per game due to the larger matrix multiplies.
+
+### Key Training Scripts
+
+| Script | Purpose |
+|--------|---------|
+| `scripts/run_stage5_training.py` | Stage 5 (200h/400h) full training |
+| `scripts/run_stage5small_training.py` | Stage 5 Small (100h/200h) full training |
+| `scripts/run_td_gameplan_training.py` | TD self-play (standalone, low-level) |
+| `scripts/run_gpu_sl_training.py` | GPU SL training (standalone, per-NN) |
+
+### Standard TD + SL Schedule
+
+The production training schedule (used for Stage 5):
+
+**TD (CPU, serial):**
+- Phase 1: 200k games @ α=0.1 (high learning rate for initial learning)
+- Phase 2: 1M games @ α=0.02 (low learning rate for refinement)
+
+**SL (GPU, per-NN):**
+
+All contact NNs train on ALL contact+crashed data (not game-plan subsets). The
+**game plan weight (gpw)** controls specialization: positions matching the NN's
+game plan get `gpw` × the gradient weight, while all other positions get weight 1.0.
+Higher gpw = stronger specialization toward that plan's positions. PureRace trains
+on separate purerace-only data (gpw not applicable).
+
+| NN | Schedule | gpw | Effective gradient % |
+|----|----------|-----|---------------------|
+| Racing | `100ep@α=20 → 200ep@α=10 → 200ep@α=3.1 → 500ep@α=1.0` | 2.0 | ~48% |
+| Attacking | same | 5.0 | ~59% |
+| Priming | same | 5.0 | ~56% |
+| Anchoring | same | 1.5 | ~27% |
+| PureRace | `200ep@α=20 → 500ep@α=6.3 → 500ep@α=2.0` | — | 100% (separate data) |
+
+**gpw tuning:** Racing uses gpw=2.0 instead of 5.0 because Racing positions are
+the most common contact plan (~37% of training data). At gpw=5.0, Racing positions
+dominate 74% of the gradient, which destabilizes smaller networks (200h). The
+threshold is between 63% (gpw=3.0, stable) and 74% (gpw=5.0, diverges). Larger
+networks (400h, Stage 5) can handle gpw=5.0 for Racing.
+
+Each SL phase resumes from the `.best` weights of the previous phase. Benchmark
+scoring runs after each epoch; the best-scoring weights are saved as `.best`.
+
 See "Benchmark Scripts" section above for all benchmarking commands.
+
+### Hybrid Evaluator (Multi-Ply with Separate Filter Model)
+
+The `MultiPlyStrategy` supports an optional separate filter strategy for 1-ply
+filtering and opponent move selection, while using the main (leaf) strategy for
+leaf evaluations. This allows using a fast/small model for filtering with an
+accurate/large model for final evaluation.
+
+**C++ API:**
+```cpp
+// Standard (single strategy for both):
+auto strat = std::make_shared<MultiPlyStrategy>(base, n_plies, filter);
+
+// Hybrid (separate filter + leaf):
+auto strat = std::make_shared<MultiPlyStrategy>(base, filter_strat, n_plies, filter);
+```
+
+**Python API:**
+```python
+# Standard multi-ply
+multipy = bgbot_cpp.create_multipy_5nn(*w.weight_args, n_plies=3)
+
+# Hybrid multi-ply (fast filter + accurate leaf)
+multipy = bgbot_cpp.create_multipy_hybrid_5nn(
+    *w_leaf.weight_args,      # 10 args: 5 weight paths + 5 hidden sizes
+    *w_filter.weight_args,    # 10 args: 5 weight paths + 5 hidden sizes
+    n_plies=3)
+
+# Hybrid rollout
+rollout = bgbot_cpp.create_rollout_hybrid_5nn(
+    *w_leaf.weight_args,
+    *w_filter.weight_args,
+    n_trials=360, truncation_depth=7, decision_ply=2)
+```
+
+The hybrid mode affects:
+- `best_move_index_impl`: filter strategy scores candidates for ranking/pruning
+- `evaluate_probs_nply_impl`: filter strategy selects opponent's best move at 1-ply
+- Leaf evaluation (`plies=0`): always uses the base (accurate) strategy
+- VR in rollouts: always uses base strategy (unaffected by hybrid mode)
 
 ## Multi-Ply Search
 
@@ -582,6 +721,45 @@ See "Benchmark Scripts" section above for all benchmarking commands.
 
 **Move filter**: After 1-ply scoring, keep top `max_moves` within `threshold` equity.
 Default TINY: 5 moves, 0.08 threshold.
+
+### Iterative Deepening Filter Chain
+
+When selecting the best move at N-ply (`best_move_index`), candidates are narrowed
+through multiple filter passes at progressively deeper ply levels before the final
+evaluation. This avoids evaluating all 1-ply survivors at the full (expensive) target
+ply — intermediate passes at cheaper ply levels prune weak candidates early.
+
+**Filter chain structure**: A sequence of `MoveFilterStep{ply, max_moves, threshold}`.
+Each step scores all current survivors at the step's ply depth, then keeps the top
+`max_moves` within `threshold` equity of the best. After all steps, the remaining
+survivors are evaluated at the full target ply to determine the best move.
+
+**Default chains** (auto-generated from the base `MoveFilter` preset via
+`build_filter_chain()`):
+
+| Target | Step 1 | Step 2 | Final |
+|--------|--------|--------|-------|
+| 2-ply | 1-ply: keep 5 @ 0.08 | — | 2-ply |
+| 3-ply | 1-ply: keep 5 @ 0.08 | 2-ply: keep 2 @ 0.02 | 3-ply |
+| 4-ply | 1-ply: keep 5 @ 0.08 | 3-ply: keep 2 @ 0.02 | 4-ply |
+
+The second step uses a tighter filter (fewer moves, stricter threshold) derived from
+the base preset: `max_moves = max(2, base.max_moves * 2/5)`, `threshold = max(0.01,
+base.threshold * 0.25)`.
+
+**Example (4-ply with TINY filter)**:
+1. Score all 16 legal moves at 1-ply → keep top 5 within 0.08 of best
+2. Score 5 survivors at 3-ply → keep top 2 within 0.02 of best
+3. Score 2 survivors at 4-ply → pick the best
+
+Without iterative deepening, step 2 is skipped and all 5 survivors go directly to
+4-ply evaluation. Since each 4-ply evaluation costs ~0.5s, evaluating 2 instead of 5
+saves ~1.5s — roughly a **2x speedup** on 4-ply checker play.
+
+**Implementation**: `MoveFilterStep` struct and `build_filter_chain()` in `multipy.h`.
+The chain is built once in the `MultiPlyStrategy` constructor and stored as
+`filter_chain_`. The `best_move_index_impl()` function in `multipy.cpp` loops through
+the chain, calling `evaluate_probs_nply_impl()` at each step's ply level.
 
 **Optimizations**: AVX2 FMA intrinsics, fast sigmoid LUT, open-addressing position
 cache, incremental delta evaluation, transposed weight matrix.
@@ -882,6 +1060,63 @@ Benchmark PR (103k decisions): 1-ply=2.47, 2-ply=1.85, 3-ply=1.53.
 
 The production model is defined in `python/bgsage/weights.py` — see "Production Model"
 section above. See `MODEL_BENCHMARKS.md` for full comparison of all trained models.
+
+## Stage 5 Small (S5S) — Fast Filter Model
+
+**Purpose:** Half-size model (100h PureRace, 200h contact NNs) trained as a potential
+fast filter for multi-ply search and truncated rollouts. The hypothesis was that using
+a smaller model for 1-ply filtering and a full-size model for leaf evaluations could
+speed up 4-ply and Roller++ calculations.
+
+**Weights:** Registered as `"stage5small"` in `python/bgsage/weights.py`. Weight files
+are `sl_s5s_{plan}.weights.best` in `models/`.
+
+**Training:** Same TD + SL pipeline as Stage 5. TD: 200k games @ α=0.1 + 1M @ α=0.02.
+SL: same schedule except Racing uses gpw=2.0 (not 5.0 — gpw=5.0 diverges at 200h due
+to Racing's 37% share of training data dominating the gradient at 74%).
+
+**Per-plan ER (1-ply):**
+
+| Plan | Stage 5 (400h) | S5S (200h) |
+|------|---------------|------------|
+| PureRace | 0.82 | 1.23 |
+| Racing | 5.74 | 6.40 |
+| Attacking | 8.74 | 8.75 |
+| Priming | 8.59 | 9.07 |
+| Anchoring | 11.06 | 12.05 |
+| **Contact** | **9.87** | **10.58** |
+
+**Timing results — S5S is NOT significantly faster than S5 at high ply:**
+
+The original hypothesis (2x faster NN → ~1.4-1.7x faster 4-ply) did not hold.
+Profiling revealed that the NN forward pass (matrix multiply) is a minority of
+total per-node cost at 4-ply depth. The dominant costs are:
+
+1. **Move generation** (`possible_boards`): O(candidates) per dice roll, fixed cost
+2. **Input encoding**: Computing 244 extended features (escape counts, containment, etc.)
+   is a fixed cost that doesn't shrink with fewer hidden nodes
+3. **Position cache divergence**: S5S's noisier 1-ply evaluations produce less consistent
+   move ordering, creating more unique positions in the search tree (fewer cache hits)
+
+| Level | S5 Time | S5S Time | S5S Speedup |
+|-------|---------|----------|-------------|
+| 1-ply | 10.8ms | 7.7ms | 1.40x |
+| 2-ply | 88ms | 79ms | 1.11x |
+| 3-ply (1T) | 146ms/pos | 96ms/pos | 1.52x |
+| 4-ply (1T, cache on) | 1,598ms/pos | 1,533ms/pos | 1.04x |
+| 4-ply (1T, cache off) | 4,401ms | 4,634ms | 0.95x (slower) |
+
+With cache disabled, S5S does 3x fewer leaf evaluations but each takes 3x longer
+in amortized terms — the fixed overhead (move gen + encoding + filtering) dominates.
+
+**Hybrid evaluator** (S5S filter + S5 leaf) was also tested. It's slower than pure S5
+at 4-ply due to overhead from managing two strategy sets. At Roller++ it showed a
+modest 1.19x speedup but crashed on large benchmark runs due to memory accumulation
+in thread-local caches.
+
+**Conclusion:** Halving hidden nodes does not meaningfully speed up multi-ply search
+because the NN matrix multiply is not the bottleneck. Future speedup efforts should
+target move generation, encoding, or cache efficiency rather than smaller networks.
 
 ## Benchmark Data Format
 

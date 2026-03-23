@@ -1227,6 +1227,37 @@ PYBIND11_MODULE(bgbot_cpp, m) {
         .def("cache_size", &MultiPlyStrategy::cache_size)
         .def("cache_hits", &MultiPlyStrategy::cache_hits)
         .def("cache_misses", &MultiPlyStrategy::cache_misses)
+        .def("set_cache_enabled", &MultiPlyStrategy::set_cache_enabled,
+             py::arg("enabled") = true)
+        .def("cache_enabled", &MultiPlyStrategy::cache_enabled)
+        .def("best_move_index", [](MultiPlyStrategy& self,
+                                    const py::list& candidates_list,
+                                    const std::vector<int>& pre_move_board) {
+            std::vector<Board> candidates;
+            candidates.reserve(candidates_list.size());
+            for (const auto& item : candidates_list) {
+                candidates.push_back(list_to_board(item.cast<std::vector<int>>()));
+            }
+            auto pmb = list_to_board(pre_move_board);
+            int idx;
+            {
+                py::gil_scoped_release release;
+                idx = self.best_move_index(candidates, pmb);
+            }
+            return idx;
+        }, "Find best move index using iterative deepening filter chain",
+           py::arg("candidates"), py::arg("pre_move_board"))
+        .def("filter_chain", [](const MultiPlyStrategy& self) {
+            py::list result;
+            for (const auto& step : self.filter_chain()) {
+                py::dict d;
+                d["ply"] = step.ply;
+                d["max_moves"] = step.max_moves;
+                d["threshold"] = step.threshold;
+                result.append(d);
+            }
+            return result;
+        }, "Return the iterative deepening filter chain")
         .def("evaluate_board", [](MultiPlyStrategy& self,
                                    const std::vector<int>& board,
                                    const std::vector<int>& pre_move_board) {
@@ -1300,6 +1331,58 @@ PYBIND11_MODULE(bgbot_cpp, m) {
        py::arg("full_depth_opponent") = false,
        py::arg("parallel_evaluate") = false,
        py::arg("parallel_threads") = 0);
+
+    // Create hybrid N-ply strategy with separate filter and leaf 5-NN strategies.
+    // The filter strategy (small/fast) is used for 1-ply filtering and opponent
+    // move selection. The leaf strategy (large/accurate) is used for leaf evaluations.
+    m.def("create_multipy_hybrid_5nn", [](
+            // Leaf (accurate) strategy weights
+            const std::string& purerace_w,
+            const std::string& racing_w,
+            const std::string& attacking_w,
+            const std::string& priming_w,
+            const std::string& anchoring_w,
+            int n_h_purerace, int n_h_racing, int n_h_attacking,
+            int n_h_priming, int n_h_anchoring,
+            // Filter (fast) strategy weights
+            const std::string& filter_purerace_w,
+            const std::string& filter_racing_w,
+            const std::string& filter_attacking_w,
+            const std::string& filter_priming_w,
+            const std::string& filter_anchoring_w,
+            int filter_n_h_purerace, int filter_n_h_racing, int filter_n_h_attacking,
+            int filter_n_h_priming, int filter_n_h_anchoring,
+            // Multi-ply config
+            int n_plies, int filter_max_moves, float filter_threshold,
+            bool full_depth_opponent, bool parallel_evaluate, int parallel_threads) {
+        auto leaf = std::make_shared<GamePlanStrategy>(
+            purerace_w, racing_w, attacking_w, priming_w, anchoring_w,
+            n_h_purerace, n_h_racing, n_h_attacking, n_h_priming, n_h_anchoring);
+        auto filter = std::make_shared<GamePlanStrategy>(
+            filter_purerace_w, filter_racing_w, filter_attacking_w,
+            filter_priming_w, filter_anchoring_w,
+            filter_n_h_purerace, filter_n_h_racing, filter_n_h_attacking,
+            filter_n_h_priming, filter_n_h_anchoring);
+        MoveFilter mf{filter_max_moves, filter_threshold};
+        return std::make_shared<MultiPlyStrategy>(
+            leaf, filter, n_plies, mf, full_depth_opponent,
+            parallel_evaluate, parallel_threads);
+    }, "Create hybrid N-ply strategy with separate filter and leaf 5-NN strategies",
+       py::arg("purerace_weights"), py::arg("racing_weights"),
+       py::arg("attacking_weights"), py::arg("priming_weights"),
+       py::arg("anchoring_weights"),
+       py::arg("n_hidden_purerace") = 200, py::arg("n_hidden_racing") = 400,
+       py::arg("n_hidden_attacking") = 400, py::arg("n_hidden_priming") = 400,
+       py::arg("n_hidden_anchoring") = 400,
+       py::arg("filter_purerace_weights"), py::arg("filter_racing_weights"),
+       py::arg("filter_attacking_weights"), py::arg("filter_priming_weights"),
+       py::arg("filter_anchoring_weights"),
+       py::arg("filter_n_hidden_purerace") = 100, py::arg("filter_n_hidden_racing") = 200,
+       py::arg("filter_n_hidden_attacking") = 200, py::arg("filter_n_hidden_priming") = 200,
+       py::arg("filter_n_hidden_anchoring") = 200,
+       py::arg("n_plies") = 2, py::arg("filter_max_moves") = 5,
+       py::arg("filter_threshold") = 0.08f, py::arg("full_depth_opponent") = false,
+       py::arg("parallel_evaluate") = false, py::arg("parallel_threads") = 0);
 
     // Create N-ply strategy wrapping a single NNStrategy
     m.def("create_multipy_nn", [](const std::string& weights_path,
@@ -1763,6 +1846,65 @@ PYBIND11_MODULE(bgbot_cpp, m) {
        py::arg("late_ply") = -1,
        py::arg("late_threshold") = 20,
        py::arg("enable_vr") = true,
+       py::arg("parallelize_trials") = false);
+
+    // Create hybrid rollout strategy with separate filter and leaf 5-NN strategies.
+    m.def("create_rollout_hybrid_5nn", [](
+            // Leaf (accurate) strategy weights
+            const std::string& purerace_w, const std::string& racing_w,
+            const std::string& attacking_w, const std::string& priming_w,
+            const std::string& anchoring_w,
+            int n_h_purerace, int n_h_racing, int n_h_attacking,
+            int n_h_priming, int n_h_anchoring,
+            // Filter (fast) strategy weights
+            const std::string& filter_purerace_w, const std::string& filter_racing_w,
+            const std::string& filter_attacking_w, const std::string& filter_priming_w,
+            const std::string& filter_anchoring_w,
+            int filter_n_h_purerace, int filter_n_h_racing, int filter_n_h_attacking,
+            int filter_n_h_priming, int filter_n_h_anchoring,
+            // Rollout config
+            int n_trials, int truncation_depth, int decision_ply,
+            int filter_max_moves, float filter_threshold,
+            int n_threads, uint32_t seed, int late_ply, int late_threshold,
+            bool enable_vr, bool parallelize_trials) {
+        auto leaf = std::make_shared<GamePlanStrategy>(
+            purerace_w, racing_w, attacking_w, priming_w, anchoring_w,
+            n_h_purerace, n_h_racing, n_h_attacking, n_h_priming, n_h_anchoring);
+        auto filter = std::make_shared<GamePlanStrategy>(
+            filter_purerace_w, filter_racing_w, filter_attacking_w,
+            filter_priming_w, filter_anchoring_w,
+            filter_n_h_purerace, filter_n_h_racing, filter_n_h_attacking,
+            filter_n_h_priming, filter_n_h_anchoring);
+        RolloutConfig config;
+        config.n_trials = n_trials;
+        config.truncation_depth = truncation_depth;
+        config.decision_ply = decision_ply;
+        config.enable_vr = enable_vr;
+        config.parallelize_trials = parallelize_trials;
+        config.filter = {filter_max_moves, filter_threshold};
+        config.n_threads = n_threads;
+        config.seed = seed;
+        config.late_ply = late_ply;
+        config.late_threshold = late_threshold;
+        return std::make_shared<RolloutStrategy>(leaf, filter, config);
+    }, "Create hybrid rollout strategy with separate filter and leaf 5-NN strategies",
+       py::arg("purerace_weights"), py::arg("racing_weights"),
+       py::arg("attacking_weights"), py::arg("priming_weights"),
+       py::arg("anchoring_weights"),
+       py::arg("n_hidden_purerace") = 200, py::arg("n_hidden_racing") = 400,
+       py::arg("n_hidden_attacking") = 400, py::arg("n_hidden_priming") = 400,
+       py::arg("n_hidden_anchoring") = 400,
+       py::arg("filter_purerace_weights"), py::arg("filter_racing_weights"),
+       py::arg("filter_attacking_weights"), py::arg("filter_priming_weights"),
+       py::arg("filter_anchoring_weights"),
+       py::arg("filter_n_hidden_purerace") = 100, py::arg("filter_n_hidden_racing") = 200,
+       py::arg("filter_n_hidden_attacking") = 200, py::arg("filter_n_hidden_priming") = 200,
+       py::arg("filter_n_hidden_anchoring") = 200,
+       py::arg("n_trials") = 36, py::arg("truncation_depth") = 7,
+       py::arg("decision_ply") = 1, py::arg("filter_max_moves") = 5,
+       py::arg("filter_threshold") = 0.08f, py::arg("n_threads") = 0,
+       py::arg("seed") = 42, py::arg("late_ply") = -1,
+       py::arg("late_threshold") = 20, py::arg("enable_vr") = true,
        py::arg("parallelize_trials") = false);
 
     // Score benchmarks using rollout strategy
