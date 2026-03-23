@@ -740,12 +740,17 @@ survivors are evaluated at the full target ply to determine the best move.
 | Target | Step 1 | Step 2 | Final |
 |--------|--------|--------|-------|
 | 2-ply | 1-ply: keep 5 @ 0.08 | — | 2-ply |
-| 3-ply | 1-ply: keep 5 @ 0.08 | 2-ply: keep 2 @ 0.02 | 3-ply |
+| 3-ply | 1-ply: keep 5 @ 0.08 | — | 3-ply |
 | 4-ply | 1-ply: keep 5 @ 0.08 | 3-ply: keep 2 @ 0.02 | 4-ply |
 
-The second step uses a tighter filter (fewer moves, stricter threshold) derived from
-the base preset: `max_moves = max(2, base.max_moves * 2/5)`, `threshold = max(0.01,
-base.threshold * 0.25)`.
+The intermediate step is only added at 4-ply and above. At 3-ply, the chain is a
+single 1-ply filter pass (same as the old behavior) because 2-ply rankings don't
+correlate well enough with 3-ply rankings on hard positions — the intermediate filter
+prunes moves that turn out to be the 3-ply best. At 4-ply, the intermediate 3-ply
+evaluation is accurate enough for safe pruning, and the speedup is significant.
+
+The second step uses a tighter filter derived from the base preset:
+`max_moves = max(2, base.max_moves * 2/5)`, `threshold = max(0.01, base.threshold * 0.25)`.
 
 **Example (4-ply with TINY filter)**:
 1. Score all 16 legal moves at 1-ply → keep top 5 within 0.08 of best
@@ -754,7 +759,7 @@ base.threshold * 0.25)`.
 
 Without iterative deepening, step 2 is skipped and all 5 survivors go directly to
 4-ply evaluation. Since each 4-ply evaluation costs ~0.5s, evaluating 2 instead of 5
-saves ~1.5s — roughly a **2x speedup** on 4-ply checker play.
+saves ~1.5s — roughly a **1.6x speedup** on 4-ply checker play.
 
 **Implementation**: `MoveFilterStep` struct and `build_filter_chain()` in `multipy.h`.
 The chain is built once in the `MultiPlyStrategy` constructor and stored as

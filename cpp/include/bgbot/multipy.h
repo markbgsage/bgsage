@@ -196,7 +196,7 @@ struct MoveFilterStep {
 //
 // Pattern for TINY preset:
 //   2-ply: [{ply=1, max=5, thresh=0.08}] → 2-ply final
-//   3-ply: [{ply=1, max=5, thresh=0.08}, {ply=2, max=2, thresh=0.02}] → 3-ply final
+//   3-ply: [{ply=1, max=5, thresh=0.08}] → 3-ply final
 //   4-ply: [{ply=1, max=5, thresh=0.08}, {ply=3, max=2, thresh=0.02}] → 4-ply final
 inline std::vector<MoveFilterStep> build_filter_chain(const MoveFilter& base, int n_plies) {
     std::vector<MoveFilterStep> chain;
@@ -205,11 +205,11 @@ inline std::vector<MoveFilterStep> build_filter_chain(const MoveFilter& base, in
     // Step 1: always filter at 1-ply with the base preset
     chain.push_back({1, base.max_moves, base.threshold});
 
-    if (n_plies >= 3) {
-        // Step 2: tighter filter at (n_plies - 1) ply
-        // Scale threshold: ~1/4 of base threshold, min 0.01
+    if (n_plies >= 4) {
+        // Step 2 (4-ply+ only): tighter filter at (n_plies - 1) ply.
+        // At 3-ply the intermediate 2-ply filter doesn't correlate well enough
+        // with 3-ply rankings, so we skip it and go straight to the final eval.
         float tight_threshold = std::max(0.01f, base.threshold * 0.25f);
-        // Scale max_moves: ~2/5 of base, min 2
         int tight_max = std::max(2, base.max_moves * 2 / 5);
         chain.push_back({n_plies - 1, tight_max, tight_threshold});
     }
