@@ -328,6 +328,8 @@ class _RolloutAnalyzer(_CubelessBase):
         decision_ply=1, n_threads=0, seed=42,
         late_ply=-1, late_threshold=20,
         parallelize_trials=True,
+        checker=None, checker_late=None,
+        cube=None, cube_late=None,
     ):
         super().__init__(weights)
         requested_threads = n_threads
@@ -346,6 +348,14 @@ class _RolloutAnalyzer(_CubelessBase):
             "late_ply": late_ply,
             "late_threshold": late_threshold,
         }
+
+        # Convert None to default TrialEvalConfig
+        _empty = bgbot_cpp.TrialEvalConfig()
+        checker_cfg = checker if checker is not None else _empty
+        checker_late_cfg = checker_late if checker_late is not None else _empty
+        cube_cfg = cube if cube is not None else _empty
+        cube_late_cfg = cube_late if cube_late is not None else _empty
+
         self._rollout_strategy = bgbot_cpp.create_rollout_5nn(
             *weights.weight_args,
             n_trials=n_trials,
@@ -356,6 +366,10 @@ class _RolloutAnalyzer(_CubelessBase):
             late_ply=late_ply,
             late_threshold=late_threshold,
             parallelize_trials=parallelize_trials,
+            checker=checker_cfg,
+            checker_late=checker_late_cfg,
+            cube=cube_cfg,
+            cube_late=cube_late_cfg,
         )
 
     def checker_play_analytics(
@@ -640,6 +654,10 @@ class BgBotAnalyzer:
             (-1 = same as ``decision_ply``).
         late_threshold: Half-move index where decision ply switches to ``late_ply``.
         seed: RNG seed for rollout.
+        checker: TrialEvalConfig for checker play during rollout trials.
+        checker_late: TrialEvalConfig for late-game checker play.
+        cube: TrialEvalConfig for cube decisions during rollout trials.
+        cube_late: TrialEvalConfig for late-game cube decisions.
     """
 
     def __init__(
@@ -658,6 +676,10 @@ class BgBotAnalyzer:
         late_threshold: int = 20,
         seed: int = 42,
         bearoff_db: bool | str = True,
+        checker=None,
+        checker_late=None,
+        cube=None,
+        cube_late=None,
     ):
         if weights is None:
             weights = WeightConfig.default()
@@ -722,6 +744,10 @@ class BgBotAnalyzer:
                 seed=seed,
                 late_ply=late_ply,
                 late_threshold=late_threshold,
+                checker=checker,
+                checker_late=checker_late,
+                cube=cube,
+                cube_late=cube_late,
             )
         else:
             raise ValueError(f"Unknown eval_level: {eval_level!r}")

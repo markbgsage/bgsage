@@ -807,12 +807,16 @@ overhead is skipped — zero performance cost compared to dedicated cubeless cod
 
 **Cubeful mode** (for cube decisions): Two-branch simulation — ND (no double)
 and DT (double/take) branches share the same board evolution and dice. Cube
-decisions via `cube_decision_1ply()` at each half-move; double/pass terminates
-the branch immediately. VR luck tracked in cubeful value space per-branch (1-ply).
-Match play works entirely in MWC space (`cl2cf_match`, `cubeless_mwc`, `dp_mwc`),
-with `away1/away2` swapped at each perspective flip. Money game branches use
-equity-based logic unchanged. Jacoby rule is propagated through `CubeInfo` on
-each branch; VR luck, terminal payoffs, and truncation all respect `jacoby_active()`.
+decisions during trials are configurable via `TrialEvalConfig`:
+- 1-ply (default): `cube_decision_1ply()` — Janowski on 1-ply cubeless probs
+- N-ply: `cube_decision_nply()` — full cubeful recursion (evaluate-all-and-decide)
+- Truncated rollout: `cubeful_cube_decision()` on inner RolloutStrategy (n_threads=1)
+Double/pass terminates the branch immediately. VR luck tracked in cubeful value
+space per-branch (always 1-ply). Match play works entirely in MWC space
+(`cl2cf_match`, `cubeless_mwc`, `dp_mwc`), with `away1/away2` swapped at each
+perspective flip. Money game branches use equity-based logic unchanged. Jacoby
+rule is propagated through `CubeInfo` on each branch; VR luck, terminal payoffs,
+and truncation all respect `jacoby_active()`.
 
 ### Truncated Rollouts (XG Roller-style)
 
@@ -830,17 +834,31 @@ for position evaluation.
   with small accuracy tradeoff, since truncation evaluation is the dominant cost.
 - `late_ply`: Ply for move selection after `late_threshold` half-moves (-1 = same as `decision_ply`)
 - `late_threshold`: Half-move index where decision ply switches from `decision_ply` to `late_ply`
-- `ultra_late_threshold`: Half-move index (hardcoded to 2) where move selection drops to 1-ply
-  regardless of `decision_ply`/`late_ply`. At 1-ply, the VR best-candidate pick is reused
-  directly — zero additional best-move-index (BMI) cost.
+- `ultra_late_threshold`: Half-move index where checker and cube evaluation drops to
+  1-ply regardless of configured strategies (default 2). Set high (e.g. 9999) to
+  disable ply reductions and use configured strategies for the full game — required
+  for accurate full rollouts with N-ply strategies. At 1-ply, the VR best-candidate
+  pick is reused directly — zero additional BMI cost. Also controls VR thinning:
+  at ultra-late moves, VR is computed only at even half-moves (odd ones skipped).
 - `enable_vr`: Variance reduction (always true for truncated rollouts, uses 1-ply)
 
-**Strategy selection during trials** (evaluated in order, first match wins):
+**Checker play strategy selection during trials** (evaluated in order, first match wins):
 - Race positions: always `base_` (1-ply, nearly perfect for pure races)
-- At or after `ultra_late_threshold` (half-move >= 2): `base_` (1-ply)
-- Before `late_threshold`: `decision_strat_` (N-ply)
-- At or after `late_threshold`: `late_decision_strat_` (lower ply, for speed)
+- At or after `ultra_late_threshold`: `base_` (1-ply)
+- Before `late_threshold`: `checker_strat_` (configured checker evaluation)
+- At or after `late_threshold`: `checker_late_strat_` (configured late checker evaluation)
 - Truncation evaluation: `truncation_strat_` (defaults to `decision_ply`, configurable via `truncation_ply`)
+
+**Cube decision strategy selection during trials** (same fallback chain):
+- Race positions: always `base_` (1-ply)
+- At or after `ultra_late_threshold`: `base_` (1-ply)
+- Before `late_threshold`: `cube_strat_` (configured cube evaluation)
+- At or after `late_threshold`: `cube_late_strat_` (configured late cube evaluation)
+
+Cube decisions get cubeless pre-roll probs via
+`invert_probs(strat.evaluate_probs(flip(board), flip(board)))`, then apply Janowski.
+This pattern works for any Strategy: 1-ply, N-ply (MultiPlyStrategy), or truncated
+rollout (child RolloutStrategy).
 
 **XG Roller equivalences** (XG uses XG ply convention = our convention):
 
@@ -879,10 +897,11 @@ analyzer = BgBotAnalyzer(eval_level="rollout",
 ```
 
 **VR speed optimizations:**
-- **Thinned VR**: At ultra-late moves (>= 2), VR is computed only at even moves
-  (2, 4, 6...). Odd ultra-late moves skip VR entirely. Since E[luck] = 0, this
-  doesn't bias the estimate — just increases variance slightly (~2x SE increase).
-  Halves VR cost at ultra-late moves.
+- **Thinned VR**: At ultra-late moves (>= `ultra_late_threshold`), VR is computed
+  only at even moves. Odd ultra-late moves skip VR entirely. Since E[luck] = 0,
+  this doesn't bias the estimate — just increases variance slightly. When
+  `ultra_late_threshold` is set high (no ply reductions), thinning never activates
+  and VR is computed at every move.
 - **VR candidate prefilter**: When a roll generates >20 legal moves (common for
   doubles), candidates are pre-filtered to the top 20 by pip heuristic before
   1-ply evaluation. The actual roll's candidates are kept unfiltered for move
@@ -894,10 +913,109 @@ analyzer = BgBotAnalyzer(eval_level="rollout",
   prefill work, without waiting for all 21 entries. run_trial_unified handles
   missing cache entries via CAS (compute on demand).
 
+### Separate Checker/Cube Evaluation Strengths
+
+Rollout trials support independent evaluation strengths for checker play (move
+selection) and cube decisions. Each can be configured as N-ply or truncated rollout,
+with separate late/ultra-late fallbacks. Backward compatible — when no per-purpose
+configs are set, checker uses `decision_ply` and cube uses 1-ply (identical to
+previous behavior).
+
+**`TrialEvalConfig`** struct (C++: `rollout.h`, Python: `bgbot_cpp.TrialEvalConfig`):
+- `ply`: N-ply depth (0 = unset/inherit, 1 = raw NN, 2+ = multi-ply)
+- `rollout_trials`: When > 0, use truncated rollout instead of N-ply
+- `rollout_depth`: Truncation depth for inner rollout (default 5)
+- `rollout_ply`: Decision ply within inner rollout (default 1)
+
+**`RolloutConfig`** fields for per-purpose evaluation:
+- `checker`: Checker play evaluation config
+- `checker_late`: Late-game checker play config
+- `cube`: Cube decision evaluation config
+- `cube_late`: Late-game cube decision config
+- `ultra_late_threshold`: Half-move where checker/cube drop to 1-ply (default 2,
+  set to 9999 to disable and use configured strategies for the full game)
+
+**Checker play** uses the `Strategy` interface (`best_move_index`). When
+`TrialEvalConfig.is_rollout()`, a child `RolloutStrategy` with `n_threads=1` is
+created as the evaluation strategy.
+
+**Cube decisions** use proper cubeful evaluation, NOT Janowski on cubeless probs:
+- 1-ply (default): `cube_decision_1ply()` (Janowski on 1-ply cubeless probs)
+- N-ply: `cube_decision_nply()` (full evaluate-all-and-decide cubeful recursion)
+- Truncated rollout: `cubeful_cube_decision()` on an inner `RolloutStrategy`
+  with `n_threads=1` (two-branch ND/DT cubeful rollout)
+
+This means N-ply and rollout cube decisions during trials produce the same quality
+of cube actions as the top-level cube analysis — cube decisions at each ply level
+emerge naturally from recursion, not from heuristic Janowski conversion.
+
+**Python API — low-level (`bgbot_cpp.cube_decision_rollout`):**
+
+```python
+import bgbot_cpp
+from bgsage.weights import WeightConfig
+w = WeightConfig.default()
+
+# Full rollout, 3-ply for both checker and cube, no ply reductions
+# IMPORTANT: set ultra_late_threshold=9999 for accurate full rollouts
+# (default=2 drops to 1-ply at move 2+, biasing results)
+result = bgbot_cpp.cube_decision_rollout(
+    checkers=board,
+    *w.weight_args[:5],   # 5 weight paths
+    **dict(zip(['n_hidden_purerace','n_hidden_racing','n_hidden_attacking',
+                'n_hidden_priming','n_hidden_anchoring'], w.hidden_sizes)),
+    n_trials=1296, truncation_depth=0, decision_ply=1,
+    n_threads=16, enable_vr=True,
+    checker=bgbot_cpp.TrialEvalConfig(ply=3),
+    cube=bgbot_cpp.TrialEvalConfig(ply=3),
+    ultra_late_threshold=9999,
+    progress=lambda done, total: print(f"{done}/{total}"),
+)
+# result: dict with equity_nd, equity_nd_se, equity_dt, equity_dt_se,
+#   cubeless_equity, cubeless_se, probs, prob_std_errors, ...
+
+# Full rollout, 3-ply checker, 1T cube (XG Roller-style cube decisions)
+result = bgbot_cpp.cube_decision_rollout(
+    checkers=board, *w.weight_args[:5],
+    **dict(zip(['n_hidden_purerace','n_hidden_racing','n_hidden_attacking',
+                'n_hidden_priming','n_hidden_anchoring'], w.hidden_sizes)),
+    n_trials=1296, truncation_depth=0, decision_ply=1,
+    n_threads=16, enable_vr=True,
+    checker=bgbot_cpp.TrialEvalConfig(ply=3),
+    cube=bgbot_cpp.TrialEvalConfig(rollout_trials=42, rollout_depth=5, rollout_ply=1),
+    ultra_late_threshold=9999,
+)
+
+# Strategy object approach (reusable across positions)
+rollout = bgbot_cpp.create_rollout_5nn(
+    *w.weight_args[:5],
+    **dict(zip(['n_hidden_purerace','n_hidden_racing','n_hidden_attacking',
+                'n_hidden_priming','n_hidden_anchoring'], w.hidden_sizes)),
+    n_trials=1296, truncation_depth=0, decision_ply=1,
+    n_threads=16, enable_vr=True,
+    checker=bgbot_cpp.TrialEvalConfig(ply=3),
+    cube=bgbot_cpp.TrialEvalConfig(ply=3),
+    ultra_late_threshold=9999,
+)
+result = rollout.cube_decision(checkers=board, cube_value=1,
+    owner=bgbot_cpp.CubeOwner.CENTERED)
+```
+
+**`ultra_late_threshold` guidance:**
+- Default `2`: fast, suitable for truncated rollouts (short games, ~5-7 moves)
+  where most moves are within the threshold anyway
+- `9999`: use configured strategies for the entire game — required for accurate
+  full rollouts (`truncation_depth=0`) with N-ply or rollout cube evaluators
+- Full rollout with 3-ply checker + 3-ply cube + `ultra_late_threshold=9999` gives
+  results matching XG at ~100s/position (1296 trials, 16 threads)
+
+**Progress callback**: Both `cube_decision_rollout()` and `rollout.cube_decision()`
+accept `progress=callable` — called with `(completed, total)` periodically during
+execution. Useful for progress bars in UI. The callback is called from worker threads
+with the GIL automatically acquired.
+
 **Not yet implemented:**
 - Early stopping (XG Roller+ stops at 0.010 confidence, minimum 180 games)
-- Separate cube decision ply during trials (XG uses "2-ply cube" after late_threshold;
-  we use 1-ply Janowski for all cube decisions during rollout trials)
 
 ## Doubling Cube
 

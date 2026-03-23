@@ -1643,7 +1643,30 @@ PYBIND11_MODULE(bgbot_cpp, m) {
         .def_readwrite("enable_vr", &RolloutConfig::enable_vr)
         .def_readwrite("filter", &RolloutConfig::filter)
         .def_readwrite("n_threads", &RolloutConfig::n_threads)
-        .def_readwrite("seed", &RolloutConfig::seed);
+        .def_readwrite("seed", &RolloutConfig::seed)
+        .def_readwrite("ultra_late_threshold", &RolloutConfig::ultra_late_threshold);
+
+    // TrialEvalConfig: per-purpose evaluation config for rollout trials
+    py::class_<TrialEvalConfig>(m, "TrialEvalConfig")
+        .def(py::init<>())
+        .def(py::init([](int ply, int rollout_trials, int rollout_depth, int rollout_ply) {
+            TrialEvalConfig c;
+            c.ply = ply;
+            c.rollout_trials = rollout_trials;
+            c.rollout_depth = rollout_depth;
+            c.rollout_ply = rollout_ply;
+            return c;
+        }), "Create TrialEvalConfig (set ply for N-ply, or rollout_trials>0 for truncated rollout)",
+           py::arg("ply") = 0,
+           py::arg("rollout_trials") = 0,
+           py::arg("rollout_depth") = 5,
+           py::arg("rollout_ply") = 1)
+        .def_readwrite("ply", &TrialEvalConfig::ply)
+        .def_readwrite("rollout_trials", &TrialEvalConfig::rollout_trials)
+        .def_readwrite("rollout_depth", &TrialEvalConfig::rollout_depth)
+        .def_readwrite("rollout_ply", &TrialEvalConfig::rollout_ply)
+        .def("is_set", &TrialEvalConfig::is_set)
+        .def("is_rollout", &TrialEvalConfig::is_rollout);
 
     py::class_<RolloutResult>(m, "RolloutResult")
         .def_readonly("equity", &RolloutResult::equity)
@@ -1809,7 +1832,12 @@ PYBIND11_MODULE(bgbot_cpp, m) {
                                     int late_ply,
                                     int late_threshold,
                                     bool enable_vr,
-                                    bool parallelize_trials) {
+                                    bool parallelize_trials,
+                                    const TrialEvalConfig& checker,
+                                    const TrialEvalConfig& checker_late,
+                                    const TrialEvalConfig& cube,
+                                    const TrialEvalConfig& cube_late,
+                                    int ultra_late_threshold) {
         auto base = std::make_shared<GamePlanStrategy>(
             purerace_w, racing_w, attacking_w, priming_w, anchoring_w,
             n_h_purerace, n_h_racing, n_h_attacking, n_h_priming, n_h_anchoring);
@@ -1824,6 +1852,11 @@ PYBIND11_MODULE(bgbot_cpp, m) {
         config.seed = seed;
         config.late_ply = late_ply;
         config.late_threshold = late_threshold;
+        config.checker = checker;
+        config.checker_late = checker_late;
+        config.cube = cube;
+        config.cube_late = cube_late;
+        config.ultra_late_threshold = ultra_late_threshold;
         return std::make_shared<RolloutStrategy>(base, config);
     }, "Create rollout strategy wrapping 5-NN GamePlanStrategy",
        py::arg("purerace_weights"),
@@ -1846,7 +1879,12 @@ PYBIND11_MODULE(bgbot_cpp, m) {
        py::arg("late_ply") = -1,
        py::arg("late_threshold") = 20,
        py::arg("enable_vr") = true,
-       py::arg("parallelize_trials") = false);
+       py::arg("parallelize_trials") = false,
+       py::arg("checker") = TrialEvalConfig{},
+       py::arg("checker_late") = TrialEvalConfig{},
+       py::arg("cube") = TrialEvalConfig{},
+       py::arg("cube_late") = TrialEvalConfig{},
+       py::arg("ultra_late_threshold") = 2);
 
     // Create hybrid rollout strategy with separate filter and leaf 5-NN strategies.
     m.def("create_rollout_hybrid_5nn", [](
@@ -1866,7 +1904,10 @@ PYBIND11_MODULE(bgbot_cpp, m) {
             int n_trials, int truncation_depth, int decision_ply,
             int filter_max_moves, float filter_threshold,
             int n_threads, uint32_t seed, int late_ply, int late_threshold,
-            bool enable_vr, bool parallelize_trials) {
+            bool enable_vr, bool parallelize_trials,
+            const TrialEvalConfig& checker, const TrialEvalConfig& checker_late,
+            const TrialEvalConfig& cube, const TrialEvalConfig& cube_late,
+            int ultra_late_threshold) {
         auto leaf = std::make_shared<GamePlanStrategy>(
             purerace_w, racing_w, attacking_w, priming_w, anchoring_w,
             n_h_purerace, n_h_racing, n_h_attacking, n_h_priming, n_h_anchoring);
@@ -1886,6 +1927,11 @@ PYBIND11_MODULE(bgbot_cpp, m) {
         config.seed = seed;
         config.late_ply = late_ply;
         config.late_threshold = late_threshold;
+        config.checker = checker;
+        config.checker_late = checker_late;
+        config.cube = cube;
+        config.cube_late = cube_late;
+        config.ultra_late_threshold = ultra_late_threshold;
         return std::make_shared<RolloutStrategy>(leaf, filter, config);
     }, "Create hybrid rollout strategy with separate filter and leaf 5-NN strategies",
        py::arg("purerace_weights"), py::arg("racing_weights"),
@@ -1905,7 +1951,12 @@ PYBIND11_MODULE(bgbot_cpp, m) {
        py::arg("filter_threshold") = 0.08f, py::arg("n_threads") = 0,
        py::arg("seed") = 42, py::arg("late_ply") = -1,
        py::arg("late_threshold") = 20, py::arg("enable_vr") = true,
-       py::arg("parallelize_trials") = false);
+       py::arg("parallelize_trials") = false,
+       py::arg("checker") = TrialEvalConfig{},
+       py::arg("checker_late") = TrialEvalConfig{},
+       py::arg("cube") = TrialEvalConfig{},
+       py::arg("cube_late") = TrialEvalConfig{},
+       py::arg("ultra_late_threshold") = 2);
 
     // Score benchmarks using rollout strategy
     // n_threads=1 for outer loop because parallelism is within each scenario
@@ -2252,7 +2303,13 @@ PYBIND11_MODULE(bgbot_cpp, m) {
                                        int away1, int away2, bool is_crawford,
                                        float cube_x_override,
                                        bool enable_vr, bool jacoby,
-                                       bool beaver, int max_cube_value) {
+                                       bool beaver, int max_cube_value,
+                                       const TrialEvalConfig& checker,
+                                       const TrialEvalConfig& checker_late,
+                                       const TrialEvalConfig& cube_cfg,
+                                       const TrialEvalConfig& cube_late,
+                                       int ultra_late_threshold,
+                                       py::object progress_callback) {
         Board board = list_to_board(checkers);
         bool race = is_race(board);
 
@@ -2269,14 +2326,28 @@ PYBIND11_MODULE(bgbot_cpp, m) {
         config.seed = seed;
         config.late_ply = late_ply;
         config.late_threshold = late_threshold;
+        config.checker = checker;
+        config.checker_late = checker_late;
+        config.cube = cube_cfg;
+        config.cube_late = cube_late;
+        config.ultra_late_threshold = ultra_late_threshold;
         auto rollout = std::make_shared<RolloutStrategy>(base, config);
 
         CubeInfo ci{cube_value, owner, {away1, away2, is_crawford}, cube_x_override, jacoby, beaver, max_cube_value};
 
+        // Build C++ progress callback that acquires GIL to call Python
+        RolloutProgressCallback cpp_progress;
+        if (!progress_callback.is_none()) {
+            cpp_progress = [cb = progress_callback](int completed, int total) {
+                py::gil_scoped_acquire acquire;
+                cb(completed, total);
+            };
+        }
+
         RolloutStrategy::CubefulRolloutResult cfr;
         {
             py::gil_scoped_release release;
-            cfr = rollout->cubeful_cube_decision(board, ci);
+            cfr = rollout->cubeful_cube_decision(board, ci, cpp_progress);
         }
 
         // Cubeless probs come from the cubeful rollout's integrated cubeless rollout
@@ -2363,8 +2434,9 @@ PYBIND11_MODULE(bgbot_cpp, m) {
         result["is_beaver"] = is_beaver_result;
         result["is_race"] = race;
         return result;
-    }, "Cubeful rollout: simulates cube decisions during trial games.\n"
-       "Two branches (ND and DT) share same board/dice. 1-ply cube checks at each turn.",
+    }, "Cubeful rollout with separate checker/cube strategies during trial games.\n"
+       "Two branches (ND and DT) share same board/dice. Cube decisions use configured cube strategy.\n"
+       "Pass checker/cube TrialEvalConfig for separate checker/cube evaluation strengths.",
        py::arg("checkers"),
        py::arg("cube_value") = 1,
        py::arg("owner") = CubeOwner::CENTERED,
@@ -2392,7 +2464,13 @@ PYBIND11_MODULE(bgbot_cpp, m) {
        py::arg("enable_vr") = true,
        py::arg("jacoby") = true,
        py::arg("beaver") = true,
-       py::arg("max_cube_value") = 0);
+       py::arg("max_cube_value") = 0,
+       py::arg("checker") = TrialEvalConfig{},
+       py::arg("checker_late") = TrialEvalConfig{},
+       py::arg("cube") = TrialEvalConfig{},
+       py::arg("cube_late") = TrialEvalConfig{},
+       py::arg("ultra_late_threshold") = 2,
+       py::arg("progress") = py::none());
 
     // ======================== Batch position evaluation ========================
 

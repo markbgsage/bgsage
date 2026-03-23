@@ -9,23 +9,57 @@
 #include <vector>
 #include <cstdint>
 #include <atomic>
+#include <functional>
 
 namespace bgbot {
 
 class BearoffDB;  // forward declaration
 
+// Configuration for evaluation strength of a specific purpose (checker play or
+// cube decisions) within rollout trials.
+//
+// When is_set() is false (ply=0, rollout_trials=0), the purpose inherits from
+// the legacy decision_ply / late_ply fields in RolloutConfig.
+//
+// Two modes:
+//   N-ply:  set ply >= 1 (1 = raw NN, 2+ = multi-ply lookahead)
+//   Truncated rollout:  set rollout_trials > 0 (overrides ply)
+struct TrialEvalConfig {
+    int ply = 0;                    // 0 = unset (inherit default), 1+ = N-ply depth
+    // Truncated rollout mode (when rollout_trials > 0, overrides ply)
+    int rollout_trials = 0;         // 0 = N-ply mode, >0 = truncated rollout
+    int rollout_depth = 5;          // Truncation depth for inner rollout
+    int rollout_ply = 1;            // Decision ply within inner rollout
+
+    bool is_set() const { return ply > 0 || rollout_trials > 0; }
+    bool is_rollout() const { return rollout_trials > 0; }
+};
+
+// Progress callback for rollout operations.
+// Called periodically with (completed_trials, total_trials).
+using RolloutProgressCallback = std::function<void(int completed, int total)>;
+
 struct RolloutConfig {
     int n_trials = 36;           // Number of trial games per candidate
     int truncation_depth = 7;    // Half-moves before truncating (0 = play to completion)
-    int decision_ply = 1;        // Ply depth for move selection during trials (1 = raw NN)
+    int decision_ply = 1;        // Default checker ply (backward compat, 1 = raw NN)
     int truncation_ply = -1;     // Ply for truncation evaluation (-1 = same as decision_ply)
     bool enable_vr = true;       // Enable variance reduction (VR uses same ply as decision)
     bool parallelize_trials = false;  // Allow parallel trial dispatch for truncated N-ply rollouts
     MoveFilter filter = MoveFilters::TINY;  // Filter for candidate selection at top level
     int n_threads = 0;           // Threads for parallelizing trials (0 = auto)
     uint32_t seed = 42;
-    int late_ply = -1;           // Decision ply for late moves (-1 = same as decision_ply)
-    int late_threshold = 20;     // Half-move index where we switch to late_ply
+    int late_ply = -1;           // Default late ply for both checker and cube (-1 = same as decision_ply)
+    int late_threshold = 20;     // Half-move index where we switch to late strategies
+    int ultra_late_threshold = 2; // Half-move where checker/cube drop to 1-ply (set high to disable)
+
+    // Per-purpose evaluation overrides.
+    // When is_set(), override the legacy decision_ply / late_ply defaults.
+    // When unset: checker inherits decision_ply, cube inherits 1-ply (backward compat).
+    TrialEvalConfig checker;        // Checker play evaluation
+    TrialEvalConfig checker_late;   // Late-game checker play
+    TrialEvalConfig cube;           // Cube decision evaluation
+    TrialEvalConfig cube_late;      // Late-game cube decisions
 };
 
 // Result of rolling out a single position.
@@ -43,15 +77,20 @@ struct RolloutResult {
 // Wraps a base strategy and evaluates positions by playing out trial games
 // from the given position. At each half-move in a trial:
 //   1. VR mean: evaluate best move for all 21 dice outcomes at 1-ply
-//   2. Move selection: pick best move for actual roll using N-ply decision strategy
-//   3. VR luck: evaluate chosen move at 1-ply, luck = actual(1-ply) - mean(1-ply)
-//   4. Accumulate luck from starting player's perspective
-//   5. At truncation/game-end: VR result = outcome - accumulated luck
+//   2. Move selection: pick best move for actual roll using checker strategy
+//   3. Cube decisions: evaluate pre-roll probs using cube strategy + Janowski
+//   4. VR luck: evaluate chosen move at 1-ply, luck = actual(1-ply) - mean(1-ply)
+//   5. Accumulate luck from starting player's perspective
+//   6. At truncation/game-end: VR result = outcome - accumulated luck
 //
 // VR is decoupled from the decision strategy: VR always uses base_ (1-ply)
-// regardless of decision ply. Move selection uses decision_strat_ (N-ply)
-// before late_threshold, late_decision_strat_ after, base_ for race positions.
-// Since VR tracks luck = (actual - mean) with both at 1-ply, biases cancel.
+// regardless of checker/cube strategies. Since VR tracks luck = (actual - mean)
+// with both at 1-ply, biases cancel.
+//
+// Checker play and cube decisions can use different evaluation strengths:
+//   - N-ply (MultiPlyStrategy) for fast multi-ply lookahead
+//   - Truncated rollout (inner RolloutStrategy with n_threads=1) for higher accuracy
+// Both support late/ultra-late fallback to cheaper strategies at depth.
 //
 // Truncation evaluation uses truncation_strat_ (truncation_ply, defaults to
 // decision_ply). Race positions use base_ at truncation.
@@ -90,7 +129,9 @@ public:
                         const Board& pre_move_board) const override;
 
     // Rollout a single post-move position.
-    RolloutResult rollout_position(const Board& board) const;
+    RolloutResult rollout_position(
+        const Board& board,
+        RolloutProgressCallback progress = nullptr) const;
 
     // Result of a cubeful cube decision rollout.
     struct CubefulRolloutResult {
@@ -105,11 +146,12 @@ public:
 
     // Cubeful rollout for cube decisions. Rolls out two branches (ND and DT)
     // simultaneously with the same dice sequences. Cube decisions (double/take/pass)
-    // are simulated at each half-move using 1-ply Janowski evaluation.
+    // are simulated at each half-move using the configured cube strategy + Janowski.
     // `pre_roll_board` is from the player-on-roll's perspective (before rolling).
     CubefulRolloutResult cubeful_cube_decision(
         const Board& pre_roll_board,
-        const CubeInfo& cube) const;
+        const CubeInfo& cube,
+        RolloutProgressCallback progress = nullptr) const;
 
     const RolloutConfig& config() const { return config_; }
 
@@ -133,16 +175,28 @@ private:
     RolloutConfig config_;
     mutable std::unique_ptr<SharedPosCache> shared_pos_cache_;
 
-    // Decision-making strategy for move selection during trials.
-    // If decision_ply > 0, this wraps base_ in a MultiPlyStrategy.
-    // If decision_ply == 0, this is the same as base_.
-    std::shared_ptr<Strategy> decision_strat_;
+    // Checker play strategies (move selection during trials).
+    // If checker config specifies >1-ply, wraps base_ in MultiPlyStrategy.
+    // If checker config specifies truncated rollout, wraps in child RolloutStrategy.
+    std::shared_ptr<Strategy> checker_strat_;
 
-    // Late-game decision strategy (used after late_threshold half-moves).
-    // If late_ply < 0, same as decision_strat_.
-    std::shared_ptr<Strategy> late_decision_strat_;
+    // Late-game checker play strategy (used after late_threshold half-moves).
+    std::shared_ptr<Strategy> checker_late_strat_;
 
-    // Truncation evaluation strategy. If truncation_ply < 0, same as decision_strat_.
+    // Cube decision evaluation configs (resolved from RolloutConfig).
+    // Used to dispatch to the right cube decision function during trials:
+    //   ply == 1: cube_decision_1ply (Janowski on 1-ply probs)
+    //   ply > 1:  cube_decision_nply (full cubeful N-ply recursion)
+    //   is_rollout: inner_rollout->cubeful_cube_decision (cubeful rollout)
+    TrialEvalConfig cube_eval_config_;
+    TrialEvalConfig cube_late_eval_config_;
+
+    // Inner RolloutStrategy for truncated rollout cube decisions (n_threads=1).
+    // Only created when cube config specifies rollout_trials > 0.
+    std::shared_ptr<RolloutStrategy> cube_inner_rollout_;
+    std::shared_ptr<RolloutStrategy> cube_late_inner_rollout_;
+
+    // Truncation evaluation strategy. If truncation_ply < 0, same as checker_strat_.
     // Allows using a lower ply for truncation evaluation (faster) while keeping
     // a higher ply for move selection (move0 BMI).
     std::shared_ptr<Strategy> truncation_strat_;
@@ -243,7 +297,9 @@ private:
         Move1Cache* move1_cache = nullptr) const;
 
     // Run N trials in parallel for a position, return mean + std error.
-    RolloutResult run_trials_parallel(const Board& board) const;
+    RolloutResult run_trials_parallel(
+        const Board& board,
+        RolloutProgressCallback progress = nullptr) const;
 
     // GNUbg-style hierarchical permutation array for quasi-random dice.
     // 6 levels × 128 turns × 36 permutations.

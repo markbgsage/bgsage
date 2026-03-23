@@ -41,6 +41,13 @@ from .types import (
 from .gnubg import GnuBgAnalyzer
 from .weights import MODELS, PRODUCTION_MODEL, WeightConfig
 
+# Re-export TrialEvalConfig from the C++ bindings for convenient access
+try:
+    import bgbot_cpp as _cpp
+    TrialEvalConfig = _cpp.TrialEvalConfig
+except (ImportError, AttributeError):
+    TrialEvalConfig = None
+
 __all__ = [
     "BgBotAnalyzer",
     "GnuBgAnalyzer",
@@ -72,4 +79,5 @@ __all__ = [
     "is_crashed",
     "invert_probs",
     "can_double_match",
+    "TrialEvalConfig",
 ]

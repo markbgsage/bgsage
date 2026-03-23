@@ -81,10 +81,10 @@ void RolloutStrategy::clear_internal_caches() const {
     // Clear thread-local PosCache (shared by all MultiPlyStrategy instances
     // on this thread). This prevents state accumulation across independent
     // positions that could lead to memory corruption with deep decision plies.
-    if (auto* mps = dynamic_cast<MultiPlyStrategy*>(decision_strat_.get())) {
+    if (auto* mps = dynamic_cast<MultiPlyStrategy*>(checker_strat_.get())) {
         mps->clear_cache();
     }
-    // late_decision_strat_ shares the same thread_local cache, but clearing
+    // Other strategies share the same thread_local cache, but clearing
     // it separately is a no-op since clear_cache() memsets the shared cache.
 
     // Also clear the cross-thread shared position cache.
@@ -95,51 +95,123 @@ void RolloutStrategy::clear_internal_caches() const {
 
 // ======================== Constructor ========================
 
-// Helper: build multi-ply strategies for rollout internals.
+// Helper: build a Strategy from a TrialEvalConfig.
+// Returns base for 1-ply, MultiPlyStrategy for N-ply, or a child RolloutStrategy
+// for truncated rollout (single-threaded, lightweight).
+static std::shared_ptr<Strategy> build_eval_strategy(
+    const TrialEvalConfig& eval,
+    int effective_ply,
+    const std::shared_ptr<Strategy>& base,
+    const std::shared_ptr<Strategy>& filter_base,
+    const MoveFilter& internal_filter)
+{
+    if (eval.is_rollout()) {
+        // Truncated rollout: create child RolloutStrategy with n_threads=1
+        RolloutConfig inner;
+        inner.n_trials = eval.rollout_trials;
+        inner.truncation_depth = eval.rollout_depth;
+        inner.decision_ply = eval.rollout_ply;
+        inner.n_threads = 1;
+        inner.enable_vr = true;
+        inner.seed = 42;
+        if (filter_base) {
+            return std::make_shared<RolloutStrategy>(base, filter_base, inner);
+        }
+        return std::make_shared<RolloutStrategy>(base, inner);
+    }
+
+    int ply = eval.is_set() ? eval.ply : effective_ply;
+    if (ply > 1) {
+        if (filter_base) {
+            return std::make_shared<MultiPlyStrategy>(
+                base, filter_base, ply, internal_filter);
+        }
+        return std::make_shared<MultiPlyStrategy>(
+            base, ply, internal_filter);
+    }
+    return base;
+}
+
+// Resolve a TrialEvalConfig, applying defaults from legacy fields.
+static TrialEvalConfig resolve_cube_eval_config(
+    const TrialEvalConfig& cfg, int default_ply)
+{
+    if (cfg.is_set()) return cfg;
+    TrialEvalConfig resolved;
+    resolved.ply = default_ply;
+    return resolved;
+}
+
+// Helper: build all per-purpose strategies for rollout internals.
 // If filter_base is provided, creates hybrid MultiPlyStrategy (fast filter + accurate leaf).
 static void build_rollout_strategies(
     const std::shared_ptr<Strategy>& base,
     const std::shared_ptr<Strategy>& filter_base,
     const RolloutConfig& config,
-    std::shared_ptr<Strategy>& decision_strat,
-    std::shared_ptr<Strategy>& late_decision_strat,
+    std::shared_ptr<Strategy>& checker_strat,
+    std::shared_ptr<Strategy>& checker_late_strat,
+    TrialEvalConfig& cube_eval_config,
+    TrialEvalConfig& cube_late_eval_config,
+    std::shared_ptr<RolloutStrategy>& cube_inner_rollout,
+    std::shared_ptr<RolloutStrategy>& cube_late_inner_rollout,
     std::shared_ptr<Strategy>& truncation_strat)
 {
     MoveFilter internal_filter = {2, 0.03f};
 
-    auto make_multipy = [&](int ply) -> std::shared_ptr<MultiPlyStrategy> {
+    // Resolve effective ply values from legacy fields
+    int checker_ply = config.decision_ply;
+    int checker_late_ply_eff = (config.late_ply >= 1) ? config.late_ply : config.decision_ply;
+
+    // Build checker strategies
+    checker_strat = build_eval_strategy(
+        config.checker, checker_ply, base, filter_base, internal_filter);
+
+    // Build late checker strategy (share if same config)
+    if (!config.checker_late.is_set() && !config.checker.is_set()
+        && checker_late_ply_eff == checker_ply) {
+        checker_late_strat = checker_strat;
+    } else {
+        checker_late_strat = build_eval_strategy(
+            config.checker_late.is_set() ? config.checker_late : config.checker,
+            checker_late_ply_eff, base, filter_base, internal_filter);
+    }
+
+    // Resolve cube eval configs (cube defaults to 1-ply for backward compat)
+    cube_eval_config = resolve_cube_eval_config(config.cube, 1);
+    cube_late_eval_config = resolve_cube_eval_config(
+        config.cube_late.is_set() ? config.cube_late : config.cube, 1);
+
+    // Build inner rollout strategies for truncated rollout cube decisions
+    auto make_inner_rollout = [&](const TrialEvalConfig& cfg)
+            -> std::shared_ptr<RolloutStrategy> {
+        if (!cfg.is_rollout()) return nullptr;
+        RolloutConfig inner;
+        inner.n_trials = cfg.rollout_trials;
+        inner.truncation_depth = cfg.rollout_depth;
+        inner.decision_ply = cfg.rollout_ply;
+        inner.n_threads = 1;
+        inner.enable_vr = true;
+        inner.seed = 42;
         if (filter_base) {
-            return std::make_shared<MultiPlyStrategy>(
-                base, filter_base, ply, internal_filter);
-        } else {
-            return std::make_shared<MultiPlyStrategy>(
-                base, ply, internal_filter);
+            return std::make_shared<RolloutStrategy>(base, filter_base, inner);
         }
+        return std::make_shared<RolloutStrategy>(base, inner);
     };
+    cube_inner_rollout = make_inner_rollout(cube_eval_config);
+    cube_late_inner_rollout = make_inner_rollout(cube_late_eval_config);
 
-    // Build decision strategy
-    if (config.decision_ply > 1) {
-        decision_strat = make_multipy(config.decision_ply);
-    } else {
-        decision_strat = base;
-    }
-
-    // Build late-game decision strategy
-    int effective_late_ply = (config.late_ply >= 1) ? config.late_ply : config.decision_ply;
-    if (effective_late_ply == config.decision_ply) {
-        late_decision_strat = decision_strat;
-    } else if (effective_late_ply > 1) {
-        late_decision_strat = make_multipy(effective_late_ply);
-    } else {
-        late_decision_strat = base;
-    }
-
-    // Build truncation evaluation strategy
+    // Build truncation evaluation strategy (unchanged logic)
     int effective_trunc_ply = (config.truncation_ply >= 1) ? config.truncation_ply : config.decision_ply;
-    if (effective_trunc_ply == config.decision_ply) {
-        truncation_strat = decision_strat;
+    if (effective_trunc_ply == checker_ply && !config.checker.is_set()) {
+        truncation_strat = checker_strat;
     } else if (effective_trunc_ply > 1) {
-        truncation_strat = make_multipy(effective_trunc_ply);
+        if (filter_base) {
+            truncation_strat = std::make_shared<MultiPlyStrategy>(
+                base, filter_base, effective_trunc_ply, internal_filter);
+        } else {
+            truncation_strat = std::make_shared<MultiPlyStrategy>(
+                base, effective_trunc_ply, internal_filter);
+        }
     } else {
         truncation_strat = base;
     }
@@ -159,7 +231,10 @@ RolloutStrategy::RolloutStrategy(std::shared_ptr<Strategy> base, RolloutConfig c
                        : 200)
 {
     build_rollout_strategies(base_, nullptr, config_,
-                             decision_strat_, late_decision_strat_, truncation_strat_);
+                             checker_strat_, checker_late_strat_,
+                             cube_eval_config_, cube_late_eval_config_,
+                             cube_inner_rollout_, cube_late_inner_rollout_,
+                             truncation_strat_);
 
     // VR enabled flag
     vr_enabled_ = config_.enable_vr;
@@ -185,7 +260,10 @@ RolloutStrategy::RolloutStrategy(std::shared_ptr<Strategy> base,
                        : 200)
 {
     build_rollout_strategies(base_, filter_base, config_,
-                             decision_strat_, late_decision_strat_, truncation_strat_);
+                             checker_strat_, checker_late_strat_,
+                             cube_eval_config_, cube_late_eval_config_,
+                             cube_inner_rollout_, cube_late_inner_rollout_,
+                             truncation_strat_);
 
     // VR enabled flag
     vr_enabled_ = config_.enable_vr;
@@ -416,9 +494,9 @@ void RolloutStrategy::prefill_move0_cache(
     SharedPosCache* shared) const
 {
     const bool race = is_race(start_board);
-    // Move0 uses late strategy (2-ply for non-race) for move selection.
+    // Move0 uses checker strategy for move selection.
     // This also warms the thread-local PosCache for truncation evaluation.
-    const auto& current_strat = race ? *base_ : *late_decision_strat_;
+    const auto& current_strat = race ? *base_ : *checker_strat_;
     const bool using_base = (&current_strat == base_.get());
 
     auto compute_roll = [&](int roll_idx) {
@@ -474,6 +552,10 @@ void RolloutStrategy::populate_move1_cache_entry(
     const bool using_base = true;
 
     const Board opp_board = flip(move1_board);
+    // mover_probs are always 1-ply (used for 1-ply Janowski cube decisions and
+    // as fallback). When cube strategy is N-ply or rollout, the trial code
+    // bypasses these cached probs and calls cube_decision_nply or
+    // cubeful_cube_decision directly.
     entry.mover_probs = invert_probs(base_->evaluate_probs(opp_board, opp_board));
 
     for (size_t second_roll = 0; second_roll < ALL_ROLLS.size(); ++second_roll) {
@@ -651,52 +733,155 @@ RolloutStrategy::TrialResult RolloutStrategy::run_trial_unified(
 
         // Phase 1: Cube check (cubeful only, skip on move 0)
         if (cube_active && move_num > 0) {
-            std::array<float, NUM_OUTPUTS> mover_probs;
-            if (move1_entry) {
-                mover_probs = move1_entry->mover_probs;
-                cube_x = move1_entry->cube_x;
-                cube_x_ready = true;
-            } else {
-                Board opp_board = flip(board);
-                auto opp_probs = base_->evaluate_probs(opp_board, opp_board);
-                mover_probs = invert_probs(opp_probs);
-                cube_x = cube_efficiency(board, race);
-                cube_x_ready = true;
+            // Determine cube evaluation mode for this move.
+            // Race and ultra-late positions always use 1-ply Janowski.
+            // Otherwise use the configured cube evaluation strategy.
+            const int ultra_late_cube = config_.ultra_late_threshold;
+            bool use_cube_1ply = race || move_num >= ultra_late_cube;
+            const TrialEvalConfig* cube_cfg = nullptr;
+            if (!use_cube_1ply) {
+                cube_cfg = is_late ? &cube_late_eval_config_ : &cube_eval_config_;
+                use_cube_1ply = (cube_cfg->ply <= 1 && !cube_cfg->is_rollout());
             }
 
-            for (int b = 0; b < n_branches; ++b) {
-                if (branches[b].finished) continue;
-                if (!can_double(branches[b].cube)) continue;
+            if (use_cube_1ply) {
+                // 1-ply Janowski path (original behavior)
+                std::array<float, NUM_OUTPUTS> mover_probs;
+                if (move1_entry) {
+                    mover_probs = move1_entry->mover_probs;
+                    cube_x = move1_entry->cube_x;
+                    cube_x_ready = true;
+                } else {
+                    Board opp_board = flip(board);
+                    auto opp_probs = base_->evaluate_probs(opp_board, opp_board);
+                    mover_probs = invert_probs(opp_probs);
+                    cube_x = cube_efficiency(board, race);
+                    cube_x_ready = true;
+                }
 
-                CubeDecision cd = cube_decision_1ply(mover_probs, branches[b].cube, cube_x);
-                if (cd.should_double) {
-                    if (cd.is_beaver) {
-                        branches[b].cube.cube_value *= 4;
-                        branches[b].cube.owner = CubeOwner::OPPONENT;
-                    } else if (cd.should_take) {
-                        branches[b].cube.cube_value *= 2;
-                        branches[b].cube.owner = CubeOwner::OPPONENT;
-                    } else {
-                        // Double/Pass: mover wins current stake
-                        double sp_val;
-                        if (is_match) {
-                            float mwc = dp_mwc(
+                for (int b = 0; b < n_branches; ++b) {
+                    if (branches[b].finished) continue;
+                    if (!can_double(branches[b].cube)) continue;
+                    CubeDecision cd = cube_decision_1ply(mover_probs, branches[b].cube, cube_x);
+                    if (cd.should_double) {
+                        if (cd.is_beaver) {
+                            branches[b].cube.cube_value *= 4;
+                            branches[b].cube.owner = CubeOwner::OPPONENT;
+                        } else if (cd.should_take) {
+                            branches[b].cube.cube_value *= 2;
+                            branches[b].cube.owner = CubeOwner::OPPONENT;
+                        } else {
+                            double sp_val;
+                            if (is_match) {
+                                float mwc = dp_mwc(
+                                    branches[b].cube.match.away1,
+                                    branches[b].cube.match.away2,
+                                    branches[b].cube.cube_value,
+                                    branches[b].cube.match.is_crawford);
+                                sp_val = is_sp_turn ? static_cast<double>(mwc)
+                                                    : (1.0 - static_cast<double>(mwc));
+                            } else {
+                                sp_val = static_cast<double>(branches[b].cube.cube_value)
+                                         / branches[b].basis_cube;
+                                if (!is_sp_turn) sp_val = -sp_val;
+                            }
+                            branches[b].final_equity = sp_val - branches[b].vr_luck;
+                            branches[b].finished = true;
+                        }
+                    }
+                }
+            } else {
+                // N-ply or rollout cube decision (proper cubeful evaluation)
+                MoveFilter cube_filter = {2, 0.03f};
+                const RolloutStrategy* cube_rollout = nullptr;
+                if (cube_cfg->is_rollout()) {
+                    cube_rollout = is_late ? cube_late_inner_rollout_.get()
+                                           : cube_inner_rollout_.get();
+                }
+
+                // Also compute 1-ply cube_x for the cubeful VR mean later
+                if (!cube_x_ready) {
+                    cube_x = move1_entry ? move1_entry->cube_x
+                                         : cube_efficiency(board, race);
+                    cube_x_ready = true;
+                }
+
+                for (int b = 0; b < n_branches; ++b) {
+                    if (branches[b].finished) continue;
+                    if (!can_double(branches[b].cube)) continue;
+
+                    CubeDecision cd;
+                    if (cube_rollout) {
+                        // Cubeful rollout: run inner truncated rollout
+                        auto cfr = cube_rollout->cubeful_cube_decision(
+                            board, branches[b].cube);
+                        // Extract decision from rollout result
+                        if (branches[b].cube.is_money()) {
+                            float nd_eq = static_cast<float>(cfr.nd_equity);
+                            float dt_eq = static_cast<float>(cfr.dt_equity);
+                            cd.equity_nd = nd_eq;
+                            cd.equity_dp = 1.0f;
+                            if (branches[b].cube.beaver && dt_eq < 0.0f) {
+                                cd.equity_dt = 2.0f * dt_eq;
+                                cd.is_beaver = true;
+                            } else {
+                                cd.equity_dt = dt_eq;
+                            }
+                            float best = std::min(cd.equity_dt, cd.equity_dp);
+                            cd.should_double = (best > cd.equity_nd);
+                            cd.should_take = (cd.equity_dt <= cd.equity_dp);
+                        } else {
+                            float nd_m = static_cast<float>(cfr.nd_equity);
+                            float dt_m = static_cast<float>(cfr.dt_equity);
+                            float dp_m = dp_mwc(
                                 branches[b].cube.match.away1,
                                 branches[b].cube.match.away2,
                                 branches[b].cube.cube_value,
                                 branches[b].cube.match.is_crawford);
-                            sp_val = is_sp_turn ? static_cast<double>(mwc)
-                                                : (1.0 - static_cast<double>(mwc));
-                        } else {
-                            sp_val = static_cast<double>(branches[b].cube.cube_value)
-                                     / branches[b].basis_cube;
-                            if (!is_sp_turn) sp_val = -sp_val;
+                            float best = std::min(dt_m, dp_m);
+                            cd.should_double = (best > nd_m);
+                            cd.should_take = (dt_m <= dp_m);
+                            // Convert to equity for consistency (not strictly needed)
+                            cd.equity_nd = nd_m;
+                            cd.equity_dt = dt_m;
+                            cd.equity_dp = dp_m;
                         }
-                        branches[b].final_equity = sp_val - branches[b].vr_luck;
-                        branches[b].finished = true;
+                    } else {
+                        // N-ply cubeful recursion
+                        cd = cube_decision_nply(
+                            board, branches[b].cube, *base_,
+                            cube_cfg->ply, cube_filter, 1 /*serial*/);
+                    }
+
+                    // Same double/take/pass handling as 1-ply path
+                    if (cd.should_double) {
+                        if (cd.is_beaver) {
+                            branches[b].cube.cube_value *= 4;
+                            branches[b].cube.owner = CubeOwner::OPPONENT;
+                        } else if (cd.should_take) {
+                            branches[b].cube.cube_value *= 2;
+                            branches[b].cube.owner = CubeOwner::OPPONENT;
+                        } else {
+                            double sp_val;
+                            if (is_match) {
+                                float mwc = dp_mwc(
+                                    branches[b].cube.match.away1,
+                                    branches[b].cube.match.away2,
+                                    branches[b].cube.cube_value,
+                                    branches[b].cube.match.is_crawford);
+                                sp_val = is_sp_turn ? static_cast<double>(mwc)
+                                                    : (1.0 - static_cast<double>(mwc));
+                            } else {
+                                sp_val = static_cast<double>(branches[b].cube.cube_value)
+                                         / branches[b].basis_cube;
+                                if (!is_sp_turn) sp_val = -sp_val;
+                            }
+                            branches[b].final_equity = sp_val - branches[b].vr_luck;
+                            branches[b].finished = true;
+                        }
                     }
                 }
-            }
+            } // end N-ply / rollout cube path
 
             // Check if all branches finished (all D/P'd)
             bool all_done = true;
@@ -705,11 +890,14 @@ RolloutStrategy::TrialResult RolloutStrategy::run_trial_unified(
             }
             if (all_done) {
                 // All branches D/P'd — use 1-ply pre-roll cubeless probs
+                Board opp_board_early = flip(board);
+                auto opp_probs_early = base_->evaluate_probs(opp_board_early, opp_board_early);
+                auto early_probs = invert_probs(opp_probs_early);
                 std::array<float, NUM_OUTPUTS> sp_probs;
                 if (is_sp_turn) {
-                    sp_probs = mover_probs;
+                    sp_probs = early_probs;
                 } else {
-                    sp_probs = invert_probs(mover_probs);
+                    sp_probs = invert_probs(early_probs);
                 }
                 double raw_eq = NeuralNetwork::compute_equity(sp_probs);
                 std::array<float, NUM_OUTPUTS> vr_probs;
@@ -731,7 +919,7 @@ RolloutStrategy::TrialResult RolloutStrategy::run_trial_unified(
         // selection AND skip VR. Rollout averaging over many trials dilutes
         // both move-selection quality and per-move VR contribution at depth.
         // 1-ply lets us reuse the VR best-candidate pick (zero extra cost).
-        constexpr int ultra_late_threshold = 2;
+        const int ultra_late_threshold = config_.ultra_late_threshold;
         // Skip VR at move 0 (stratified) and at ultra-late moves that aren't
         // multiples of 2 (thinned VR). Compute VR at moves 1,2,4,6 only (skip 3,5).
         // Since E[luck] = 0, skipping moves doesn't bias the estimate, just increases
@@ -748,49 +936,21 @@ RolloutStrategy::TrialResult RolloutStrategy::run_trial_unified(
                 move_candidates[i].clear();
                 possible_boards(board, ALL_ROLLS[i].d1, ALL_ROLLS[i].d2, move_candidates[i]);
             }
-            // Pre-filter rolls with many candidates for VR (only approximate
-            // best-move probs needed). Preserve actual roll's full list for
-            // move selection.
-            constexpr int VR_PREFILTER_MAX = 20;
-            if (move_num >= ultra_late_threshold) {
-                thread_local std::vector<std::pair<int, int>> vr_ranking;
-                thread_local std::vector<Board> vr_filtered;
-                for (size_t i = 0; i < ALL_ROLLS.size(); ++i) {
-                    if (static_cast<int>(i) == actual_idx) continue;  // keep actual roll unfiltered
-                    auto& cands = move_candidates[i];
-                    if (static_cast<int>(cands.size()) > VR_PREFILTER_MAX) {
-                        vr_ranking.clear();
-                        vr_ranking.reserve(cands.size());
-                        for (int ci = 0; ci < static_cast<int>(cands.size()); ++ci) {
-                            int p_pips = 0, blots = 0;
-                            for (int pt = 1; pt <= 24; ++pt) {
-                                int p = cands[ci][pt];
-                                if (p > 0) { p_pips += pt * p; if (p == 1) ++blots; }
-                            }
-                            vr_ranking.push_back({p_pips + 8 * blots + 20 * cands[ci][25], ci});
-                        }
-                        std::nth_element(vr_ranking.begin(),
-                                         vr_ranking.begin() + VR_PREFILTER_MAX,
-                                         vr_ranking.end());
-                        vr_ranking.resize(VR_PREFILTER_MAX);
-                        vr_filtered.clear();
-                        vr_filtered.reserve(VR_PREFILTER_MAX);
-                        for (auto& [score, idx] : vr_ranking) {
-                            vr_filtered.push_back(cands[idx]);
-                        }
-                        cands.swap(vr_filtered);
-                    }
-                }
-            }
+            // No VR candidate prefiltering — evaluating all candidates at 1-ply
+            // is fast and avoids the bias that prefiltering introduces (selecting
+            // the best from a filtered subset systematically underestimates the
+            // VR mean, biasing luck positive and the VR-corrected result negative).
         } else {
             move_candidates[actual_idx].clear();
             possible_boards(board, d1, d2, move_candidates[actual_idx]);
         }
 
+
         // Phase 3: VR mean — always use base_ (1-ply) for efficiency.
+        // Checker play strategy for move selection (N-ply or truncated rollout).
         const auto& current_strat = race ? *base_
-            : (move_num >= ultra_late_threshold ? *base_
-               : (is_late ? *late_decision_strat_ : *decision_strat_));
+            : (move_num >= config_.ultra_late_threshold ? *base_
+               : (is_late ? *checker_late_strat_ : *checker_strat_));
         bool using_base = (&current_strat == base_.get());
         bool can_reuse_vr_idx = do_vr && base_gps_;
 
@@ -1121,7 +1281,8 @@ RolloutStrategy::TrialResult RolloutStrategy::run_trial_unified(
 // ======================== Parallel Trial Execution ========================
 
 RolloutResult RolloutStrategy::run_trials_parallel(
-    const Board& board) const
+    const Board& board,
+    RolloutProgressCallback progress) const
 {
     const int n_trials = config_.n_trials;
     const int max_moves = (config_.truncation_depth > 0)
@@ -1163,6 +1324,7 @@ RolloutResult RolloutStrategy::run_trials_parallel(
         double sum_eq = 0.0, sum_eq_sq = 0.0;
         double sum_svr_eq = 0.0, sum_svr_eq_sq = 0.0;
 
+        const int report_interval = progress ? std::max(1, n_trials / 100) : 0;
         for (int t = 0; t < n_trials; ++t) {
             auto r = run_trial_unified(board, true, nullptr, 0, all_dice[t].data(), max_moves,
                                        &move0_cache, &move1_cache);
@@ -1176,6 +1338,9 @@ RolloutResult RolloutStrategy::run_trials_parallel(
             sum_eq_sq += eq * eq;
             sum_svr_eq += r.scalar_vr_equity;
             sum_svr_eq_sq += r.scalar_vr_equity * r.scalar_vr_equity;
+            if (report_interval && ((t + 1) % report_interval == 0 || t + 1 == n_trials)) {
+                progress(t + 1, n_trials);
+            }
         }
 
         for (int k = 0; k < NUM_OUTPUTS; ++k) {
@@ -1218,6 +1383,8 @@ RolloutResult RolloutStrategy::run_trials_parallel(
         }
         SharedPosCache* shared_cache = shared_pos_cache_.get();
         std::atomic<int> next_trial{0};
+        std::atomic<int> completed_trials{0};
+        const int report_interval = progress ? std::max(1, n_trials / 100) : 0;
 
         // Use persistent thread pool to avoid thread churn. Creating
         // ephemeral threads per rollout exhausts Windows TLS slots and
@@ -1233,6 +1400,12 @@ RolloutResult RolloutStrategy::run_trials_parallel(
                         board, true, nullptr, 0,
                         all_dice[t].data(), max_moves,
                         &move0_cache, &move1_cache);
+                }
+                if (report_interval) {
+                    int done = completed_trials.fetch_add(end - start, std::memory_order_relaxed) + (end - start);
+                    if (done % report_interval < kTrialChunkSize || done >= n_trials) {
+                        progress(std::min(done, n_trials), n_trials);
+                    }
                 }
             }
             MultiPlyStrategy::set_shared_cache(nullptr);
@@ -1290,7 +1463,8 @@ RolloutResult RolloutStrategy::run_trials_parallel(
 
 RolloutStrategy::CubefulRolloutResult RolloutStrategy::cubeful_cube_decision(
     const Board& pre_roll_board,
-    const CubeInfo& cube) const
+    const CubeInfo& cube,
+    RolloutProgressCallback progress) const
 {
     // (timing removed — see benchmark_3t for end-to-end timing)
 
@@ -1333,6 +1507,8 @@ RolloutStrategy::CubefulRolloutResult RolloutStrategy::cubeful_cube_decision(
     const bool uses_move1_cache =
         (config_.truncation_depth == 0) || (config_.truncation_depth > 1);
 
+    const int report_interval = progress ? std::max(1, n_trials / 100) : 0;
+
     if (n_threads == 1) {
         // Serial: prefill + trials on a single thread (PosCache stays warm)
         prefill_move0_cache(pre_roll_board, move0_cache, 1, nullptr);
@@ -1349,6 +1525,9 @@ RolloutStrategy::CubefulRolloutResult RolloutStrategy::cubeful_cube_decision(
                 all_dice[t].data(), max_moves, &move0_cache, &move1_cache);
             trial_results[t].nd_equity = branches[0].final_equity;
             trial_results[t].dt_equity = branches[1].final_equity;
+            if (report_interval && ((t + 1) % report_interval == 0 || t + 1 == n_trials)) {
+                progress(t + 1, n_trials);
+            }
         }
     } else {
         // Unified threading: same threads do combined move0+move1 prefill then
@@ -1366,11 +1545,11 @@ RolloutStrategy::CubefulRolloutResult RolloutStrategy::cubeful_cube_decision(
         SharedPosCache* shared_cache = shared_pos_cache_.get();
         std::atomic<int> next_roll{0};
         std::atomic<int> next_trial{0};
+        std::atomic<int> completed_trials{0};
 
         // Precompute move0 strategy selection (same for all rolls).
-        // Uses late strategy (warms cache for truncation evaluation).
         const bool m0_race = is_race(pre_roll_board);
-        const Strategy* m0_strat = m0_race ? base_.get() : late_decision_strat_.get();
+        const Strategy* m0_strat = m0_race ? base_.get() : checker_strat_.get();
 
         // Use persistent thread pool — same rationale as cubeless path.
         multipy_parallel_run(n_threads, [&]() {
@@ -1415,6 +1594,12 @@ RolloutStrategy::CubefulRolloutResult RolloutStrategy::cubeful_cube_decision(
                         all_dice[t].data(), max_moves, &move0_cache, &move1_cache);
                     trial_results[t].nd_equity = branches[0].final_equity;
                     trial_results[t].dt_equity = branches[1].final_equity;
+                }
+                if (report_interval) {
+                    int done = completed_trials.fetch_add(end - start, std::memory_order_relaxed) + (end - start);
+                    if (done % report_interval < kTrialChunkSize || done >= n_trials) {
+                        progress(std::min(done, n_trials), n_trials);
+                    }
                 }
             }
 
@@ -1497,9 +1682,10 @@ std::array<float, NUM_OUTPUTS> RolloutStrategy::evaluate_probs(
 }
 
 RolloutResult RolloutStrategy::rollout_position(
-    const Board& board) const
+    const Board& board,
+    RolloutProgressCallback progress) const
 {
-    return run_trials_parallel(board);
+    return run_trials_parallel(board, std::move(progress));
 }
 
 int RolloutStrategy::best_move_index(const std::vector<Board>& candidates,

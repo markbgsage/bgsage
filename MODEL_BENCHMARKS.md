@@ -278,3 +278,48 @@ RTX 4070S / Windows, Stage 5 production model.
 - **Subsample tracking:** N-ply ERs on the step=100 subsample track within ~10% of
   full-dataset values (1-ply: 10.64 vs 9.87, 2-ply: 8.72 vs 8.42, 3-ply: 7.33
   vs 7.65), validating the subsample as representative for rollout comparison.
+
+## Full Rollout Cube Decision Accuracy (Stage 5)
+
+Cubeful rollout of a single reference position comparing different evaluation
+strengths for checker play and cube decisions during trial games. All configs use
+1296 trials (36² for full stratification), 16 threads, `ultra_late_threshold=9999`
+(no ply reductions — configured strategies used for every move throughout the game).
+
+**Reference position:** `[2,2,0,0,0,0,4,1,2,0,1,0,-4,3,0,0,0,-3,0,-4,-2,0,1,0,1,0]`,
+centered cube at 1, money game (Jacoby on).
+
+Benchmark run: 2026-03-23, RTX 4070S / Windows, Stage 5 production model.
+
+| Config | Checker | Cube | ND eq | ND SE | DT eq | DT SE | CL eq | CL SE | P(win) | P(gw) | P(gl) | Time |
+|--------|---------|------|------:|------:|------:|------:|------:|------:|-------:|------:|------:|-----:|
+| Fast, no VR | 1-ply | 1-ply | +0.564 | 0.094 | +0.491 | 0.118 | +0.411 | 0.039 | 0.5850 | 0.3613 | 0.1161 | 0.4s |
+| Fast, VR | 1-ply | 1-ply | +0.544 | 0.019 | +0.528 | 0.022 | +0.435 | 0.006 | 0.5943 | 0.3680 | 0.1179 | 6.2s |
+| Medium | 2-ply | 3-ply | +0.541 | 0.022 | +0.518 | 0.029 | +0.447 | 0.006 | 0.5987 | 0.3687 | 0.1178 | 76s |
+| **3p** | **3-ply** | **3-ply** | **+0.599** | **0.018** | **+0.610** | **0.021** | **+0.461** | **0.006** | **0.6037** | **0.3724** | **0.1162** | **98s** |
+| Default | 3-ply | 1T | +0.600 | 0.018 | +0.605 | 0.022 | +0.460 | 0.006 | 0.6041 | 0.3718 | 0.1177 | 858s |
+| **XG ref** | **3-ply** | **1T** | **+0.598** | | **+0.606** | | **+0.449** | **0.014** | **0.6007** | **0.3801** | **0.1156** | |
+
+**Key observations:**
+- **VR is essential:** No-VR has CL SE=0.039 vs VR CL SE=0.006 (6.5x reduction).
+  Cubeful SEs also dramatically improved. VR adds ~15x runtime (0.4s → 6.2s at 1-ply)
+  but the SE improvement is worth it for any serious analysis.
+- **3-ply checker+cube matches XG:** ND +0.599 vs XG +0.598, DT +0.610 vs XG +0.606.
+  This confirms our cubeful rollout produces the same quality as XG's full rollout.
+- **3-ply cube ≈ 1T cube, 9x faster:** 3p (98s) and Default/1T (858s) give nearly
+  identical cubeful equities, but 3-ply cube is 9x faster. The inner truncated
+  rollout for cube decisions adds little accuracy over 3-ply cubeful recursion.
+- **`ultra_late_threshold` matters:** Previous runs with the default threshold of 2
+  (dropping to 1-ply at move 2+) showed VR appearing to bias results. The real cause
+  was that N-ply strategies were only used for the first 2 moves, making "3-ply"
+  rollouts essentially 1-ply. Setting `ultra_late_threshold=9999` fixed this entirely.
+
+**Reproducing:**
+
+```bash
+python bgsage/scripts/rollout_cube_bench.py
+```
+
+Edit the `configs` list in the script to select which configurations to run. Each
+config specifies `checker` and `cube` `TrialEvalConfig` objects and
+`ultra_late_threshold`.
