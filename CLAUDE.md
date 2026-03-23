@@ -2,6 +2,22 @@
 
 Neural-network backgammon engine with C++ core and Python interface. MIT licensed.
 
+## Git Worktree Rules
+
+**CRITICAL: When working in a git worktree, ALL file operations (reads, edits,
+writes, new files, builds, script execution) MUST use the worktree path — never
+the main repo path.** The worktree path is shown in the environment as "Worktree
+path" and is the primary working directory for the session.
+
+- The worktree has its own branch. Commit and push from the worktree, then merge
+  to main via PR or local merge — do NOT commit directly to main.
+- Use relative paths or the worktree absolute path for all tool calls. If you see
+  yourself using the main repo path (e.g. `C:/.../bgsage/` instead of
+  `C:/.../bgsage/.claude/worktrees/<name>/`), STOP and fix it.
+- New files created in the main repo path will NOT be on the worktree branch.
+- The MSVC build directory (`build_msvc/`) is shared across worktrees. After
+  building, copy the `.pyd` to the worktree's `build/` directory.
+
 ## Project Structure
 
 ```
