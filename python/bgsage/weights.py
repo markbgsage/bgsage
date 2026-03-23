@@ -19,6 +19,10 @@ from typing import Any
 # (purerace, racing, attacking, priming, anchoring).
 
 MODELS: dict[str, dict[str, Any]] = {
+    "stage6": {
+        "hidden": (100, 300, 300, 300, 300),
+        "pattern": "sl_s6_{plan}.weights.best",
+    },
     "stage5": {
         "hidden": (200, 400, 400, 400, 400),
         "pattern": "sl_s5_{plan}.weights.best",

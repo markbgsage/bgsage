@@ -12,6 +12,7 @@ trained, append its results to the tables below.
 | Stage 3 (5-NN, 120h/250h, 244 inputs) | 10.47 | 1.03 | +0.641 | 73.4/25.7/0.9 |
 | Stage 4 (5-NN, 120h/250h, 244 inputs, per-NN gpw) | 10.31 | 1.03 | +0.646 | 72.9/26.0/1.1 |
 | **Stage 5 (5-NN, 200h/400h, 244 inputs, per-NN gpw)** | **9.87** | **0.95** | **+0.633** | **75.0/24.2/0.8** |
+| Stage 6 (5-NN, 100h/300h, 244 inputs, per-NN gpw) | 10.09 | 1.00 | +0.624 | 73.1/26.0/0.9 |
 
 **Targets:** Contact < 10.5, Race < 0.643, vs PubEval > +0.63
 
@@ -22,6 +23,7 @@ trained, append its results to the tables below.
 | Stage 3 | 0.98 | 6.13 | 8.49 | 9.17 | 10.78 | — |
 | Stage 4 | 1.03 | 6.14 | 8.51 | 9.34 | 11.43 | 6.63 |
 | **Stage 5** | **0.95** | **5.74** | **8.74** | **8.59** | **11.06** | **6.44** |
+| Stage 6 | 1.00 | 5.90 | 8.73 | 9.58 | 11.34 | 6.84 |
 
 ## Model Details
 
@@ -106,6 +108,30 @@ bgbot_cpp.score_benchmarks_5nn(scenarios,
 
 Training script: `python/run_stage5_training.py`
 
+### Stage 6 (5-NN, 100h purerace / 300h contact, 244 inputs, per-NN gpw)
+
+Mid-size model between Stage 5 Small (100h/200h) and Stage 5 (200h/400h).
+TD: 200k@0.1 + 1M@0.02. SL: same schedule as Stage 5, except Priming uses gpw=2.0
+(gpw=5.0 caused divergence at 300h, similar to Racing at 200h in S5S).
+Racing also uses gpw=2.0.
+
+| Network | Weight File |
+|---------|-------------|
+| PureRace (100h, 196 inputs) | `models/sl_s6_purerace.weights.best` |
+| Racing (300h, 244 inputs) | `models/sl_s6_racing.weights.best` |
+| Attacking (300h, 244 inputs) | `models/sl_s6_attacking.weights.best` |
+| Priming (300h, 244 inputs) | `models/sl_s6_priming.weights.best` |
+| Anchoring (300h, 244 inputs) | `models/sl_s6_anchoring.weights.best` |
+
+Loading:
+```python
+bgbot_cpp.score_benchmarks_5nn(scenarios,
+    purerace_w, racing_w, attacking_w, priming_w, anchoring_w,
+    100, 300, 300, 300, 300)
+```
+
+Training script: `scripts/run_stage6_training.py`
+
 ## Benchmark PR (Performance Rating)
 
 Benchmark PR measures average equity error per decision against 2-ply 1296-trial
@@ -139,6 +165,16 @@ Scripts: `python/generate_benchmark_pr.py`, `python/score_benchmark_pr.py`
 |--------|-------|--------------|--------------|
 | Contact ER | 10.47 | 8.71 | 7.19 |
 | Race ER | 1.03 | 0.84 | 0.48 |
+
+## Multi-Ply Contact ER Comparison (Full 107,484 scenarios)
+
+| Model | 1-ply | 2-ply | 3-ply | Time (3-ply) |
+|-------|-------|-------|-------|-------------|
+| **Stage 5** (200h/400h) | **9.87** | **8.42** | **7.65** | 1,628s |
+| Stage 6 (100h/300h) | 10.09 | 8.80 | 7.97 | 341s |
+
+Stage 6 is significantly faster at 3-ply (~4.8x) due to smaller matrices (300h vs 400h),
+while maintaining competitive accuracy (7.97 vs 7.65, a 4% gap).
 
 ## XG Roller-Style Truncated Rollout Benchmark (Stage 5)
 
@@ -182,6 +218,26 @@ pre-existing issues: (1) PosCache at 2M entries (64MB/thread) caused OOM when
 16+ threads accumulated thread-local caches — reduced to 512K entries (16MB).
 (2) 4MB thread stacks overflowed on deep 3-ply recursion with crashed positions
 generating 90+ legal moves — increased to 8MB.
+
+## XG Roller-Style Truncated Rollout Benchmark (Stage 6)
+
+Top-100 worst 1-ply scenarios from 207,484 total (contact + crashed).
+Script: `scripts/run_top100_safe.py --model stage6`
+
+Benchmark run: 2026-03-23, 16 threads (RTX 4070S / Windows), Stage 6 model.
+
+| Strategy | Settings | ER | Time |
+|----------|----------|------|------|
+| 1-ply | - | 558.56 | 0.0s |
+| 2-ply | TINY filter | 335.29 | 0.2s |
+| 3-ply | TINY filter | 348.46 | 2.8s |
+| 4-ply | TINY filter | 353.17 | 13.2s |
+| XG Roller | 42t, trunc=5, dp=1 | 325.63 | 34.1s |
+| XG Roller+ | 360t, trunc=7, dp=2, late=1@2 | 331.86 | 79.9s |
+| XG Roller++ | 360t, trunc=5, dp=3, late=2@2 | 320.03 | 523.7s |
+
+**Note:** XG Roller++ was run separately with 4 threads (vs 16 for other levels)
+to avoid thread-local PosCache accumulation crashes at 3-ply decision depth.
 
 ## Contact Benchmark by Evaluation Level (Stage 5)
 

@@ -98,6 +98,7 @@ The `MODELS` registry maps model names to their hidden sizes and weight file pat
 
 ```python
 MODELS = {
+    "stage6": {"hidden": (100, 300, 300, 300, 300), "pattern": "sl_s6_{plan}.weights.best"},
     "stage5": {"hidden": (200, 400, 400, 400, 400), "pattern": "sl_s5_{plan}.weights.best"},
     "stage4": {"hidden": (120, 250, 250, 250, 250), "pattern": "sl_s4_{plan}.weights.best"},
     "stage3": {"hidden": (120, 250, 250, 250, 250), "pattern": "sl_{plan}.weights.best"},
@@ -1065,6 +1066,35 @@ Benchmark PR (103k decisions): 1-ply=2.47, 2-ply=1.85, 3-ply=1.53.
 
 The production model is defined in `python/bgsage/weights.py` — see "Production Model"
 section above. See `MODEL_BENCHMARKS.md` for full comparison of all trained models.
+
+## Stage 6 (S6) — Mid-Size Model
+
+**Purpose:** Mid-size model (100h PureRace, 300h contact NNs) between Stage 5 Small
+(100h/200h) and Stage 5 (200h/400h). Tests whether 300h contact NNs close the gap
+to 400h.
+
+**Weights:** Registered as `"stage6"` in `python/bgsage/weights.py`. Weight files
+are `sl_s6_{plan}.weights.best` in `models/`.
+
+**Training:** Same TD + SL pipeline as Stage 5. TD: 200k games @ α=0.1 + 1M @ α=0.02.
+SL: same schedule except Racing and Priming use gpw=2.0 (not 5.0 — gpw=5.0 causes
+divergence at 300h for Priming, similar to Racing at 200h in S5S).
+
+**Per-plan ER (1-ply):**
+
+| Plan | Stage 5 (400h) | S6 (300h) |
+|------|---------------|-----------|
+| PureRace | 0.95 | 1.00 |
+| Racing | 5.74 | 5.90 |
+| Attacking | 8.74 | 8.73 |
+| Priming | 8.59 | 9.58 |
+| Anchoring | 11.06 | 11.34 |
+| **Contact** | **9.87** | **10.09** |
+
+**Summary:** Contact ER=10.09 meets the <10.5 target. Attacking is essentially
+identical to Stage 5 (8.73 vs 8.74). Other plans show small regressions from the
+reduced hidden size. Priming shows the largest gap (9.58 vs 8.59), likely due to
+the lower gpw=2.0 needed to prevent divergence.
 
 ## Stage 5 Small (S5S) — Fast Filter Model
 
