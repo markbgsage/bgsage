@@ -13,6 +13,7 @@ trained, append its results to the tables below.
 | Stage 4 (5-NN, 120h/250h, 244 inputs, per-NN gpw) | 10.31 | 1.03 | +0.646 | 72.9/26.0/1.1 |
 | **Stage 5 (5-NN, 200h/400h, 244 inputs, per-NN gpw)** | **9.87** | **0.95** | **+0.633** | **75.0/24.2/0.8** |
 | Stage 6 (5-NN, 100h/300h, 244 inputs, per-NN gpw) | 10.09 | 1.00 | +0.624 | 73.1/26.0/0.9 |
+| Stage 7 (17-NN pair, 100h/300h, 244 inputs, per-pair gpw) | 9.76 | 1.00 | — | — |
 
 **Targets:** Contact < 10.5, Race < 0.643, vs PubEval > +0.63
 
@@ -24,6 +25,10 @@ trained, append its results to the tables below.
 | Stage 4 | 1.03 | 6.14 | 8.51 | 9.34 | 11.43 | 6.63 |
 | **Stage 5** | **0.95** | **5.74** | **8.74** | **8.59** | **11.06** | **6.44** |
 | Stage 6 | 1.00 | 5.90 | 8.73 | 9.58 | 11.34 | 6.84 |
+| Stage 7 (pair) | 1.00 | — | — | — | — | — |
+
+**Note:** Stage 7 uses 17-NN pair strategy (player × opponent game plan), so per-plan
+ERs are not directly comparable. See pair-filtered benchmarks below.
 
 ## Model Details
 
@@ -168,13 +173,18 @@ Scripts: `python/generate_benchmark_pr.py`, `python/score_benchmark_pr.py`
 
 ## Multi-Ply Contact ER Comparison (Full 107,484 scenarios)
 
-| Model | 1-ply | 2-ply | 3-ply | Time (3-ply) |
-|-------|-------|-------|-------|-------------|
-| **Stage 5** (200h/400h) | **9.87** | **8.42** | **7.65** | 1,628s |
-| Stage 6 (100h/300h) | 10.09 | 8.80 | 7.97 | 341s |
+| Model | 1-ply | 2-ply | 3-ply | 4-ply | Time (3/4-ply) |
+|-------|-------|-------|-------|-------|----------------|
+| **Stage 5** (200h/400h) | **9.87** | **8.42** | **7.65** | — | 1,628s |
+| Stage 6 (100h/300h) | 10.09 | 8.80 | 7.97 | — | 341s |
+| Stage 7 (17-NN pair, 100h/300h) | 9.76 | 8.60 | 7.93 | 7.82 | 419s / 1,016s |
 
 Stage 6 is significantly faster at 3-ply (~4.8x) due to smaller matrices (300h vs 400h),
 while maintaining competitive accuracy (7.97 vs 7.65, a 4% gap).
+
+Stage 7 beats Stage 5 at 1-ply (9.76 vs 9.87) thanks to pair specialization, but S5's
+larger 400h hidden layers pull ahead at 2-ply+ where multi-ply search compensates for
+the lack of opponent-awareness in the single-plan strategy.
 
 ## XG Roller-Style Truncated Rollout Benchmark (Stage 5)
 
@@ -323,3 +333,85 @@ python bgsage/scripts/rollout_cube_bench.py
 Edit the `configs` list in the script to select which configurations to run. Each
 config specifies `checker` and `cube` `TrialEvalConfig` objects and
 `ultra_late_threshold`.
+
+## Stage 7 (17-NN Pair Strategy, 100h purerace / 300h contact)
+
+17 NNs selected by (player, opponent) game plan pair. 14 distinct weight files —
+4 rare pairs (prim_prim, prim_anch, anch_prim, anch_anch) share one NN.
+PureRace reused from Stage 6 (same 100h architecture).
+
+TD: 300k@0.1 + 1.5M@0.02. SL: 4-phase schedule with per-pair optimal GPW values
+determined by pair-filtered benchmark scan.
+
+| Network | GPW | Weight File |
+|---------|-----|-------------|
+| PureRace (100h, 196 inputs) | — | `models/sl_s7_purerace.weights.best` |
+| Racing/Racing (300h, 244 inputs) | 7.0 | `models/sl_s7_race_race.weights.best` |
+| Racing/Attacking (300h) | 10.0 | `models/sl_s7_race_att.weights.best` |
+| Racing/Priming (300h) | 5.0 | `models/sl_s7_race_prim.weights.best` |
+| Racing/Anchoring (300h) | 7.0 | `models/sl_s7_race_anch.weights.best` |
+| Attacking/Racing (300h) | 5.0 | `models/sl_s7_att_race.weights.best` |
+| Attacking/Attacking (300h) | 7.0 | `models/sl_s7_att_att.weights.best` |
+| Attacking/Priming (300h) | 5.0 | `models/sl_s7_att_prim.weights.best` |
+| Attacking/Anchoring (300h) | 10.0 | `models/sl_s7_att_anch.weights.best` |
+| Priming/Racing (300h) | 7.0 | `models/sl_s7_prim_race.weights.best` |
+| Priming/Attacking (300h) | 7.0 | `models/sl_s7_prim_att.weights.best` |
+| Priming/Anchoring (shared, 300h) | 5.0 | `models/sl_s7_prim_anch.weights.best` |
+| Anchoring/Racing (300h) | 7.0 | `models/sl_s7_anch_race.weights.best` |
+| Anchoring/Attacking (300h) | 7.0 | `models/sl_s7_anch_att.weights.best` |
+
+Loading:
+```python
+bgbot_cpp.score_benchmarks_pair(scenarios, weight_paths, hidden_sizes)
+```
+
+Training scripts: `scripts/run_s7_training.py`, `scripts/run_s7_sl_training.py`,
+`scripts/run_s7_sl_phase34.py`
+
+### S7 Pair-Filtered Benchmark Detail
+
+Each NN benchmarked on positions matching its specific (player, opponent) game plan
+pair, compared against S6's single-plan NN on the same subset.
+
+| NN | Freq | S7 Pair ER | S6 Plan ER | Δ |
+|----|------|-----------|-----------|---|
+| race_race | 10.0% | **7.26** | 7.97 | -0.71 |
+| race_att | 5.7% | **4.72** | 5.00 | -0.28 |
+| race_prim | 9.5% | **4.38** | 4.51 | -0.13 |
+| race_anch | 11.3% | **5.26** | 5.82 | -0.56 |
+| att_race | 5.7% | **5.39** | 6.99 | -1.60 |
+| att_att | 3.9% | **9.90** | 9.96 | -0.06 |
+| att_prim | 6.3% | **8.31** | 8.33 | -0.02 |
+| att_anch | 6.8% | **9.98** | 10.57 | -0.59 |
+| prim_race | 9.5% | **8.50** | 9.40 | -0.90 |
+| prim_att | 6.3% | **9.71** | 10.04 | -0.33 |
+| prim_anch (shared) | 6.8% | **9.15** | 9.60 | -0.45 |
+| anch_race | 11.3% | **11.79** | 11.84 | -0.05 |
+| anch_att | 6.8% | **10.36** | 10.72 | -0.36 |
+| **Weighted avg** | | **7.85** | **8.53** | **-0.68** |
+
+All 13 NNs beat S6 baseline. Weighted average improvement: -0.68 ER (8.0%).
+
+## XG Roller-Style Truncated Rollout Benchmark (Stage 7)
+
+Top-100 worst 1-ply scenarios from 207,484 total (contact + crashed), selected
+using S7 pair strategy at 1-ply.
+
+Benchmark run: 2026-03-24, RTX 4070S / Windows, Stage 7 pair model.
+N-ply levels run at 16 threads; rollout levels at 4 threads (16 threads causes
+segfault with pair strategy due to thread-local cache accumulation — see CLAUDE.md).
+
+| Strategy | Settings | ER | Time |
+|----------|----------|------|------|
+| 1-ply | — | 408.00 | <1s |
+| 2-ply | TINY filter | 250.74 | <1s |
+| 3-ply | TINY filter | 243.32 | 2.8s |
+| 4-ply | TINY filter | 242.65 | 5.5s |
+| XG Roller | 42t, trunc=5, dp=1 | 233.04 | 23.5s |
+| XG Roller+ | 360t, trunc=7, dp=2, late=1@2 | 223.51 | 240s |
+| XG Roller++ | 360t, trunc=5, dp=3, late=2@2 | 225.17 | 492s |
+
+**Note:** S7 top-100 ERs are not directly comparable to S5/S6 top-100 ERs because
+the top-100 worst positions differ between models (selected by each model's own
+1-ply errors). S7's lower absolute ERs partly reflect that its worst 1-ply errors
+are less severe than S5/S6's worst errors.

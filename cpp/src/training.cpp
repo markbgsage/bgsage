@@ -789,4 +789,258 @@ TDTrainResult td_train_gameplan(const GamePlanTDTrainConfig& config)
     return train_result;
 }
 
+// ======================== 17-NN Pair TD Training ========================
+
+TDTrainResult td_train_gameplan_pair(const GamePlanPairTDTrainConfig& config)
+{
+    auto t_start = std::chrono::steady_clock::now();
+    std::cout << std::defaultfloat;
+
+    const auto& pair_names = game_plan_pair_names();
+
+    std::cout << "=== Game Plan Pair TD Training (17-NN) ===" << std::endl;
+    for (int i = 0; i < NUM_PAIR_NNS; ++i) {
+        int n_inp = (i == 0) ? TESAURO_INPUTS : EXTENDED_CONTACT_INPUTS;
+        std::cout << "  " << std::setw(12) << std::left << pair_names[i]
+                  << ": " << config.hidden_sizes[i] << " hidden, " << n_inp << " inputs" << std::endl;
+    }
+    std::cout << "  Alpha:     " << config.alpha << std::endl;
+    std::cout << "  Games:     " << config.n_games << std::endl;
+    std::cout << "  Seed:      " << config.seed << std::endl;
+    std::cout << std::endl;
+
+    // Print canonical map if any sharing
+    bool has_sharing = false;
+    for (int i = 0; i < NUM_PAIR_NNS; ++i) {
+        if (config.canonical_map[i] != i) { has_sharing = true; break; }
+    }
+    if (has_sharing) {
+        std::cout << "  NN sharing:" << std::endl;
+        for (int i = 0; i < NUM_PAIR_NNS; ++i) {
+            if (config.canonical_map[i] != i) {
+                std::cout << "    " << pair_names[i] << " -> " << pair_names[config.canonical_map[i]] << std::endl;
+            }
+        }
+        std::cout << std::endl;
+    }
+
+    // Create NNs — canonical indices get their own NN, aliases share
+    std::array<std::shared_ptr<NeuralNetwork>, NUM_PAIR_NNS> nns;
+    for (int i = 0; i < NUM_PAIR_NNS; ++i) {
+        int canonical = config.canonical_map[i];
+        if (canonical == i) {
+            int n_inp = (i == 0) ? TESAURO_INPUTS : EXTENDED_CONTACT_INPUTS;
+            nns[i] = std::make_shared<NeuralNetwork>(
+                config.hidden_sizes[i], n_inp, config.weight_init_eps, config.seed + i);
+        } else {
+            nns[i] = nns[canonical];  // share the same NN
+        }
+    }
+
+    // Resume weights (only for canonical indices)
+    for (int i = 0; i < NUM_PAIR_NNS; ++i) {
+        if (config.canonical_map[i] != i) continue;  // skip aliases
+        if (!config.resume_paths[i].empty()) {
+            if (!nns[i]->load_weights(config.resume_paths[i]))
+                throw std::runtime_error("Failed to load " + std::string(pair_names[i]) +
+                                         " weights: " + config.resume_paths[i]);
+            std::cout << "  Resumed " << pair_names[i] << " from: " << config.resume_paths[i] << std::endl;
+        }
+    }
+
+    GamePlanPairStrategy strat(nns);
+
+    std::mt19937 rng(config.seed);
+    std::uniform_int_distribution<int> die(1, 6);
+
+    // Weight file paths
+    std::array<std::string, NUM_PAIR_NNS> weight_paths, best_paths;
+    for (int i = 0; i < NUM_PAIR_NNS; ++i) {
+        weight_paths[i] = config.models_dir + "/" + config.model_name + "_" + pair_names[i] + ".weights";
+        best_paths[i]   = weight_paths[i] + ".best";
+    }
+    std::string history_path = config.models_dir + "/" + config.model_name + ".history.csv";
+
+    double best_contact_score = 1e9;
+
+    TDTrainResult train_result;
+    std::vector<Board> candidates;
+    candidates.reserve(32);
+    std::array<float, EXTENDED_CONTACT_INPUTS> pre_buf;
+    std::array<float, EXTENDED_CONTACT_INPUTS> post_buf;
+
+    auto encode_for_nn = [](const Board& board, int nn_idx, float* out) {
+        if (nn_idx == 0) {
+            auto inputs = compute_tesauro_inputs(board);
+            std::copy(inputs.begin(), inputs.end(), out);
+        } else {
+            auto inputs = compute_extended_contact_inputs(board);
+            std::copy(inputs.begin(), inputs.end(), out);
+        }
+    };
+
+    // Compute nn_idx for a pre-roll board (board is from the player's perspective after flip).
+    // Applies canonical_map to resolve shared NNs.
+    auto get_nn_idx = [&config](const Board& flipped_board, const Board& original_board) -> int {
+        GamePlan player_gp = classify_game_plan(flipped_board);
+        if (player_gp == GamePlan::PURERACE) return 0;
+        // original_board is opponent's perspective; classify it for opponent's plan
+        GamePlan opponent_gp = classify_game_plan(original_board);
+        if (opponent_gp == GamePlan::PURERACE) opponent_gp = GamePlan::RACING;
+        int idx = 1 + game_plan_pair_index(player_gp, opponent_gp);
+        return config.canonical_map[idx];
+    };
+
+    std::array<int, NUM_PAIR_NNS> update_counts = {};
+    int interval_singles = 0, interval_gammons = 0, interval_backgammons = 0, interval_games = 0;
+
+    auto run_benchmark_and_print = [&](int game_idx, bool is_final) {
+        auto t_now = std::chrono::steady_clock::now();
+        double elapsed = std::chrono::duration<double>(t_now - t_start).count();
+
+        // Score each NN against its benchmark if available
+        std::array<double, NUM_PAIR_NNS> scores;
+        scores.fill(-1.0);
+        for (int i = 0; i < NUM_PAIR_NNS; ++i) {
+            if (config.canonical_map[i] != i) continue;  // skip aliases
+            if (config.benchmarks[i] && !config.benchmarks[i]->empty()) {
+                scores[i] = score_benchmarks(strat, *config.benchmarks[i], 1).score();
+            }
+        }
+
+        // Use a representative contact score for history tracking
+        // Average the per-plan benchmark scores that are available
+        double contact_avg = 0.0;
+        int n_contact = 0;
+        for (int i = 1; i < NUM_PAIR_NNS; ++i) {
+            if (scores[i] >= 0) { contact_avg += scores[i]; n_contact++; }
+        }
+        if (n_contact > 0) contact_avg /= n_contact;
+
+        train_result.history.push_back({game_idx, contact_avg, elapsed});
+
+        int total_upd = 0;
+        for (int i = 0; i < NUM_PAIR_NNS; ++i) total_upd += update_counts[i];
+
+        std::cout << "Game " << std::setw(7) << game_idx << std::fixed << std::setprecision(2);
+        // Print a subset of scores to keep output readable
+        if (scores[0] >= 0) std::cout << "  pr=" << scores[0];
+        // Print per-plan averages
+        for (int p = 0; p < 4; ++p) {
+            double plan_avg = 0; int cnt = 0;
+            for (int o = 0; o < 4; ++o) {
+                int idx = 1 + p * 4 + o;
+                if (scores[idx] >= 0) { plan_avg += scores[idx]; cnt++; }
+            }
+            const char* plan_labels[] = {"race", "att", "prim", "anch"};
+            if (cnt > 0) std::cout << "  " << plan_labels[p] << "=" << (plan_avg / cnt);
+        }
+
+        std::cout << std::setprecision(0) << "  upd%:";
+        for (int i = 0; i < NUM_PAIR_NNS; ++i) {
+            double pct = total_upd > 0 ? 100.0 * update_counts[i] / total_upd : 0;
+            if (pct >= 0.5) std::cout << " " << pair_names[i][0] << pair_names[i][1] << "=" << pct;
+        }
+
+        if (interval_games > 0) {
+            std::cout << std::setprecision(1)
+                      << "  out: s=" << (100.0 * interval_singles / interval_games)
+                      << "% g=" << (100.0 * interval_gammons / interval_games)
+                      << "% b=" << (100.0 * interval_backgammons / interval_games) << "%";
+        }
+        std::cout << "  time=" << std::setprecision(1) << elapsed << "s";
+        if (is_final) std::cout << "  (final)";
+        std::cout << std::endl;
+
+        interval_singles = interval_gammons = interval_backgammons = interval_games = 0;
+
+        // Save weights (only canonical indices, skip aliases)
+        for (int i = 0; i < NUM_PAIR_NNS; ++i) {
+            if (config.canonical_map[i] == i)
+                nns[i]->save_weights(weight_paths[i]);
+        }
+
+        // Best weights tracking (based on contact average)
+        if (contact_avg >= 0 && contact_avg < best_contact_score && game_idx > 0) {
+            best_contact_score = contact_avg;
+            for (int i = 0; i < NUM_PAIR_NNS; ++i) {
+                if (config.canonical_map[i] == i)
+                    nns[i]->save_weights(best_paths[i]);
+            }
+            std::cout << "  ** New best (contact_avg=" << contact_avg << ")" << std::endl;
+        }
+
+        save_history_csv(train_result.history, history_path);
+    };
+
+    for (int game_idx = 0; game_idx < config.n_games; ++game_idx) {
+        if (game_idx % config.benchmark_interval == 0) {
+            run_benchmark_and_print(game_idx, false);
+        }
+
+        Board board = STARTING_BOARD;
+        int d1, d2;
+        do { d1 = die(rng); d2 = die(rng); } while (d1 == d2);
+        if (d2 > d1) board = flip(board);
+
+        bool first_move = true;
+        for (;;) {
+            if (!first_move) { d1 = die(rng); d2 = die(rng); }
+            first_move = false;
+
+            Board flipped = flip(board);
+            // Player's perspective = flipped, opponent's perspective = board
+            int pre_nn_idx = get_nn_idx(flipped, board);
+            NeuralNetwork& pre_nn = *nns[pre_nn_idx];
+            encode_for_nn(flipped, pre_nn_idx, pre_buf.data());
+            pre_nn.forward_with_gradients(pre_buf.data());
+
+            possible_boards(board, d1, d2, candidates);
+            if (candidates.size() == 1) {
+                board = candidates[0];
+            } else {
+                int idx = strat.best_move_index(candidates, board);
+                board = candidates[idx];
+            }
+
+            GameResult result = check_game_over(board);
+
+            if (result != GameResult::NOT_OVER) {
+                pre_nn.td_update(terminal_targets_flipped(result), config.alpha);
+                update_counts[pre_nn_idx]++;
+
+                interval_games++;
+                switch (result) {
+                    case GameResult::WIN_SINGLE:
+                    case GameResult::LOSS_SINGLE:      interval_singles++; break;
+                    case GameResult::WIN_GAMMON:
+                    case GameResult::LOSS_GAMMON:       interval_gammons++; break;
+                    case GameResult::WIN_BACKGAMMON:
+                    case GameResult::LOSS_BACKGAMMON:   interval_backgammons++; break;
+                    default: break;
+                }
+                break;
+            }
+
+            // Post-move: board is from opponent's perspective after flip
+            Board post_flipped = board;  // post-move board (opponent's next pre-roll)
+            int post_nn_idx = get_nn_idx(post_flipped, flip(post_flipped));
+            encode_for_nn(post_flipped, post_nn_idx, post_buf.data());
+            auto post_outputs = nns[post_nn_idx]->forward(post_buf.data());
+
+            pre_nn.td_update(flip_outputs(post_outputs), config.alpha);
+            update_counts[pre_nn_idx]++;
+
+            board = flip(board);
+        }
+    }
+
+    run_benchmark_and_print(config.n_games, true);
+
+    auto t_end = std::chrono::steady_clock::now();
+    train_result.games_played = config.n_games;
+    train_result.total_seconds = std::chrono::duration<double>(t_end - t_start).count();
+    return train_result;
+}
+
 } // namespace bgbot

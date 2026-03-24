@@ -3462,4 +3462,249 @@ PYBIND11_MODULE(bgbot_cpp, m) {
         strat.set_bearoff_db(db);
     }, "Set bearoff DB on a RolloutStrategy for exact bearoff evaluation",
        py::arg("strategy"), py::arg("db"));
+
+    // =====================================================================
+    // 17-NN Game Plan Pair Strategy bindings
+    // =====================================================================
+
+    py::class_<GamePlanPairStrategy, std::shared_ptr<GamePlanPairStrategy>>(m, "GamePlanPairStrategy")
+        .def(py::init<const std::vector<std::string>&, const std::vector<int>&>(),
+             py::arg("weight_paths"), py::arg("hidden_sizes"),
+             "Create 17-NN strategy: weight_paths[0]=purerace, [1-16]=contact pairs; "
+             "hidden_sizes[0-16] corresponding hidden layer sizes");
+
+    // --- Pair strategy scoring ---
+    m.def("score_benchmarks_pair", [](const ScenarioSet& ss,
+                                      const std::vector<std::string>& weight_paths,
+                                      const std::vector<int>& hidden_sizes,
+                                      int n_threads) {
+        GamePlanPairStrategy strat(weight_paths, hidden_sizes);
+        py::gil_scoped_release release;
+        return run_score_benchmarks(strat, ss.scenarios, n_threads);
+    }, "Score benchmarks using 17-NN GamePlanPairStrategy",
+       py::arg("scenarios"),
+       py::arg("weight_paths"),
+       py::arg("hidden_sizes"),
+       py::arg("n_threads") = 0);
+
+    m.def("score_benchmarks_per_scenario_pair", [](const ScenarioSet& ss,
+                                                   const std::vector<std::string>& weight_paths,
+                                                   const std::vector<int>& hidden_sizes,
+                                                   int n_threads) {
+        GamePlanPairStrategy strat(weight_paths, hidden_sizes);
+        const int n = static_cast<int>(ss.scenarios.size());
+        std::vector<double> errors(n);
+        {
+            py::gil_scoped_release release;
+            score_benchmarks_per_scenario(strat, ss.scenarios, errors.data(), n_threads);
+        }
+        return errors;
+    }, "Score benchmarks per-scenario using 17-NN Pair strategy, returns list of errors",
+       py::arg("scenarios"),
+       py::arg("weight_paths"),
+       py::arg("hidden_sizes"),
+       py::arg("n_threads") = 0);
+
+    // --- Pair strategy vs PubEval ---
+    m.def("play_games_pair_vs_pubeval", [](const std::vector<std::string>& weight_paths,
+                                            const std::vector<int>& hidden_sizes,
+                                            int n_games, uint32_t seed,
+                                            PubEval::WeightSource pe_weights,
+                                            int n_threads) {
+        GamePlanPairStrategy nn_strat(weight_paths, hidden_sizes);
+        PubEval pe_strat(pe_weights);
+        py::gil_scoped_release release;
+        return play_games_parallel(nn_strat, pe_strat, n_games, seed, n_threads);
+    }, "Play games: 17-NN Pair (p1) vs PubEval (p2)",
+       py::arg("weight_paths"),
+       py::arg("hidden_sizes"),
+       py::arg("n_games") = 1000,
+       py::arg("seed") = 42,
+       py::arg("pe_weights") = PubEval::WeightSource::TESAURO,
+       py::arg("n_threads") = 0);
+
+    // --- Pair strategy self-play ---
+    m.def("play_games_pair_vs_self", [](const std::vector<std::string>& weight_paths,
+                                         const std::vector<int>& hidden_sizes,
+                                         int n_games, uint32_t seed,
+                                         int n_threads) {
+        GamePlanPairStrategy strat(weight_paths, hidden_sizes);
+        py::gil_scoped_release release;
+        return play_games_parallel(strat, strat, n_games, seed, n_threads);
+    }, "Play games: 17-NN Pair vs itself (self-play outcome distribution)",
+       py::arg("weight_paths"),
+       py::arg("hidden_sizes"),
+       py::arg("n_games") = 1000,
+       py::arg("seed") = 42,
+       py::arg("n_threads") = 0);
+
+    // --- Pair TD training ---
+    m.def("td_train_gameplan_pair", [](int n_games, float alpha,
+                                        std::vector<int> hidden_sizes,
+                                        float eps, uint32_t seed,
+                                        int benchmark_interval,
+                                        const std::string& model_name,
+                                        const std::string& models_dir,
+                                        std::vector<std::string> resume_paths,
+                                        py::list benchmarks_py,
+                                        std::vector<int> canonical_map) {
+        if (static_cast<int>(hidden_sizes.size()) != NUM_PAIR_NNS)
+            throw std::runtime_error("hidden_sizes must have " + std::to_string(NUM_PAIR_NNS) + " elements");
+
+        GamePlanPairTDTrainConfig config;
+        config.n_games = n_games;
+        config.alpha = alpha;
+        for (int i = 0; i < NUM_PAIR_NNS; ++i)
+            config.hidden_sizes[i] = hidden_sizes[i];
+        config.weight_init_eps = eps;
+        config.seed = seed;
+        config.benchmark_interval = benchmark_interval;
+        config.model_name = model_name;
+        config.models_dir = models_dir;
+
+        // Pad resume_paths to 17 if shorter
+        resume_paths.resize(NUM_PAIR_NNS, "");
+        for (int i = 0; i < NUM_PAIR_NNS; ++i)
+            config.resume_paths[i] = resume_paths[i];
+
+        // Canonical map for NN sharing
+        if (!canonical_map.empty()) {
+            if (static_cast<int>(canonical_map.size()) != NUM_PAIR_NNS)
+                throw std::runtime_error("canonical_map must have " + std::to_string(NUM_PAIR_NNS) + " elements");
+            for (int i = 0; i < NUM_PAIR_NNS; ++i)
+                config.canonical_map[i] = canonical_map[i];
+        }
+
+        // Convert benchmarks list (ScenarioSet or None for each)
+        std::vector<std::shared_ptr<ScenarioSet>> bm_holders;
+        for (int i = 0; i < NUM_PAIR_NNS && i < static_cast<int>(py::len(benchmarks_py)); ++i) {
+            auto item = benchmarks_py[i];
+            if (!item.is_none()) {
+                auto ss = item.cast<std::shared_ptr<ScenarioSet>>();
+                bm_holders.push_back(ss);
+                if (!ss->scenarios.empty())
+                    config.benchmarks[i] = &ss->scenarios;
+            }
+        }
+
+        py::gil_scoped_release release;
+        return td_train_gameplan_pair(config);
+    }, "Run 17-network game plan pair TD(0) self-play training",
+       py::arg("n_games") = 5000,
+       py::arg("alpha") = 0.1f,
+       py::arg("hidden_sizes"),
+       py::arg("eps") = 0.1f,
+       py::arg("seed") = 42,
+       py::arg("benchmark_interval") = 1000,
+       py::arg("model_name") = "td_s7",
+       py::arg("models_dir") = "models",
+       py::arg("resume_paths") = std::vector<std::string>(),
+       py::arg("benchmarks") = py::list(),
+       py::arg("canonical_map") = std::vector<int>());
+
+    // --- Pair strategy multipy creation ---
+    m.def("create_multipy_pair", [](const std::vector<std::string>& weight_paths,
+                                     const std::vector<int>& hidden_sizes,
+                                     int n_plies,
+                                     int filter_max_moves, float filter_threshold,
+                                     bool full_depth_opponent,
+                                     bool parallel_evaluate, int parallel_threads) {
+        auto base = std::make_shared<GamePlanPairStrategy>(weight_paths, hidden_sizes);
+        MoveFilter filter{filter_max_moves, filter_threshold};
+        return std::make_shared<MultiPlyStrategy>(
+            base, n_plies, filter, full_depth_opponent,
+            parallel_evaluate, parallel_threads);
+    }, "Create MultiPlyStrategy from 17-NN Pair base strategy",
+       py::arg("weight_paths"),
+       py::arg("hidden_sizes"),
+       py::arg("n_plies") = 2,
+       py::arg("filter_max_moves") = 5,
+       py::arg("filter_threshold") = 0.08f,
+       py::arg("full_depth_opponent") = false,
+       py::arg("parallel_evaluate") = false,
+       py::arg("parallel_threads") = 0);
+
+    // --- Pair strategy rollout creation ---
+    m.def("create_rollout_pair", [](const std::vector<std::string>& weight_paths,
+                                     const std::vector<int>& hidden_sizes,
+                                     int n_trials, int truncation_depth, int decision_ply,
+                                     int filter_max_moves, float filter_threshold,
+                                     int n_threads, uint32_t seed,
+                                     int late_ply, int late_threshold,
+                                     bool enable_vr, bool parallelize_trials,
+                                     const TrialEvalConfig& checker,
+                                     const TrialEvalConfig& checker_late,
+                                     const TrialEvalConfig& cube,
+                                     const TrialEvalConfig& cube_late,
+                                     int ultra_late_threshold) {
+        auto base = std::make_shared<GamePlanPairStrategy>(weight_paths, hidden_sizes);
+        RolloutConfig rc;
+        rc.n_trials = n_trials;
+        rc.truncation_depth = truncation_depth;
+        rc.decision_ply = decision_ply;
+        rc.filter = {filter_max_moves, filter_threshold};
+        rc.n_threads = n_threads;
+        rc.seed = seed;
+        rc.late_ply = late_ply;
+        rc.late_threshold = late_threshold;
+        rc.enable_vr = enable_vr;
+        rc.parallelize_trials = parallelize_trials;
+        rc.checker = checker;
+        rc.checker_late = checker_late;
+        rc.cube = cube;
+        rc.cube_late = cube_late;
+        rc.ultra_late_threshold = ultra_late_threshold;
+        return std::make_shared<RolloutStrategy>(base, rc);
+    }, "Create RolloutStrategy from 17-NN Pair base strategy",
+       py::arg("weight_paths"),
+       py::arg("hidden_sizes"),
+       py::arg("n_trials") = 1296,
+       py::arg("truncation_depth") = 0,
+       py::arg("decision_ply") = 1,
+       py::arg("filter_max_moves") = 5,
+       py::arg("filter_threshold") = 0.08f,
+       py::arg("n_threads") = 1,
+       py::arg("seed") = 42,
+       py::arg("late_ply") = -1,
+       py::arg("late_threshold") = 20,
+       py::arg("enable_vr") = true,
+       py::arg("parallelize_trials") = true,
+       py::arg("checker") = TrialEvalConfig{},
+       py::arg("checker_late") = TrialEvalConfig{},
+       py::arg("cube") = TrialEvalConfig{},
+       py::arg("cube_late") = TrialEvalConfig{},
+       py::arg("ultra_late_threshold") = 2);
+
+    // --- Pair classification batch ---
+    m.def("classify_game_plan_pairs_batch", [](py::array_t<int32_t> boards_np) {
+        auto info = boards_np.request();
+        if (info.ndim != 2 || info.shape[1] != 26)
+            throw std::runtime_error("boards must be shape [N, 26]");
+        int n = static_cast<int>(info.shape[0]);
+        const int32_t* data = static_cast<const int32_t*>(info.ptr);
+
+        py::array_t<int32_t> player_out(n);
+        py::array_t<int32_t> opponent_out(n);
+        auto p_ptr = static_cast<int32_t*>(player_out.request().ptr);
+        auto o_ptr = static_cast<int32_t*>(opponent_out.request().ptr);
+
+        for (int i = 0; i < n; ++i) {
+            Board board;
+            for (int j = 0; j < 26; ++j) board[j] = data[i * 26 + j];
+            p_ptr[i] = static_cast<int32_t>(classify_game_plan(board));
+            o_ptr[i] = static_cast<int32_t>(classify_game_plan(flip(board)));
+        }
+        return py::make_tuple(player_out, opponent_out);
+    }, "Classify (player, opponent) game plans for a batch of boards. "
+       "Returns (player_plans, opponent_plans) as int32 arrays (0-4).",
+       py::arg("boards"));
+
+    // --- Pair name utilities ---
+    m.def("game_plan_pair_names", []() {
+        const auto& names = game_plan_pair_names();
+        py::list result;
+        for (int i = 0; i < NUM_PAIR_NNS; ++i)
+            result.append(std::string(names[i]));
+        return result;
+    }, "Return list of 17 pair names (purerace, race_race, race_att, ...)");
 }

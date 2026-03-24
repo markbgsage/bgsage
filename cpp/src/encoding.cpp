@@ -1894,4 +1894,29 @@ GamePlan classify_game_plan(const Board& board) {
     }
 }
 
+// --- Game plan pair strategy helpers ---
+
+int game_plan_pair_index(GamePlan player, GamePlan opponent) {
+    int p = static_cast<int>(player);   // RACING=1..ANCHORING=4
+    int o = static_cast<int>(opponent);
+    return (p - 1) * 4 + (o - 1);
+}
+
+static const std::array<const char*, NUM_PAIR_NNS> PAIR_NAMES = {
+    "purerace",
+    "race_race",  "race_att",  "race_prim",  "race_anch",
+    "att_race",   "att_att",   "att_prim",   "att_anch",
+    "prim_race",  "prim_att",  "prim_prim",  "prim_anch",
+    "anch_race",  "anch_att",  "anch_prim",  "anch_anch",
+};
+
+const char* game_plan_pair_name(int pair_idx) {
+    if (pair_idx < 0 || pair_idx >= NUM_PAIR_NNS) return "unknown";
+    return PAIR_NAMES[pair_idx];
+}
+
+const std::array<const char*, NUM_PAIR_NNS>& game_plan_pair_names() {
+    return PAIR_NAMES;
+}
+
 } // namespace bgbot

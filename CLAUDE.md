@@ -1230,6 +1230,84 @@ identical to Stage 5 (8.73 vs 8.74). Other plans show small regressions from the
 reduced hidden size. Priming shows the largest gap (9.58 vs 8.59), likely due to
 the lower gpw=2.0 needed to prevent divergence.
 
+## Stage 7 (S7) — 17-NN Pair Strategy Model
+
+**Purpose:** Uses 17 NNs (1 PureRace + 16 contact) selected by the (player, opponent)
+game plan pair, instead of just the player's game plan. This allows each NN to
+specialize for specific matchups (e.g., attacking vs anchoring). 14 distinct weight
+files — 3 rare pairs (prim_prim, prim_anch, anch_prim, anch_anch) share one NN.
+
+**Architecture:** `GamePlanPairStrategy` in `neural_net.h`. Array of 17 NNs indexed by
+`pair_nn_index(player_gp, opponent_gp)`. Classification: `classify_game_plan(board)`
+for player, `classify_game_plan(flip(board))` for opponent. PureRace selected when
+`is_race(board)` is true.
+
+**Hidden sizes:** 100h PureRace, 300h for all 16 contact pair NNs.
+
+**Weights:** Registered as `"stage7"` in `python/bgsage/weights.py`. Weight files are
+`sl_s7_{pair}.weights.best` in `models/`. Shared pairs use `sl_s7_prim_anch.weights.best`.
+
+**Training:**
+- TD: 300k games @ α=0.1 + 1.5M @ α=0.02 (50% more than S5/S6 due to 16 contact NNs)
+- GPW scan: For each NN, test gpw values (1.5, 3, 5, 7, 10) with pair-filtered
+  benchmarks. Pick the gpw that minimizes ER on the NN's specific (player, opponent)
+  pair subset of the benchmark.
+- SL: 4-phase schedule (100ep@α=20 → 200ep@α=10 → 200ep@α=3.1 → 500ep@α=1.0) using
+  optimal gpw per NN. Pair-filtered benchmarks used for best-weight selection.
+
+**Pair frequencies in training data and optimal GPW values:**
+
+| NN | Freq | GPW | Pair ER (S7) | Pair ER (S6) | Δ |
+|----|------|-----|-------------|-------------|---|
+| race_race | 10.0% | 7.0 | 7.26 | 7.97 | -0.71 |
+| race_att | 5.7% | 10.0 | 4.72 | 5.00 | -0.28 |
+| race_prim | 9.5% | 5.0 | 4.38 | 4.51 | -0.13 |
+| race_anch | 11.3% | 7.0 | 5.26 | 5.82 | -0.56 |
+| att_race | 5.7% | 5.0 | 5.39 | 6.99 | -1.60 |
+| att_att | 3.9% | 7.0 | 9.90 | 9.96 | -0.06 |
+| att_prim | 6.3% | 5.0 | 8.31 | 8.33 | -0.02 |
+| att_anch | 6.8% | 10.0 | 9.98 | 10.57 | -0.59 |
+| prim_race | 9.5% | 7.0 | 8.50 | 9.40 | -0.90 |
+| prim_att | 6.3% | 7.0 | 9.71 | 10.04 | -0.33 |
+| prim_anch (shared) | 6.8% | 5.0 | 9.15 | 9.60 | -0.45 |
+| anch_race | 11.3% | 7.0 | 11.79 | 11.84 | -0.05 |
+| anch_att | 6.8% | 7.0 | 10.36 | 10.72 | -0.36 |
+
+**Benchmark results (1-ply):**
+
+| Metric | S7 (17-NN, 300h) | S6 (5-NN, 300h) | S5 (5-NN, 400h) |
+|--------|-----------------|-----------------|-----------------|
+| Contact ER | 9.76 | 10.09 | **9.66** |
+| Race ER | 1.00 | 1.00 | **0.95** |
+
+**Summary:** S7 reduces Contact ER from 10.09 (S6) to 9.76 — recovering 77% of
+the gap between S6 and S5 (400h) through pair specialization alone, using the same
+300h hidden size. All 13 canonical NNs beat their S6 baseline on pair-filtered
+benchmarks. Biggest wins on cross-plan pairs (att_race: -1.60, prim_race: -0.90).
+
+**C++ bindings:**
+```python
+# 1-ply scoring
+bgbot_cpp.score_benchmarks_pair(scenarios, weight_paths, hidden_sizes)
+
+# Multi-ply
+multipy = bgbot_cpp.create_multipy_pair(weight_paths, hidden_sizes, n_plies=3)
+
+# Rollout
+rollout = bgbot_cpp.create_rollout_pair(weight_paths, hidden_sizes,
+    n_trials=360, truncation_depth=7, decision_ply=2, n_threads=4)
+```
+
+**Known issue:** Rollout with 16 threads and the pair strategy can segfault after
+running multiple evaluation levels in the same process (e.g., multipy + rollout
+objects accumulated). 4 threads is stable. The crash appears related to thread-local
+cache accumulation with 17 NNs. Investigation pending.
+
+**Training scripts:**
+- `scripts/run_s7_training.py` — TD training
+- `scripts/run_s7_sl_training.py` — GPW scan
+- `scripts/run_s7_sl_phase34.py` — Full SL training (phases 3-4)
+
 ## Stage 5 Small (S5S) — Fast Filter Model
 
 **Purpose:** Half-size model (100h PureRace, 200h contact NNs) trained as a potential

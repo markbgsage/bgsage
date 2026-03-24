@@ -105,4 +105,30 @@ struct GamePlanTDTrainConfig {
 // Run TD(0) self-play training with five game plan networks.
 TDTrainResult td_train_gameplan(const GamePlanTDTrainConfig& config);
 
+// Configuration for 17-network game plan pair TD training.
+// Supports NN sharing: canonical_map[i] specifies which NN index to use for
+// pair index i. Default is identity (each pair has its own NN). To share NNs,
+// set multiple indices to the same canonical value (e.g., canonical_map[11] =
+// canonical_map[15] = 12 to share (prim_prim) and (anch_prim) with (prim_anch)).
+struct GamePlanPairTDTrainConfig {
+    int n_games             = 5000;
+    float alpha             = 0.1f;
+    std::array<int, NUM_PAIR_NNS> hidden_sizes = {};  // [0]=purerace, [1-16]=contact pairs
+    float weight_init_eps   = 0.1f;
+    uint32_t seed           = 42;
+    int benchmark_interval  = 1000;
+    std::string model_name  = "td_s7";
+    std::string models_dir  = "models";
+    std::array<std::string, NUM_PAIR_NNS> resume_paths = {};
+    std::array<const std::vector<BenchmarkScenario>*, NUM_PAIR_NNS> benchmarks = {};
+
+    // Canonical index mapping: canonical_map[i] = physical NN to use for pair i.
+    // Default: identity (each pair has its own NN). Shared pairs point to the
+    // same canonical index.
+    std::array<int, NUM_PAIR_NNS> canonical_map = {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16};
+};
+
+// Run TD(0) self-play training with 17 game plan pair networks.
+TDTrainResult td_train_gameplan_pair(const GamePlanPairTDTrainConfig& config);
+
 } // namespace bgbot

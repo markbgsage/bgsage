@@ -177,4 +177,21 @@ GamePlan classify_game_plan(const Board& board);
 // Human-readable name for a game plan.
 const char* game_plan_name(GamePlan gp);
 
+// --- Game plan pair strategy (17-NN) ---
+// 1 PureRace + 16 ordered (player, opponent) contact pairs.
+
+constexpr int NUM_PAIR_NNS = 17;
+constexpr int NUM_CONTACT_PAIRS = 16;
+
+// Compute pair index (0-15) from ordered (player, opponent) contact plans.
+// Both plans must be non-PURERACE (RACING=1, ATTACKING=2, PRIMING=3, ANCHORING=4).
+// Returns (int(player)-1)*4 + (int(opponent)-1).
+int game_plan_pair_index(GamePlan player, GamePlan opponent);
+
+// Pair name string for weight file naming (index 0-16, 0=purerace).
+const char* game_plan_pair_name(int pair_idx);
+
+// All 17 pair names in order.
+const std::array<const char*, NUM_PAIR_NNS>& game_plan_pair_names();
+
 } // namespace bgbot

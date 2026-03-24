@@ -350,4 +350,70 @@ private:
     const NeuralNetwork& select_nn(GamePlan gp) const;
 };
 
+// ---------------------------------------------------------------------------
+// GamePlanPairStrategy: 17-NN strategy using ordered (player, opponent) pairs
+// ---------------------------------------------------------------------------
+// 1 PureRace NN + 16 contact NNs, one per (player_plan, opponent_plan) pair.
+// Selection: classify player's plan from board, opponent's plan from flip(board),
+// look up the (player, opponent) pair NN.
+
+class GamePlanPairStrategy : public Strategy {
+public:
+    // Construct from vectors of weight paths and hidden sizes (length 17 each).
+    // Index 0 = PureRace, indices 1-16 = contact pairs.
+    GamePlanPairStrategy(const std::vector<std::string>& weight_paths,
+                         const std::vector<int>& hidden_sizes);
+
+    // Construct from pre-built NNs (used by TD training).
+    explicit GamePlanPairStrategy(
+        std::array<std::shared_ptr<NeuralNetwork>, NUM_PAIR_NNS> nns);
+
+    double evaluate(const Board& board, bool pre_move_is_race) const override;
+
+    std::array<float, NN_OUTPUTS> evaluate_probs(
+        const Board& board, bool pre_move_is_race) const override;
+    std::array<float, NN_OUTPUTS> evaluate_probs(
+        const Board& board, const Board& pre_move_board) const override;
+
+    int best_move_index(const std::vector<Board>& candidates,
+                        bool pre_move_is_race) const override;
+    int best_move_index(const std::vector<Board>& candidates,
+                        const Board& pre_move_board) const override;
+
+    int evaluate_candidates_equity(
+        const std::vector<Board>& candidates,
+        const Board& pre_move_board,
+        double* equities) const;
+
+    int batch_evaluate_candidates_equity(
+        const std::vector<Board>& candidates,
+        const Board& pre_move_board,
+        double* equities) const;
+
+    int batch_evaluate_candidates_equity_probs(
+        const std::vector<Board>& candidates,
+        const Board& pre_move_board,
+        double* equities,
+        std::array<float, NUM_OUTPUTS>* probs_out) const;
+
+    int batch_evaluate_candidates_best_prob(
+        const std::vector<Board>& candidates,
+        const Board& pre_move_board,
+        double* equities,
+        std::array<float, NUM_OUTPUTS>* best_probs_out) const;
+
+    std::shared_ptr<NeuralNetwork> nn(int idx) const { return nns_[idx]; }
+
+private:
+    std::array<std::shared_ptr<NeuralNetwork>, NUM_PAIR_NNS> nns_;
+
+    // Determine which NN to use for a board position.
+    // Returns 0 for purerace, 1-16 for contact pairs.
+    int select_nn_idx(const Board& board) const;
+
+    double evaluate_with_nn(const Board& board, int nn_idx) const;
+    std::array<float, NN_OUTPUTS> probs_with_nn(const Board& board, int nn_idx) const;
+    bool is_purerace_nn(int nn_idx) const { return nn_idx == 0; }
+};
+
 } // namespace bgbot
