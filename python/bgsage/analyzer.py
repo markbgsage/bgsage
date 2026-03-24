@@ -56,6 +56,11 @@ def resolve_owner(cube_owner: str | Any) -> Any:
     return cube_owner
 
 
+class RolloutCancelled(Exception):
+    """Raised when a rollout is cancelled via cancel()."""
+    pass
+
+
 def _default_parallel_threads() -> int:
     env_threads = os.getenv("BGBOT_MULTIPLY_THREADS", "")
     if not env_threads:
@@ -330,6 +335,7 @@ class _RolloutAnalyzer(_CubelessBase):
         parallelize_trials=True,
         checker=None, checker_late=None,
         cube=None, cube_late=None,
+        ultra_late_threshold=2,
     ):
         super().__init__(weights)
         requested_threads = n_threads
@@ -348,6 +354,7 @@ class _RolloutAnalyzer(_CubelessBase):
             "late_ply": late_ply,
             "late_threshold": late_threshold,
         }
+        self._cancel_event = threading.Event()
 
         # Convert None to default TrialEvalConfig
         _empty = bgbot_cpp.TrialEvalConfig()
@@ -370,7 +377,28 @@ class _RolloutAnalyzer(_CubelessBase):
             checker_late=checker_late_cfg,
             cube=cube_cfg,
             cube_late=cube_late_cfg,
+            ultra_late_threshold=ultra_late_threshold,
         )
+
+        # Create a 3-ply strategy for pre-filtering (accurate move count)
+        self._strategy_3ply = bgbot_cpp.create_multipy_5nn(
+            *weights.weight_args, n_plies=3,
+        )
+
+    def cancel(self):
+        """Request cancellation of in-progress rollout."""
+        self._cancel_event.set()
+        self._rollout_strategy.cancel()
+
+    def reset_cancel(self):
+        """Clear cancellation flag for reuse."""
+        self._cancel_event.clear()
+        self._rollout_strategy.reset_cancel()
+
+    def _check_cancel(self):
+        """Raise RolloutCancelled if cancellation was requested."""
+        if self._cancel_event.is_set():
+            raise RolloutCancelled()
 
     def checker_play_analytics(
         self, board, die1, die2, cube_value=1, cube_owner="centered",
@@ -386,14 +414,57 @@ class _RolloutAnalyzer(_CubelessBase):
             cube_value=cube_value, away1=away1, away2=away2,
             is_crawford=is_crawford, jacoby=jacoby,
         )
-        survivors, survivor_set = self._filter_candidates(
+        survivors_1ply, survivor_1ply_set = self._filter_candidates(
             scored_1ply, self.FILTER_THRESHOLD, self.FILTER_MAX_MOVES
         )
+        # Ensure at least 2 candidates go into the 3-ply rescore so the
+        # cubeful promotion loop won't need surprise extra rollouts.
+        if len(survivors_1ply) < 2 and len(scored_1ply) >= 2:
+            for item in scored_1ply:
+                if tuple(item[2]) not in survivor_1ply_set:
+                    survivors_1ply.append(item)
+                    survivor_1ply_set.add(tuple(item[2]))
+                    if len(survivors_1ply) >= 2:
+                        break
 
+        # 3-ply rescore: re-evaluate 1-ply survivors at 3-ply, then re-filter
+        # to get accurate move count before starting the rollout.
+        self._check_cancel()
+        scored_3ply = []
+        for feq, cleq, b, p in survivors_1ply:
+            r = self._strategy_3ply.evaluate_board(b, board)
+            scored_3ply.append((r["equity"], cleq, b, list(r["probs"])))
+        scored_3ply.sort(key=lambda x: -x[0])
+        survivors, survivor_set = self._filter_candidates(
+            scored_3ply, self.FILTER_THRESHOLD, self.FILTER_MAX_MOVES
+        )
+        # Maintain the min-2 guarantee after 3-ply filtering too.
+        if len(survivors) < 2 and len(scored_3ply) >= 2:
+            for item in scored_3ply:
+                if tuple(item[2]) not in survivor_set:
+                    survivors.append(item)
+                    survivor_set.add(tuple(item[2]))
+                    if len(survivors) >= 2:
+                        break
+
+        n_trials = self._rollout_config["n_trials"]
         results = []
-        total = len(survivors)
+        total_moves = len(survivors)
         for i, (feq, cleq, b, p0) in enumerate(survivors):
-            r = self._rollout_strategy.evaluate_board(b, board)
+            self._check_cancel()
+
+            # Trial-level progress callback: maps trial progress within
+            # the current move to overall progress across all moves.
+            def _trial_progress(completed_trials, total_trials, _move_idx=i):
+                if progress_callback:
+                    overall = _move_idx * n_trials + completed_trials
+                    overall_total = total_moves * n_trials
+                    progress_callback(overall, overall_total, results)
+
+            try:
+                r = self._rollout_strategy.evaluate_board(b, board, _trial_progress)
+            except bgbot_cpp.RolloutCancelled:
+                raise RolloutCancelled()
             results.append({
                 "board": b,
                 "equity": r["equity"],
@@ -402,42 +473,52 @@ class _RolloutAnalyzer(_CubelessBase):
                 "prob_std_errors": list(r.get("prob_std_errors", [0] * 5)),
                 "eval_level": "Rollout",
             })
-            if progress_callback:
-                progress_callback(i + 1, total, results)
 
+        # Non-rolled-out moves: use 3-ply results where available, 1-ply otherwise.
+        scored_3ply_map = {tuple(b): (eq, p) for eq, _, b, p in scored_3ply}
         for feq, cleq, b, p in scored_1ply:
-            if tuple(b) not in survivor_set:
-                results.append({
-                    "board": b,
-                    "equity": cleq,
-                    "probs": p,
-                    "is_1ply_only": True,
-                    "eval_level": "1-ply",
-                })
+            bkey = tuple(b)
+            if bkey not in survivor_set:
+                eq3, p3 = scored_3ply_map.get(bkey, (None, None))
+                if eq3 is not None:
+                    results.append({
+                        "board": b,
+                        "equity": eq3,
+                        "probs": p3,
+                        "eval_level": "3-ply",
+                    })
+                else:
+                    results.append({
+                        "board": b,
+                        "equity": cleq,
+                        "probs": p,
+                        "eval_level": "1-ply",
+                    })
 
-        rollout_strategy = self._rollout_strategy
-
-        def _rollout_eval(b, board_ref):
-            r = rollout_strategy.evaluate_board(b, board_ref)
-            extra = {
-                "std_error": r.get("std_error", 0),
-                "prob_std_errors": list(r.get("prob_std_errors", [0] * 5)),
-            }
-            return r["equity"], list(r["probs"]), "Rollout", extra
-
-        self._promote_second_best(results, board, _rollout_eval)
         return self._finalize_results(results)
 
     def cube_action_analytics(
         self, board, cube_value=1, cube_owner="centered",
+        progress_callback=None,
         away1=0, away2=0, is_crawford=False, jacoby=True, beaver=True,
     ) -> dict:
+        self._check_cancel()
         owner = resolve_owner(cube_owner)
-        r = self._rollout_strategy.cube_decision(
-            board, cube_value, owner,
-            away1=away1, away2=away2, is_crawford=is_crawford,
-            jacoby=jacoby, beaver=beaver,
-        )
+
+        # Wire trial-level progress for cube rollout
+        def _cube_trial_progress(completed_trials, total_trials):
+            if progress_callback:
+                progress_callback(completed_trials, total_trials, [])
+
+        try:
+            r = self._rollout_strategy.cube_decision(
+                board, cube_value, owner,
+                away1=away1, away2=away2, is_crawford=is_crawford,
+                jacoby=jacoby, beaver=beaver,
+                progress=_cube_trial_progress if progress_callback else None,
+            )
+        except bgbot_cpp.RolloutCancelled:
+            raise RolloutCancelled()
         return self._format_cube_result(r, eval_level="Rollout")
 
 
@@ -505,14 +586,38 @@ class _CubefulAnalyzer:
         away1=0, away2=0, is_crawford=False, jacoby=True, beaver=True,
     ) -> list[dict]:
         owner = resolve_owner(cube_owner)
-        results = self._inner.checker_play_analytics(
+        inner = self._inner
+        is_rollout = isinstance(inner, _RolloutAnalyzer)
+
+        results = inner.checker_play_analytics(
             board, die1, die2, cube_value, cube_owner, progress_callback,
             away1=away1, away2=away2, is_crawford=is_crawford, jacoby=jacoby,
         )
         if not results:
             return results
 
-        workers = getattr(self._inner, "_parallel_threads", 0)
+        if is_rollout:
+            # Rollout path: all heavy computation is done. Just apply 1-ply
+            # Janowski cubeful equity to each move's probs (instant) and sort.
+            for m in results:
+                cubeless_eq = m["equity"]
+                cf_eq = self._cubeful_equity(
+                    m["board"], m["probs"], owner,
+                    cube_value=cube_value, away1=away1, away2=away2,
+                    is_crawford=is_crawford, jacoby=jacoby, beaver=beaver,
+                )
+                m["cubeless_equity"] = cubeless_eq
+                m["equity"] = cf_eq
+
+            results.sort(key=lambda x: -x["equity"])
+            if results:
+                best = results[0]["equity"]
+                for r in results:
+                    r["equity_diff"] = r["equity"] - best
+            return results
+
+        # Non-rollout path: N-ply cubeful equity + promotion loop
+        workers = getattr(inner, "_parallel_threads", 0)
         if not isinstance(workers, int) or workers <= 1:
             workers = max(2, os.cpu_count() or 2)
         workers = max(1, workers)
@@ -536,20 +641,11 @@ class _CubefulAnalyzer:
 
         results.sort(key=lambda x: -x["equity"])
 
-        inner = self._inner
-
-        def _cubeful_eval(b, board_ref):
+        def _nply_eval(b, board_ref):
             if isinstance(inner, _MultiPlyAnalyzer):
                 r = inner._strategy_nply.evaluate_board(b, board_ref)
                 eval_level = f"{inner._n_plies}-ply"
                 extra = {}
-            elif isinstance(inner, _RolloutAnalyzer):
-                r = inner._rollout_strategy.evaluate_board(b, board_ref)
-                eval_level = "Rollout"
-                extra = {
-                    "std_error": r.get("std_error", 0),
-                    "prob_std_errors": list(r.get("prob_std_errors", [0] * 5)),
-                }
             else:
                 return None
             probs = list(r["probs"])
@@ -563,7 +659,7 @@ class _CubefulAnalyzer:
 
         while len(results) >= 2 and results[1].get("is_1ply_only"):
             r = results[1]
-            ret = _cubeful_eval(r["board"], board)
+            ret = _nply_eval(r["board"], board)
             if ret is None:
                 break
             cf_eq, probs, eval_level, extra = ret
@@ -680,6 +776,7 @@ class BgBotAnalyzer:
         checker_late=None,
         cube=None,
         cube_late=None,
+        ultra_late_threshold: int = 2,
     ):
         if weights is None:
             weights = WeightConfig.default()
@@ -748,6 +845,7 @@ class BgBotAnalyzer:
                 checker_late=checker_late,
                 cube=cube,
                 cube_late=cube_late,
+                ultra_late_threshold=ultra_late_threshold,
             )
         else:
             raise ValueError(f"Unknown eval_level: {eval_level!r}")
@@ -764,6 +862,28 @@ class BgBotAnalyzer:
             self._analyzer = _CubefulAnalyzer(inner)
         else:
             self._analyzer = inner
+
+    def cancel(self):
+        """Request cancellation of an in-progress rollout.
+
+        Thread-safe. Only effective when the analyzer uses rollout evaluation.
+        After calling cancel(), the next or in-progress checker_play() or
+        cube_action() call will raise :class:`RolloutCancelled`.
+        Call :meth:`reset_cancel` before reusing the analyzer.
+        """
+        inner = self._analyzer
+        if isinstance(inner, _CubefulAnalyzer):
+            inner = inner._inner
+        if isinstance(inner, _RolloutAnalyzer):
+            inner.cancel()
+
+    def reset_cancel(self):
+        """Clear cancellation flag so the analyzer can be reused."""
+        inner = self._analyzer
+        if isinstance(inner, _CubefulAnalyzer):
+            inner = inner._inner
+        if isinstance(inner, _RolloutAnalyzer):
+            inner.reset_cancel()
 
     def epc(self, board: list[int], player: int = 0) -> float | None:
         """Return Effective Pip Count for a player in a bearoff position.

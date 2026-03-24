@@ -79,6 +79,9 @@ struct ScenarioSet {
 PYBIND11_MODULE(bgbot_cpp, m) {
     m.doc() = "Backgammon bot C++ engine";
 
+    // Register C++ RolloutCancelled as a Python exception
+    py::register_exception<RolloutCancelled>(m, "RolloutCancelled");
+
     // --- ScenarioSet (preferred for large benchmark sets) ---
     py::class_<ScenarioSet, std::shared_ptr<ScenarioSet>>(m, "ScenarioSet")
         .def(py::init<>())
@@ -1680,6 +1683,12 @@ PYBIND11_MODULE(bgbot_cpp, m) {
         .def("config", &RolloutStrategy::config, py::return_value_policy::reference_internal)
         .def("clear_internal_caches", &RolloutStrategy::clear_internal_caches,
              "Clear thread-local N-ply caches to prevent state accumulation")
+        .def("cancel", &RolloutStrategy::cancel,
+             "Request cancellation of in-progress rollout. Thread-safe.")
+        .def("reset_cancel", &RolloutStrategy::reset_cancel,
+             "Clear cancellation flag. Call before reusing for a new rollout.")
+        .def("is_cancelled", &RolloutStrategy::is_cancelled,
+             "Check if cancellation was requested.")
         .def("rollout_position", [](const RolloutStrategy& self,
                                      const std::vector<int>& board_vec) {
             Board board = list_to_board(board_vec);
@@ -1689,11 +1698,18 @@ PYBIND11_MODULE(bgbot_cpp, m) {
            py::arg("board"))
         .def("evaluate_board", [](RolloutStrategy& self,
                                    const std::vector<int>& board_vec,
-                                   const std::vector<int>& pre_move_board) {
+                                   const std::vector<int>& pre_move_board,
+                                   py::object progress_callback) {
             auto b = list_to_board(board_vec);
-            // pre_move_board is accepted for backward compatibility but no longer used
+            RolloutProgressCallback cpp_progress;
+            if (!progress_callback.is_none()) {
+                cpp_progress = [cb = progress_callback](int completed, int total) {
+                    py::gil_scoped_acquire acquire;
+                    cb(completed, total);
+                };
+            }
             py::gil_scoped_release release;
-            auto r = self.rollout_position(b);
+            auto r = self.rollout_position(b, cpp_progress);
             py::gil_scoped_acquire acquire;
             py::dict result;
             result["probs"] = r.mean_probs;
@@ -1704,7 +1720,8 @@ PYBIND11_MODULE(bgbot_cpp, m) {
             result["scalar_vr_se"] = r.scalar_vr_se;
             return result;
         }, "Evaluate board via rollout, returns probs, equity, std_error, prob_std_errors, scalar_vr_equity/se",
-           py::arg("board"), py::arg("pre_move_board"))
+           py::arg("board"), py::arg("pre_move_board"),
+           py::arg("progress") = py::none())
         .def("cube_decision", [](RolloutStrategy& self,
                                   const std::vector<int>& checkers,
                                   int cube_value,
@@ -1715,16 +1732,25 @@ PYBIND11_MODULE(bgbot_cpp, m) {
                                   float cube_x_override,
                                   bool jacoby,
                                   bool beaver,
-                                  int max_cube_value) {
+                                  int max_cube_value,
+                                  py::object progress_callback) {
             Board board = list_to_board(checkers);
             bool race = is_race(board);
             CubeInfo ci{cube_value, owner, {away1, away2, is_crawford},
                         cube_x_override, jacoby, beaver, max_cube_value};
 
+            RolloutProgressCallback cpp_progress;
+            if (!progress_callback.is_none()) {
+                cpp_progress = [cb = progress_callback](int completed, int total) {
+                    py::gil_scoped_acquire acquire;
+                    cb(completed, total);
+                };
+            }
+
             RolloutStrategy::CubefulRolloutResult cfr;
             {
                 py::gil_scoped_release release;
-                cfr = self.cubeful_cube_decision(board, ci);
+                cfr = self.cubeful_cube_decision(board, ci, cpp_progress);
             }
 
             const auto& cl = cfr.cubeless;
@@ -1809,7 +1835,8 @@ PYBIND11_MODULE(bgbot_cpp, m) {
            py::arg("cube_x_override") = -1.0f,
            py::arg("jacoby") = true,
            py::arg("beaver") = true,
-           py::arg("max_cube_value") = 0);
+           py::arg("max_cube_value") = 0,
+           py::arg("progress") = py::none());
 
     // Create rollout strategy wrapping a 5-NN GamePlanStrategy
     m.def("create_rollout_5nn", [](const std::string& purerace_w,

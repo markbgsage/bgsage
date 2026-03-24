@@ -93,6 +93,23 @@ void RolloutStrategy::clear_internal_caches() const {
     }
 }
 
+// ======================== Cancellation ========================
+
+void RolloutStrategy::cancel() {
+    owned_cancel_flag_.store(true, std::memory_order_relaxed);
+    config_.cancel_flag = &owned_cancel_flag_;
+}
+
+void RolloutStrategy::reset_cancel() {
+    owned_cancel_flag_.store(false, std::memory_order_relaxed);
+    config_.cancel_flag = &owned_cancel_flag_;
+}
+
+bool RolloutStrategy::is_cancelled() const {
+    return config_.cancel_flag &&
+           config_.cancel_flag->load(std::memory_order_relaxed);
+}
+
 // ======================== Constructor ========================
 
 // Helper: build a Strategy from a TrialEvalConfig.
@@ -1394,6 +1411,11 @@ RolloutResult RolloutStrategy::run_trials_parallel(
             int start;
             while ((start = next_trial.fetch_add(kTrialChunkSize, std::memory_order_relaxed))
                    < n_trials) {
+                // Check cancellation between trial chunks
+                if (config_.cancel_flag &&
+                    config_.cancel_flag->load(std::memory_order_relaxed)) {
+                    break;
+                }
                 int end = std::min(start + kTrialChunkSize, n_trials);
                 for (int t = start; t < end; ++t) {
                     trial_results[t] = run_trial_unified(
@@ -1410,6 +1432,11 @@ RolloutResult RolloutStrategy::run_trials_parallel(
             }
             MultiPlyStrategy::set_shared_cache(nullptr);
         });
+
+        // Check if cancelled after trial loop completes
+        if (is_cancelled()) {
+            throw RolloutCancelled();
+        }
     }
 
     RolloutResult result;
@@ -1586,6 +1613,11 @@ RolloutStrategy::CubefulRolloutResult RolloutStrategy::cubeful_cube_decision(
             int start;
             while ((start = next_trial.fetch_add(kTrialChunkSize, std::memory_order_relaxed))
                    < n_trials) {
+                // Check cancellation between trial chunks
+                if (config_.cancel_flag &&
+                    config_.cancel_flag->load(std::memory_order_relaxed)) {
+                    break;
+                }
                 int end = std::min(start + kTrialChunkSize, n_trials);
                 for (int t = start; t < end; ++t) {
                     CubefulBranch branches[2] = {nd_template, dt_template};
@@ -1605,6 +1637,11 @@ RolloutStrategy::CubefulRolloutResult RolloutStrategy::cubeful_cube_decision(
 
             MultiPlyStrategy::set_shared_cache(nullptr);
         });
+
+        // Check if cancelled after trial loop completes
+        if (is_cancelled()) {
+            throw RolloutCancelled();
+        }
     }
 
     // Aggregate results: cubeful equities + cubeless probs (all from same trials)

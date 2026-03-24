@@ -13,7 +13,7 @@ Quick start::
         print(f"{m.equity:+.3f}  {m.probs.win:.1%}")
 """
 
-from .analyzer import BgBotAnalyzer, create_analyzer
+from .analyzer import BgBotAnalyzer, RolloutCancelled, create_analyzer
 from .batch import PositionEval, batch_checker_play, batch_cube_action, batch_evaluate, batch_post_move_evaluate
 from .board import (
     STARTING_BOARD,
@@ -50,6 +50,7 @@ except (ImportError, AttributeError):
 
 __all__ = [
     "BgBotAnalyzer",
+    "RolloutCancelled",
     "GnuBgAnalyzer",
     "batch_checker_play",
     "batch_cube_action",

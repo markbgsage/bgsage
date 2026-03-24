@@ -10,6 +10,7 @@
 #include <cstdint>
 #include <atomic>
 #include <functional>
+#include <stdexcept>
 
 namespace bgbot {
 
@@ -33,6 +34,11 @@ struct TrialEvalConfig {
 
     bool is_set() const { return ply > 0 || rollout_trials > 0; }
     bool is_rollout() const { return rollout_trials > 0; }
+};
+
+// Exception thrown when a rollout is cancelled via cancel_flag.
+struct RolloutCancelled : std::runtime_error {
+    RolloutCancelled() : std::runtime_error("Rollout cancelled") {}
 };
 
 // Progress callback for rollout operations.
@@ -60,6 +66,11 @@ struct RolloutConfig {
     TrialEvalConfig checker_late;   // Late-game checker play
     TrialEvalConfig cube;           // Cube decision evaluation
     TrialEvalConfig cube_late;      // Late-game cube decisions
+
+    // Cancellation flag. When non-null and set to true, the rollout aborts
+    // between trial chunks. Checked by run_trials_parallel() and
+    // cubeful_cube_decision(). Thread-safe: read with relaxed ordering.
+    std::atomic<bool>* cancel_flag = nullptr;
 };
 
 // Result of rolling out a single position.
@@ -165,7 +176,18 @@ public:
     // when reusing the same strategy to prevent state accumulation.
     void clear_internal_caches() const;
 
+    // Request cancellation of an in-progress rollout. Thread-safe.
+    // After calling cancel(), all subsequent rollout_position() and
+    // cubeful_cube_decision() calls will abort early.
+    // Call reset_cancel() before reusing the strategy for a new rollout.
+    void cancel();
+    void reset_cancel();
+    bool is_cancelled() const;
+
 private:
+    // Owned cancel flag for strategies created via Python bindings.
+    // config_.cancel_flag points to this when set via cancel().
+    std::atomic<bool> owned_cancel_flag_{false};
     mutable std::vector<std::vector<std::pair<int, int>>> cached_dice_;
     mutable int cached_max_moves_ = 0;
 
