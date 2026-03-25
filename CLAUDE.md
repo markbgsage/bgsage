@@ -1295,13 +1295,8 @@ multipy = bgbot_cpp.create_multipy_pair(weight_paths, hidden_sizes, n_plies=3)
 
 # Rollout
 rollout = bgbot_cpp.create_rollout_pair(weight_paths, hidden_sizes,
-    n_trials=360, truncation_depth=7, decision_ply=2, n_threads=4)
+    n_trials=360, truncation_depth=7, decision_ply=2, n_threads=16)
 ```
-
-**Known issue:** Rollout with 16 threads and the pair strategy can segfault after
-running multiple evaluation levels in the same process (e.g., multipy + rollout
-objects accumulated). 4 threads is stable. The crash appears related to thread-local
-cache accumulation with 17 NNs. Investigation pending.
 
 **Training scripts:**
 - `scripts/run_s7_training.py` — TD training

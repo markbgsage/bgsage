@@ -2,6 +2,8 @@
 Top-100 worst 1-ply positions scored at all strategy levels.
 Includes 1-4 ply and XG Roller / Roller+ / Roller++ truncated rollouts.
 
+Supports both 5-NN (stage3-6) and 17-NN pair (stage7) models automatically.
+
 Benchmark scoring is cubeless checker play evaluation. Rollout strategies
 use the unified trial function (run_trial_unified with n_branches=0),
 which skips all cubeful overhead -- equivalent to dedicated cubeless code.
@@ -12,9 +14,12 @@ import os
 import sys
 import time
 
-# Setup import paths
+# Setup import paths — find the main project root (contains build/)
 script_dir = os.path.dirname(os.path.abspath(__file__))
 project_dir = os.path.dirname(os.path.dirname(script_dir))
+if not os.path.isdir(os.path.join(project_dir, 'build')):
+    # Worktree: try the main repo
+    project_dir = r'C:\Users\mghig\Dropbox\agents\bgbot'
 build_dirs = [
     os.path.join(project_dir, 'build_msvc'),
     os.path.join(project_dir, 'build_cpu_build'),
@@ -36,7 +41,7 @@ sys.path.insert(0, os.path.join(project_dir, 'bgsage', 'python'))
 
 import bgbot_cpp
 from bgsage.data import load_benchmark_file, load_benchmark_scenarios_by_indices
-from bgsage.weights import WeightConfig
+from bgsage.weights import WeightConfig, WeightConfigPair, MODELS
 
 DATA_DIR = os.path.join(project_dir, 'bgsage', 'data')
 
@@ -55,9 +60,18 @@ def main():
 
     bgbot_cpp.init_escape_tables()
 
-    w = WeightConfig.from_args(args)
-    w.validate()
-    w.print_summary(f'Model: {args.model}')
+    # Detect pair vs 5-NN model
+    is_pair = MODELS.get(args.model, {}).get("plans") == "pair"
+
+    if is_pair:
+        wp = WeightConfigPair.from_model(args.model)
+        wp.validate()
+        wp.print_summary(f'Model: {args.model} (17-NN pair)')
+        pair_paths, pair_hiddens = wp.weight_args
+    else:
+        w = WeightConfig.from_args(args)
+        w.validate()
+        w.print_summary(f'Model: {args.model}')
 
     # Step 1: Load and score all scenarios at 1-ply
     print("Loading benchmarks...")
@@ -73,12 +87,18 @@ def main():
 
     print("Scoring all scenarios at 1-ply...")
     t0 = time.perf_counter()
-    errors_contact = bgbot_cpp.score_benchmarks_per_scenario_5nn(
-        scenarios_contact, w.purerace, w.racing, w.attacking, w.priming, w.anchoring,
-        *w.hidden_sizes)
-    errors_crashed = bgbot_cpp.score_benchmarks_per_scenario_5nn(
-        scenarios_crashed, w.purerace, w.racing, w.attacking, w.priming, w.anchoring,
-        *w.hidden_sizes)
+    if is_pair:
+        errors_contact = bgbot_cpp.score_benchmarks_per_scenario_pair(
+            scenarios_contact, pair_paths, pair_hiddens, 0)
+        errors_crashed = bgbot_cpp.score_benchmarks_per_scenario_pair(
+            scenarios_crashed, pair_paths, pair_hiddens, 0)
+    else:
+        errors_contact = bgbot_cpp.score_benchmarks_per_scenario_5nn(
+            scenarios_contact, w.purerace, w.racing, w.attacking, w.priming, w.anchoring,
+            *w.hidden_sizes)
+        errors_crashed = bgbot_cpp.score_benchmarks_per_scenario_5nn(
+            scenarios_crashed, w.purerace, w.racing, w.attacking, w.priming, w.anchoring,
+            *w.hidden_sizes)
     t_1ply_full = time.perf_counter() - t0
     print(f"  Done in {t_1ply_full:.1f}s")
 
@@ -127,6 +147,27 @@ def main():
         print(f"  {label:<50} {mean_err:>8.2f}  {elapsed:>9.1f}s", flush=True)
         return mean_err, elapsed
 
+    # Factory helpers for pair vs 5-NN
+    def create_multipy(n_plies):
+        if is_pair:
+            return bgbot_cpp.create_multipy_pair(
+                pair_paths, pair_hiddens, n_plies=n_plies,
+                parallel_evaluate=True, parallel_threads=args.threads)
+        return bgbot_cpp.create_multipy_5nn(
+            *w.weight_args, n_plies=n_plies,
+            parallel_evaluate=True, parallel_threads=args.threads)
+
+    def create_rollout(**kwargs):
+        if is_pair:
+            return bgbot_cpp.create_rollout_pair(
+                pair_paths, pair_hiddens, **kwargs)
+        return bgbot_cpp.create_rollout_5nn(*w.weight_args, **kwargs)
+
+    def score_1ply(ss):
+        if is_pair:
+            return bgbot_cpp.score_benchmarks_pair(ss, pair_paths, pair_hiddens, 0)
+        return bgbot_cpp.score_benchmarks_5nn(ss, *w.weight_args)
+
     print()
     print(f"{'Strategy':<52} {'ER':>8}  {'Time':>9}")
     print(f"{'-'*52} {'-'*8}  {'-'*9}")
@@ -134,15 +175,11 @@ def main():
     results = []
 
     # 1-ply
-    def score_1ply(ss):
-        return bgbot_cpp.score_benchmarks_5nn(ss, *w.weight_args)
     er, t = score_subset('1-ply', score_1ply)
     results.append(('1-ply', er, t))
 
     # 2-ply
-    multipy_2 = bgbot_cpp.create_multipy_5nn(
-        *w.weight_args, n_plies=2,
-        parallel_evaluate=True, parallel_threads=args.threads)
+    multipy_2 = create_multipy(2)
     def score_2ply(ss):
         multipy_2.clear_cache()
         return bgbot_cpp.score_benchmarks_multipy(ss, multipy_2, 1)
@@ -150,9 +187,7 @@ def main():
     results.append(('2-ply', er, t))
 
     # 3-ply
-    multipy_3 = bgbot_cpp.create_multipy_5nn(
-        *w.weight_args, n_plies=3,
-        parallel_evaluate=True, parallel_threads=args.threads)
+    multipy_3 = create_multipy(3)
     def score_3ply(ss):
         multipy_3.clear_cache()
         return bgbot_cpp.score_benchmarks_multipy(ss, multipy_3, 1)
@@ -160,9 +195,7 @@ def main():
     results.append(('3-ply', er, t))
 
     # 4-ply
-    multipy_4 = bgbot_cpp.create_multipy_5nn(
-        *w.weight_args, n_plies=4,
-        parallel_evaluate=True, parallel_threads=args.threads)
+    multipy_4 = create_multipy(4)
     def score_4ply(ss):
         multipy_4.clear_cache()
         return bgbot_cpp.score_benchmarks_multipy(ss, multipy_4, 1)
@@ -170,8 +203,7 @@ def main():
     results.append(('4-ply', er, t))
 
     # XG Roller: 42 trials, trunc=5, dp=1
-    roller = bgbot_cpp.create_rollout_5nn(
-        *w.weight_args,
+    roller = create_rollout(
         n_trials=42, truncation_depth=5,
         decision_ply=1, n_threads=rollout_threads)
     def score_roller(ss):
@@ -180,9 +212,7 @@ def main():
     results.append(('XG Roller', er, t))
 
     # XG Roller+: 360 trials, trunc=7, dp=2, late=1@2
-    # parallelize_trials disabled (deadlocks on Windows with high thread count)
-    roller_plus = bgbot_cpp.create_rollout_5nn(
-        *w.weight_args,
+    roller_plus = create_rollout(
         n_trials=360, truncation_depth=7,
         decision_ply=2, n_threads=rollout_threads,
         late_ply=1, late_threshold=2)
@@ -192,9 +222,7 @@ def main():
     results.append(('XG Roller+', er, t))
 
     # XG Roller++ Checker: 360 trials, trunc=5, dp=3, late=2@2
-    # parallelize_trials disabled for dp=3 (crashes with parallel trial dispatch)
-    roller_pp = bgbot_cpp.create_rollout_5nn(
-        *w.weight_args,
+    roller_pp = create_rollout(
         n_trials=360, truncation_depth=5,
         decision_ply=3, n_threads=rollout_threads,
         late_ply=2, late_threshold=2)

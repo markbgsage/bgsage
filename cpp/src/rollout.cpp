@@ -1301,6 +1301,12 @@ RolloutResult RolloutStrategy::run_trials_parallel(
     const Board& board,
     RolloutProgressCallback progress) const
 {
+    // Clear thread-local N-ply cache on the calling thread. Pool threads are
+    // cleared inside their lambda. This prevents stale entries from other
+    // strategies (which share the same persistent thread pool) from persisting
+    // across independent rollout evaluations.
+    MultiPlyStrategy::get_cache().clear();
+
     const int n_trials = config_.n_trials;
     const int max_moves = (config_.truncation_depth > 0)
         ? config_.truncation_depth + 10  // extra buffer for safety
@@ -1407,6 +1413,10 @@ RolloutResult RolloutStrategy::run_trials_parallel(
         // ephemeral threads per rollout exhausts Windows TLS slots and
         // fragments memory after thousands of create/destroy cycles.
         multipy_parallel_run(n_threads, [&]() {
+            // Clear thread-local N-ply cache to prevent stale entries from
+            // previous evaluations (other strategies sharing the same pool
+            // threads) from accumulating and causing memory corruption.
+            MultiPlyStrategy::get_cache().clear();
             MultiPlyStrategy::set_shared_cache(shared_cache);
             int start;
             while ((start = next_trial.fetch_add(kTrialChunkSize, std::memory_order_relaxed))
@@ -1493,7 +1503,8 @@ RolloutStrategy::CubefulRolloutResult RolloutStrategy::cubeful_cube_decision(
     const CubeInfo& cube,
     RolloutProgressCallback progress) const
 {
-    // (timing removed — see benchmark_3t for end-to-end timing)
+    // Clear thread-local N-ply cache (same rationale as run_trials_parallel).
+    MultiPlyStrategy::get_cache().clear();
 
     const int n_trials = config_.n_trials;
     const int max_moves = (config_.truncation_depth > 0)
@@ -1580,6 +1591,8 @@ RolloutStrategy::CubefulRolloutResult RolloutStrategy::cubeful_cube_decision(
 
         // Use persistent thread pool — same rationale as cubeless path.
         multipy_parallel_run(n_threads, [&]() {
+            // Clear thread-local N-ply cache (same as cubeless path).
+            MultiPlyStrategy::get_cache().clear();
             MultiPlyStrategy::set_shared_cache(shared_cache);
 
             // Phase 1+2: Combined move0 + move1 prefill per roll
@@ -1741,13 +1754,10 @@ int RolloutStrategy::best_move_index(const std::vector<Board>& candidates,
     if (n <= 1) return 0;
 
     // Clear thread-local N-ply caches between positions.
-    // With deep decision plies (dp>=3), accumulated cache state across many
-    // independent best_move_index calls can cause memory corruption. Clearing
-    // the cache is cheap relative to the rollout cost (64MB memset vs minutes
-    // of N-ply evaluation per position).
-    if (config_.decision_ply >= 3) {
-        clear_internal_caches();
-    }
+    // Accumulated cache state from other strategies sharing the same thread
+    // pool can cause memory corruption. Always clear — the cost is negligible
+    // relative to rollout computation.
+    clear_internal_caches();
 
     // Step 1: Score all candidates at 1-ply for filtering
     std::vector<double> equities(n);
