@@ -14,6 +14,7 @@ trained, append its results to the tables below.
 | **Stage 5 (5-NN, 200h/400h, 244 inputs, per-NN gpw)** | **9.87** | **0.95** | **+0.633** | **75.0/24.2/0.8** |
 | Stage 6 (5-NN, 100h/300h, 244 inputs, per-NN gpw) | 10.09 | 1.00 | +0.624 | 73.1/26.0/0.9 |
 | Stage 7 (17-NN pair, 100h/300h, 244 inputs, per-pair gpw) | 9.76 | 1.00 | — | — |
+| Stage 8 (17-NN pair, 100h/400h, S5 fallback, per-pair gpw) | **9.49** | **1.00** | **+0.633** | 72.8/26.1/1.0 |
 
 **Targets:** Contact < 10.5, Race < 0.643, vs PubEval > +0.63
 
@@ -26,9 +27,12 @@ trained, append its results to the tables below.
 | **Stage 5** | **0.95** | **5.74** | **8.74** | **8.59** | **11.06** | **6.44** |
 | Stage 6 | 1.00 | 5.90 | 8.73 | 9.58 | 11.34 | 6.84 |
 | Stage 7 (pair) | 1.00 | — | — | — | — | — |
+| Stage 8 (pair+S5) | 1.00 | 5.26 | 7.95 | 8.33 | 10.83 | 5.92 |
 
-**Note:** Stage 7 uses 17-NN pair strategy (player × opponent game plan), so per-plan
-ERs are not directly comparable. See pair-filtered benchmarks below.
+**Note:** Stages 7 and 8 use 17-NN pair strategy (player x opponent game plan), so
+per-plan ERs are not directly comparable to single-plan models. See pair-filtered
+benchmarks below. Stage 8 uses S5 fallback: any pair NN worse than S5 is replaced
+with the corresponding S5 plan weights.
 
 ## Model Details
 
@@ -415,3 +419,69 @@ segfault with pair strategy due to thread-local cache accumulation — see CLAUD
 the top-100 worst positions differ between models (selected by each model's own
 1-ply errors). S7's lower absolute ERs partly reflect that its worst 1-ply errors
 are less severe than S5/S6's worst errors.
+
+## Stage 8 (17-NN Pair Strategy, 100h purerace / 400h contact, S5 fallback)
+
+17 NNs selected by (player, opponent) game plan pair. Same architecture as Stage 7
+but with 400h contact NNs (matching Stage 5 hidden size). 14 distinct weight files —
+4 rare pairs share one NN (same sharing as S7). PureRace reused from Stage 7.
+
+TD: 300k@0.1 + 1.5M@0.02. GPW scan: [2, 5, 7, 10, 12] with pair-filtered benchmarks.
+SL: 4-phase schedule (100ep@20 + 200ep@10 + 200ep@3.1 + 500ep@1.0) with per-pair
+optimal GPW values. S5 fallback: any pair NN with worse pair-filtered ER than S5 is
+replaced with the corresponding S5 plan weights, guaranteeing no regressions.
+
+Training script: `scripts/run_s8_training.py`
+
+### S8 Standard Benchmarks (1-ply)
+
+Benchmark run: 2026-03-25, RTX 4070S / Windows.
+
+| Benchmark | S8 | S5 (400h) | S7 (300h) |
+|-----------|------|-----------|-----------|
+| PureRace | 1.00 | 0.95 | 1.00 |
+| Racing | 5.26 | 5.74 | 5.90 |
+| Attacking | 7.95 | 8.74 | 8.73 |
+| Priming | 8.33 | 8.59 | 9.58 |
+| Anchoring | 10.83 | 11.06 | 11.34 |
+| **Contact** | **9.49** | **9.87** | **9.76** |
+| Crashed | 5.92 | 6.44 | — |
+| Race | 1.00 | 0.95 | 1.00 |
+| vs PubEval | +0.633 | +0.633 | — |
+
+### S8 Pair-Filtered Benchmarks vs S5 (1-ply)
+
+Each pair NN is scored only on benchmark positions matching its (player, opponent)
+game plan pair. S5 uses the player's plan NN on the same subset. "S5" in the GPW
+column means the S5 fallback was applied (S8 pair NN was worse, replaced with S5
+plan weights).
+
+| NN | Count | GPW | S8 ER | S5 ER | Delta |
+|----|-------|-----|-------|-------|-------|
+| race_race | 16901 | 7.0 | 7.10 | 7.57 | -0.48 |
+| race_att | 17425 | 12.0 | 4.30 | 4.44 | -0.14 |
+| race_prim | 12514 | S5 | 4.49 | 4.49 | 0.00 |
+| race_anch | 25648 | 12.0 | 5.09 | 5.20 | -0.11 |
+| att_race | 15944 | 10.0 | 5.62 | 7.24 | -1.62 |
+| att_att | 10369 | S5 | 9.56 | 9.56 | 0.00 |
+| att_prim | 9326 | 12.0 | 7.93 | 8.05 | -0.12 |
+| att_anch | 10088 | 12.0 | 9.98 | 10.31 | -0.34 |
+| prim_race | 20775 | 12.0 | 7.95 | 8.24 | -0.29 |
+| prim_att | 13243 | S5 | 9.10 | 9.10 | 0.00 |
+| prim_anch (shared) | 9548 | 5.0 | 8.78 | 8.82 | -0.04 |
+| anch_race | 29037 | 5.0 | 11.25 | 11.52 | -0.26 |
+| anch_att | 16666 | 5.0 | 10.26 | 10.31 | -0.05 |
+| **Weighted avg** | **207484** | | **7.77** | **8.05** | **-0.28** |
+
+10 of 13 pair NNs beat S5; 3 replaced with S5 weights (race_prim, att_att, prim_att).
+Biggest win: att_race (-1.62), where pair specialization helps the Attacking NN
+recognize Racing opponents.
+
+### S8 Multi-Ply Contact Benchmarks
+
+| Level | S8 Contact ER | S5 Contact ER |
+|-------|--------------|--------------|
+| 1-ply | 9.49 | 9.87 |
+| 2-ply | 8.44 | — |
+| 3-ply | 7.76 | — |
+| 4-ply | 7.66 | — |

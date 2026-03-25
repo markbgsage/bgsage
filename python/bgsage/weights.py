@@ -19,6 +19,13 @@ from typing import Any
 # (purerace, racing, attacking, priming, anchoring).
 
 MODELS: dict[str, dict[str, Any]] = {
+    "stage8": {
+        "hidden": (100,) + (400,) * 16,
+        "pattern": "sl_s8_{plan}.weights.best",
+        "plans": "pair",  # uses _PAIR_PLANS (17 NNs)
+        # NN sharing: same as S7 — indices 11, 15, 16 share index 12.
+        "canonical_map": [0,1,2,3,4,5,6,7,8,9,10,12,12,13,14,12,12],
+    },
     "stage7": {
         "hidden": (100,) + (300,) * 16,
         "pattern": "sl_s7_{plan}.weights.best",

@@ -1303,6 +1303,165 @@ rollout = bgbot_cpp.create_rollout_pair(weight_paths, hidden_sizes,
 - `scripts/run_s7_sl_training.py` — GPW scan
 - `scripts/run_s7_sl_phase34.py` — Full SL training (phases 3-4)
 
+## Stage 8 (S8) — 17-NN Pair Strategy, 400h Contact, S5 Fallback
+
+**Purpose:** Same 17-NN pair strategy architecture as Stage 7, but with 400h contact
+NNs (matching Stage 5 hidden size) instead of S7's 300h. Tests whether pair
+specialization + larger hidden layers can beat S5's single-plan 400h NNs. PureRace
+weights copied from S7 (same 100h architecture).
+
+**S5 fallback:** After training, each pair NN is scored on its pair-filtered benchmark
+subset. Any NN with worse ER than S5's corresponding plan NN is replaced with the S5
+weights, guaranteeing no regressions. 10 of 13 pair NNs beat S5; 3 were replaced
+(race_prim, att_att, prim_att).
+
+**Weights:** Registered as `"stage8"` in `python/bgsage/weights.py`. Weight files
+are `sl_s8_{pair}.weights.best` in `models/`. 3 of the 14 canonical weight files
+are copies of S5 plan weights (due to fallback).
+
+**Hidden sizes:** 100h PureRace, 400h for all 16 contact pair NNs.
+
+**Training:** Same pipeline as S7 with these differences:
+- Contact NNs: 400h hidden (vs S7's 300h)
+- GPW candidates: [2, 5, 7, 10, 12] (vs S7's [1.5, 3, 5, 7, 10])
+- PureRace: copied from S7 (not retrained)
+- S5 fallback applied after SL training
+
+**Training schedule:**
+- TD: 300k games @ α=0.1 + 1.5M @ α=0.02 (same as S7)
+- GPW scan: For each of 13 canonical contact NNs, try gpw in [2, 5, 7, 10, 12]
+  with phases 1-2 (100ep@α=20 + 200ep@α=10). Pick gpw minimizing pair-filtered ER.
+- SL phases 3-4: 200ep@α=3.1 + 500ep@α=1.0 with optimal gpw, starting from
+  scan's best weights.
+- S5 fallback: replace any pair NN with worse pair-filtered ER than S5.
+
+**Benchmark results (1-ply):**
+
+| Metric | S8 (17-NN, 400h) | S7 (17-NN, 300h) | S5 (5-NN, 400h) |
+|--------|-----------------|-----------------|-----------------|
+| Contact ER | **9.49** | 9.76 | 9.87 |
+| Race ER | 1.00 | 1.00 | 0.95 |
+| vs PubEval | +0.633 | — | +0.633 |
+
+**Multi-ply Contact ER:** 1-ply=9.49, 2-ply=8.44, 3-ply=7.76, 4-ply=7.66.
+
+**C++ bindings:** Same as S7 — `score_benchmarks_pair`, `create_multipy_pair`,
+`create_rollout_pair`.
+
+**Training script:** `scripts/run_s8_training.py` — unified pipeline (TD + GPW scan +
+SL phases 3-4 + S5 fallback + scoring + benchmarks).
+
+## Training a New Pair Strategy Model (End-to-End Process)
+
+This section documents the full algorithm for training a new 17-NN pair strategy
+model (like S7 or S8), so future training runs can follow the same process.
+
+### Prerequisites
+
+- CUDA GPU available (for SL training)
+- C++ build with pair strategy support (`td_train_gameplan_pair`, `cuda_supervised_train`,
+  `score_benchmarks_pair`, `create_multipy_pair`, `create_rollout_pair`)
+- Training data in `data/`: `contact-train-data`, `crashed-train-data`, `purerace-train-data`
+- Benchmark files in `data/`: `purerace.bm`, `racing.bm`, `attacking.bm`, `priming.bm`,
+  `anchoring.bm`, `contact.bm`, `crashed.bm`, `race.bm`
+
+### Step 1: Register the Model
+
+Add an entry to `MODELS` in `python/bgsage/weights.py`:
+```python
+MODELS["stage9"] = {
+    "hidden": (100,) + (400,) * 16,        # (purerace_h,) + (contact_h,) * 16
+    "pattern": "sl_s9_{plan}.weights.best",
+    "plans": "pair",
+    "canonical_map": [0,1,2,3,4,5,6,7,8,9,10,12,12,13,14,12,12],
+}
+```
+
+### Step 2: Create the Training Script
+
+Copy `scripts/run_s8_training.py` and update these constants:
+- `N_HIDDEN`: contact NN hidden size (e.g., 400)
+- `MODEL_PREFIX`: e.g., `'sl_s9'`
+- `TD_MODEL_NAME`: e.g., `'td_s9'`
+- `GPW_CANDIDATES`: list of gpw values to scan (e.g., `[2, 5, 7, 10, 12]`)
+- PureRace source: which model to copy PureRace weights from
+
+### Step 3: Launch Training
+
+Training is long-running (~30-50 hours depending on hidden size). Launch as a
+detached Windows process:
+
+```bash
+powershell -Command "Start-Process -FilePath 'C:\Users\mghig\AppData\Local\Programs\Python\Python314\python.exe' -ArgumentList '-u','bgsage\scripts\run_s9_training.py' -WorkingDirectory 'C:\Users\mghig\Dropbox\agents\bgbot' -WindowStyle Hidden -RedirectStandardOutput 'C:\Users\mghig\Dropbox\agents\bgbot\logs\s9_training.log' -RedirectStandardError 'C:\Users\mghig\Dropbox\agents\bgbot\logs\s9_training_err.log'"
+```
+
+### Step 4: Monitor Progress
+
+Set up a cron job to show the user a training summary every 10 minutes. Use
+`CronCreate` with `*/10 * * * *` and a prompt that runs these checks:
+
+1. **Process alive?** `powershell -Command "Get-Process python* | Select-Object Id, CPU, WorkingSet64, StartTime | Format-Table -AutoSize"`
+2. **Training log tail:** `powershell -Command "Get-Content 'C:\Users\mghig\Dropbox\agents\bgbot\logs\s9_training.log' -Tail 30"`
+3. **Errors:** `powershell -Command "Get-Content 'C:\Users\mghig\Dropbox\agents\bgbot\logs\s9_training_err.log' -Tail 10"`
+4. **Weight files:** `ls -lt bgsage/models/td_s9* bgsage/models/sl_s9* bgsage/models/s9_gpw_scan/ 2>/dev/null | head -20`
+
+The cron prompt should instruct Claude to summarize: what phase it's in (TD Phase 1,
+TD Phase 2, GPW scan, SL phases 3-4, benchmarks), how far along, and any issues.
+
+The training script also prints its own progress updates every 10 minutes to the log
+(via the `ProgressTracker` class), but the cron job gives the user a live interactive
+summary without needing to manually check logs.
+
+You can also check manually:
+```bash
+powershell -Command "Get-Content 'logs\s9_training.log' -Tail 30"
+```
+
+Check weight file timestamps to verify training is progressing:
+```bash
+ls -la bgsage/models/td_s9_*.weights
+ls -la bgsage/models/s9_gpw_scan/
+ls -la bgsage/models/sl_s9_*.weights.best
+```
+
+### Step 5: Training Pipeline Phases
+
+The script runs these phases automatically:
+
+1. **Copy PureRace** from previous model (no retraining needed if same 100h arch)
+2. **TD Phase 1**: 300k self-play games @ α=0.1 (~5-11h depending on hidden size)
+3. **TD Phase 2**: 1.5M self-play games @ α=0.02 (~25-55h)
+4. **GPW Scan**: For each of 13 canonical contact NNs:
+   - Try each GPW candidate with SL phases 1-2 (100ep@α=20 + 200ep@α=10)
+   - Score using pair-filtered benchmarks (only positions matching the NN's
+     player×opponent game plan pair)
+   - Select GPW minimizing pair-filtered ER
+   - Save results to `models/s*_gpw_scan/optimal_gpw.json`
+5. **SL Phases 3-4**: For each canonical contact NN:
+   - Resume from GPW scan's optimal `.best` weights
+   - Train phases 3 (200ep@α=3.1) and 4 (500ep@α=1.0)
+   - Use pair-filtered benchmarks for best-weight selection
+   - Copy canonical weights to alias NNs (shared group)
+6. **Scoring**: Pair-filtered comparison with reference model (e.g., S5)
+7. **Benchmarks**: 1-ply contact/race, 2-4 ply contact, top-100 worst positions
+
+### Step 6: Record Results
+
+After training completes:
+1. Update `MODEL_BENCHMARKS.md` with benchmark results
+2. Update this `CLAUDE.md` with the new model section (hidden sizes, GPW values,
+   pair-filtered ER results, training scripts)
+3. Commit weight files and updated docs
+
+### Recovery / Partial Reruns
+
+The script supports resuming from any point:
+- `--sl-only`: Skip TD, use existing TD weights
+- `--phase34-only`: Skip TD and GPW scan, resume from saved optimal GPW
+- `--score-only`: Skip all training, just score existing weights
+- `--benchmark-only`: Run multi-ply and top-100 benchmarks only
+- `--nn race_race att_att`: Train only specific NNs
+
 ## Stage 5 Small (S5S) — Fast Filter Model
 
 **Purpose:** Half-size model (100h PureRace, 200h contact NNs) trained as a potential
