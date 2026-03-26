@@ -57,7 +57,7 @@ MODELS: dict[str, dict[str, Any]] = {
 }
 
 # *** THE production model — change this single line to promote a new model ***
-PRODUCTION_MODEL: str = "stage5"
+PRODUCTION_MODEL: str = "stage8"
 
 _PLANS = ("purerace", "racing", "attacking", "priming", "anchoring")
 
