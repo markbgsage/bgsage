@@ -20,8 +20,11 @@ The library supports "multi-ply" lookahead calculations. 1-ply is the raw neural
 numbering convention; GNUbg calls this "0-ply"). Adding a ply makes the calculation roughly 20x slower. It efficiently parallelizes
 these multi-ply calculations on your CPUs.
 
-It also supports rollout calculations, which are Monte Carlo simulations playing out the game over and over. It includes
-variance reduction and efficiently parallelizes on your CPUs.
+It supports truncated rollout calculations, where it simulates the game several turns into the future and then stops the simulation, using bot evaluations at the leaves.
+
+It also supports full rollout calculations, which are simulations playing out the game over and over to completion. 
+
+Truncated and full rollouts both include variance reduction and efficiently parallelize on CPUs.
 
 ## What are Its Interfaces?
 
