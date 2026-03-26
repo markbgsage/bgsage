@@ -485,3 +485,26 @@ recognize Racing opponents.
 | 2-ply | 8.44 | — |
 | 3-ply | 7.76 | — |
 | 4-ply | 7.66 | — |
+
+### S8 Top-100 Worst Positions Benchmark
+
+Top-100 worst 1-ply scenarios from 207,484 total (contact + crashed), selected
+using S8 pair strategy at 1-ply.
+
+Benchmark run: 2026-03-25, RTX 4070S / Windows, Stage 8 pair model (after S5 fallback).
+N-ply and XG Roller/Roller+ at 16 threads; XG Roller++ at 4 threads (segfaults at 8+
+threads with pair strategy at 3-ply decision depth).
+
+| Strategy | Settings | ER | Time |
+|----------|----------|------|------|
+| 1-ply | — | 406.15 | <1s |
+| 2-ply | TINY filter | 248.57 | <1s |
+| 3-ply | TINY filter | 282.54 | 2.1s |
+| 4-ply | TINY filter | 275.99 | 2.7s |
+| XG Roller | 42t, trunc=5, dp=1 | 250.95 | 40.9s |
+| XG Roller+ | 360t, trunc=7, dp=2, late=1@2 | 234.37 | 172.1s |
+| XG Roller++ | 360t, trunc=5, dp=3, late=2@2 | 232.51 | 741.4s |
+
+**Note:** S8 top-100 ERs are not directly comparable to S5/S6/S7 top-100 ERs because
+the top-100 worst positions differ between models (selected by each model's own
+1-ply errors).
