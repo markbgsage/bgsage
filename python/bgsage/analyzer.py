@@ -30,7 +30,7 @@ from .types import (
     PostMoveAnalysis,
     Probabilities,
 )
-from .weights import WeightConfig, bearoff_db_path
+from .weights import WeightConfig, WeightConfigPair, bearoff_db_path, default_weights
 
 # ---------------------------------------------------------------------------
 # Cube owner mapping
@@ -80,9 +80,14 @@ def _default_parallel_threads() -> int:
 class _CubelessBase:
     """Shared infrastructure for cubeless analyzers."""
 
-    def __init__(self, weights: WeightConfig):
+    def __init__(self, weights: WeightConfig | WeightConfigPair):
         self._weights = weights
-        self._strategy_1ply = bgbot_cpp.GamePlanStrategy(*weights.weight_args)
+        self._is_pair = isinstance(weights, WeightConfigPair)
+        if self._is_pair:
+            paths, hiddens = weights.weight_args
+            self._strategy_1ply = bgbot_cpp.GamePlanPairStrategy(paths, hiddens)
+        else:
+            self._strategy_1ply = bgbot_cpp.GamePlanStrategy(*weights.weight_args)
         self._bearoff_db = None  # Set by BgBotAnalyzer after construction
 
     def _score_candidates_1ply(
@@ -204,12 +209,21 @@ class _OnePlyAnalyzer(_CubelessBase):
         away1=0, away2=0, is_crawford=False, jacoby=True, beaver=True,
     ) -> dict:
         owner = resolve_owner(cube_owner)
-        r = bgbot_cpp.evaluate_cube_decision(
-            board, cube_value, owner, *self._weights.weight_args,
-            away1=away1, away2=away2, is_crawford=is_crawford,
-            jacoby=jacoby, beaver=beaver,
-            bearoff_db=self._bearoff_db,
-        )
+        if self._is_pair:
+            paths, hiddens = self._weights.weight_args
+            r = bgbot_cpp.evaluate_cube_decision_pair(
+                board, cube_value, owner, paths, hiddens,
+                away1=away1, away2=away2, is_crawford=is_crawford,
+                jacoby=jacoby, beaver=beaver,
+                bearoff_db=self._bearoff_db,
+            )
+        else:
+            r = bgbot_cpp.evaluate_cube_decision(
+                board, cube_value, owner, *self._weights.weight_args,
+                away1=away1, away2=away2, is_crawford=is_crawford,
+                jacoby=jacoby, beaver=beaver,
+                bearoff_db=self._bearoff_db,
+            )
         return self._format_cube_result(r, eval_level="1-ply")
 
 
@@ -228,12 +242,21 @@ class _MultiPlyAnalyzer(_CubelessBase):
         elif n_plies > 1:
             requested_threads = max(2, parallel_threads)
         self._parallel_threads = requested_threads
-        self._strategy_nply = bgbot_cpp.create_multipy_5nn(
-            *weights.weight_args,
-            n_plies=n_plies,
-            parallel_evaluate=parallel_evaluate,
-            parallel_threads=self._parallel_threads,
-        )
+        if self._is_pair:
+            paths, hiddens = weights.weight_args
+            self._strategy_nply = bgbot_cpp.create_multipy_pair(
+                paths, hiddens,
+                n_plies=n_plies,
+                parallel_evaluate=parallel_evaluate,
+                parallel_threads=self._parallel_threads,
+            )
+        else:
+            self._strategy_nply = bgbot_cpp.create_multipy_5nn(
+                *weights.weight_args,
+                n_plies=n_plies,
+                parallel_evaluate=parallel_evaluate,
+                parallel_threads=self._parallel_threads,
+            )
 
     def checker_play_analytics(
         self, board, die1, die2, cube_value=1, cube_owner="centered",
@@ -289,13 +312,23 @@ class _MultiPlyAnalyzer(_CubelessBase):
         away1=0, away2=0, is_crawford=False, jacoby=True, beaver=True,
     ) -> dict:
         owner = resolve_owner(cube_owner)
-        r = bgbot_cpp.cube_decision_nply(
-            board, cube_value, owner, self._n_plies, *self._weights.weight_args,
-            n_threads=self._parallel_threads,
-            away1=away1, away2=away2, is_crawford=is_crawford,
-            jacoby=jacoby, beaver=beaver,
-            bearoff_db=self._bearoff_db,
-        )
+        if self._is_pair:
+            paths, hiddens = self._weights.weight_args
+            r = bgbot_cpp.cube_decision_nply_pair(
+                board, cube_value, owner, self._n_plies, paths, hiddens,
+                n_threads=self._parallel_threads,
+                away1=away1, away2=away2, is_crawford=is_crawford,
+                jacoby=jacoby, beaver=beaver,
+                bearoff_db=self._bearoff_db,
+            )
+        else:
+            r = bgbot_cpp.cube_decision_nply(
+                board, cube_value, owner, self._n_plies, *self._weights.weight_args,
+                n_threads=self._parallel_threads,
+                away1=away1, away2=away2, is_crawford=is_crawford,
+                jacoby=jacoby, beaver=beaver,
+                bearoff_db=self._bearoff_db,
+            )
         result = self._format_cube_result(r, eval_level=f"{self._n_plies}-ply")
 
         # The C++ binding already computes N-ply cubeless probs (with bearoff DB
@@ -363,27 +396,48 @@ class _RolloutAnalyzer(_CubelessBase):
         cube_cfg = cube if cube is not None else _empty
         cube_late_cfg = cube_late if cube_late is not None else _empty
 
-        self._rollout_strategy = bgbot_cpp.create_rollout_5nn(
-            *weights.weight_args,
-            n_trials=n_trials,
-            truncation_depth=truncation_depth,
-            decision_ply=decision_ply,
-            n_threads=self._parallel_threads,
-            seed=seed,
-            late_ply=late_ply,
-            late_threshold=late_threshold,
-            parallelize_trials=parallelize_trials,
-            checker=checker_cfg,
-            checker_late=checker_late_cfg,
-            cube=cube_cfg,
-            cube_late=cube_late_cfg,
-            ultra_late_threshold=ultra_late_threshold,
-        )
-
-        # Create a 3-ply strategy for pre-filtering (accurate move count)
-        self._strategy_3ply = bgbot_cpp.create_multipy_5nn(
-            *weights.weight_args, n_plies=3,
-        )
+        if self._is_pair:
+            paths, hiddens = weights.weight_args
+            self._rollout_strategy = bgbot_cpp.create_rollout_pair(
+                paths, hiddens,
+                n_trials=n_trials,
+                truncation_depth=truncation_depth,
+                decision_ply=decision_ply,
+                n_threads=self._parallel_threads,
+                seed=seed,
+                late_ply=late_ply,
+                late_threshold=late_threshold,
+                parallelize_trials=parallelize_trials,
+                checker=checker_cfg,
+                checker_late=checker_late_cfg,
+                cube=cube_cfg,
+                cube_late=cube_late_cfg,
+                ultra_late_threshold=ultra_late_threshold,
+            )
+            self._strategy_3ply = bgbot_cpp.create_multipy_pair(
+                paths, hiddens, n_plies=3,
+            )
+        else:
+            self._rollout_strategy = bgbot_cpp.create_rollout_5nn(
+                *weights.weight_args,
+                n_trials=n_trials,
+                truncation_depth=truncation_depth,
+                decision_ply=decision_ply,
+                n_threads=self._parallel_threads,
+                seed=seed,
+                late_ply=late_ply,
+                late_threshold=late_threshold,
+                parallelize_trials=parallelize_trials,
+                checker=checker_cfg,
+                checker_late=checker_late_cfg,
+                cube=cube_cfg,
+                cube_late=cube_late_cfg,
+                ultra_late_threshold=ultra_late_threshold,
+            )
+            # Create a 3-ply strategy for pre-filtering (accurate move count)
+            self._strategy_3ply = bgbot_cpp.create_multipy_5nn(
+                *weights.weight_args, n_plies=3,
+            )
 
     def cancel(self):
         """Request cancellation of in-progress rollout."""
@@ -736,7 +790,7 @@ class BgBotAnalyzer:
     Thread-safe: multiple threads can call methods concurrently.
 
     Args:
-        weights: Weight file configuration (defaults to bundled Stage 5 models).
+        weights: Weight file configuration (defaults to production model).
         eval_level: ``'1ply'``, ``'2ply'``, ``'3ply'``, ``'4ply'``,
             ``'truncated1'``, ``'truncated2'``, ``'truncated3'``, or ``'rollout'``.
         cubeful: If True, compute cubeful equities via Janowski.
@@ -758,7 +812,7 @@ class BgBotAnalyzer:
 
     def __init__(
         self,
-        weights: WeightConfig | None = None,
+        weights: WeightConfig | WeightConfigPair | None = None,
         eval_level: str = "1ply",
         cubeful: bool = True,
         *,
@@ -779,7 +833,7 @@ class BgBotAnalyzer:
         ultra_late_threshold: int = 2,
     ):
         if weights is None:
-            weights = WeightConfig.default()
+            weights = default_weights()
         self._weights = weights
         self._eval_level = eval_level
 
@@ -1085,7 +1139,7 @@ class BgBotAnalyzer:
 
 def create_analyzer(
     level: str = "1ply",
-    weights: WeightConfig | None = None,
+    weights: WeightConfig | WeightConfigPair | None = None,
     cubeful: bool = True,
     **kwargs: Any,
 ) -> BgBotAnalyzer:

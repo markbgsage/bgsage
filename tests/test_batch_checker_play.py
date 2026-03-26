@@ -32,7 +32,7 @@ sys.path.insert(0, os.path.join(project_dir, "bgsage", "python"))
 from bgsage import BgBotAnalyzer
 from bgsage.batch import batch_checker_play
 from bgsage.data import board_from_gnubg_position_string
-from bgsage.weights import WeightConfig
+from bgsage.weights import default_weights
 
 DATA_DIR = os.path.join(project_dir, "bgsage", "data")
 CONTACT_BM = os.path.join(DATA_DIR, "contact.bm")
@@ -74,7 +74,7 @@ class TestBatchCheckerPlay(unittest.TestCase):
         if not os.path.isfile(CONTACT_BM):
             raise unittest.SkipTest(f"contact.bm not found at {CONTACT_BM}")
         cls.positions = _load_positions_from_bm(CONTACT_BM, N_POSITIONS, SEED)
-        cls.weights = WeightConfig.default()
+        cls.weights = default_weights()
         cls.weights.validate()
 
     # ------------------------------------------------------------------

@@ -39,7 +39,7 @@ from .types import (
     Probabilities,
 )
 from .gnubg import GnuBgAnalyzer
-from .weights import MODELS, PRODUCTION_MODEL, WeightConfig
+from .weights import MODELS, PRODUCTION_MODEL, WeightConfig, WeightConfigPair, default_weights
 
 # Re-export TrialEvalConfig from the C++ bindings for convenient access
 try:
@@ -58,6 +58,8 @@ __all__ = [
     "batch_post_move_evaluate",
     "create_analyzer",
     "WeightConfig",
+    "WeightConfigPair",
+    "default_weights",
     "PRODUCTION_MODEL",
     "MODELS",
     "Probabilities",

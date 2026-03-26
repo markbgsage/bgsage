@@ -94,6 +94,22 @@ def bearoff_db_path() -> str | None:
     return path if os.path.exists(path) else None
 
 
+def is_pair_model(name: str) -> bool:
+    """Return True if the named model uses the 17-NN pair strategy."""
+    return MODELS.get(name, {}).get("plans") == "pair"
+
+
+def default_weights() -> "WeightConfig | WeightConfigPair":
+    """Return the production model's weight config (correct type auto-detected).
+
+    Returns a :class:`WeightConfig` for 5-NN models and a
+    :class:`WeightConfigPair` for 17-NN pair models.
+    """
+    if is_pair_model(PRODUCTION_MODEL):
+        return WeightConfigPair.from_model(PRODUCTION_MODEL)
+    return WeightConfig.from_model(PRODUCTION_MODEL)
+
+
 @dataclass
 class WeightConfig:
     """Paths to the 5-NN weight files and their hidden-layer sizes."""

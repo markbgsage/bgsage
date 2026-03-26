@@ -38,7 +38,7 @@ import bgbot_cpp
 
 from .analyzer import resolve_owner
 from .types import CheckerPlayResult, CubeActionResult, MoveAnalysis, PostMoveAnalysis, Probabilities
-from .weights import WeightConfig
+from .weights import WeightConfig, WeightConfigPair, default_weights
 
 
 @dataclass
@@ -60,7 +60,7 @@ class PositionEval:
 def batch_evaluate(
     positions: list[dict],
     eval_level: str = "1ply",
-    weights: WeightConfig | None = None,
+    weights: WeightConfig | WeightConfigPair | None = None,
     *,
     n_threads: int = 0,
     filter_max_moves: int = 5,
@@ -97,7 +97,8 @@ def batch_evaluate(
         List of :class:`PositionEval`, one per input position.
     """
     if weights is None:
-        weights = WeightConfig.default()
+        weights = default_weights()
+    is_pair = isinstance(weights, WeightConfigPair)
 
     # Build (board, cube_value, CubeOwner[, away1, away2, is_crawford]) tuples for C++
     cpp_positions = []
@@ -120,7 +121,11 @@ def batch_evaluate(
     effective_beaver = beaver and not has_match
 
     if eval_level == "1ply":
-        strategy = bgbot_cpp.GamePlanStrategy(*weights.weight_args)
+        if is_pair:
+            paths, hiddens = weights.weight_args
+            strategy = bgbot_cpp.GamePlanPairStrategy(paths, hiddens)
+        else:
+            strategy = bgbot_cpp.GamePlanStrategy(*weights.weight_args)
         raw_results = bgbot_cpp.batch_evaluate_positions(
             cpp_positions, strategy, n_threads,
             jacoby=effective_jacoby, beaver=effective_beaver,
@@ -129,14 +134,25 @@ def batch_evaluate(
         n_plies = int(eval_level[0])
         # parallel_evaluate=False so each N-ply eval is serial;
         # parallelism is across positions in the C++ batch function.
-        strategy = bgbot_cpp.create_multipy_5nn(
-            *weights.weight_args,
-            n_plies=n_plies,
-            filter_max_moves=filter_max_moves,
-            filter_threshold=filter_threshold,
-            parallel_evaluate=False,
-            parallel_threads=0,
-        )
+        if is_pair:
+            paths, hiddens = weights.weight_args
+            strategy = bgbot_cpp.create_multipy_pair(
+                paths, hiddens,
+                n_plies=n_plies,
+                filter_max_moves=filter_max_moves,
+                filter_threshold=filter_threshold,
+                parallel_evaluate=False,
+                parallel_threads=0,
+            )
+        else:
+            strategy = bgbot_cpp.create_multipy_5nn(
+                *weights.weight_args,
+                n_plies=n_plies,
+                filter_max_moves=filter_max_moves,
+                filter_threshold=filter_threshold,
+                parallel_evaluate=False,
+                parallel_threads=0,
+            )
         raw_results = bgbot_cpp.batch_evaluate_positions(
             cpp_positions, strategy, n_threads,
             jacoby=effective_jacoby, beaver=effective_beaver,
@@ -167,7 +183,7 @@ def batch_evaluate(
 def batch_post_move_evaluate(
     positions: list[dict],
     eval_level: str = "1ply",
-    weights: WeightConfig | None = None,
+    weights: WeightConfig | WeightConfigPair | None = None,
     *,
     n_threads: int = 0,
     filter_max_moves: int = 5,
@@ -205,7 +221,8 @@ def batch_post_move_evaluate(
         List of :class:`~bgsage.types.PostMoveAnalysis`, one per input position.
     """
     if weights is None:
-        weights = WeightConfig.default()
+        weights = default_weights()
+    is_pair = isinstance(weights, WeightConfigPair)
 
     # Build (board, CubeOwner[, cube_value, away1, away2, is_crawford]) tuples for C++
     cpp_positions = []
@@ -227,7 +244,11 @@ def batch_post_move_evaluate(
     effective_jacoby = jacoby and not has_match
 
     if eval_level == "1ply":
-        strategy = bgbot_cpp.GamePlanStrategy(*weights.weight_args)
+        if is_pair:
+            paths, hiddens = weights.weight_args
+            strategy = bgbot_cpp.GamePlanPairStrategy(paths, hiddens)
+        else:
+            strategy = bgbot_cpp.GamePlanStrategy(*weights.weight_args)
         raw_results = bgbot_cpp.batch_evaluate_post_move(
             cpp_positions, strategy, n_threads,
             jacoby=effective_jacoby,
@@ -235,14 +256,25 @@ def batch_post_move_evaluate(
         level_label = "1-ply"
     elif eval_level in ("2ply", "3ply", "4ply"):
         n_plies = int(eval_level[0])
-        strategy = bgbot_cpp.create_multipy_5nn(
-            *weights.weight_args,
-            n_plies=n_plies,
-            filter_max_moves=filter_max_moves,
-            filter_threshold=filter_threshold,
-            parallel_evaluate=False,
-            parallel_threads=0,
-        )
+        if is_pair:
+            paths, hiddens = weights.weight_args
+            strategy = bgbot_cpp.create_multipy_pair(
+                paths, hiddens,
+                n_plies=n_plies,
+                filter_max_moves=filter_max_moves,
+                filter_threshold=filter_threshold,
+                parallel_evaluate=False,
+                parallel_threads=0,
+            )
+        else:
+            strategy = bgbot_cpp.create_multipy_5nn(
+                *weights.weight_args,
+                n_plies=n_plies,
+                filter_max_moves=filter_max_moves,
+                filter_threshold=filter_threshold,
+                parallel_evaluate=False,
+                parallel_threads=0,
+            )
         raw_results = bgbot_cpp.batch_evaluate_post_move(
             cpp_positions, strategy, n_threads,
             jacoby=effective_jacoby,
@@ -268,7 +300,7 @@ def batch_post_move_evaluate(
 def batch_cube_action(
     positions: list[dict],
     eval_level: str = "1ply",
-    weights: WeightConfig | None = None,
+    weights: WeightConfig | WeightConfigPair | None = None,
     *,
     n_threads: int = 0,
     filter_max_moves: int = 5,
@@ -348,7 +380,7 @@ def batch_cube_action(
 def batch_checker_play(
     positions: list[dict],
     eval_level: str = "1ply",
-    weights: WeightConfig | None = None,
+    weights: WeightConfig | WeightConfigPair | None = None,
     *,
     n_threads: int = 0,
     filter_max_moves: int = 5,
@@ -389,7 +421,8 @@ def batch_checker_play(
         the rest at 1-ply.
     """
     if weights is None:
-        weights = WeightConfig.default()
+        weights = default_weights()
+    is_pair = isinstance(weights, WeightConfigPair)
 
     # Build input dicts with CubeOwner enum for C++
     cpp_inputs = []
@@ -410,7 +443,11 @@ def batch_checker_play(
             d["is_crawford"] = is_crawford
         cpp_inputs.append(d)
 
-    strategy_1ply = bgbot_cpp.GamePlanStrategy(*weights.weight_args)
+    if is_pair:
+        paths, hiddens = weights.weight_args
+        strategy_1ply = bgbot_cpp.GamePlanPairStrategy(paths, hiddens)
+    else:
+        strategy_1ply = bgbot_cpp.GamePlanStrategy(*weights.weight_args)
 
     # Auto-disable Jacoby for match play positions
     has_match = any(p.get("away1", 0) > 0 or p.get("away2", 0) > 0 for p in positions)
@@ -425,14 +462,25 @@ def batch_checker_play(
         level_label = "1-ply"
     elif eval_level in ("2ply", "3ply", "4ply"):
         n_plies = int(eval_level[0])
-        strategy_nply = bgbot_cpp.create_multipy_5nn(
-            *weights.weight_args,
-            n_plies=n_plies,
-            filter_max_moves=filter_max_moves,
-            filter_threshold=filter_threshold,
-            parallel_evaluate=False,
-            parallel_threads=0,
-        )
+        if is_pair:
+            paths, hiddens = weights.weight_args
+            strategy_nply = bgbot_cpp.create_multipy_pair(
+                paths, hiddens,
+                n_plies=n_plies,
+                filter_max_moves=filter_max_moves,
+                filter_threshold=filter_threshold,
+                parallel_evaluate=False,
+                parallel_threads=0,
+            )
+        else:
+            strategy_nply = bgbot_cpp.create_multipy_5nn(
+                *weights.weight_args,
+                n_plies=n_plies,
+                filter_max_moves=filter_max_moves,
+                filter_threshold=filter_threshold,
+                parallel_evaluate=False,
+                parallel_threads=0,
+            )
         raw_results = bgbot_cpp.batch_checker_play(
             cpp_inputs, strategy_1ply, strategy_nply,
             filter_max_moves, filter_threshold, n_threads,

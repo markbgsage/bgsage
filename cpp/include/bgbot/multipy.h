@@ -410,8 +410,10 @@ private:
         std::size_t size() const { return count; }
     };
 
+public:
     // Access thread-local cache (MSVC-compatible: function-local thread_local).
     static PosCache& get_cache();
+private:
 
     static std::size_t hash_board(const Board& b);
     std::size_t cache_key_for(const Board& b, int plies) const;
