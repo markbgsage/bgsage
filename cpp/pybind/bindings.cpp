@@ -51,6 +51,37 @@ static std::vector<int> board_to_list(const Board& b) {
     return std::vector<int>(b.begin(), b.end());
 }
 
+// Convert TwoPlyDetails to a Python list of dicts
+static py::list two_ply_details_to_list(const TwoPlyDetails& details) {
+    py::list player_rolls_list;
+    for (const auto& pr : details.player_rolls) {
+        py::dict d;
+        d["die1"] = pr.die1;
+        d["die2"] = pr.die2;
+        d["checkers"] = board_to_list(pr.post_move_board);
+        d["cubeful_equity"] = pr.cubeful_equity;
+        if (pr.is_terminal) {
+            // Terminal: no opponent_rolls field
+        } else if (pr.opponent_dp) {
+            // Opponent D/P: no opponent_rolls field
+            d["opponent_dp"] = true;
+        } else {
+            py::list opp_list;
+            for (const auto& opp : pr.opponent_rolls) {
+                py::dict od;
+                od["die1"] = opp.die1;
+                od["die2"] = opp.die2;
+                od["checkers"] = board_to_list(opp.post_move_board);
+                od["cubeful_equity"] = opp.cubeful_equity;
+                opp_list.append(od);
+            }
+            d["opponent_rolls"] = opp_list;
+        }
+        player_rolls_list.append(d);
+    }
+    return player_rolls_list;
+}
+
 // C++ container for benchmark scenarios — avoids pybind11 vector copy issues
 // with large datasets. Scenarios are built and stored entirely in C++.
 struct ScenarioSet {
@@ -2225,7 +2256,13 @@ PYBIND11_MODULE(bgbot_cpp, m) {
                                          int away1, int away2, bool is_crawford,
                                          float cube_x_override, bool jacoby,
                                          bool beaver, int max_cube_value,
-                                         const BearoffDB* bearoff_db) {
+                                         const BearoffDB* bearoff_db,
+                                         bool incl_2ply_details) {
+        if (incl_2ply_details && n_plies < 3) {
+            throw std::invalid_argument(
+                "incl_2ply_details requires n_plies >= 3 (analysis depth not deep enough)");
+        }
+
         Board board = list_to_board(checkers);
         auto gps = std::make_shared<GamePlanPairStrategy>(weight_paths, hidden_sizes);
 
@@ -2238,11 +2275,16 @@ PYBIND11_MODULE(bgbot_cpp, m) {
         MoveFilter filter{filter_max_moves, filter_threshold};
 
         CubeDecision cd;
+        TwoPlyDetails details;
         std::array<float, NUM_OUTPUTS> pre_roll_probs;
         float cl_eq;
         {
             py::gil_scoped_release release;
-            cd = cube_decision_nply(board, ci, *base_strat, n_plies, filter, n_threads);
+            if (incl_2ply_details) {
+                cd = cube_decision_nply_with_details(board, ci, *base_strat, n_plies, filter, n_threads, details);
+            } else {
+                cd = cube_decision_nply(board, ci, *base_strat, n_plies, filter, n_threads);
+            }
 
             Board flipped = flip(board);
             MultiPlyStrategy multipy(base_strat, n_plies, filter);
@@ -2266,6 +2308,9 @@ PYBIND11_MODULE(bgbot_cpp, m) {
         result["optimal_equity"] = cd.optimal_equity;
         result["is_beaver"] = cd.is_beaver;
         result["n_plies"] = n_plies;
+        if (incl_2ply_details) {
+            result["player_rolls"] = two_ply_details_to_list(details);
+        }
         return result;
     }, "N-ply cube decision using 17-NN pair strategy.",
        py::arg("checkers"),
@@ -2280,7 +2325,8 @@ PYBIND11_MODULE(bgbot_cpp, m) {
        py::arg("away1") = 0, py::arg("away2") = 0, py::arg("is_crawford") = false,
        py::arg("cube_x_override") = -1.0f, py::arg("jacoby") = true,
        py::arg("beaver") = true, py::arg("max_cube_value") = 0,
-       py::arg("bearoff_db") = nullptr);
+       py::arg("bearoff_db") = nullptr,
+       py::arg("incl_2ply_details") = false);
 
     m.def("cube_efficiency", [](const std::vector<int>& board, bool is_race_pos) {
         return cube_efficiency(list_to_board(board), is_race_pos);
@@ -2395,7 +2441,13 @@ PYBIND11_MODULE(bgbot_cpp, m) {
                                     int away1, int away2, bool is_crawford,
                                     float cube_x_override, bool jacoby,
                                     bool beaver, int max_cube_value,
-                                    const BearoffDB* bearoff_db) {
+                                    const BearoffDB* bearoff_db,
+                                    bool incl_2ply_details) {
+        if (incl_2ply_details && n_plies < 3) {
+            throw std::invalid_argument(
+                "incl_2ply_details requires n_plies >= 3 (analysis depth not deep enough)");
+        }
+
         Board board = list_to_board(checkers);
         auto gps = std::make_shared<GamePlanStrategy>(
             purerace_w, racing_w, attacking_w, priming_w, anchoring_w,
@@ -2411,11 +2463,16 @@ PYBIND11_MODULE(bgbot_cpp, m) {
         MoveFilter filter{filter_max_moves, filter_threshold};
 
         CubeDecision cd;
+        TwoPlyDetails details;
         std::array<float, NUM_OUTPUTS> pre_roll_probs;
         float cl_eq;
         {
             py::gil_scoped_release release;
-            cd = cube_decision_nply(board, ci, *base_strat, n_plies, filter, n_threads);
+            if (incl_2ply_details) {
+                cd = cube_decision_nply_with_details(board, ci, *base_strat, n_plies, filter, n_threads, details);
+            } else {
+                cd = cube_decision_nply(board, ci, *base_strat, n_plies, filter, n_threads);
+            }
 
             // Get N-ply cubeless pre-roll probs: flip board, evaluate at N-ply, invert.
             Board flipped = flip(board);
@@ -2440,9 +2497,13 @@ PYBIND11_MODULE(bgbot_cpp, m) {
         result["optimal_equity"] = cd.optimal_equity;
         result["is_beaver"] = cd.is_beaver;
         result["n_plies"] = n_plies;
+        if (incl_2ply_details) {
+            result["player_rolls"] = two_ply_details_to_list(details);
+        }
         return result;
     }, "N-ply cube decision for a pre-roll position.\n"
-       "Returns dict with probs, cubeless_equity, equity_nd/dt/dp, should_double, should_take, optimal_equity, is_beaver.",
+       "Returns dict with probs, cubeless_equity, equity_nd/dt/dp, should_double, should_take, optimal_equity, is_beaver.\n"
+       "When incl_2ply_details=True, also returns player_rolls with per-roll details.",
        py::arg("checkers"),
        py::arg("cube_value") = 1,
        py::arg("owner") = CubeOwner::CENTERED,
@@ -2463,7 +2524,8 @@ PYBIND11_MODULE(bgbot_cpp, m) {
        py::arg("away1") = 0, py::arg("away2") = 0, py::arg("is_crawford") = false,
        py::arg("cube_x_override") = -1.0f, py::arg("jacoby") = true,
        py::arg("beaver") = true, py::arg("max_cube_value") = 0,
-       py::arg("bearoff_db") = nullptr);
+       py::arg("bearoff_db") = nullptr,
+       py::arg("incl_2ply_details") = false);
 
     // Cubeful rollout: simulates cube decisions during trial games.
     // Two branches (ND and DT) share the same board evolution and dice sequences.

@@ -207,7 +207,10 @@ class _OnePlyAnalyzer(_CubelessBase):
     def cube_action_analytics(
         self, board, cube_value=1, cube_owner="centered",
         away1=0, away2=0, is_crawford=False, jacoby=True, beaver=True,
+        incl_2ply_details=False,
     ) -> dict:
+        if incl_2ply_details:
+            raise ValueError("incl_2ply_details requires at least 3-ply evaluation")
         owner = resolve_owner(cube_owner)
         if self._is_pair:
             paths, hiddens = self._weights.weight_args
@@ -310,6 +313,7 @@ class _MultiPlyAnalyzer(_CubelessBase):
     def cube_action_analytics(
         self, board, cube_value=1, cube_owner="centered",
         away1=0, away2=0, is_crawford=False, jacoby=True, beaver=True,
+        incl_2ply_details=False,
     ) -> dict:
         owner = resolve_owner(cube_owner)
         if self._is_pair:
@@ -320,6 +324,7 @@ class _MultiPlyAnalyzer(_CubelessBase):
                 away1=away1, away2=away2, is_crawford=is_crawford,
                 jacoby=jacoby, beaver=beaver,
                 bearoff_db=self._bearoff_db,
+                incl_2ply_details=incl_2ply_details,
             )
         else:
             r = bgbot_cpp.cube_decision_nply(
@@ -328,8 +333,13 @@ class _MultiPlyAnalyzer(_CubelessBase):
                 away1=away1, away2=away2, is_crawford=is_crawford,
                 jacoby=jacoby, beaver=beaver,
                 bearoff_db=self._bearoff_db,
+                incl_2ply_details=incl_2ply_details,
             )
         result = self._format_cube_result(r, eval_level=f"{self._n_plies}-ply")
+
+        # Pass through player_rolls if present
+        if "player_rolls" in r:
+            result["player_rolls"] = r["player_rolls"]
 
         # The C++ binding already computes N-ply cubeless probs (with bearoff DB
         # when applicable). Only override if the binding didn't use bearoff DB,
@@ -734,11 +744,13 @@ class _CubefulAnalyzer:
     def cube_action_analytics(
         self, board, cube_value=1, cube_owner="centered",
         away1=0, away2=0, is_crawford=False, jacoby=True, beaver=True,
+        incl_2ply_details=False,
     ) -> dict:
         return self._inner.cube_action_analytics(
             board, cube_value, cube_owner,
             away1=away1, away2=away2, is_crawford=is_crawford,
             jacoby=jacoby, beaver=beaver,
+            incl_2ply_details=incl_2ply_details,
         )
 
 
@@ -1091,6 +1103,7 @@ class BgBotAnalyzer:
         is_crawford: bool = False,
         jacoby: bool = True,
         beaver: bool = True,
+        incl_2ply_details: bool = False,
     ) -> CubeActionResult:
         """Analyze the cube decision for a pre-roll position.
 
@@ -1109,6 +1122,9 @@ class BgBotAnalyzer:
             beaver: If True, opponent can beaver (redouble while retaining
                 ownership) after being doubled. Money games only.
                 Auto-disabled for match play.
+            incl_2ply_details: If True, include per-roll details for the
+                first two turns under the No Double scenario. Requires
+                3-ply or higher evaluation.
         """
         if away1 > 0 or away2 > 0:
             jacoby = False
@@ -1117,6 +1133,7 @@ class BgBotAnalyzer:
             board, cube_value, cube_owner,
             away1=away1, away2=away2, is_crawford=is_crawford,
             jacoby=jacoby, beaver=beaver,
+            incl_2ply_details=incl_2ply_details,
         )
         probs = Probabilities.from_list(raw["probs"])
         is_beaver = raw.get("is_beaver", False)
@@ -1134,6 +1151,7 @@ class BgBotAnalyzer:
             eval_level=raw["eval_level"],
             is_beaver=is_beaver,
             cubeless_se=raw.get("cubeless_se"),
+            player_rolls=raw.get("player_rolls"),
         )
 
 

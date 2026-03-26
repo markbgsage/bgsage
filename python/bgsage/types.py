@@ -98,6 +98,7 @@ class CubeActionResult:
     eval_level: str
     is_beaver: bool = False     # True if opponent would beaver (equity_dt = DB equity)
     cubeless_se: float | None = None  # Rollout standard error
+    player_rolls: list[dict] | None = None  # Per-roll 2-ply details (only when incl_2ply_details=True)
 
 
 @dataclass

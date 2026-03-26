@@ -120,6 +120,33 @@ struct CubeDecision {
     bool is_beaver = false; // True if opponent would beaver (DT field = DB equity)
 };
 
+// ---------------------------------------------------------------------------
+// 2-ply detail structures for cube decision analysis
+// ---------------------------------------------------------------------------
+
+// Detail for a single opponent roll within the 2-ply detail view.
+struct OpponentRollDetail {
+    int die1, die2;
+    Board post_move_board;    // Player's perspective (original player, not opponent)
+    float cubeful_equity;     // Player's perspective, per-initial-cube
+};
+
+// Detail for a single player roll within the 2-ply detail view.
+struct PlayerRollDetail {
+    int die1, die2;
+    Board post_move_board;    // Player's perspective
+    float cubeful_equity;     // Player's perspective, per-initial-cube,
+                              // incorporates opponent's optimal cube decision
+    bool is_terminal = false; // Player's move ended the game (no opponent rolls)
+    bool opponent_dp = false; // Opponent has Double/Pass (game over, no opponent rolls)
+    std::vector<OpponentRollDetail> opponent_rolls; // 21 entries (empty if terminal/DP)
+};
+
+// Per-roll details for the first two turns of a cube decision analysis (ND scenario).
+struct TwoPlyDetails {
+    std::vector<PlayerRollDetail> player_rolls; // 21 entries
+};
+
 // Compute cube decision for a pre-roll position (1-ply / raw NN).
 // `probs` are cubeless pre-roll probabilities from the player's perspective.
 // Uses Janowski interpolation with the given cube efficiency.
@@ -182,6 +209,20 @@ CubeDecision cube_decision_nply(
     int n_plies,
     const MoveFilter& filter = MoveFilters::TINY,
     int n_threads = 1);
+
+// Compute full cube decision at N-ply depth, with per-roll details for the
+// first two turns (player + opponent) under the No Double scenario.
+// Requires n_plies >= 3. Populates `details` with 21 player-roll entries,
+// each containing 21 opponent-roll entries (unless terminal or opponent D/P).
+// All equities are per-initial-cube, from the player's perspective.
+CubeDecision cube_decision_nply_with_details(
+    const Board& board,
+    const CubeInfo& cube,
+    const Strategy& strategy,
+    int n_plies,
+    const MoveFilter& filter,
+    int n_threads,
+    TwoPlyDetails& details);
 
 // Compute cube decision from cubeless pre-roll probabilities (Janowski conversion).
 // This is the simplest form of cubeful evaluation from any source of cubeless probs
