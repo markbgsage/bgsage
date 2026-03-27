@@ -529,10 +529,16 @@ class _RolloutAnalyzer(_CubelessBase):
                 r = self._rollout_strategy.evaluate_board(b, board, _trial_progress)
             except bgbot_cpp.RolloutCancelled:
                 raise RolloutCancelled()
+
+            probs = list(r["probs"])
+            # Override with exact bearoff DB probs when available.
+            if self._bearoff_db is not None and self._bearoff_db.is_bearoff(b):
+                probs = self._bearoff_db.lookup_probs(b, post_move=True)
+
             results.append({
                 "board": b,
                 "equity": r["equity"],
-                "probs": list(r["probs"]),
+                "probs": probs,
                 "std_error": r.get("std_error", 0),
                 "prob_std_errors": list(r.get("prob_std_errors", [0] * 5)),
                 "eval_level": "Rollout",
@@ -565,6 +571,7 @@ class _RolloutAnalyzer(_CubelessBase):
         self, board, cube_value=1, cube_owner="centered",
         progress_callback=None,
         away1=0, away2=0, is_crawford=False, jacoby=True, beaver=True,
+        incl_2ply_details=False,
     ) -> dict:
         self._check_cancel()
         owner = resolve_owner(cube_owner)
@@ -583,7 +590,21 @@ class _RolloutAnalyzer(_CubelessBase):
             )
         except bgbot_cpp.RolloutCancelled:
             raise RolloutCancelled()
-        return self._format_cube_result(r, eval_level="Rollout")
+        result = self._format_cube_result(r, eval_level="Rollout")
+
+        # Override cubeless probs with exact bearoff DB values when available.
+        # The rollout's cubeful equities (ND/DT/DP) are still valuable, but
+        # the cubeless probs from Monte Carlo are noisy — the DB is exact.
+        if self._bearoff_db is not None and self._bearoff_db.is_bearoff(board):
+            pre_roll = self._bearoff_db.lookup_probs(board, post_move=False)
+            result["probs"] = pre_roll
+            result["cubeless_equity"] = (
+                2.0 * pre_roll[0] - 1.0
+                + pre_roll[1] - pre_roll[3]
+                + pre_roll[2] - pre_roll[4]
+            )
+
+        return result
 
 
 class _CubefulAnalyzer:
