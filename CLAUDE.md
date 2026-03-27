@@ -34,6 +34,7 @@ python/bgsage/               # Python package
   weights.py                # Production model registry, WeightConfig, model discovery
   data.py                   # .bm file loading, training data parsing
   gnubg.py                  # GNUbg CLI wrapper for reference evaluation
+  matchinfo.py              # Match play take points, dead cube take points, gammon prices
 scripts/                     # Training & benchmarking scripts
 tests/                       # Python tests
 models/                      # Production weights (5 files per model stage)
@@ -391,6 +392,22 @@ Board manipulation, move generation, and game state queries.
 | `is_race(board)` | Contact check |
 | `is_crashed(board)` | Crashed position check |
 | `invert_probs(probs)` | Invert 5-probability array |
+
+### 6. Match Info
+
+Match play gammonless take points, dead cube take points, and gammon prices.
+
+**Python** — `python/bgsage/matchinfo.py`:
+
+| Function | Description |
+|----------|-------------|
+| `take_points(away1, away2, cube_value)` | Gammonless live cube take points. Uses empirically-derived lookup tables (away-scores 2-5 for cv=1; select scores for cv=2) with Janowski approximation (x=0.68) as fallback. Handles automatic redouble cases (doubler wins match on single win at new cube level) with a special dead cube formula at 4C. Returns `(player1, player2)` tuple. |
+| `take_points_dead_cube(away1, away2, cube_value)` | Gammonless dead cube take points, calculated exactly from the MET. Returns `(player1, player2)` tuple. |
+| `take_points_janowski(away1, away2, cube_value, x)` | Gammonless Janowski live cube take points with explicit cube life index x. Returns `(player1, player2)` tuple. |
+| `gammon_prices(away1, away2, cube_value)` | Gammon prices calculated exactly from the MET. Returns `(player1, player2)` tuple. |
+
+All take points are gammonless (assume zero gammon/backgammon probability). For money
+games: take point = 0.22, dead cube take point = 0.25, gammon price = 0.5 (both players).
 
 ### Model Selection
 
