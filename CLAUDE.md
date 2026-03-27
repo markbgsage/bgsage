@@ -2,6 +2,14 @@
 
 Neural-network backgammon engine with C++ core and Python interface. MIT licensed.
 
+## Repo Boundary Rule
+
+**This is a standalone library repo (`bgsage/`). When the working directory is
+pointed at this folder, ALL new files, edits, and commits MUST stay within this
+repo.** Never create or modify files in the parent directory (e.g. `sageapi/`),
+even if parent CLAUDE.md files are loaded as context. New Python modules go in
+`python/bgsage/`, new scripts in `scripts/`, new C++ in `cpp/`.
+
 ## Git Worktree Rules
 
 **CRITICAL: When working in a git worktree, ALL file operations (reads, edits,
