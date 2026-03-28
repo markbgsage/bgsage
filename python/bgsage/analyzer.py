@@ -206,6 +206,7 @@ class _OnePlyAnalyzer(_CubelessBase):
 
     def cube_action_analytics(
         self, board, cube_value=1, cube_owner="centered",
+        progress_callback=None,
         away1=0, away2=0, is_crawford=False, jacoby=True, beaver=True,
         incl_2ply_details=False,
     ) -> dict:
@@ -312,6 +313,7 @@ class _MultiPlyAnalyzer(_CubelessBase):
 
     def cube_action_analytics(
         self, board, cube_value=1, cube_owner="centered",
+        progress_callback=None,
         away1=0, away2=0, is_crawford=False, jacoby=True, beaver=True,
         incl_2ply_details=False,
     ) -> dict:
@@ -769,11 +771,13 @@ class _CubefulAnalyzer:
 
     def cube_action_analytics(
         self, board, cube_value=1, cube_owner="centered",
+        progress_callback=None,
         away1=0, away2=0, is_crawford=False, jacoby=True, beaver=True,
         incl_2ply_details=False,
     ) -> dict:
         return self._inner.cube_action_analytics(
             board, cube_value, cube_owner,
+            progress_callback=progress_callback,
             away1=away1, away2=away2, is_crawford=is_crawford,
             jacoby=jacoby, beaver=beaver,
             incl_2ply_details=incl_2ply_details,
@@ -1130,6 +1134,7 @@ class BgBotAnalyzer:
         jacoby: bool = True,
         beaver: bool = True,
         incl_2ply_details: bool = False,
+        progress_callback=None,
     ) -> CubeActionResult:
         """Analyze the cube decision for a pre-roll position.
 
@@ -1157,6 +1162,7 @@ class BgBotAnalyzer:
             beaver = False
         raw = self._analyzer.cube_action_analytics(
             board, cube_value, cube_owner,
+            progress_callback=progress_callback,
             away1=away1, away2=away2, is_crawford=is_crawford,
             jacoby=jacoby, beaver=beaver,
             incl_2ply_details=incl_2ply_details,
