@@ -361,7 +361,12 @@ class _MultiPlyAnalyzer(_CubelessBase):
                 + nply_pre_roll[1] - nply_pre_roll[3]
                 + nply_pre_roll[2] - nply_pre_roll[4]
             )
-            self._strategy_nply.clear_cache()
+
+        # Always clear the shared position cache after cube analysis.
+        # cube_decision_nply() fills the cache internally; without clearing,
+        # subsequent analyses (especially on bearoff positions where the
+        # non-bearoff branch above is skipped) can return stale cached values.
+        self._strategy_nply.clear_cache()
 
         return result
 
