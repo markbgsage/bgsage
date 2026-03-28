@@ -42,6 +42,20 @@ inline CubeOwner flip_owner(CubeOwner o) {
     return CubeOwner::CENTERED;
 }
 
+// Flip a CubeInfo to the opponent's perspective.
+// PLAYER ↔ OPPONENT, CENTERED stays. Match away values swapped.
+inline CubeInfo flip_cube_perspective(const CubeInfo& cube) {
+    CubeInfo opp;
+    opp.cube_value = cube.cube_value;
+    opp.owner = flip_owner(cube.owner);
+    opp.match = cube.match.flip();
+    opp.cube_x_override = cube.cube_x_override;
+    opp.jacoby = cube.jacoby;
+    opp.beaver = cube.beaver;
+    opp.max_cube_value = cube.max_cube_value;
+    return opp;
+}
+
 // Can the player on roll legally double?
 inline bool can_double(const CubeInfo& ci) {
     // Cube at or above max → cannot double (max_cube_value=1 means cubeless)

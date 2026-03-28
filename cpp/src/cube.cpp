@@ -964,20 +964,6 @@ static float eval_pre_roll_cubeful_1ply(
     }
 }
 
-// Helper: flip a CubeInfo to the opponent's perspective.
-// PLAYER ↔ OPPONENT, CENTERED stays. Match away values swapped.
-static CubeInfo flip_cube_perspective(const CubeInfo& cube) {
-    CubeInfo opp;
-    opp.cube_value = cube.cube_value;
-    opp.owner = flip_owner(cube.owner);
-    opp.match = cube.match.flip();
-    opp.cube_x_override = cube.cube_x_override;
-    opp.jacoby = cube.jacoby;
-    opp.beaver = cube.beaver;
-    opp.max_cube_value = cube.max_cube_value;
-    return opp;
-}
-
 // Expand cci cube states into 2*cci states (ND + DT pairs).
 //
 // For each input state i:

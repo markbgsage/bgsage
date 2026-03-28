@@ -3,6 +3,7 @@
 #include "bgbot/board.h"
 #include "bgbot/moves.h"
 #include "bgbot/encoding.h"
+#include "bgbot/bearoff.h"
 #include <algorithm>
 #include <numeric>
 #include <random>
@@ -573,7 +574,12 @@ void RolloutStrategy::populate_move1_cache_entry(
     // as fallback). When cube strategy is N-ply or rollout, the trial code
     // bypasses these cached probs and calls cube_decision_nply or
     // cubeful_cube_decision directly.
-    entry.mover_probs = invert_probs(base_->evaluate_probs(opp_board, opp_board));
+    // Use bearoff DB for exact probs when available.
+    if (bearoff_db_ && bearoff_db_->is_bearoff(move1_board)) {
+        entry.mover_probs = bearoff_db_->lookup_probs(move1_board);
+    } else {
+        entry.mover_probs = invert_probs(base_->evaluate_probs(opp_board, opp_board));
+    }
 
     for (size_t second_roll = 0; second_roll < ALL_ROLLS.size(); ++second_roll) {
         candidates.clear();
@@ -767,6 +773,10 @@ RolloutStrategy::TrialResult RolloutStrategy::run_trial_unified(
                 if (move1_entry) {
                     mover_probs = move1_entry->mover_probs;
                     cube_x = move1_entry->cube_x;
+                    cube_x_ready = true;
+                } else if (bearoff_db_ && bearoff_db_->is_bearoff(board)) {
+                    mover_probs = bearoff_db_->lookup_probs(board);
+                    cube_x = cube_efficiency(board, race);
                     cube_x_ready = true;
                 } else {
                     Board opp_board = flip(board);
