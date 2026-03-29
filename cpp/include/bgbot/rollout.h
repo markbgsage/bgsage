@@ -61,7 +61,7 @@ struct RolloutConfig {
 
     // Per-purpose evaluation overrides.
     // When is_set(), override the legacy decision_ply / late_ply defaults.
-    // When unset: checker inherits decision_ply, cube inherits 1-ply (backward compat).
+    // When unset: checker inherits decision_ply, cube inherits decision_ply.
     TrialEvalConfig checker;        // Checker play evaluation
     TrialEvalConfig checker_late;   // Late-game checker play
     TrialEvalConfig cube;           // Cube decision evaluation
@@ -169,7 +169,7 @@ public:
     // Bearoff DB: when set, positions in the DB are evaluated exactly.
     // Input positions that are bearoff get immediate results (no simulation).
     // Truncation evaluations also use the DB when applicable.
-    void set_bearoff_db(const BearoffDB* db) { bearoff_db_ = db; }
+    void set_bearoff_db(const BearoffDB* db);
     const BearoffDB* bearoff_db() const { return bearoff_db_; }
 
     // Clear thread-local N-ply caches. Call between independent positions
@@ -192,6 +192,7 @@ private:
     mutable int cached_max_moves_ = 0;
 
     std::shared_ptr<Strategy> base_;
+    std::shared_ptr<Strategy> base_bearoff_;  // base_ wrapped in BearoffStrategy (when DB set)
     GamePlanStrategy* base_gps_;   // Cached downcast (null if not GPS)
     const BearoffDB* bearoff_db_ = nullptr;
     RolloutConfig config_;
@@ -222,6 +223,9 @@ private:
     // Allows using a lower ply for truncation evaluation (faster) while keeping
     // a higher ply for move selection (move0 BMI).
     std::shared_ptr<Strategy> truncation_strat_;
+
+    // Effective truncation ply level (for N-ply cubeful evaluation at truncation).
+    int truncation_ply_;
 
     // Whether VR is enabled (from config_.enable_vr).
     bool vr_enabled_;

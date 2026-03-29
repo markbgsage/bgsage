@@ -1,5 +1,7 @@
 #include "bgbot/rollout.h"
 #include "bgbot/multipy.h"
+#include "bgbot/cube.h"
+#include "bgbot/match_equity.h"
 #include "bgbot/board.h"
 #include "bgbot/moves.h"
 #include "bgbot/encoding.h"
@@ -92,6 +94,34 @@ void RolloutStrategy::clear_internal_caches() const {
     if (shared_pos_cache_) {
         shared_pos_cache_->clear();
     }
+}
+
+// Helper: propagate bearoff DB to a Strategy that may be MultiPly or Rollout.
+static void propagate_bearoff_db(Strategy* strat, const BearoffDB* db) {
+    if (!strat) return;
+    if (auto* mps = dynamic_cast<MultiPlyStrategy*>(strat)) {
+        mps->set_bearoff_db(db);
+    } else if (auto* rs = dynamic_cast<RolloutStrategy*>(strat)) {
+        rs->set_bearoff_db(db);
+    }
+}
+
+void RolloutStrategy::set_bearoff_db(const BearoffDB* db) {
+    bearoff_db_ = db;
+    // Create bearoff-wrapped version of base_ for cubeful evaluations
+    // (cubeful_equity_nply needs a 1-ply strategy with bearoff support).
+    if (db && db->is_loaded()) {
+        base_bearoff_ = std::make_shared<BearoffStrategy>(base_, db);
+    } else {
+        base_bearoff_ = nullptr;
+    }
+    // Propagate to all internal strategies so N-ply evaluations use exact
+    // bearoff probs at their 1-ply leaf nodes.
+    propagate_bearoff_db(checker_strat_.get(), db);
+    propagate_bearoff_db(checker_late_strat_.get(), db);
+    propagate_bearoff_db(truncation_strat_.get(), db);
+    if (cube_inner_rollout_) cube_inner_rollout_->set_bearoff_db(db);
+    if (cube_late_inner_rollout_) cube_late_inner_rollout_->set_bearoff_db(db);
 }
 
 // ======================== Cancellation ========================
@@ -194,10 +224,11 @@ static void build_rollout_strategies(
             checker_late_ply_eff, base, filter_base, internal_filter);
     }
 
-    // Resolve cube eval configs (cube defaults to 1-ply for backward compat)
-    cube_eval_config = resolve_cube_eval_config(config.cube, 1);
+    // Resolve cube eval configs (cube defaults to decision_ply to match checker play)
+    cube_eval_config = resolve_cube_eval_config(config.cube, checker_ply);
     cube_late_eval_config = resolve_cube_eval_config(
-        config.cube_late.is_set() ? config.cube_late : config.cube, 1);
+        config.cube_late.is_set() ? config.cube_late : config.cube,
+        checker_late_ply_eff);
 
     // Build inner rollout strategies for truncated rollout cube decisions
     auto make_inner_rollout = [&](const TrialEvalConfig& cfg)
@@ -254,6 +285,9 @@ RolloutStrategy::RolloutStrategy(std::shared_ptr<Strategy> base, RolloutConfig c
                              cube_inner_rollout_, cube_late_inner_rollout_,
                              truncation_strat_);
 
+    // Effective truncation ply (for N-ply cubeful evaluation at truncation)
+    truncation_ply_ = (config_.truncation_ply >= 1) ? config_.truncation_ply : config_.decision_ply;
+
     // VR enabled flag
     vr_enabled_ = config_.enable_vr;
 
@@ -282,6 +316,9 @@ RolloutStrategy::RolloutStrategy(std::shared_ptr<Strategy> base,
                              cube_eval_config_, cube_late_eval_config_,
                              cube_inner_rollout_, cube_late_inner_rollout_,
                              truncation_strat_);
+
+    // Effective truncation ply (for N-ply cubeful evaluation at truncation)
+    truncation_ply_ = (config_.truncation_ply >= 1) ? config_.truncation_ply : config_.decision_ply;
 
     // VR enabled flag
     vr_enabled_ = config_.enable_vr;
@@ -511,10 +548,9 @@ void RolloutStrategy::prefill_move0_cache(
     const Board& start_board, Move0Cache& cache, int n_threads,
     SharedPosCache* shared) const
 {
-    const bool race = is_race(start_board);
     // Move0 uses checker strategy for move selection.
     // This also warms the thread-local PosCache for truncation evaluation.
-    const auto& current_strat = race ? *base_ : *checker_strat_;
+    const auto& current_strat = *checker_strat_;
     const bool using_base = (&current_strat == base_.get());
 
     auto compute_roll = [&](int roll_idx) {
@@ -757,10 +793,10 @@ RolloutStrategy::TrialResult RolloutStrategy::run_trial_unified(
         // Phase 1: Cube check (cubeful only, skip on move 0)
         if (cube_active && move_num > 0) {
             // Determine cube evaluation mode for this move.
-            // Race and ultra-late positions always use 1-ply Janowski.
+            // Ultra-late positions always use 1-ply Janowski.
             // Otherwise use the configured cube evaluation strategy.
             const int ultra_late_cube = config_.ultra_late_threshold;
-            bool use_cube_1ply = race || move_num >= ultra_late_cube;
+            bool use_cube_1ply = move_num >= ultra_late_cube;
             const TrialEvalConfig* cube_cfg = nullptr;
             if (!use_cube_1ply) {
                 cube_cfg = is_late ? &cube_late_eval_config_ : &cube_eval_config_;
@@ -875,8 +911,9 @@ RolloutStrategy::TrialResult RolloutStrategy::run_trial_unified(
                         }
                     } else {
                         // N-ply cubeful recursion
+                        const Strategy& cf_base = base_bearoff_ ? *base_bearoff_ : *base_;
                         cd = cube_decision_nply(
-                            board, branches[b].cube, *base_,
+                            board, branches[b].cube, cf_base,
                             cube_cfg->ply, cube_filter, 1 /*serial*/);
                     }
 
@@ -975,8 +1012,8 @@ RolloutStrategy::TrialResult RolloutStrategy::run_trial_unified(
 
         // Phase 3: VR mean — always use base_ (1-ply) for efficiency.
         // Checker play strategy for move selection (N-ply or truncated rollout).
-        const auto& current_strat = race ? *base_
-            : (move_num >= config_.ultra_late_threshold ? *base_
+        const auto& current_strat =
+            (move_num >= config_.ultra_late_threshold ? *base_
                : (is_late ? *checker_late_strat_ : *checker_strat_));
         bool using_base = (&current_strat == base_.get());
         bool can_reuse_vr_idx = do_vr && base_gps_;
@@ -1237,13 +1274,14 @@ RolloutStrategy::TrialResult RolloutStrategy::run_trial_unified(
         }
     }
 
-    // Truncation: evaluate from the LAST MOVER's perspective.
-    // flip(board) = chosen = the last mover's post-move board.
+    // Truncation: evaluate the position at the truncation point.
+    // `board` is from the next mover's perspective (after Phase 6 flip).
+    // `flip(board)` = last mover's post-move board.
     ROLLOUT_TIMER_START;
     Board last_mover_board = flip(board);
     int trunc_move = std::min(truncation, max_moves);
     bool trunc_race = is_race(last_mover_board);
-    const auto& trunc_strat = trunc_race ? *base_ : *truncation_strat_;
+    const auto& trunc_strat = *truncation_strat_;
     auto last_mover_probs = trunc_strat.evaluate_probs(last_mover_board, last_mover_board);
     ROLLOUT_TIMER_ADD(trunc_time_ns);
 #ifdef ROLLOUT_PROFILE
@@ -1255,29 +1293,64 @@ RolloutStrategy::TrialResult RolloutStrategy::run_trial_unified(
 
     // Cubeful branch truncation (only when cube_active)
     if (cube_active) {
-        float trunc_x = cube_efficiency(last_mover_board, trunc_race);
-        for (int b = 0; b < n_branches; ++b) {
-            if (branches[b].finished) continue;
-            // Cube is from next mover's perspective; flip to last mover's
-            CubeInfo last_cube = branches[b].cube;
-            last_cube.owner = flip_owner(last_cube.owner);
-            if (is_match) {
-                std::swap(last_cube.match.away1, last_cube.match.away2);
+        if (truncation_ply_ > 1) {
+            // N-ply cubeful evaluation at truncation point.
+            // `board` is the next mover's pre-roll position; branches[b].cube
+            // is from the next mover's perspective.
+            MoveFilter trunc_filter = {2, 0.03f};
+            for (int b = 0; b < n_branches; ++b) {
+                if (branches[b].finished) continue;
+                const Strategy& cf_strat = base_bearoff_ ? *base_bearoff_ : *base_;
+                float cf = cubeful_equity_nply(
+                    board, branches[b].cube, cf_strat,
+                    truncation_ply_, trunc_filter, 1 /*serial*/);
+                double sp_val;
+                if (is_match) {
+                    // cubeful_equity_nply returns equity; convert back to MWC
+                    // (branch final_equity uses MWC space for match play).
+                    float mwc = eq2mwc(cf,
+                        branches[b].cube.match.away1,
+                        branches[b].cube.match.away2,
+                        branches[b].cube.cube_value,
+                        branches[b].cube.match.is_crawford);
+                    // mwc is next mover's match winning chance
+                    sp_val = last_mover_is_sp ? (1.0 - static_cast<double>(mwc))
+                                              : static_cast<double>(mwc);
+                } else {
+                    // cf is per-cube-unit equity from next mover's perspective
+                    double points = cf * branches[b].cube.cube_value;
+                    sp_val = points / branches[b].basis_cube;
+                    if (last_mover_is_sp) sp_val = -sp_val;
+                }
+                branches[b].final_equity = sp_val - branches[b].vr_luck;
+                branches[b].finished = true;
             }
-            double sp_val;
-            if (is_match) {
-                float mwc = cl2cf_match(last_mover_probs, last_cube, trunc_x);
-                sp_val = last_mover_is_sp ? static_cast<double>(mwc)
-                                          : (1.0 - static_cast<double>(mwc));
-            } else {
-                float cf = cl2cf_money(last_mover_probs, last_cube.owner, trunc_x,
-                                        last_cube.jacoby_active());
-                double points = cf * last_cube.cube_value;
-                sp_val = points / branches[b].basis_cube;
-                if (!last_mover_is_sp) sp_val = -sp_val;
+        } else {
+            // 1-ply: Janowski on cubeless probs (original behavior)
+            float trunc_x = cube_efficiency(last_mover_board, trunc_race);
+            for (int b = 0; b < n_branches; ++b) {
+                if (branches[b].finished) continue;
+                // Cube is from next mover's perspective; flip to last mover's
+                CubeInfo last_cube = branches[b].cube;
+                last_cube.owner = flip_owner(last_cube.owner);
+                if (is_match) {
+                    std::swap(last_cube.match.away1, last_cube.match.away2);
+                }
+                double sp_val;
+                if (is_match) {
+                    float mwc = cl2cf_match(last_mover_probs, last_cube, trunc_x);
+                    sp_val = last_mover_is_sp ? static_cast<double>(mwc)
+                                              : (1.0 - static_cast<double>(mwc));
+                } else {
+                    float cf = cl2cf_money(last_mover_probs, last_cube.owner, trunc_x,
+                                            last_cube.jacoby_active());
+                    double points = cf * last_cube.cube_value;
+                    sp_val = points / branches[b].basis_cube;
+                    if (!last_mover_is_sp) sp_val = -sp_val;
+                }
+                branches[b].final_equity = sp_val - branches[b].vr_luck;
+                branches[b].finished = true;
             }
-            branches[b].final_equity = sp_val - branches[b].vr_luck;
-            branches[b].finished = true;
         }
     } else if (n_branches > 0) {
         // Dead-cube branches at truncation
@@ -1596,8 +1669,7 @@ RolloutStrategy::CubefulRolloutResult RolloutStrategy::cubeful_cube_decision(
         std::atomic<int> completed_trials{0};
 
         // Precompute move0 strategy selection (same for all rolls).
-        const bool m0_race = is_race(pre_roll_board);
-        const Strategy* m0_strat = m0_race ? base_.get() : checker_strat_.get();
+        const Strategy* m0_strat = checker_strat_.get();
 
         // Use persistent thread pool — same rationale as cubeless path.
         multipy_parallel_run(n_threads, [&]() {
