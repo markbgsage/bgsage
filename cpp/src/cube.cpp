@@ -815,12 +815,20 @@ static inline std::size_t hash_combine(std::size_t seed, std::size_t value) {
 
 // Open-addressing cubeful cache: fixed-size table with linear probing.
 // Much faster than unordered_map for this workload.
+//
+// Uses a global epoch counter to invalidate all thread-local caches at once.
+// begin_cubeful_cache_epoch() increments the global epoch; each cache entry
+// stores the epoch it was written at. Lookups reject entries from stale epochs.
+// This solves the cross-thread invalidation problem: worker threads in the
+// persistent thread pool retain their thread_local caches across calls, but
+// stale entries are automatically rejected when the epoch changes.
 struct CubefulCacheEntry {
     Board board;
     int plies;
     int cci;
     bool fTop;
     bool occupied;
+    uint64_t epoch;
     float values[MAX_CCI];
 };
 
@@ -828,9 +836,12 @@ static constexpr int CUBEFUL_CACHE_SIZE = 8192;   // must be power of 2
 static constexpr int CUBEFUL_CACHE_MASK = CUBEFUL_CACHE_SIZE - 1;
 static_assert((CUBEFUL_CACHE_SIZE & (CUBEFUL_CACHE_SIZE - 1)) == 0, "Must be power of 2");
 
+// Global epoch counter — incremented by begin_cubeful_cache_epoch() to
+// invalidate all thread-local cubeful caches without clearing them.
+static std::atomic<uint64_t> g_cubeful_cache_epoch{1};
+
 struct CubefulOpenCache {
     CubefulCacheEntry entries[CUBEFUL_CACHE_SIZE];
-    bool initialized = false;
 
     void clear() {
         // Zero-fill sets all occupied=false
@@ -850,12 +861,12 @@ struct CubefulOpenCache {
         return h;
     }
 
-    bool get(const Board& board, int plies, int cci, bool fTop, float* out) const {
+    bool get(const Board& board, int plies, int cci, bool fTop, uint64_t epoch, float* out) const {
         std::size_t idx = hash_board(board, plies, cci, fTop) & CUBEFUL_CACHE_MASK;
         // Linear probe up to 4 slots
         for (int probe = 0; probe < 4; ++probe) {
             const auto& e = entries[(idx + probe) & CUBEFUL_CACHE_MASK];
-            if (!e.occupied) return false;
+            if (!e.occupied || e.epoch != epoch) continue;
             if (e.plies == plies && e.cci == cci && e.fTop == fTop && e.board == board) {
                 for (int i = 0; i < cci; ++i) out[i] = e.values[i];
                 return true;
@@ -864,28 +875,31 @@ struct CubefulOpenCache {
         return false;
     }
 
-    void put(const Board& board, int plies, int cci, bool fTop, const float* values) {
+    void put(const Board& board, int plies, int cci, bool fTop, uint64_t epoch, const float* values) {
         std::size_t idx = hash_board(board, plies, cci, fTop) & CUBEFUL_CACHE_MASK;
-        // Linear probe up to 4 slots, replace first empty or matching slot
+        // Linear probe up to 4 slots, replace first empty/stale or matching slot
         for (int probe = 0; probe < 4; ++probe) {
             auto& e = entries[(idx + probe) & CUBEFUL_CACHE_MASK];
-            if (!e.occupied || (e.plies == plies && e.cci == cci && e.fTop == fTop && e.board == board)) {
+            if (!e.occupied || e.epoch != epoch ||
+                (e.plies == plies && e.cci == cci && e.fTop == fTop && e.board == board)) {
                 e.board = board;
                 e.plies = plies;
                 e.cci = cci;
                 e.fTop = fTop;
                 e.occupied = true;
+                e.epoch = epoch;
                 for (int i = 0; i < cci; ++i) e.values[i] = values[i];
                 return;
             }
         }
-        // All 4 probe slots occupied by different entries: evict first
+        // All 4 probe slots occupied by current-epoch entries: evict first
         auto& e = entries[idx & CUBEFUL_CACHE_MASK];
         e.board = board;
         e.plies = plies;
         e.cci = cci;
         e.fTop = fTop;
         e.occupied = true;
+        e.epoch = epoch;
         for (int i = 0; i < cci; ++i) e.values[i] = values[i];
     }
 };
@@ -893,7 +907,7 @@ struct CubefulOpenCache {
 static thread_local CubefulOpenCache g_cubeful_cache;
 
 static void begin_cubeful_cache_epoch() {
-    g_cubeful_cache.clear();
+    g_cubeful_cache_epoch.fetch_add(1, std::memory_order_relaxed);
 }
 
 static bool get_cached_cubeful(
@@ -906,7 +920,8 @@ static bool get_cached_cubeful(
     float arCubeful[])
 {
     if (!kEnableCubefulCache || cci <= 0) return false;
-    return g_cubeful_cache.get(board, plies, cci, fTop, arCubeful);
+    uint64_t epoch = g_cubeful_cache_epoch.load(std::memory_order_relaxed);
+    return g_cubeful_cache.get(board, plies, cci, fTop, epoch, arCubeful);
 }
 
 static void put_cached_cubeful(
@@ -919,7 +934,8 @@ static void put_cached_cubeful(
     const float arCubeful[])
 {
     if (!kEnableCubefulCache || cci <= 0) return;
-    g_cubeful_cache.put(board, plies, cci, fTop, arCubeful);
+    uint64_t epoch = g_cubeful_cache_epoch.load(std::memory_order_relaxed);
+    g_cubeful_cache.put(board, plies, cci, fTop, epoch, arCubeful);
 }
 
 // Resolve cube efficiency: use override if set, otherwise auto-detect.
