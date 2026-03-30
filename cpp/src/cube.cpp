@@ -1094,7 +1094,8 @@ static void cubeful_recursive_multi(
     int n_threads,
     bool allow_parallel,
     bool fTop,
-    float arCubeful[])
+    float arCubeful[],
+    const Strategy* move_filter = nullptr)
 {
     bool is_money = (cci > 0 && aciCubePos[0].cube_value > 0)
                     ? aciCubePos[0].is_money() : true;
@@ -1208,7 +1209,7 @@ static void cubeful_recursive_multi(
             cubeful_recursive_multi(opp_board, aci, expanded_cci,
                                     strategy, base_gps, plies - 1, filter,
                                     n_threads, child_allow_parallel, false,
-                                    arCfTemp);
+                                    arCfTemp, move_filter);
             for (int i = 0; i < expanded_cci; i++)
                 arCfLocal[i] = roll.weight * arCfTemp[i];
             return;
@@ -1253,7 +1254,7 @@ static void cubeful_recursive_multi(
             cubeful_recursive_multi(opp_pre_roll, aci, expanded_cci,
                                     strategy, base_gps, plies - 1, filter,
                                     n_threads, child_allow_parallel, false,
-                                    arCfTemp);
+                                    arCfTemp, move_filter);
             for (int i = 0; i < expanded_cci; i++) {
                 arCfLocal[i] = roll.weight * arCfTemp[i];
             }
@@ -1261,71 +1262,71 @@ static void cubeful_recursive_multi(
         }
 
         // Pick best move by cubeless 1-ply equity (shared across all cube states).
-        // For large candidate sets (common with doubles), pre-filter using a
-        // quick heuristic to avoid expensive NN evaluation of weak moves.
-        static constexpr int PREFILTER_THRESHOLD = 60;
-        static constexpr int PREFILTER_KEEP = 50;
+        // Two-stage filtering: if move_filter is set and we have enough candidates,
+        // use the cheap filter (e.g. PubEval) to narrow to top K, then evaluate
+        // survivors with the full model.
+        static constexpr int MOVE_FILTER_THRESHOLD = 14;
+        static constexpr int MOVE_FILTER_KEEP = 12;
 
         int best_idx = 0;
-        if (n_cand > PREFILTER_THRESHOLD && base_gps) {
-            // Quick heuristic: pip differential + hitting bonus + made-point bonus.
-            auto [orig_p1, orig_p2] = pip_counts(board);
+        const std::vector<Board>* eval_candidates = &candidates;
+        thread_local std::vector<Board> filtered;
+        thread_local std::vector<int> orig_indices;
 
-            thread_local std::vector<std::pair<float, int>> scores;
-            scores.clear();
-            scores.reserve(n_cand);
+        // Stage 1: cheap pre-filter (PubEval or similar)
+        if (move_filter && n_cand > MOVE_FILTER_THRESHOLD) {
+            thread_local std::vector<std::pair<double, int>> filter_scores;
+            filter_scores.clear();
+            filter_scores.reserve(n_cand);
+            bool pre_move_race = is_race(board);
             for (int c = 0; c < n_cand; c++) {
-                const Board& cb = candidates[c];
-                auto [p1, p2] = pip_counts(cb);
-                // Pip reduction (higher = better): (orig_p1 - p1) - (orig_p2 - p2)
-                float pip_diff = static_cast<float>((orig_p1 - p1) - (orig_p2 - p2));
-                // Hitting bonus: each checker on opponent's bar = 25 pips penalty
-                float hit_bonus = static_cast<float>(cb[0] - board[0]) * 25.0f;
-                // Made points bonus (points with 2+ checkers in home board)
-                float made_pts = 0.0f;
-                for (int pt = 1; pt <= 6; pt++) {
-                    if (cb[pt] >= 2 && board[pt] < 2) made_pts += 3.0f;
-                }
-                scores.push_back({-(pip_diff + hit_bonus + made_pts), c});
+                GameResult gr = check_game_over(candidates[c]);
+                double eq = (gr != GameResult::NOT_OVER)
+                    ? 1e30 // terminals always survive
+                    : move_filter->evaluate(candidates[c], pre_move_race);
+                filter_scores.push_back({-eq, c});  // negate for ascending sort
             }
+            int keep = std::min(MOVE_FILTER_KEEP, n_cand);
+            std::partial_sort(filter_scores.begin(), filter_scores.begin() + keep,
+                              filter_scores.end());
 
-            int keep = std::min(PREFILTER_KEEP, n_cand);
-            std::partial_sort(scores.begin(), scores.begin() + keep, scores.end());
-
-            thread_local std::vector<Board> filtered;
             filtered.clear();
             filtered.reserve(keep);
-            thread_local std::vector<int> orig_indices;
             orig_indices.clear();
             orig_indices.reserve(keep);
             for (int k = 0; k < keep; k++) {
-                filtered.push_back(candidates[scores[k].second]);
-                orig_indices.push_back(scores[k].second);
+                filtered.push_back(candidates[filter_scores[k].second]);
+                orig_indices.push_back(filter_scores[k].second);
             }
+            eval_candidates = &filtered;
+        }
 
-            int filtered_best = base_gps->batch_evaluate_candidates_best_prob(
-                filtered, board, nullptr, nullptr);
-            best_idx = orig_indices[filtered_best];
-        } else if (base_gps) {
-            best_idx = base_gps->batch_evaluate_candidates_best_prob(
-                candidates, board, nullptr, nullptr);
+        // Stage 2: full model evaluation on survivors
+        if (base_gps) {
+            int local_best = base_gps->batch_evaluate_candidates_best_prob(
+                *eval_candidates, board, nullptr, nullptr);
+            best_idx = (eval_candidates == &candidates)
+                ? local_best : orig_indices[local_best];
         } else {
             float best_eq = -1e30f;
-            for (int c = 0; c < n_cand; c++) {
+            int local_best = 0;
+            for (int c = 0; c < static_cast<int>(eval_candidates->size()); c++) {
                 float eq;
-                GameResult gr = check_game_over(candidates[c]);
+                GameResult gr = check_game_over((*eval_candidates)[c]);
                 if (gr != GameResult::NOT_OVER) {
                     eq = cubeless_equity(terminal_probs(gr));
                 } else {
-                    auto probs = strategy.evaluate_probs(candidates[c],
-                                                       is_race(candidates[c]));
+                    auto probs = strategy.evaluate_probs((*eval_candidates)[c],
+                                                       is_race((*eval_candidates)[c]));
                     eq = cubeless_equity(probs);
                 }
                 if (eq > best_eq) {
                     best_eq = eq;
-                    best_idx = c;
+                    local_best = c;
                 }
             }
+            best_idx = (eval_candidates == &candidates)
+                ? local_best : orig_indices[local_best];
         }
 
         // Check if best move is terminal
@@ -1368,7 +1369,7 @@ static void cubeful_recursive_multi(
         cubeful_recursive_multi(opp_pre_roll, aci, expanded_cci,
                                 strategy, base_gps, plies - 1, filter,
                                 n_threads, child_allow_parallel, false,
-                                arCfTemp);
+                                arCfTemp, move_filter);
 
         for (int i = 0; i < expanded_cci; i++)
             arCfLocal[i] = roll.weight * arCfTemp[i];
@@ -1420,7 +1421,8 @@ float cubeful_equity_nply(
     const Strategy& strategy,
     int n_plies,
     const MoveFilter& filter,
-    int n_threads)
+    int n_threads,
+    const Strategy* move_filter)
 {
     if (n_plies <= 1) {
         CubeInfo cube;
@@ -1440,7 +1442,7 @@ float cubeful_equity_nply(
     float arCubeful[1];
     bool allow_parallel = (n_threads > 1 && n_plies > 2);
     cubeful_recursive_multi(board, aciCubePos, 1, strategy, base_gps, n_plies, filter,
-                            n_threads, allow_parallel, false, arCubeful);
+                            n_threads, allow_parallel, false, arCubeful, move_filter);
     return arCubeful[0];
 }
 
@@ -1451,7 +1453,8 @@ float cubeful_equity_nply(
     const Strategy& strategy,
     int n_plies,
     const MoveFilter& filter,
-    int n_threads)
+    int n_threads,
+    const Strategy* move_filter)
 {
     if (n_plies <= 1) {
         float val = eval_pre_roll_cubeful_1ply(board, cube, strategy);
@@ -1467,7 +1470,7 @@ float cubeful_equity_nply(
     float arCubeful[1];
     bool allow_parallel = (n_threads > 1 && n_plies > 2);
     cubeful_recursive_multi(board, aciCubePos, 1, strategy, base_gps, n_plies, filter,
-                            n_threads, allow_parallel, false, arCubeful);
+                            n_threads, allow_parallel, false, arCubeful, move_filter);
 
     if (cube.is_money()) return arCubeful[0];
     return mwc2eq(arCubeful[0], cube.match.away1, cube.match.away2,
@@ -1483,7 +1486,8 @@ static int pick_best_move_for_roll(
     int die1, int die2,
     const Strategy& strategy,
     const GamePlanStrategy* base_gps,
-    std::vector<Board>& candidates)
+    std::vector<Board>& candidates,
+    const Strategy* move_filter = nullptr)
 {
     candidates.clear();
     if (candidates.capacity() < 32) candidates.reserve(32);
@@ -1493,61 +1497,65 @@ static int pick_best_move_for_roll(
     if (n_cand == 0) return -1;
     if (n_cand == 1) return 0;
 
-    static constexpr int PREFILTER_THRESHOLD = 60;
-    static constexpr int PREFILTER_KEEP = 50;
+    static constexpr int PREFILTER_THRESHOLD = 14;
+    static constexpr int PREFILTER_KEEP = 12;
 
-    int best_idx = 0;
-    if (n_cand > PREFILTER_THRESHOLD && base_gps) {
-        auto [orig_p1, orig_p2] = pip_counts(board);
-        thread_local std::vector<std::pair<float, int>> scores;
-        scores.clear();
-        scores.reserve(n_cand);
+    // Pre-filter with cheap evaluator (e.g. PubEval) if available
+    const std::vector<Board>* eval_candidates = &candidates;
+    thread_local std::vector<Board> filtered;
+    thread_local std::vector<int> orig_indices;
+
+    if (move_filter && n_cand > PREFILTER_THRESHOLD) {
+        thread_local std::vector<std::pair<double, int>> filter_scores;
+        filter_scores.clear();
+        filter_scores.reserve(n_cand);
+        bool pre_move_race = is_race(board);
         for (int c = 0; c < n_cand; c++) {
-            const Board& cb = candidates[c];
-            auto [p1, p2] = pip_counts(cb);
-            float pip_diff = static_cast<float>((orig_p1 - p1) - (orig_p2 - p2));
-            float hit_bonus = static_cast<float>(cb[0] - board[0]) * 25.0f;
-            float made_pts = 0.0f;
-            for (int pt = 1; pt <= 6; pt++) {
-                if (cb[pt] >= 2 && board[pt] < 2) made_pts += 3.0f;
-            }
-            scores.push_back({-(pip_diff + hit_bonus + made_pts), c});
+            GameResult gr = check_game_over(candidates[c]);
+            double eq = (gr != GameResult::NOT_OVER)
+                ? 1e30 : move_filter->evaluate(candidates[c], pre_move_race);
+            filter_scores.push_back({-eq, c});
         }
         int keep = std::min(PREFILTER_KEEP, n_cand);
-        std::partial_sort(scores.begin(), scores.begin() + keep, scores.end());
-        thread_local std::vector<Board> filtered;
+        std::partial_sort(filter_scores.begin(), filter_scores.begin() + keep,
+                          filter_scores.end());
         filtered.clear();
         filtered.reserve(keep);
-        thread_local std::vector<int> orig_indices;
         orig_indices.clear();
         orig_indices.reserve(keep);
         for (int k = 0; k < keep; k++) {
-            filtered.push_back(candidates[scores[k].second]);
-            orig_indices.push_back(scores[k].second);
+            filtered.push_back(candidates[filter_scores[k].second]);
+            orig_indices.push_back(filter_scores[k].second);
         }
-        int filtered_best = base_gps->batch_evaluate_candidates_best_prob(
-            filtered, board, nullptr, nullptr);
-        best_idx = orig_indices[filtered_best];
-    } else if (base_gps) {
-        best_idx = base_gps->batch_evaluate_candidates_best_prob(
-            candidates, board, nullptr, nullptr);
+        eval_candidates = &filtered;
+    }
+
+    int best_idx = 0;
+    if (base_gps) {
+        int local_best = base_gps->batch_evaluate_candidates_best_prob(
+            *eval_candidates, board, nullptr, nullptr);
+        best_idx = (eval_candidates == &candidates)
+            ? local_best : orig_indices[local_best];
     } else {
         float best_eq = -1e30f;
-        for (int c = 0; c < n_cand; c++) {
+        int local_best = 0;
+        for (int c = 0; c < static_cast<int>(eval_candidates->size()); c++) {
             float eq;
-            GameResult gr = check_game_over(candidates[c]);
+            GameResult gr = check_game_over((*eval_candidates)[c]);
             if (gr != GameResult::NOT_OVER) {
                 eq = cubeless_equity(terminal_probs(gr));
             } else {
-                auto probs = strategy.evaluate_probs(candidates[c],
-                                                     is_race(candidates[c]));
+                auto probs = strategy.evaluate_probs((*eval_candidates)[c],
+                                                     is_race((*eval_candidates)[c]));
                 eq = cubeless_equity(probs);
             }
             if (eq > best_eq) {
                 best_eq = eq;
-                best_idx = c;
+                local_best = c;
             }
         }
+        best_idx = (eval_candidates == &candidates)
+            ? local_best : orig_indices[local_best];
     }
     return best_idx;
 }
@@ -1583,7 +1591,8 @@ CubeDecision cube_decision_nply_with_details(
     int n_plies,
     const MoveFilter& filter,
     int n_threads,
-    TwoPlyDetails& details)
+    TwoPlyDetails& details,
+    const Strategy* move_filter)
 {
     begin_cubeful_cache_epoch();
 
@@ -1628,7 +1637,7 @@ CubeDecision cube_decision_nply_with_details(
         // Generate legal moves and pick best
         thread_local std::vector<Board> candidates;
         int best_idx = pick_best_move_for_roll(board, roll.d1, roll.d2,
-                                                strategy, base_gps, candidates);
+                                                strategy, base_gps, candidates, move_filter);
 
         if (best_idx < 0) {
             // No legal moves (dancing): standing pat
@@ -1658,7 +1667,7 @@ CubeDecision cube_decision_nply_with_details(
 
                 thread_local std::vector<Board> opp_candidates;
                 int opp_best = pick_best_move_for_roll(opp_board, opp_roll.d1, opp_roll.d2,
-                                                        strategy, base_gps, opp_candidates);
+                                                        strategy, base_gps, opp_candidates, move_filter);
 
                 Board opp_post_move;
                 if (opp_best < 0) {
@@ -1691,7 +1700,7 @@ CubeDecision cube_decision_nply_with_details(
                 float arCfTemp2[MAX_CCI * 2];
                 cubeful_recursive_multi(player_pre_roll, aci_L2, expanded_cci_L2,
                                         strategy, base_gps, n_plies - 2, filter,
-                                        n_threads, false, false, arCfTemp2);
+                                        n_threads, false, false, arCfTemp2, move_filter);
                 for (int i = 0; i < expanded_cci_L2; i++) {
                     opp_roll_results[opp_r][i] = arCfTemp2[i];
                     arCf_L2[i] += opp_roll.weight * arCfTemp2[i];
@@ -1880,7 +1889,7 @@ CubeDecision cube_decision_nply_with_details(
 
             thread_local std::vector<Board> opp_candidates;
             int opp_best = pick_best_move_for_roll(opp_pre_roll, opp_roll.d1, opp_roll.d2,
-                                                    strategy, base_gps, opp_candidates);
+                                                    strategy, base_gps, opp_candidates, move_filter);
 
             Board opp_post_move;
             if (opp_best < 0) {
@@ -1907,7 +1916,7 @@ CubeDecision cube_decision_nply_with_details(
             float arCfTemp2[MAX_CCI * 2];
             cubeful_recursive_multi(player_pre_roll, aci_L2, expanded_cci_L2,
                                     strategy, base_gps, n_plies - 2, filter,
-                                    n_threads, false, false, arCfTemp2);
+                                    n_threads, false, false, arCfTemp2, move_filter);
             for (int i = 0; i < expanded_cci_L2; i++) {
                 opp_roll_results[opp_r][i] = arCfTemp2[i];
                 arCf_L2[i] += opp_roll.weight * arCfTemp2[i];
@@ -2154,7 +2163,8 @@ CubeDecision cube_decision_nply(
     const Strategy& strategy,
     int n_plies,
     const MoveFilter& filter,
-    int n_threads)
+    int n_threads,
+    const Strategy* move_filter)
 {
     if (n_plies <= 1) {
         // Use 1-ply path: get pre-roll probs, apply Janowski
@@ -2181,7 +2191,7 @@ CubeDecision cube_decision_nply(
     const auto* base_gps = dynamic_cast<const GamePlanStrategy*>(&strategy);
     float arCubeful[2];
     cubeful_recursive_multi(board, aciCubePos, 2, strategy, base_gps, n_plies, filter,
-                            n_threads, allow_parallel, /*fTop=*/true, arCubeful);
+                            n_threads, allow_parallel, /*fTop=*/true, arCubeful, move_filter);
 
     // arCubeful[0] = ND value, arCubeful[1] = DT value (at doubled cube scale)
     CubeDecision result;

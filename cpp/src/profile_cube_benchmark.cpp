@@ -4,6 +4,7 @@
 #include "bgbot/encoding.h"
 #include "bgbot/multipy.h"
 #include "bgbot/neural_net.h"
+#include "bgbot/pubeval.h"
 #include "bgbot/rollout.h"
 
 #include <array>
@@ -579,6 +580,8 @@ int main(int argc, char* argv[]) {
             if (ctx.bearoff_db) {
                 ctx.rollout->set_bearoff_db(ctx.bearoff_db.get());
             }
+            // PubEval move filter for faster candidate pre-filtering in cubeful recursion
+            ctx.rollout->set_move_filter(std::make_shared<PubEval>());
         } else if (level != "1ply") {
             const int n_plies = level[0] - '0';
             ctx.nply = std::make_shared<MultiPlyStrategy>(
@@ -595,6 +598,7 @@ int main(int argc, char* argv[]) {
         double total_time = 0.0;
         for (std::size_t i = 0; i < benchmark_positions().size(); ++i) {
             const auto& pos = benchmark_positions()[i];
+            reset_cubeful_counters();
             const auto t0 = std::chrono::steady_clock::now();
             const CubeBenchmarkResult result = evaluate_position(ctx, pos);
             const auto t1 = std::chrono::steady_clock::now();
@@ -645,6 +649,7 @@ int main(int argc, char* argv[]) {
                 print_prob_std_errors(*result.prob_std_errors);
             }
             std::cout << "    Time: " << std::fixed << std::setprecision(3) << elapsed << "s\n";
+            print_cubeful_counters();
         }
 
         std::cout << "\n======================================================================\n";

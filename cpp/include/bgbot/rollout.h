@@ -172,6 +172,11 @@ public:
     void set_bearoff_db(const BearoffDB* db);
     const BearoffDB* bearoff_db() const { return bearoff_db_; }
 
+    // Set a cheap filter strategy (e.g. PubEval) for pre-filtering candidates
+    // in cubeful N-ply recursion during trials. Reduces expensive NN evaluations
+    // by narrowing candidates before full-model evaluation.
+    void set_move_filter(std::shared_ptr<Strategy> filter);  // defined in rollout.cpp
+
     // Clear thread-local N-ply caches. Call between independent positions
     // when reusing the same strategy to prevent state accumulation.
     void clear_internal_caches() const;
@@ -196,6 +201,12 @@ private:
     GamePlanStrategy* base_gps_;   // Cached downcast (null if not GPS)
     GamePlanPairStrategy* base_gpp_;  // Cached downcast (null if not 17-NN pair strategy)
     const BearoffDB* bearoff_db_ = nullptr;
+
+    // Optional cheap filter strategy for pre-filtering candidates in cubeful
+    // N-ply recursion (e.g., PubEval). When set, move selection inside
+    // cubeful_recursive_multi narrows candidates with this filter before
+    // evaluating survivors with the full model.
+    std::shared_ptr<Strategy> move_filter_;
     RolloutConfig config_;
     mutable std::unique_ptr<SharedPosCache> shared_pos_cache_;
 

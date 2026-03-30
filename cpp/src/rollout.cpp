@@ -124,6 +124,19 @@ void RolloutStrategy::set_bearoff_db(const BearoffDB* db) {
     if (cube_late_inner_rollout_) cube_late_inner_rollout_->set_bearoff_db(db);
 }
 
+void RolloutStrategy::set_move_filter(std::shared_ptr<Strategy> filter) {
+    move_filter_ = filter;
+    // Propagate to MultiPlyStrategy instances used for checker play
+    auto propagate = [&](Strategy* strat) {
+        if (auto* mps = dynamic_cast<MultiPlyStrategy*>(strat)) {
+            mps->set_move_prefilter(filter);
+        }
+    };
+    propagate(checker_strat_.get());
+    propagate(checker_late_strat_.get());
+    propagate(truncation_strat_.get());
+}
+
 // ======================== Cancellation ========================
 
 void RolloutStrategy::cancel() {
@@ -930,7 +943,8 @@ RolloutStrategy::TrialResult RolloutStrategy::run_trial_unified(
                         const Strategy& cf_base = base_bearoff_ ? *base_bearoff_ : *base_;
                         cd = cube_decision_nply(
                             board, branches[b].cube, cf_base,
-                            cube_cfg->ply, cube_filter, 1 /*serial*/);
+                            cube_cfg->ply, cube_filter, 1 /*serial*/,
+                            move_filter_.get());
                     }
 
                     // Same double/take/pass handling as 1-ply path
@@ -1319,7 +1333,8 @@ RolloutStrategy::TrialResult RolloutStrategy::run_trial_unified(
                 const Strategy& cf_strat = base_bearoff_ ? *base_bearoff_ : *base_;
                 float cf = cubeful_equity_nply(
                     board, branches[b].cube, cf_strat,
-                    truncation_ply_, trunc_filter, 1 /*serial*/);
+                    truncation_ply_, trunc_filter, 1 /*serial*/,
+                    move_filter_.get());
                 double sp_val;
                 if (is_match) {
                     // cubeful_equity_nply returns equity; convert back to MWC

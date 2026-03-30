@@ -199,7 +199,8 @@ float cubeful_equity_nply(
     const Strategy& strategy,     // cubeless base strategy
     int n_plies,
     const MoveFilter& filter = MoveFilters::TINY,
-    int n_threads = 1);
+    int n_threads = 1,
+    const Strategy* move_filter = nullptr);
 
 // Compute cubeful equity for a pre-roll position at N-ply depth (money or match).
 // Uses full CubeInfo including match state. For money game, dispatches to
@@ -211,18 +212,22 @@ float cubeful_equity_nply(
     const Strategy& strategy,
     int n_plies,
     const MoveFilter& filter = MoveFilters::TINY,
-    int n_threads = 1);
+    int n_threads = 1,
+    const Strategy* move_filter = nullptr);
 
 // Compute full cube decision at N-ply depth.
 // `board` is pre-roll from the player's perspective.
 // Returns CubeDecision with ND/DT/DP equities and optimal play decisions.
+// move_filter: optional cheap strategy (e.g. PubEval) for pre-filtering candidates
+// in move selection before evaluating survivors with the full strategy.
 CubeDecision cube_decision_nply(
     const Board& board,
     const CubeInfo& cube,
     const Strategy& strategy,
     int n_plies,
     const MoveFilter& filter = MoveFilters::TINY,
-    int n_threads = 1);
+    int n_threads = 1,
+    const Strategy* move_filter = nullptr);
 
 // Compute full cube decision at N-ply depth, with per-roll details for the
 // first two turns (player + opponent) under the No Double scenario.
@@ -236,7 +241,8 @@ CubeDecision cube_decision_nply_with_details(
     int n_plies,
     const MoveFilter& filter,
     int n_threads,
-    TwoPlyDetails& details);
+    TwoPlyDetails& details,
+    const Strategy* move_filter = nullptr);
 
 // Compute cube decision from cubeless pre-roll probabilities (Janowski conversion).
 // This is the simplest form of cubeful evaluation from any source of cubeless probs

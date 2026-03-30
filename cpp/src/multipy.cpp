@@ -440,12 +440,13 @@ std::array<float, NUM_OUTPUTS> MultiPlyStrategy::evaluate_probs_nply_impl(
     // opponent's probs and invert them back to the current player's perspective.
     std::array<double, NUM_OUTPUTS> sum_probs = {0, 0, 0, 0, 0};
 
+    // PubEval pre-filter replaces old pip-based heuristic. Same threshold/keep
+    // as before (20/15) — only the quality of filtering changes.
     constexpr int PREFILTER_THRESHOLD = 20;
     constexpr int PREFILTER_KEEP = 15;
 
     auto evaluate_roll = [&](const DiceRoll& roll) -> std::array<float, NUM_OUTPUTS> {
         thread_local std::vector<Board> opp_candidates;
-        thread_local std::vector<std::pair<int, int>> pip_ranking;
         thread_local std::vector<Board> filtered_candidates;
         thread_local std::vector<double> opp_equities;
 
@@ -455,33 +456,28 @@ std::array<float, NUM_OUTPUTS> MultiPlyStrategy::evaluate_probs_nply_impl(
         // Generate opponent's legal moves
         possible_boards(opp_board, roll.d1, roll.d2, opp_candidates);
 
-        // Pre-filter if too many candidates
-        if (static_cast<int>(opp_candidates.size()) > PREFILTER_THRESHOLD) {
-            pip_ranking.clear();
-            pip_ranking.reserve(opp_candidates.size());
-            for (int ci = 0; ci < static_cast<int>(opp_candidates.size()); ++ci) {
-                const auto& cand = opp_candidates[ci];
-                int blots = 0;
-                int p_pips = 0;
-                for (int pt = 1; pt <= 24; ++pt) {
-                    const int p = cand[pt];
-                    if (p > 0) {
-                        p_pips += pt * p;
-                        if (p == 1) ++blots;
-                    }
-                }
-                int score = p_pips + 8 * blots + 20 * cand[25];
-                pip_ranking.push_back({score, ci});
+        // Pre-filter with cheap evaluator (PubEval) if available, otherwise skip.
+        // Replaces old pip-based heuristic with same threshold.
+        if (move_prefilter_ && static_cast<int>(opp_candidates.size()) > PREFILTER_THRESHOLD) {
+            const int n_cand = static_cast<int>(opp_candidates.size());
+            thread_local std::vector<std::pair<double, int>> filter_scores;
+            filter_scores.clear();
+            filter_scores.reserve(n_cand);
+            bool opp_race = is_race(opp_board);
+            for (int ci = 0; ci < n_cand; ++ci) {
+                GameResult gr = check_game_over(opp_candidates[ci]);
+                double eq = (gr != GameResult::NOT_OVER)
+                    ? 1e30  // terminals always survive
+                    : move_prefilter_->evaluate(opp_candidates[ci], opp_race);
+                filter_scores.push_back({-eq, ci});
             }
-            std::nth_element(pip_ranking.begin(),
-                             pip_ranking.begin() + PREFILTER_KEEP,
-                             pip_ranking.end());
-            pip_ranking.resize(PREFILTER_KEEP);
-            std::sort(pip_ranking.begin(), pip_ranking.end());
+            int keep = std::min(PREFILTER_KEEP, n_cand);
+            std::partial_sort(filter_scores.begin(), filter_scores.begin() + keep,
+                              filter_scores.end());
             filtered_candidates.clear();
-            filtered_candidates.reserve(PREFILTER_KEEP);
-            for (int fi = 0; fi < PREFILTER_KEEP; ++fi) {
-                filtered_candidates.push_back(opp_candidates[pip_ranking[fi].second]);
+            filtered_candidates.reserve(keep);
+            for (int k = 0; k < keep; ++k) {
+                filtered_candidates.push_back(opp_candidates[filter_scores[k].second]);
             }
             opp_candidates.swap(filtered_candidates);
         }

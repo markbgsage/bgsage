@@ -282,6 +282,10 @@ public:
     void set_bearoff_db(const BearoffDB* db) { bearoff_db_ = db; }
     const BearoffDB* bearoff_db() const { return bearoff_db_; }
 
+    // Set a cheap filter strategy (e.g. PubEval) for pre-filtering opponent
+    // candidates in N-ply evaluation before full-model scoring.
+    void set_move_prefilter(std::shared_ptr<Strategy> filter) { move_prefilter_ = std::move(filter); }
+
     // Enable/disable position cache (for profiling).
     void set_cache_enabled(bool enabled) { cache_enabled_ = enabled; }
     bool cache_enabled() const { return cache_enabled_; }
@@ -304,6 +308,7 @@ private:
     GamePlanStrategy* filter_gps_ = nullptr;  // Cached downcast
     GamePlanPairStrategy* filter_gpp_ = nullptr;  // Cached downcast for pair strategy
     const BearoffDB* bearoff_db_ = nullptr;
+    std::shared_ptr<Strategy> move_prefilter_;  // Cheap filter (e.g. PubEval) for opponent candidate pruning
     int n_plies_;
     MoveFilter move_filter_;
     std::vector<MoveFilterStep> filter_chain_;
