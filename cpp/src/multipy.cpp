@@ -270,6 +270,7 @@ MultiPlyStrategy::MultiPlyStrategy(std::shared_ptr<Strategy> base_strategy,
                                    int parallel_threads)
     : base_(std::move(base_strategy))
     , base_gps_(dynamic_cast<GamePlanStrategy*>(base_.get()))
+    , base_gpp_(dynamic_cast<GamePlanPairStrategy*>(base_.get()))
     , n_plies_(std::max(1, n_plies))
     , move_filter_(filter)
     , full_depth_opponent_(full_depth_opponent)
@@ -279,6 +280,7 @@ MultiPlyStrategy::MultiPlyStrategy(std::shared_ptr<Strategy> base_strategy,
 {
     // No separate filter strategy: use base_ for filtering too
     filter_gps_ = base_gps_;
+    filter_gpp_ = base_gpp_;
     if (move_filter_.max_moves < 1) move_filter_.max_moves = 1;
     if (move_filter_.threshold < 0.0f) move_filter_.threshold = 0.0f;
     filter_chain_ = build_filter_chain(move_filter_, n_plies_);
@@ -293,8 +295,10 @@ MultiPlyStrategy::MultiPlyStrategy(std::shared_ptr<Strategy> base_strategy,
                                    int parallel_threads)
     : base_(std::move(base_strategy))
     , base_gps_(dynamic_cast<GamePlanStrategy*>(base_.get()))
+    , base_gpp_(dynamic_cast<GamePlanPairStrategy*>(base_.get()))
     , filter_strat_(std::move(filter_strategy))
     , filter_gps_(dynamic_cast<GamePlanStrategy*>(filter_strat_.get()))
+    , filter_gpp_(dynamic_cast<GamePlanPairStrategy*>(filter_strat_.get()))
     , n_plies_(std::max(1, n_plies))
     , move_filter_(filter)
     , full_depth_opponent_(full_depth_opponent)
@@ -571,10 +575,28 @@ std::array<float, NUM_OUTPUTS> MultiPlyStrategy::evaluate_probs_nply_impl(
                 // return base_->evaluate_probs(best, board). We already have those
                 // probs from the batch evaluation. Use them directly.
                 p1_probs = invert_probs(best_probs);
+            } else if (plies == 2 && base_gpp_ && !filter_strat_) {
+                std::array<float, NUM_OUTPUTS> best_probs{};
+                best_opp_idx = base_gpp_->batch_evaluate_candidates_best_prob(
+                    opp_candidates, opp_board, nullptr, &best_probs);
+                p1_probs = invert_probs(best_probs);
             } else if (filter_gps_) {
                 // Batch evaluation with filter strategy: classify once, encode all, forward_batch
                 opp_equities.resize(opp_candidates.size());
                 best_opp_idx = filter_gps_->batch_evaluate_candidates_equity(
+                    opp_candidates, opp_board, opp_equities.data());
+
+                Board opp_best = opp_candidates[best_opp_idx];
+                GameResult opp_result = check_game_over(opp_best);
+                if (opp_result != GameResult::NOT_OVER) {
+                    p1_probs = invert_probs(terminal_probs(opp_result));
+                } else {
+                    auto opp_probs = evaluate_probs_nply_impl(opp_best, opp_board, plies - 1, false);
+                    p1_probs = invert_probs(opp_probs);
+                }
+            } else if (filter_gpp_) {
+                opp_equities.resize(opp_candidates.size());
+                best_opp_idx = filter_gpp_->batch_evaluate_candidates_equity(
                     opp_candidates, opp_board, opp_equities.data());
 
                 Board opp_best = opp_candidates[best_opp_idx];
@@ -738,6 +760,9 @@ int MultiPlyStrategy::best_move_index_impl(
         if (step.ply == 1 && filter_gps_) {
             // Fast path: batch 1-ply evaluation via GamePlanStrategy
             filter_gps_->batch_evaluate_candidates_equity(
+                candidates, pre_move_board, equities.data());
+        } else if (step.ply == 1 && filter_gpp_) {
+            filter_gpp_->batch_evaluate_candidates_equity(
                 candidates, pre_move_board, equities.data());
         } else {
             // N-ply evaluation for each survivor

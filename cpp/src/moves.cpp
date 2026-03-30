@@ -90,18 +90,56 @@ bool has_checkers(const Board& b) {
     return false;
 }
 
+struct BoardLess {
+    bool operator()(const Board& a, const Board& b) const noexcept {
+        for (int i = 0; i < 26; ++i) {
+            if (a[i] != b[i]) return a[i] < b[i];
+        }
+        return false;
+    }
+};
+
+void sort_unique_boards(std::vector<Board>& results) {
+    if (results.size() <= 1) return;
+
+    constexpr BoardLess board_less{};
+
+    // Candidate lists are usually small; maintaining a sorted unique vector
+    // avoids the heavier general-purpose introsort path in the hot move-gen loop.
+    if (results.size() <= 48) {
+        std::vector<Board> sorted_unique;
+        sorted_unique.reserve(results.size());
+        for (const auto& board : results) {
+            auto it = std::lower_bound(sorted_unique.begin(), sorted_unique.end(), board, board_less);
+            if (it == sorted_unique.end() || *it != board) {
+                sorted_unique.insert(it, board);
+            }
+        }
+        results.swap(sorted_unique);
+        return;
+    }
+
+    std::sort(results.begin(), results.end(), board_less);
+    results.erase(std::unique(results.begin(), results.end()), results.end());
+}
+
 // Strict recursive generator: only adds boards where ALL n_dice are used.
 // Does NOT add partial (fewer-dice) fallback results.
 // This enforces the backgammon rule: must use maximum number of dice possible.
+//
+// Each recursion depth gets its own scratch vector so we don't have to copy the
+// current level's candidate list before descending.
 void generate_boards_strict(const Board& b, const int* dice, int n_dice,
                             std::vector<Board>& results,
-                            std::vector<Board>& scratch) {
+                            std::vector<Board>* scratch_by_depth,
+                            int depth = 0) {
     // All checkers borne off mid-sequence — game over, remaining dice irrelevant
     if (!has_checkers(b)) {
         results.push_back(b);
         return;
     }
 
+    std::vector<Board>& scratch = scratch_by_depth[depth];
     scratch.clear();
     possible_boards_one_die(b, dice[0], scratch);
 
@@ -116,12 +154,9 @@ void generate_boards_strict(const Board& b, const int* dice, int n_dice,
         return;
     }
 
-    // Save intermediate results to avoid scratch being overwritten in recursion.
-    auto intermediates = scratch;  // copy
-
-    for (const auto& nb : intermediates) {
+    for (const auto& nb : scratch) {
         // Only recurse — do NOT add intermediate if remaining dice can't be used.
-        generate_boards_strict(nb, dice + 1, n_dice - 1, results, scratch);
+        generate_boards_strict(nb, dice + 1, n_dice - 1, results, scratch_by_depth, depth + 1);
     }
 }
 
@@ -130,22 +165,24 @@ void generate_boards_strict(const Board& b, const int* dice, int n_dice,
 std::vector<Board> possible_boards(const Board& board, int die1, int die2) {
     std::vector<Board> results;
     results.reserve(32);
-    std::vector<Board> scratch;
-    scratch.reserve(16);
+    std::array<std::vector<Board>, 4> scratch_by_depth;
+    for (auto& scratch : scratch_by_depth) {
+        scratch.reserve(16);
+    }
 
     if (die1 == die2) {
         // Doubles: must use maximum number of dice possible (4, then 3, ...)
         int dice[4] = {die1, die1, die1, die1};
         for (int n = 4; n >= 1; --n) {
-            generate_boards_strict(board, dice, n, results, scratch);
+            generate_boards_strict(board, dice, n, results, scratch_by_depth.data());
             if (!results.empty()) break;
         }
     } else {
         // Non-doubles: must use both dice if possible
         int dice_a[2] = {die1, die2};
         int dice_b[2] = {die2, die1};
-        generate_boards_strict(board, dice_a, 2, results, scratch);
-        generate_boards_strict(board, dice_b, 2, results, scratch);
+        generate_boards_strict(board, dice_a, 2, results, scratch_by_depth.data());
+        generate_boards_strict(board, dice_b, 2, results, scratch_by_depth.data());
 
         if (results.empty()) {
             // Can't use both dice. Must use the larger one if possible.
@@ -163,9 +200,7 @@ std::vector<Board> possible_boards(const Board& board, int die1, int die2) {
         return results;
     }
 
-    // Deduplicate
-    std::sort(results.begin(), results.end());
-    results.erase(std::unique(results.begin(), results.end()), results.end());
+    sort_unique_boards(results);
 
     return results;
 }
@@ -173,23 +208,26 @@ std::vector<Board> possible_boards(const Board& board, int die1, int die2) {
 void possible_boards(const Board& board, int die1, int die2,
                      std::vector<Board>& results) {
     results.clear();
-    thread_local std::vector<Board> scratch;
-    scratch.clear();
-    scratch.reserve(16);
+    thread_local std::array<std::vector<Board>, 4> scratch_by_depth;
+    for (auto& scratch : scratch_by_depth) {
+        if (scratch.capacity() < 16) {
+            scratch.reserve(16);
+        }
+    }
 
     if (die1 == die2) {
         // Doubles: must use maximum number of dice possible (4, then 3, ...)
         int dice[4] = {die1, die1, die1, die1};
         for (int n = 4; n >= 1; --n) {
-            generate_boards_strict(board, dice, n, results, scratch);
+            generate_boards_strict(board, dice, n, results, scratch_by_depth.data());
             if (!results.empty()) break;
         }
     } else {
         // Non-doubles: must use both dice if possible
         int dice_a[2] = {die1, die2};
         int dice_b[2] = {die2, die1};
-        generate_boards_strict(board, dice_a, 2, results, scratch);
-        generate_boards_strict(board, dice_b, 2, results, scratch);
+        generate_boards_strict(board, dice_a, 2, results, scratch_by_depth.data());
+        generate_boards_strict(board, dice_b, 2, results, scratch_by_depth.data());
 
         if (results.empty()) {
             // Can't use both dice. Must use the larger one if possible.
@@ -207,8 +245,7 @@ void possible_boards(const Board& board, int die1, int die2,
         return;
     }
 
-    std::sort(results.begin(), results.end());
-    results.erase(std::unique(results.begin(), results.end()), results.end());
+    sort_unique_boards(results);
 }
 
 } // namespace bgbot

@@ -515,6 +515,7 @@ std::array<float, NN_OUTPUTS> NeuralNetwork::forward_save_base(
             saved_base[h] += v;
         }
     }
+
     for (int h = 0; h < nh; ++h) {
         hiddens[h] = fast_sigmoid(hiddens[h]);
     }
@@ -1835,34 +1836,33 @@ int GamePlanPairStrategy::batch_evaluate_candidates_equity(
     if (nn_indices.empty()) return best_idx;
 
     const int nn_count = static_cast<int>(nn_indices.size());
-    thread_local std::vector<float> saved_base, saved_inputs, cur_inputs;
+    thread_local std::vector<float> saved_base, saved_inputs;
     saved_base.resize(nh);
     saved_inputs.resize(ni);
-    cur_inputs.resize(ni);
 
     // First candidate: full forward + save base
+    std::array<float, NUM_OUTPUTS> out0;
     if (is_pr) {
         auto inp = compute_tesauro_inputs(candidates[nn_indices[0]]);
-        std::copy(inp.begin(), inp.end(), cur_inputs.begin());
+        out0 = nn.forward_save_base(inp.data(), saved_base.data(), saved_inputs.data());
     } else {
         auto inp = compute_extended_contact_inputs(candidates[nn_indices[0]]);
-        std::copy(inp.begin(), inp.end(), cur_inputs.begin());
+        out0 = nn.forward_save_base(inp.data(), saved_base.data(), saved_inputs.data());
     }
-    auto out0 = nn.forward_save_base(cur_inputs.data(), saved_base.data(), saved_inputs.data());
     double val0 = NeuralNetwork::compute_equity(out0);
     equities[nn_indices[0]] = val0;
     if (val0 > best_val) { best_val = val0; best_idx = nn_indices[0]; }
 
     // Remaining: delta evaluation
+    std::array<float, NUM_OUTPUTS> out;
     for (int j = 1; j < nn_count; ++j) {
         if (is_pr) {
             auto inp = compute_tesauro_inputs(candidates[nn_indices[j]]);
-            std::copy(inp.begin(), inp.end(), cur_inputs.begin());
+            out = nn.forward_from_base(inp.data(), saved_base.data(), saved_inputs.data());
         } else {
             auto inp = compute_extended_contact_inputs(candidates[nn_indices[j]]);
-            std::copy(inp.begin(), inp.end(), cur_inputs.begin());
+            out = nn.forward_from_base(inp.data(), saved_base.data(), saved_inputs.data());
         }
-        auto out = nn.forward_from_base(cur_inputs.data(), saved_base.data(), saved_inputs.data());
         double val = NeuralNetwork::compute_equity(out);
         equities[nn_indices[j]] = val;
         if (val > best_val) { best_val = val; best_idx = nn_indices[j]; }
@@ -1917,34 +1917,33 @@ int GamePlanPairStrategy::batch_evaluate_candidates_equity_probs(
     if (nn_indices.empty()) return best_idx;
 
     const int nn_count = static_cast<int>(nn_indices.size());
-    thread_local std::vector<float> saved_base, saved_inputs, cur_inputs;
+    thread_local std::vector<float> saved_base, saved_inputs;
     saved_base.resize(nh);
     saved_inputs.resize(ni);
-    cur_inputs.resize(ni);
 
+    std::array<float, NUM_OUTPUTS> out0;
     if (is_pr) {
         auto inp = compute_tesauro_inputs(candidates[nn_indices[0]]);
-        std::copy(inp.begin(), inp.end(), cur_inputs.begin());
+        out0 = nn.forward_save_base(inp.data(), saved_base.data(), saved_inputs.data());
     } else {
         auto inp = compute_extended_contact_inputs(candidates[nn_indices[0]]);
-        std::copy(inp.begin(), inp.end(), cur_inputs.begin());
+        out0 = nn.forward_save_base(inp.data(), saved_base.data(), saved_inputs.data());
     }
-    auto out0 = nn.forward_save_base(cur_inputs.data(), saved_base.data(), saved_inputs.data());
     probs_out[nn_indices[0]] = out0;
     equities[nn_indices[0]] = NeuralNetwork::compute_equity(out0);
     if (equities[nn_indices[0]] > best_val) {
         best_val = equities[nn_indices[0]]; best_idx = nn_indices[0];
     }
 
+    std::array<float, NUM_OUTPUTS> out;
     for (int j = 1; j < nn_count; ++j) {
         if (is_pr) {
             auto inp = compute_tesauro_inputs(candidates[nn_indices[j]]);
-            std::copy(inp.begin(), inp.end(), cur_inputs.data());
+            out = nn.forward_from_base(inp.data(), saved_base.data(), saved_inputs.data());
         } else {
             auto inp = compute_extended_contact_inputs(candidates[nn_indices[j]]);
-            std::copy(inp.begin(), inp.end(), cur_inputs.data());
+            out = nn.forward_from_base(inp.data(), saved_base.data(), saved_inputs.data());
         }
-        auto out = nn.forward_from_base(cur_inputs.data(), saved_base.data(), saved_inputs.data());
         probs_out[nn_indices[j]] = out;
         equities[nn_indices[j]] = NeuralNetwork::compute_equity(out);
         if (equities[nn_indices[j]] > best_val) {
@@ -2009,19 +2008,18 @@ int GamePlanPairStrategy::batch_evaluate_candidates_best_prob(
     }
 
     const int nn_count = static_cast<int>(nn_indices.size());
-    thread_local std::vector<float> saved_base, saved_inputs, cur_inputs;
+    thread_local std::vector<float> saved_base, saved_inputs;
     saved_base.resize(nh);
     saved_inputs.resize(ni);
-    cur_inputs.resize(ni);
 
+    std::array<float, NUM_OUTPUTS> out0;
     if (is_pr) {
         auto inp = compute_tesauro_inputs(candidates[nn_indices[0]]);
-        std::copy(inp.begin(), inp.end(), cur_inputs.begin());
+        out0 = nn.forward_save_base(inp.data(), saved_base.data(), saved_inputs.data());
     } else {
         auto inp = compute_extended_contact_inputs(candidates[nn_indices[0]]);
-        std::copy(inp.begin(), inp.end(), cur_inputs.begin());
+        out0 = nn.forward_save_base(inp.data(), saved_base.data(), saved_inputs.data());
     }
-    auto out0 = nn.forward_save_base(cur_inputs.data(), saved_base.data(), saved_inputs.data());
     double val0 = NeuralNetwork::compute_equity(out0);
     if (equities) equities[nn_indices[0]] = val0;
     if (val0 > best_val) {
@@ -2029,15 +2027,15 @@ int GamePlanPairStrategy::batch_evaluate_candidates_best_prob(
         if (best_probs_out) best_probs = out0;
     }
 
+    std::array<float, NUM_OUTPUTS> out;
     for (int j = 1; j < nn_count; ++j) {
         if (is_pr) {
             auto inp = compute_tesauro_inputs(candidates[nn_indices[j]]);
-            std::copy(inp.begin(), inp.end(), cur_inputs.data());
+            out = nn.forward_from_base(inp.data(), saved_base.data(), saved_inputs.data());
         } else {
             auto inp = compute_extended_contact_inputs(candidates[nn_indices[j]]);
-            std::copy(inp.begin(), inp.end(), cur_inputs.data());
+            out = nn.forward_from_base(inp.data(), saved_base.data(), saved_inputs.data());
         }
-        auto out = nn.forward_from_base(cur_inputs.data(), saved_base.data(), saved_inputs.data());
         double val = NeuralNetwork::compute_equity(out);
         if (equities) equities[nn_indices[j]] = val;
         if (val > best_val) {

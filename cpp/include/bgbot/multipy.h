@@ -297,10 +297,12 @@ private:
 
     std::shared_ptr<Strategy> base_;
     GamePlanStrategy* base_gps_;  // Cached downcast (null if base isn't GamePlanStrategy)
+    GamePlanPairStrategy* base_gpp_ = nullptr;  // Cached downcast for pair strategy
     // Optional separate filter strategy (for hybrid mode: fast filter + accurate leaf).
     // When null, base_ is used for filtering (standard behavior).
     std::shared_ptr<Strategy> filter_strat_;
     GamePlanStrategy* filter_gps_ = nullptr;  // Cached downcast
+    GamePlanPairStrategy* filter_gpp_ = nullptr;  // Cached downcast for pair strategy
     const BearoffDB* bearoff_db_ = nullptr;
     int n_plies_;
     MoveFilter move_filter_;

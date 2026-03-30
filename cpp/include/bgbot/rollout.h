@@ -194,6 +194,7 @@ private:
     std::shared_ptr<Strategy> base_;
     std::shared_ptr<Strategy> base_bearoff_;  // base_ wrapped in BearoffStrategy (when DB set)
     GamePlanStrategy* base_gps_;   // Cached downcast (null if not GPS)
+    GamePlanPairStrategy* base_gpp_;  // Cached downcast (null if not 17-NN pair strategy)
     const BearoffDB* bearoff_db_ = nullptr;
     RolloutConfig config_;
     mutable std::unique_ptr<SharedPosCache> shared_pos_cache_;

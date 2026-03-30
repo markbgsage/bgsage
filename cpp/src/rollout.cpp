@@ -274,6 +274,7 @@ void RolloutStrategy_common_init(RolloutStrategy& self,
 RolloutStrategy::RolloutStrategy(std::shared_ptr<Strategy> base, RolloutConfig config)
     : base_(std::move(base))
     , base_gps_(dynamic_cast<GamePlanStrategy*>(base_.get()))
+    , base_gpp_(dynamic_cast<GamePlanPairStrategy*>(base_.get()))
     , config_(config)
     , cached_max_moves_((config.truncation_depth > 0)
                        ? config.truncation_depth + 10
@@ -306,6 +307,7 @@ RolloutStrategy::RolloutStrategy(std::shared_ptr<Strategy> base,
                                  RolloutConfig config)
     : base_(std::move(base))
     , base_gps_(dynamic_cast<GamePlanStrategy*>(base_.get()))
+    , base_gpp_(dynamic_cast<GamePlanPairStrategy*>(base_.get()))
     , config_(config)
     , cached_max_moves_((config.truncation_depth > 0)
                        ? config.truncation_depth + 10
@@ -451,10 +453,17 @@ std::array<float, NUM_OUTPUTS> RolloutStrategy::best_move_probs_for_candidates(
         return strat.evaluate_probs(candidates[0], board);
     }
 
-    // Fast batch path for 1-ply (raw NN) GamePlanStrategy
+    // Fast batch path for 1-ply base strategy.
     if (base_gps_ && &strat == base_.get()) {
         std::array<float, NUM_OUTPUTS> best_probs{};
         int idx = base_gps_->batch_evaluate_candidates_best_prob(
+            candidates, board, nullptr, &best_probs);
+        if (best_index) *best_index = idx;
+        return best_probs;
+    }
+    if (base_gpp_ && &strat == base_.get()) {
+        std::array<float, NUM_OUTPUTS> best_probs{};
+        int idx = base_gpp_->batch_evaluate_candidates_best_prob(
             candidates, board, nullptr, &best_probs);
         if (best_index) *best_index = idx;
         return best_probs;
@@ -569,7 +578,14 @@ void RolloutStrategy::prefill_move0_cache(
         } else if (candidates.size() == 1) {
             chosen = candidates[0];
         } else if (using_base) {
-            chosen = candidates[base_->best_move_index(candidates, start_board)];
+            int best_idx = -1;
+            if (base_gpp_) {
+                best_idx = base_gpp_->batch_evaluate_candidates_best_prob(
+                    candidates, start_board, nullptr, nullptr);
+            } else {
+                best_idx = base_->best_move_index(candidates, start_board);
+            }
+            chosen = candidates[best_idx];
         } else {
             chosen = candidates[current_strat.best_move_index(candidates, start_board)];
         }
