@@ -97,7 +97,9 @@ class CubeActionResult:
     optimal_action: str         # "No Double", "Double/Take", "Double/Pass", "Double/Beaver"
     eval_level: str
     is_beaver: bool = False     # True if opponent would beaver (equity_dt = DB equity)
-    cubeless_se: float | None = None  # Rollout standard error
+    cubeless_se: float | None = None  # Rollout cubeless standard error
+    equity_nd_se: float | None = None  # Rollout ND cubeful standard error
+    equity_dt_se: float | None = None  # Rollout DT cubeful standard error
     player_rolls: list[dict] | None = None  # Per-roll 2-ply details (only when incl_2ply_details=True)
 
 

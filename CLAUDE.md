@@ -153,6 +153,14 @@ python scripts/run_full_benchmark.py --model stage3
 
 ## Interfaces
 
+**IMPORTANT: When writing scripts or code that needs checker play or cube action
+analysis without targeting a specific model, always use `BgBotAnalyzer` from
+`bgsage`.** This is the standard model-independent Python interface — it
+abstracts away whether the production model is a 5-NN or 17-NN pair strategy.
+Do NOT call low-level `bgbot_cpp` functions directly (e.g.
+`cube_decision_nply`, `cube_decision_nply_pair`) unless you need to target a
+specific model type or need parameters not exposed by the public API.
+
 The library provides both **Python** and **C++** interfaces for five categories
 of functionality. All Python functions default to the production model; pass
 `weights=WeightConfig.from_model("stage3")` (or `model="stage3"` where
@@ -550,6 +558,7 @@ to override. Scripts live in `scripts/`.
 | `test_cube_decision.py` | Cube decisions vs 3 reference positions at 1-4 ply + rollout | `--model` |
 | `test_unified_rollout.py` | Verify cubeful(max_cube=1) == cubeless at N-ply + rollout | `--model` |
 | `eval_position.py` | Side-by-side Stage 5 vs GNUbg evaluation (cube action or checker play, 1-4 ply + rollout, money or match play) | `cube`/`checker` subcommand, `--checkers`, `--dice`, `--match`, `--score`, `--cube-value`, `--cube-owner` |
+| `profile_cube_benchmark.py` | Profiling benchmark: 8 fixed cube positions (mix of money/match, bearoff/contact) evaluated serially with timing. For verifying optimisations don't change values. | level positional arg: `1ply`–`4ply`, `1T`, `2T`, `3T` |
 
 ```bash
 # Full benchmark with production model (1-ply)

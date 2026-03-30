@@ -178,6 +178,8 @@ class _CubelessBase:
             "optimal_equity": r["optimal_equity"],
             "is_beaver": bool(r.get("is_beaver", False)),
             "cubeless_se": r.get("cubeless_se", None),
+            "equity_nd_se": r.get("equity_nd_se", None),
+            "equity_dt_se": r.get("equity_dt_se", None),
             "eval_level": eval_level,
         }
 
@@ -1183,6 +1185,8 @@ class BgBotAnalyzer:
             eval_level=raw["eval_level"],
             is_beaver=is_beaver,
             cubeless_se=raw.get("cubeless_se"),
+            equity_nd_se=raw.get("equity_nd_se"),
+            equity_dt_se=raw.get("equity_dt_se"),
             player_rolls=raw.get("player_rolls"),
         )
 
