@@ -83,7 +83,8 @@ void compute_WL(const std::array<float, NUM_OUTPUTS>& probs, float& W, float& L)
 
 // Live cube equity (piecewise linear, depends on cube ownership).
 // Returns equity normalized to cube value 1.
-float money_live(float W, float L, float p_win, CubeOwner owner);
+float money_live(float W, float L, float p_win, CubeOwner owner,
+                 bool jacoby = false);
 
 // Cubeless equity from probabilities.
 // E = 2*P(win) - 1 + P(gw) - P(gl) + P(bw) - P(bl)

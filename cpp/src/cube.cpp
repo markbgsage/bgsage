@@ -65,7 +65,8 @@ void compute_WL(const std::array<float, NUM_OUTPUTS>& probs, float& W, float& L)
     }
 }
 
-float money_live(float W, float L, float p_win, CubeOwner owner) {
+float money_live(float W, float L, float p_win, CubeOwner owner,
+                 bool jacoby) {
     // Take point and cash point (live cube)
     float TP = (L - 0.5f) / (W + L + 0.5f);
     float CP = (L + 1.0f) / (W + L + 0.5f);
@@ -75,15 +76,26 @@ float money_live(float W, float L, float p_win, CubeOwner owner) {
     switch (owner) {
         case CubeOwner::CENTERED: {
             // Interpolate through (0, -L), (TP, -1), (CP, +1), (1, +W)
+            //
+            // Under Jacoby, the extreme segments are clamped to ±1.0
+            // (matching GNUbg's MoneyLive).  Rationale: above the cash
+            // point, the player doubles and the opponent passes → +1.0;
+            // below the take point, the opponent doubles and the player
+            // passes → -1.0.  There is no "too good" / "too weak" premium
+            // because gammons are worthless while the cube is centered.
+            // The middle segment (doubling window) is unchanged because
+            // once the cube is turned, gammons count — the real W/L apply.
             if (p < TP) {
                 // Segment: (0, -L) → (TP, -1)
-                return -L + (-1.0f + L) * p / TP;
+                return jacoby ? -1.0f
+                              : -L + (-1.0f + L) * p / TP;
             } else if (p < CP) {
                 // Segment: (TP, -1) → (CP, +1)
                 return -1.0f + 2.0f * (p - TP) / (CP - TP);
             } else {
                 // Segment: (CP, +1) → (1, +W)
-                return 1.0f + (W - 1.0f) * (p - CP) / (1.0f - CP);
+                return jacoby ? 1.0f
+                              : 1.0f + (W - 1.0f) * (p - CP) / (1.0f - CP);
             }
         }
         case CubeOwner::PLAYER: {
@@ -114,18 +126,26 @@ float cl2cf_money(const std::array<float, NUM_OUTPUTS>& probs,
 float cl2cf_money(const std::array<float, NUM_OUTPUTS>& probs,
                   CubeOwner owner, float cube_x, bool jacoby_active) {
     float W, L;
-    if (jacoby_active) {
-        // Jacoby: gammons/backgammons worth nothing with centered cube
-        W = 1.0f;
-        L = 1.0f;
-    } else {
-        compute_WL(probs, W, L);
-    }
+    // Always compute real W/L from the full gammon/backgammon rates.
+    // The live-cube equity uses real W/L because once the cube is turned,
+    // gammons count (Jacoby deactivates).
+    compute_WL(probs, W, L);
 
+    // Dead-cube equity: under Jacoby with a centered cube, gammons don't
+    // count, so dead equity = 2*P(win)-1.  Otherwise full cubeless equity.
+    // This matches GNUbg's Utility() which applies arGammonPrice (0 under
+    // Jacoby+centered).
     float e_dead = jacoby_active
-        ? (2.0f * probs[0] - 1.0f)  // Gammon terms zeroed
+        ? (2.0f * probs[0] - 1.0f)
         : cubeless_equity(probs);
-    float e_live = money_live(W, L, probs[0], owner);
+
+    // Live-cube equity: uses real W/L but with Jacoby clamping on the
+    // extreme segments (p < TP → -1, p > CP → +1).  Matching GNUbg's
+    // MoneyLive: the middle segment (doubling window) is unchanged because
+    // doubling activates gammons; the extreme segments are clamped because
+    // there is no "too good/too weak" premium under Jacoby (you'd just
+    // double to cash or get doubled out).
+    float e_live = money_live(W, L, probs[0], owner, jacoby_active);
 
     return e_dead * (1.0f - cube_x) + e_live * cube_x;
 }
