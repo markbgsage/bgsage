@@ -23,16 +23,17 @@ namespace rollout_profile {
     static std::atomic<int64_t> trunc_time_ns{0};
     static std::atomic<int64_t> cube_time_ns{0};
     static std::atomic<int64_t> movegen_time_ns{0};
+    static std::atomic<int64_t> bmi_time_ns{0};
     static std::atomic<int64_t> trial_count{0};
 
     void reset() {
         vr_time_ns = 0; trunc_time_ns = 0; cube_time_ns = 0;
-        movegen_time_ns = 0; trial_count = 0;
+        movegen_time_ns = 0; bmi_time_ns = 0; trial_count = 0;
     }
     void print() {
         int64_t n = trial_count.load();
-        printf("  Profile: vr=%.1fms trunc=%.1fms cube=%.1fms movegen=%.1fms trials=%lld\n",
-               vr_time_ns / 1e6, trunc_time_ns / 1e6, cube_time_ns / 1e6,
+        printf("  Profile: vr=%.1fms bmi=%.1fms trunc=%.1fms cube=%.1fms movegen=%.1fms trials=%lld\n",
+               vr_time_ns / 1e6, bmi_time_ns / 1e6, trunc_time_ns / 1e6, cube_time_ns / 1e6,
                movegen_time_ns / 1e6, (long long)n);
     }
 }
@@ -1109,6 +1110,9 @@ RolloutStrategy::TrialResult RolloutStrategy::run_trial_unified(
         }
 
         ROLLOUT_TIMER_ADD(vr_time_ns);
+#ifdef ROLLOUT_PROFILE
+        auto _rp_bmi_timer = std::chrono::high_resolution_clock::now();
+#endif
 
         // Phase 4: Pick best move for actual roll.
         // Move selection uses the full decision strategy (N-ply when applicable).
@@ -1169,6 +1173,12 @@ RolloutStrategy::TrialResult RolloutStrategy::run_trial_unified(
                 }
             }
         }
+#ifdef ROLLOUT_PROFILE
+        rollout_profile::bmi_time_ns.fetch_add(
+            std::chrono::duration_cast<std::chrono::nanoseconds>(
+                std::chrono::high_resolution_clock::now() - _rp_bmi_timer).count(),
+            std::memory_order_relaxed);
+#endif
         if (move_num == 0) move0_roll_idx = actual_idx;
 
         // Phase 4b: VR luck computation
@@ -1848,7 +1858,10 @@ RolloutResult RolloutStrategy::rollout_position(
     const Board& board,
     RolloutProgressCallback progress) const
 {
-    return run_trials_parallel(board, std::move(progress));
+    rollout_profile::reset();
+    auto result = run_trials_parallel(board, std::move(progress));
+    rollout_profile::print();
+    return result;
 }
 
 int RolloutStrategy::best_move_index(const std::vector<Board>& candidates,

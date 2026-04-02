@@ -1720,6 +1720,11 @@ PYBIND11_MODULE(bgbot_cpp, m) {
              "Clear cancellation flag. Call before reusing for a new rollout.")
         .def("is_cancelled", &RolloutStrategy::is_cancelled,
              "Check if cancellation was requested.")
+        .def("set_move_filter", [](RolloutStrategy& self,
+                                     PubEval& filter) {
+            self.set_move_filter(std::make_shared<PubEval>(filter));
+        }, "Set PubEval or other cheap strategy as pre-filter for N-ply opponent moves",
+           py::arg("filter"))
         .def("rollout_position", [](const RolloutStrategy& self,
                                      const std::vector<int>& board_vec) {
             Board board = list_to_board(board_vec);

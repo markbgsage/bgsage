@@ -440,10 +440,9 @@ std::array<float, NUM_OUTPUTS> MultiPlyStrategy::evaluate_probs_nply_impl(
     // opponent's probs and invert them back to the current player's perspective.
     std::array<double, NUM_OUTPUTS> sum_probs = {0, 0, 0, 0, 0};
 
-    // PubEval pre-filter replaces old pip-based heuristic. Same threshold/keep
-    // as before (20/15) — only the quality of filtering changes.
-    constexpr int PREFILTER_THRESHOLD = 20;
-    constexpr int PREFILTER_KEEP = 15;
+    // PubEval pre-filter: narrow large candidate sets before NN evaluation.
+    constexpr int PREFILTER_THRESHOLD = 8;
+    constexpr int PREFILTER_KEEP = 5;
 
     auto evaluate_roll = [&](const DiceRoll& roll) -> std::array<float, NUM_OUTPUTS> {
         thread_local std::vector<Board> opp_candidates;
