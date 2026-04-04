@@ -691,12 +691,8 @@ void NeuralNetwork::build_transposed_weights() const {
 }
 
 // ======================== Equity ========================
-
-double NeuralNetwork::compute_equity(const std::array<float, NN_OUTPUTS>& outputs) {
-    return 2.0 * outputs[0] - 1.0
-         + outputs[1] - outputs[3]
-         + outputs[2] - outputs[4];
-}
+// NeuralNetwork::compute_equity is now inlined in neural_net.h,
+// delegating to the free function compute_equity() in strategy.h.
 
 // ======================== Forward with gradient caching ========================
 
@@ -1159,6 +1155,18 @@ GamePlanStrategy::GamePlanStrategy(const std::string& purerace_weights,
     attacking_nn_->ensure_transposed_weights();
     priming_nn_->ensure_transposed_weights();
     anchoring_nn_->ensure_transposed_weights();
+}
+
+GamePlanStrategy::GamePlanStrategy(const std::vector<std::string>& weight_paths,
+                                   const std::vector<int>& hidden_sizes)
+    : GamePlanStrategy(weight_paths.at(0), weight_paths.at(1), weight_paths.at(2),
+                       weight_paths.at(3), weight_paths.at(4),
+                       hidden_sizes.at(0), hidden_sizes.at(1), hidden_sizes.at(2),
+                       hidden_sizes.at(3), hidden_sizes.at(4))
+{
+    if (weight_paths.size() != 5 || hidden_sizes.size() != 5)
+        throw std::invalid_argument(
+            "GamePlanStrategy vector constructor requires exactly 5 weight paths and 5 hidden sizes");
 }
 
 const NeuralNetwork& GamePlanStrategy::select_nn(GamePlan gp) const {
@@ -1954,6 +1962,422 @@ int GamePlanPairStrategy::batch_evaluate_candidates_equity_probs(
 }
 
 int GamePlanPairStrategy::batch_evaluate_candidates_best_prob(
+    const std::vector<Board>& candidates,
+    const Board& pre_move_board,
+    double* equities,
+    std::array<float, NUM_OUTPUTS>* best_probs_out) const
+{
+    const int n = static_cast<int>(candidates.size());
+    if (n == 0) return -1;
+    if (n == 1) {
+        GameResult result = check_game_over(candidates[0]);
+        if (result != GameResult::NOT_OVER) {
+            if (equities) equities[0] = terminal_equity(result);
+            if (best_probs_out) *best_probs_out = terminal_probs(result);
+        } else {
+            int nn_idx = select_nn_idx(pre_move_board);
+            auto probs = probs_with_nn(candidates[0], nn_idx);
+            if (best_probs_out) *best_probs_out = probs;
+            if (equities) equities[0] = NeuralNetwork::compute_equity(probs);
+        }
+        return 0;
+    }
+
+    int nn_idx = select_nn_idx(pre_move_board);
+    const auto& nn = *nns_[nn_idx];
+    const int ni = nn.n_inputs();
+    const int nh = nn.n_hidden();
+    bool is_pr = (nn_idx == 0);
+
+    thread_local std::vector<int> nn_indices;
+    nn_indices.clear();
+    nn_indices.reserve(n);
+
+    double best_val = -1e30;
+    int best_idx = 0;
+    std::array<float, NUM_OUTPUTS> best_probs{};
+
+    for (int i = 0; i < n; ++i) {
+        GameResult result = check_game_over(candidates[i]);
+        if (result != GameResult::NOT_OVER) {
+            double val = terminal_equity(result);
+            if (equities) equities[i] = val;
+            if (val > best_val) {
+                best_val = val; best_idx = i;
+                if (best_probs_out) best_probs = terminal_probs(result);
+            }
+        } else {
+            nn_indices.push_back(i);
+        }
+    }
+    if (nn_indices.empty()) {
+        if (best_probs_out) *best_probs_out = best_probs;
+        return best_idx;
+    }
+
+    const int nn_count = static_cast<int>(nn_indices.size());
+    thread_local std::vector<float> saved_base, saved_inputs;
+    saved_base.resize(nh);
+    saved_inputs.resize(ni);
+
+    std::array<float, NUM_OUTPUTS> out0;
+    if (is_pr) {
+        auto inp = compute_tesauro_inputs(candidates[nn_indices[0]]);
+        out0 = nn.forward_save_base(inp.data(), saved_base.data(), saved_inputs.data());
+    } else {
+        auto inp = compute_extended_contact_inputs(candidates[nn_indices[0]]);
+        out0 = nn.forward_save_base(inp.data(), saved_base.data(), saved_inputs.data());
+    }
+    double val0 = NeuralNetwork::compute_equity(out0);
+    if (equities) equities[nn_indices[0]] = val0;
+    if (val0 > best_val) {
+        best_val = val0; best_idx = nn_indices[0];
+        if (best_probs_out) best_probs = out0;
+    }
+
+    std::array<float, NUM_OUTPUTS> out;
+    for (int j = 1; j < nn_count; ++j) {
+        if (is_pr) {
+            auto inp = compute_tesauro_inputs(candidates[nn_indices[j]]);
+            out = nn.forward_from_base(inp.data(), saved_base.data(), saved_inputs.data());
+        } else {
+            auto inp = compute_extended_contact_inputs(candidates[nn_indices[j]]);
+            out = nn.forward_from_base(inp.data(), saved_base.data(), saved_inputs.data());
+        }
+        double val = NeuralNetwork::compute_equity(out);
+        if (equities) equities[nn_indices[j]] = val;
+        if (val > best_val) {
+            best_val = val; best_idx = nn_indices[j];
+            if (best_probs_out) best_probs = out;
+        }
+    }
+
+    if (best_probs_out) *best_probs_out = best_probs;
+    return best_idx;
+}
+
+// ===========================================================================
+// BackgameAwarePairStrategy implementation
+// ===========================================================================
+
+BackgameAwarePairStrategy::BackgameAwarePairStrategy(
+    const std::vector<std::string>& weight_paths,
+    const std::vector<int>& hidden_sizes)
+{
+    if (weight_paths.size() != NUM_BACKGAME_PAIR_NNS ||
+        hidden_sizes.size() != NUM_BACKGAME_PAIR_NNS) {
+        throw std::runtime_error(
+            "BackgameAwarePairStrategy requires exactly " +
+            std::to_string(NUM_BACKGAME_PAIR_NNS) +
+            " weight paths and hidden sizes, got " +
+            std::to_string(weight_paths.size()) + "/" +
+            std::to_string(hidden_sizes.size()));
+    }
+    for (int i = 0; i < NUM_BACKGAME_PAIR_NNS; ++i) {
+        int n_inputs = (i == 0) ? TESAURO_INPUTS : EXTENDED_CONTACT_INPUTS;
+        nns_[i] = std::make_shared<NeuralNetwork>(hidden_sizes[i], n_inputs);
+        if (!nns_[i]->load_weights(weight_paths[i]))
+            throw std::runtime_error(
+                "Failed to load weights for index " + std::to_string(i) +
+                ": " + weight_paths[i]);
+        nns_[i]->ensure_transposed_weights();
+    }
+}
+
+int BackgameAwarePairStrategy::select_nn_idx(const Board& board) const {
+    GamePlan player_gp = classify_game_plan(board);
+    if (player_gp == GamePlan::PURERACE) return 0;
+    GamePlan opponent_gp = classify_game_plan(flip(board));
+    if (opponent_gp == GamePlan::PURERACE) {
+        opponent_gp = GamePlan::RACING;
+    }
+
+    // Player back game: (anchoring, racing) + player behind + 2+ anchors in opp home
+    if (player_gp == GamePlan::ANCHORING && opponent_gp == GamePlan::RACING) {
+        auto [player_pips, opp_pips] = pip_counts(board);
+        if (player_pips > opp_pips) {
+            int anchors = 0;
+            for (int pt = 19; pt <= 24; ++pt) {
+                if (board[pt] >= 2) ++anchors;
+            }
+            if (anchors >= 2) return 17;  // player backgame NN
+        }
+    }
+
+    // Opponent back game: (racing, anchoring) + opp behind + 2+ opp anchors in player home
+    if (player_gp == GamePlan::RACING && opponent_gp == GamePlan::ANCHORING) {
+        auto [player_pips, opp_pips] = pip_counts(board);
+        if (opp_pips > player_pips) {
+            int opp_anchors = 0;
+            for (int pt = 1; pt <= 6; ++pt) {
+                if (board[pt] <= -2) ++opp_anchors;
+            }
+            if (opp_anchors >= 2) return 18;  // opponent backgame NN
+        }
+    }
+
+    return 1 + game_plan_pair_index(player_gp, opponent_gp);
+}
+
+double BackgameAwarePairStrategy::evaluate_with_nn(const Board& board, int nn_idx) const {
+    const auto& nn = *nns_[nn_idx];
+    if (nn_idx == 0) {
+        auto inputs = compute_tesauro_inputs(board);
+        auto outputs = nn.forward(inputs);
+        return NeuralNetwork::compute_equity(outputs);
+    } else {
+        auto inputs = compute_extended_contact_inputs(board);
+        auto outputs = nn.forward(inputs.data());
+        return NeuralNetwork::compute_equity(outputs);
+    }
+}
+
+std::array<float, NN_OUTPUTS> BackgameAwarePairStrategy::probs_with_nn(
+    const Board& board, int nn_idx) const
+{
+    const auto& nn = *nns_[nn_idx];
+    if (nn_idx == 0) {
+        auto inputs = compute_tesauro_inputs(board);
+        return nn.forward(inputs);
+    } else {
+        auto inputs = compute_extended_contact_inputs(board);
+        return nn.forward(inputs.data());
+    }
+}
+
+double BackgameAwarePairStrategy::evaluate(const Board& board, bool /*pre_move_is_race*/) const {
+    GameResult result = check_game_over(board);
+    if (result != GameResult::NOT_OVER) return terminal_equity(result);
+    return evaluate_with_nn(board, select_nn_idx(board));
+}
+
+std::array<float, NN_OUTPUTS> BackgameAwarePairStrategy::evaluate_probs(
+    const Board& board, bool /*pre_move_is_race*/) const
+{
+    GameResult result = check_game_over(board);
+    if (result != GameResult::NOT_OVER) return terminal_probs(result);
+    return probs_with_nn(board, select_nn_idx(board));
+}
+
+std::array<float, NN_OUTPUTS> BackgameAwarePairStrategy::evaluate_probs(
+    const Board& board, const Board& pre_move_board) const
+{
+    GameResult result = check_game_over(board);
+    if (result != GameResult::NOT_OVER) return terminal_probs(result);
+    return probs_with_nn(board, select_nn_idx(pre_move_board));
+}
+
+int BackgameAwarePairStrategy::best_move_index(const std::vector<Board>& candidates,
+                                                bool pre_move_is_race) const {
+    int nn_idx = pre_move_is_race ? 0 : 6;  // fallback: purerace or att_att
+    const int n = static_cast<int>(candidates.size());
+    if (n == 1) return 0;
+
+    double best_val = -1e30;
+    int best_idx = 0;
+    for (int i = 0; i < n; ++i) {
+        GameResult result = check_game_over(candidates[i]);
+        double val = (result != GameResult::NOT_OVER)
+            ? terminal_equity(result) : evaluate_with_nn(candidates[i], nn_idx);
+        if (val > best_val) { best_val = val; best_idx = i; }
+    }
+    return best_idx;
+}
+
+int BackgameAwarePairStrategy::best_move_index(const std::vector<Board>& candidates,
+                                                const Board& pre_move_board) const {
+    const int n = static_cast<int>(candidates.size());
+    if (n == 1) return 0;
+    int nn_idx = select_nn_idx(pre_move_board);
+
+    double best_val = -1e30;
+    int best_idx = 0;
+    for (int i = 0; i < n; ++i) {
+        GameResult result = check_game_over(candidates[i]);
+        double val = (result != GameResult::NOT_OVER)
+            ? terminal_equity(result) : evaluate_with_nn(candidates[i], nn_idx);
+        if (val > best_val) { best_val = val; best_idx = i; }
+    }
+    return best_idx;
+}
+
+int BackgameAwarePairStrategy::evaluate_candidates_equity(
+    const std::vector<Board>& candidates,
+    const Board& pre_move_board,
+    double* equities) const
+{
+    const int n = static_cast<int>(candidates.size());
+    if (n == 0) return -1;
+    int nn_idx = select_nn_idx(pre_move_board);
+
+    double best_val = -1e30;
+    int best_idx = 0;
+    for (int i = 0; i < n; ++i) {
+        GameResult result = check_game_over(candidates[i]);
+        double val = (result != GameResult::NOT_OVER)
+            ? terminal_equity(result) : evaluate_with_nn(candidates[i], nn_idx);
+        equities[i] = val;
+        if (val > best_val) { best_val = val; best_idx = i; }
+    }
+    return best_idx;
+}
+
+int BackgameAwarePairStrategy::batch_evaluate_candidates_equity(
+    const std::vector<Board>& candidates,
+    const Board& pre_move_board,
+    double* equities) const
+{
+    const int n = static_cast<int>(candidates.size());
+    if (n == 0) return -1;
+    if (n == 1) {
+        GameResult result = check_game_over(candidates[0]);
+        equities[0] = (result != GameResult::NOT_OVER)
+            ? terminal_equity(result)
+            : evaluate_with_nn(candidates[0], select_nn_idx(pre_move_board));
+        return 0;
+    }
+
+    int nn_idx = select_nn_idx(pre_move_board);
+    const auto& nn = *nns_[nn_idx];
+    const int ni = nn.n_inputs();
+    const int nh = nn.n_hidden();
+    bool is_pr = (nn_idx == 0);
+
+    thread_local std::vector<int> nn_indices;
+    nn_indices.clear();
+    nn_indices.reserve(n);
+
+    double best_val = -1e30;
+    int best_idx = 0;
+
+    for (int i = 0; i < n; ++i) {
+        GameResult result = check_game_over(candidates[i]);
+        if (result != GameResult::NOT_OVER) {
+            equities[i] = terminal_equity(result);
+            if (equities[i] > best_val) { best_val = equities[i]; best_idx = i; }
+        } else {
+            nn_indices.push_back(i);
+        }
+    }
+    if (nn_indices.empty()) return best_idx;
+
+    const int nn_count = static_cast<int>(nn_indices.size());
+    thread_local std::vector<float> saved_base, saved_inputs;
+    saved_base.resize(nh);
+    saved_inputs.resize(ni);
+
+    std::array<float, NUM_OUTPUTS> out0;
+    if (is_pr) {
+        auto inp = compute_tesauro_inputs(candidates[nn_indices[0]]);
+        out0 = nn.forward_save_base(inp.data(), saved_base.data(), saved_inputs.data());
+    } else {
+        auto inp = compute_extended_contact_inputs(candidates[nn_indices[0]]);
+        out0 = nn.forward_save_base(inp.data(), saved_base.data(), saved_inputs.data());
+    }
+    double val0 = NeuralNetwork::compute_equity(out0);
+    equities[nn_indices[0]] = val0;
+    if (val0 > best_val) { best_val = val0; best_idx = nn_indices[0]; }
+
+    std::array<float, NUM_OUTPUTS> out;
+    for (int j = 1; j < nn_count; ++j) {
+        if (is_pr) {
+            auto inp = compute_tesauro_inputs(candidates[nn_indices[j]]);
+            out = nn.forward_from_base(inp.data(), saved_base.data(), saved_inputs.data());
+        } else {
+            auto inp = compute_extended_contact_inputs(candidates[nn_indices[j]]);
+            out = nn.forward_from_base(inp.data(), saved_base.data(), saved_inputs.data());
+        }
+        double val = NeuralNetwork::compute_equity(out);
+        equities[nn_indices[j]] = val;
+        if (val > best_val) { best_val = val; best_idx = nn_indices[j]; }
+    }
+    return best_idx;
+}
+
+int BackgameAwarePairStrategy::batch_evaluate_candidates_equity_probs(
+    const std::vector<Board>& candidates,
+    const Board& pre_move_board,
+    double* equities,
+    std::array<float, NUM_OUTPUTS>* probs_out) const
+{
+    const int n = static_cast<int>(candidates.size());
+    if (n == 0) return -1;
+    if (n == 1) {
+        GameResult result = check_game_over(candidates[0]);
+        if (result != GameResult::NOT_OVER) {
+            probs_out[0] = terminal_probs(result);
+            equities[0] = terminal_equity(result);
+        } else {
+            int nn_idx = select_nn_idx(pre_move_board);
+            probs_out[0] = probs_with_nn(candidates[0], nn_idx);
+            equities[0] = NeuralNetwork::compute_equity(probs_out[0]);
+        }
+        return 0;
+    }
+
+    int nn_idx = select_nn_idx(pre_move_board);
+    const auto& nn = *nns_[nn_idx];
+    const int ni = nn.n_inputs();
+    const int nh = nn.n_hidden();
+    bool is_pr = (nn_idx == 0);
+
+    thread_local std::vector<int> nn_indices;
+    nn_indices.clear();
+    nn_indices.reserve(n);
+
+    double best_val = -1e30;
+    int best_idx = 0;
+
+    for (int i = 0; i < n; ++i) {
+        GameResult result = check_game_over(candidates[i]);
+        if (result != GameResult::NOT_OVER) {
+            probs_out[i] = terminal_probs(result);
+            equities[i] = terminal_equity(result);
+            if (equities[i] > best_val) { best_val = equities[i]; best_idx = i; }
+        } else {
+            nn_indices.push_back(i);
+        }
+    }
+    if (nn_indices.empty()) return best_idx;
+
+    const int nn_count = static_cast<int>(nn_indices.size());
+    thread_local std::vector<float> saved_base, saved_inputs;
+    saved_base.resize(nh);
+    saved_inputs.resize(ni);
+
+    std::array<float, NUM_OUTPUTS> out0;
+    if (is_pr) {
+        auto inp = compute_tesauro_inputs(candidates[nn_indices[0]]);
+        out0 = nn.forward_save_base(inp.data(), saved_base.data(), saved_inputs.data());
+    } else {
+        auto inp = compute_extended_contact_inputs(candidates[nn_indices[0]]);
+        out0 = nn.forward_save_base(inp.data(), saved_base.data(), saved_inputs.data());
+    }
+    probs_out[nn_indices[0]] = out0;
+    equities[nn_indices[0]] = NeuralNetwork::compute_equity(out0);
+    if (equities[nn_indices[0]] > best_val) {
+        best_val = equities[nn_indices[0]]; best_idx = nn_indices[0];
+    }
+
+    std::array<float, NUM_OUTPUTS> out;
+    for (int j = 1; j < nn_count; ++j) {
+        if (is_pr) {
+            auto inp = compute_tesauro_inputs(candidates[nn_indices[j]]);
+            out = nn.forward_from_base(inp.data(), saved_base.data(), saved_inputs.data());
+        } else {
+            auto inp = compute_extended_contact_inputs(candidates[nn_indices[j]]);
+            out = nn.forward_from_base(inp.data(), saved_base.data(), saved_inputs.data());
+        }
+        probs_out[nn_indices[j]] = out;
+        equities[nn_indices[j]] = NeuralNetwork::compute_equity(out);
+        if (equities[nn_indices[j]] > best_val) {
+            best_val = equities[nn_indices[j]]; best_idx = nn_indices[j];
+        }
+    }
+    return best_idx;
+}
+
+int BackgameAwarePairStrategy::batch_evaluate_candidates_best_prob(
     const std::vector<Board>& candidates,
     const Board& pre_move_board,
     double* equities,

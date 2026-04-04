@@ -89,8 +89,10 @@ public:
     }
 
     // Compute equity from 5 output probabilities.
-    // equity = 2*P(win) - 1 + P(gw) - P(gl) + P(bw) - P(bl)
-    static double compute_equity(const std::array<float, NN_OUTPUTS>& outputs);
+    // Delegates to the free function compute_equity() in strategy.h.
+    static double compute_equity(const std::array<float, NN_OUTPUTS>& outputs) {
+        return bgbot::compute_equity(outputs);
+    }
 
     // ----- Training (mutating, NOT thread-safe) -----
 
@@ -276,6 +278,11 @@ public:
                      int n_hidden_priming = 120,
                      int n_hidden_anchoring = 120);
 
+    // Construct from vectors (length 5 each), matching pair strategy API.
+    // Order: [purerace, racing, attacking, priming, anchoring].
+    GamePlanStrategy(const std::vector<std::string>& weight_paths,
+                     const std::vector<int>& hidden_sizes);
+
     double evaluate(const Board& board, bool pre_move_is_race) const override;
 
     std::array<float, NN_OUTPUTS> evaluate_probs(
@@ -296,47 +303,27 @@ public:
     std::shared_ptr<NeuralNetwork> priming_nn() { return priming_nn_; }
     std::shared_ptr<NeuralNetwork> anchoring_nn() { return anchoring_nn_; }
 
-    // Batch evaluation: classify pre_move_board once, evaluate all candidates
-    // with the appropriate NN. Fills equities[0..n-1] with equity values.
-    // Returns the index of the best (highest equity) candidate.
-    // This is faster than calling evaluate_probs() per candidate because it
-    // avoids repeated game plan classification and virtual dispatch.
-    // Handles terminal positions (check_game_over) for each candidate.
     int evaluate_candidates_equity(
         const std::vector<Board>& candidates,
         const Board& pre_move_board,
-        double* equities) const;
+        double* equities) const override;
 
-    // Batch encoding + forward pass: classify once, encode all non-terminal
-    // candidates into a contiguous buffer, call forward_batch, compute equities.
-    // Returns index of best candidate. Faster than evaluate_candidates_equity
-    // when there are many candidates (amortizes NN call overhead).
     int batch_evaluate_candidates_equity(
         const std::vector<Board>& candidates,
         const Board& pre_move_board,
-        double* equities) const;
+        double* equities) const override;
 
-    // Same as batch_evaluate_candidates_equity, but also stores the full
-    // 5-output probabilities for each candidate in `probs_out`.
-    // Avoids re-evaluating the best candidate when probabilities are needed.
     int batch_evaluate_candidates_equity_probs(
         const std::vector<Board>& candidates,
         const Board& pre_move_board,
         double* equities,
-        std::array<float, NUM_OUTPUTS>* probs_out) const;
+        std::array<float, NUM_OUTPUTS>* probs_out) const override;
 
-    // Same as batch_evaluate_candidates_equity, but returns only the
-    // best candidate probabilities in `best_probs_out`.
-    // Avoids filling probabilities for non-best candidates when only one
-    // probability vector is needed.
-    // If `equities` is nullptr, the equity outputs are not stored.
     int batch_evaluate_candidates_best_prob(
         const std::vector<Board>& candidates,
         const Board& pre_move_board,
         double* equities,
-        std::array<float, NUM_OUTPUTS>* best_probs_out) const;
-
-
+        std::array<float, NUM_OUTPUTS>* best_probs_out) const override;
 
 private:
     std::shared_ptr<NeuralNetwork> purerace_nn_;
@@ -383,24 +370,24 @@ public:
     int evaluate_candidates_equity(
         const std::vector<Board>& candidates,
         const Board& pre_move_board,
-        double* equities) const;
+        double* equities) const override;
 
     int batch_evaluate_candidates_equity(
         const std::vector<Board>& candidates,
         const Board& pre_move_board,
-        double* equities) const;
+        double* equities) const override;
 
     int batch_evaluate_candidates_equity_probs(
         const std::vector<Board>& candidates,
         const Board& pre_move_board,
         double* equities,
-        std::array<float, NUM_OUTPUTS>* probs_out) const;
+        std::array<float, NUM_OUTPUTS>* probs_out) const override;
 
     int batch_evaluate_candidates_best_prob(
         const std::vector<Board>& candidates,
         const Board& pre_move_board,
         double* equities,
-        std::array<float, NUM_OUTPUTS>* best_probs_out) const;
+        std::array<float, NUM_OUTPUTS>* best_probs_out) const override;
 
     std::shared_ptr<NeuralNetwork> nn(int idx) const { return nns_[idx]; }
 
@@ -409,6 +396,77 @@ private:
 
     // Determine which NN to use for a board position.
     // Returns 0 for purerace, 1-16 for contact pairs.
+    int select_nn_idx(const Board& board) const;
+
+    double evaluate_with_nn(const Board& board, int nn_idx) const;
+    std::array<float, NN_OUTPUTS> probs_with_nn(const Board& board, int nn_idx) const;
+    bool is_purerace_nn(int nn_idx) const { return nn_idx == 0; }
+};
+
+// ---------------------------------------------------------------------------
+// BackgameAwarePairStrategy: 19-NN pair strategy with backgame detection
+// ---------------------------------------------------------------------------
+// Extends the 17-NN pair strategy with 2 additional NNs for back games:
+//   Index 17: player back game (replaces anch_race when backgame detected)
+//   Index 18: opponent back game (replaces race_anch when backgame detected)
+//
+// Backgame detection criteria:
+// - Player BG: pair is (anchoring, racing), player pips > opponent pips,
+//   player has >= 2 anchors in opponent's home board (points 19-24)
+// - Opponent BG: pair is (racing, anchoring), opponent pips > player pips,
+//   opponent has >= 2 anchors in player's home board (points 1-6)
+
+constexpr int NUM_BACKGAME_PAIR_NNS = 19;
+
+class BackgameAwarePairStrategy : public Strategy {
+public:
+    // Construct from vectors of weight paths and hidden sizes (length 19 each).
+    // Index 0 = PureRace, indices 1-16 = contact pairs,
+    // index 17 = player backgame, index 18 = opponent backgame.
+    BackgameAwarePairStrategy(const std::vector<std::string>& weight_paths,
+                              const std::vector<int>& hidden_sizes);
+
+    double evaluate(const Board& board, bool pre_move_is_race) const override;
+
+    std::array<float, NN_OUTPUTS> evaluate_probs(
+        const Board& board, bool pre_move_is_race) const override;
+    std::array<float, NN_OUTPUTS> evaluate_probs(
+        const Board& board, const Board& pre_move_board) const override;
+
+    int best_move_index(const std::vector<Board>& candidates,
+                        bool pre_move_is_race) const override;
+    int best_move_index(const std::vector<Board>& candidates,
+                        const Board& pre_move_board) const override;
+
+    int evaluate_candidates_equity(
+        const std::vector<Board>& candidates,
+        const Board& pre_move_board,
+        double* equities) const override;
+
+    int batch_evaluate_candidates_equity(
+        const std::vector<Board>& candidates,
+        const Board& pre_move_board,
+        double* equities) const override;
+
+    int batch_evaluate_candidates_equity_probs(
+        const std::vector<Board>& candidates,
+        const Board& pre_move_board,
+        double* equities,
+        std::array<float, NUM_OUTPUTS>* probs_out) const override;
+
+    int batch_evaluate_candidates_best_prob(
+        const std::vector<Board>& candidates,
+        const Board& pre_move_board,
+        double* equities,
+        std::array<float, NUM_OUTPUTS>* best_probs_out) const override;
+
+    std::shared_ptr<NeuralNetwork> nn(int idx) const { return nns_[idx]; }
+
+private:
+    std::array<std::shared_ptr<NeuralNetwork>, NUM_BACKGAME_PAIR_NNS> nns_;
+
+    // Determine which NN to use. Returns 0 for purerace, 1-16 for standard
+    // contact pairs, 17 for player backgame, 18 for opponent backgame.
     int select_nn_idx(const Board& board) const;
 
     double evaluate_with_nn(const Board& board, int nn_idx) const;

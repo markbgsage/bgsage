@@ -19,6 +19,13 @@ from typing import Any
 # (purerace, racing, attacking, priming, anchoring).
 
 MODELS: dict[str, dict[str, Any]] = {
+    "stage9": {
+        "hidden": (100,) + (400,) * 18,  # 1 purerace + 18 contact (incl 2 backgame)
+        "pattern": "sl_s9_{plan}.weights.best",
+        "plans": "backgame_pair",  # uses _BACKGAME_PAIR_PLANS (19 NNs)
+        # NN sharing: same as S8 for standard pairs + 2 backgame NNs
+        "canonical_map": [0,1,2,3,4,5,6,7,8,9,10,12,12,13,14,12,12,17,18],
+    },
     "stage8": {
         "hidden": (100,) + (400,) * 16,
         "pattern": "sl_s8_{plan}.weights.best",
@@ -70,6 +77,9 @@ _PAIR_PLANS = (
     "anch_race", "anch_att", "anch_prim", "anch_anch",
 )
 
+# 19-NN backgame-aware pair plan names (17 standard + 2 backgame)
+_BACKGAME_PAIR_PLANS = _PAIR_PLANS + ("player_bg", "opponent_bg")
+
 # Bearoff database filename (stored in data/ directory)
 BEAROFF_DB_FILENAME = "bearoff_1sided.db"
 
@@ -95,15 +105,20 @@ def bearoff_db_path() -> str | None:
 
 
 def is_pair_model(name: str) -> bool:
-    """Return True if the named model uses the 17-NN pair strategy."""
-    return MODELS.get(name, {}).get("plans") == "pair"
+    """Return True if the named model uses a pair strategy (17-NN or 19-NN)."""
+    return MODELS.get(name, {}).get("plans") in ("pair", "backgame_pair")
+
+
+def is_backgame_pair_model(name: str) -> bool:
+    """Return True if the named model uses the 19-NN backgame-aware pair strategy."""
+    return MODELS.get(name, {}).get("plans") == "backgame_pair"
 
 
 def default_weights() -> "WeightConfig | WeightConfigPair":
     """Return the production model's weight config (correct type auto-detected).
 
     Returns a :class:`WeightConfig` for 5-NN models and a
-    :class:`WeightConfigPair` for 17-NN pair models.
+    :class:`WeightConfigPair` for pair models (17- or 19-NN).
     """
     if is_pair_model(PRODUCTION_MODEL):
         return WeightConfigPair.from_model(PRODUCTION_MODEL)
@@ -124,6 +139,9 @@ class WeightConfig:
     n_hidden_attacking: int = 400
     n_hidden_priming: int = 400
     n_hidden_anchoring: int = 400
+
+    #: Strategy type for unified C++ factory functions.
+    strategy_type: str = "5nn"
 
     @property
     def weight_args(self) -> tuple:
@@ -162,6 +180,17 @@ class WeightConfig:
             "priming": self.priming,
             "anchoring": self.anchoring,
         }
+
+    @property
+    def weight_paths_list(self) -> list[str]:
+        """Weight paths as a list (for unified C++ factory)."""
+        return [self.purerace, self.racing, self.attacking,
+                self.priming, self.anchoring]
+
+    @property
+    def hidden_sizes_list(self) -> list[int]:
+        """Hidden sizes as a list (for unified C++ factory)."""
+        return list(self.hidden_sizes)
 
     # ------------------------------------------------------------------
     # Factory methods
@@ -248,14 +277,16 @@ class WeightConfig:
 
 @dataclass
 class WeightConfigPair:
-    """Paths and hidden sizes for 17-NN pair strategy models.
+    """Paths and hidden sizes for pair strategy models (17-NN or 19-NN).
 
-    Stores weight paths and hidden sizes as lists (index 0 = purerace,
-    indices 1-16 = ordered contact pairs). Use with GamePlanPairStrategy.
+    Stores weight paths and hidden sizes as lists. For 17-NN: index 0 =
+    purerace, indices 1-16 = ordered contact pairs. For 19-NN: same plus
+    index 17 = player backgame, index 18 = opponent backgame.
     """
 
-    paths: list[str]         # 17 weight file paths
-    hiddens: list[int]       # 17 hidden sizes
+    paths: list[str]         # 17 or 19 weight file paths
+    hiddens: list[int]       # 17 or 19 hidden sizes
+    strategy_type: str = "pair"  # "pair" or "backgame_pair"
 
     @property
     def weight_args(self) -> tuple[list[str], list[int]]:
@@ -263,9 +294,24 @@ class WeightConfigPair:
         return (self.paths, self.hiddens)
 
     @property
+    def weight_paths_list(self) -> list[str]:
+        """Weight paths as a list (for unified C++ factory)."""
+        return self.paths
+
+    @property
+    def hidden_sizes_list(self) -> list[int]:
+        """Hidden sizes as a list (for unified C++ factory)."""
+        return self.hiddens
+
+    @property
+    def plan_names(self) -> tuple[str, ...]:
+        """Tuple of plan names matching this config's length."""
+        return _BACKGAME_PAIR_PLANS if len(self.paths) == 19 else _PAIR_PLANS
+
+    @property
     def weight_paths(self) -> dict[str, str]:
         """Dict mapping pair name to weight file path."""
-        return {name: path for name, path in zip(_PAIR_PLANS, self.paths)}
+        return {name: path for name, path in zip(self.plan_names, self.paths)}
 
     @classmethod
     def from_model(cls, name: str) -> WeightConfigPair:
@@ -277,21 +323,23 @@ class WeightConfigPair:
         if name not in MODELS:
             raise KeyError(f"Unknown model {name!r}")
         cfg = MODELS[name]
-        if cfg.get("plans") != "pair":
+        plans_type = cfg.get("plans")
+        if plans_type not in ("pair", "backgame_pair"):
             raise ValueError(f"Model {name!r} is not a pair model")
+        plan_names = _BACKGAME_PAIR_PLANS if plans_type == "backgame_pair" else _PAIR_PLANS
         hidden = list(cfg["hidden"])
         pattern = cfg["pattern"]
         models_dir = _models_dir()
-        canonical_map = cfg.get("canonical_map", list(range(len(_PAIR_PLANS))))
+        canonical_map = cfg.get("canonical_map", list(range(len(plan_names))))
         paths = []
-        for i, plan in enumerate(_PAIR_PLANS):
-            canonical_plan = _PAIR_PLANS[canonical_map[i]]
+        for i, plan in enumerate(plan_names):
+            canonical_plan = plan_names[canonical_map[i]]
             paths.append(os.path.join(models_dir, pattern.format(plan=canonical_plan)))
-        return cls(paths=paths, hiddens=hidden)
+        return cls(paths=paths, hiddens=hidden, strategy_type=plans_type)
 
     def validate(self) -> None:
         """Check that all weight files exist."""
-        for name, path in zip(_PAIR_PLANS, self.paths):
+        for name, path in zip(self.plan_names, self.paths):
             if not os.path.exists(path):
                 raise FileNotFoundError(f"{name} weights not found: {path}")
 
@@ -299,6 +347,6 @@ class WeightConfigPair:
         """Print a short summary of the model configuration."""
         if label:
             print(f"=== {label} ===")
-        for name, path, h in zip(_PAIR_PLANS, self.paths, self.hiddens):
-            print(f"  {name:12s}: {path} ({h}h)")
+        for name, path, h in zip(self.plan_names, self.paths, self.hiddens):
+            print(f"  {name:14s}: {path} ({h}h)")
         print()

@@ -287,8 +287,6 @@ void RolloutStrategy_common_init(RolloutStrategy& self,
 
 RolloutStrategy::RolloutStrategy(std::shared_ptr<Strategy> base, RolloutConfig config)
     : base_(std::move(base))
-    , base_gps_(dynamic_cast<GamePlanStrategy*>(base_.get()))
-    , base_gpp_(dynamic_cast<GamePlanPairStrategy*>(base_.get()))
     , config_(config)
     , cached_max_moves_((config.truncation_depth > 0)
                        ? config.truncation_depth + 10
@@ -320,8 +318,6 @@ RolloutStrategy::RolloutStrategy(std::shared_ptr<Strategy> base,
                                  std::shared_ptr<Strategy> filter_base,
                                  RolloutConfig config)
     : base_(std::move(base))
-    , base_gps_(dynamic_cast<GamePlanStrategy*>(base_.get()))
-    , base_gpp_(dynamic_cast<GamePlanPairStrategy*>(base_.get()))
     , config_(config)
     , cached_max_moves_((config.truncation_depth > 0)
                        ? config.truncation_depth + 10
@@ -467,103 +463,71 @@ std::array<float, NUM_OUTPUTS> RolloutStrategy::best_move_probs_for_candidates(
         return strat.evaluate_probs(candidates[0], board);
     }
 
-    // Fast batch path for 1-ply base strategy.
-    if (base_gps_ && &strat == base_.get()) {
+    // Fast batch path when using base_ (1-ply) strategy directly.
+    if (&strat == base_.get()) {
         std::array<float, NUM_OUTPUTS> best_probs{};
-        int idx = base_gps_->batch_evaluate_candidates_best_prob(
-            candidates, board, nullptr, &best_probs);
-        if (best_index) *best_index = idx;
-        return best_probs;
-    }
-    if (base_gpp_ && &strat == base_.get()) {
-        std::array<float, NUM_OUTPUTS> best_probs{};
-        int idx = base_gpp_->batch_evaluate_candidates_best_prob(
+        int idx = base_->batch_evaluate_candidates_best_prob(
             candidates, board, nullptr, &best_probs);
         if (best_index) *best_index = idx;
         return best_probs;
     }
 
-    // For non-base strategies (e.g. MultiPly 2-ply): generous 1-ply pre-filter
+    // Non-base strategy (e.g. MultiPly N-ply): generous 1-ply pre-filter
     // to avoid evaluating clearly terrible candidates at expensive N-ply depth.
     // Threshold is 2x wider than TINY (0.08) to virtually never drop a good move.
-    if (base_gps_) {
-        constexpr double VR_FILTER_THRESHOLD = 0.12;
-        constexpr int VR_FILTER_MAX = 8;
+    constexpr double VR_FILTER_THRESHOLD = 0.12;
+    constexpr int VR_FILTER_MAX = 8;
 
-        thread_local std::vector<double> eq_buf;
-        eq_buf.resize(candidates.size());
-        base_gps_->batch_evaluate_candidates_equity(candidates, board, eq_buf.data());
+    thread_local std::vector<double> eq_buf;
+    eq_buf.resize(candidates.size());
+    base_->batch_evaluate_candidates_equity(candidates, board, eq_buf.data());
 
-        double best_1ply = -1e30;
-        for (size_t i = 0; i < candidates.size(); ++i) {
-            if (eq_buf[i] > best_1ply) best_1ply = eq_buf[i];
-        }
-
-        // Collect survivors within threshold
-        thread_local std::vector<std::pair<double, int>> ranked;
-        ranked.clear();
-        for (size_t i = 0; i < candidates.size(); ++i) {
-            if (eq_buf[i] >= best_1ply - VR_FILTER_THRESHOLD) {
-                ranked.push_back({eq_buf[i], static_cast<int>(i)});
-            }
-        }
-
-        // If too many, sort and keep top VR_FILTER_MAX
-        if (static_cast<int>(ranked.size()) > VR_FILTER_MAX) {
-            std::partial_sort(ranked.begin(), ranked.begin() + VR_FILTER_MAX,
-                              ranked.end(),
-                              [](const auto& a, const auto& b) { return a.first > b.first; });
-            ranked.resize(VR_FILTER_MAX);
-        }
-
-        // Evaluate survivors at N-ply
-        double best_eq = -1e30;
-        std::array<float, NUM_OUTPUTS> best_probs = {};
-        int best_original_idx = ranked.empty() ? 0 : ranked[0].second;
-
-        for (const auto& [eq0, idx] : ranked) {
-            GameResult r = check_game_over(candidates[idx]);
-            std::array<float, NUM_OUTPUTS> probs;
-            double eq;
-            if (r != GameResult::NOT_OVER) {
-                probs = terminal_probs(r);
-                eq = static_cast<double>(static_cast<int>(r));
-            } else {
-                probs = strat.evaluate_probs(candidates[idx], board);
-                eq = NeuralNetwork::compute_equity(probs);
-            }
-            if (eq > best_eq) {
-                best_eq = eq;
-                best_probs = probs;
-                best_original_idx = idx;
-            }
-        }
-
-        if (best_index) *best_index = best_original_idx;
-        return best_probs;
+    double best_1ply = -1e30;
+    for (size_t i = 0; i < candidates.size(); ++i) {
+        if (eq_buf[i] > best_1ply) best_1ply = eq_buf[i];
     }
 
-    // Fallback: no base_gps_, evaluate all at N-ply
+    // Collect survivors within threshold
+    thread_local std::vector<std::pair<double, int>> ranked;
+    ranked.clear();
+    for (size_t i = 0; i < candidates.size(); ++i) {
+        if (eq_buf[i] >= best_1ply - VR_FILTER_THRESHOLD) {
+            ranked.push_back({eq_buf[i], static_cast<int>(i)});
+        }
+    }
+
+    // If too many, sort and keep top VR_FILTER_MAX
+    if (static_cast<int>(ranked.size()) > VR_FILTER_MAX) {
+        std::partial_sort(ranked.begin(), ranked.begin() + VR_FILTER_MAX,
+                          ranked.end(),
+                          [](const auto& a, const auto& b) { return a.first > b.first; });
+        ranked.resize(VR_FILTER_MAX);
+    }
+
+    // Evaluate survivors at N-ply
     double best_eq = -1e30;
     std::array<float, NUM_OUTPUTS> best_probs = {};
-    if (best_index) *best_index = 0;
-    for (size_t i = 0; i < candidates.size(); ++i) {
-        GameResult r = check_game_over(candidates[i]);
+    int best_original_idx = ranked.empty() ? 0 : ranked[0].second;
+
+    for (const auto& [eq0, idx] : ranked) {
+        GameResult r = check_game_over(candidates[idx]);
         std::array<float, NUM_OUTPUTS> probs;
         double eq;
         if (r != GameResult::NOT_OVER) {
             probs = terminal_probs(r);
-            eq = NeuralNetwork::compute_equity(probs);
+            eq = static_cast<double>(static_cast<int>(r));
         } else {
-            probs = strat.evaluate_probs(candidates[i], board);
-            eq = NeuralNetwork::compute_equity(probs);
+            probs = strat.evaluate_probs(candidates[idx], board);
+            eq = compute_equity(probs);
         }
         if (eq > best_eq) {
             best_eq = eq;
             best_probs = probs;
-            if (best_index) *best_index = static_cast<int>(i);
+            best_original_idx = idx;
         }
     }
+
+    if (best_index) *best_index = best_original_idx;
     return best_probs;
 }
 
@@ -592,14 +556,7 @@ void RolloutStrategy::prefill_move0_cache(
         } else if (candidates.size() == 1) {
             chosen = candidates[0];
         } else if (using_base) {
-            int best_idx = -1;
-            if (base_gpp_) {
-                best_idx = base_gpp_->batch_evaluate_candidates_best_prob(
-                    candidates, start_board, nullptr, nullptr);
-            } else {
-                best_idx = base_->best_move_index(candidates, start_board);
-            }
-            chosen = candidates[best_idx];
+            chosen = candidates[base_->best_move_index(candidates, start_board)];
         } else {
             chosen = candidates[current_strat.best_move_index(candidates, start_board)];
         }
@@ -994,7 +951,7 @@ RolloutStrategy::TrialResult RolloutStrategy::run_trial_unified(
                 } else {
                     sp_probs = invert_probs(early_probs);
                 }
-                double raw_eq = NeuralNetwork::compute_equity(sp_probs);
+                double raw_eq = compute_equity(sp_probs);
                 std::array<float, NUM_OUTPUTS> vr_probs;
                 for (int k = 0; k < NUM_OUTPUTS; ++k)
                     vr_probs[k] = static_cast<float>(sp_probs[k] - cl_accumulated_luck[k]);
@@ -1047,7 +1004,7 @@ RolloutStrategy::TrialResult RolloutStrategy::run_trial_unified(
             (move_num >= config_.ultra_late_threshold ? *base_
                : (is_late ? *checker_late_strat_ : *checker_strat_));
         bool using_base = (&current_strat == base_.get());
-        bool can_reuse_vr_idx = do_vr && base_gps_;
+        bool can_reuse_vr_idx = do_vr;
 
         std::array<std::array<float, NUM_OUTPUTS>, 21> roll_best_probs;
         std::array<int, 21> best_candidate_idx{};
@@ -1225,7 +1182,7 @@ RolloutStrategy::TrialResult RolloutStrategy::run_trial_unified(
             std::array<double, NUM_OUTPUTS> luck_mover;
             for (int k = 0; k < NUM_OUTPUTS; ++k)
                 luck_mover[k] = actual_probs[k] - cl_mean_probs[k];
-            double actual_eq = NeuralNetwork::compute_equity(actual_probs);
+            double actual_eq = compute_equity(actual_probs);
             double luck_eq = actual_eq - cl_mean_eq;
 
             // Cross-map luck to SP perspective
@@ -1250,7 +1207,7 @@ RolloutStrategy::TrialResult RolloutStrategy::run_trial_unified(
 
             // Cubeful branch terminal (only when cube_active)
             if (cube_active) {
-                double mover_eq_full = NeuralNetwork::compute_equity(t_probs);
+                double mover_eq_full = compute_equity(t_probs);
                 for (int b = 0; b < n_branches; ++b) {
                     if (branches[b].finished) continue;
                     double sp_val;
@@ -1278,7 +1235,7 @@ RolloutStrategy::TrialResult RolloutStrategy::run_trial_unified(
                 std::array<float, NUM_OUTPUTS> sp_probs_t;
                 if (is_sp_turn) { sp_probs_t = t_probs; }
                 else { sp_probs_t = invert_probs(t_probs); }
-                double raw_sp = NeuralNetwork::compute_equity(sp_probs_t);
+                double raw_sp = compute_equity(sp_probs_t);
                 double vr_sp = raw_sp - cl_scalar_eq_luck;
                 for (int b = 0; b < n_branches; ++b) {
                     if (branches[b].finished) continue;
@@ -1292,7 +1249,7 @@ RolloutStrategy::TrialResult RolloutStrategy::run_trial_unified(
             std::array<float, NUM_OUTPUTS> sp_probs;
             if (is_sp_turn) { sp_probs = t_probs; }
             else { sp_probs = invert_probs(t_probs); }
-            double raw_eq = NeuralNetwork::compute_equity(sp_probs);
+            double raw_eq = compute_equity(sp_probs);
             std::array<float, NUM_OUTPUTS> vr_probs;
             for (int k = 0; k < NUM_OUTPUTS; ++k)
                 vr_probs[k] = static_cast<float>(sp_probs[k] - cl_accumulated_luck[k]);
@@ -1398,7 +1355,7 @@ RolloutStrategy::TrialResult RolloutStrategy::run_trial_unified(
         std::array<float, NUM_OUTPUTS> sp_probs_t;
         if (last_mover_is_sp) { sp_probs_t = last_mover_probs; }
         else { sp_probs_t = invert_probs(last_mover_probs); }
-        double raw_sp = NeuralNetwork::compute_equity(sp_probs_t);
+        double raw_sp = compute_equity(sp_probs_t);
         double vr_sp = raw_sp - cl_scalar_eq_luck;
         for (int b = 0; b < n_branches; ++b) {
             if (branches[b].finished) continue;
@@ -1412,7 +1369,7 @@ RolloutStrategy::TrialResult RolloutStrategy::run_trial_unified(
     std::array<float, NUM_OUTPUTS> sp_probs;
     if (last_mover_is_sp) { sp_probs = last_mover_probs; }
     else { sp_probs = invert_probs(last_mover_probs); }
-    double raw_eq = NeuralNetwork::compute_equity(sp_probs);
+    double raw_eq = compute_equity(sp_probs);
     std::array<float, NUM_OUTPUTS> vr_probs;
     for (int k = 0; k < NUM_OUTPUTS; ++k)
         vr_probs[k] = static_cast<float>(sp_probs[k] - cl_accumulated_luck[k]);
@@ -1889,18 +1846,10 @@ int RolloutStrategy::best_move_index(const std::vector<Board>& candidates,
     std::vector<double> equities(n);
     double best_1ply = -1e30;
 
-    if (base_gps_) {
-        base_gps_->batch_evaluate_candidates_equity(
-            candidates, pre_move_board, equities.data());
-        for (int i = 0; i < n; ++i) {
-            if (equities[i] > best_1ply) best_1ply = equities[i];
-        }
-    } else {
-        for (int i = 0; i < n; ++i) {
-            equities[i] = NeuralNetwork::compute_equity(
-                base_->evaluate_probs(candidates[i], pre_move_board));
-            if (equities[i] > best_1ply) best_1ply = equities[i];
-        }
+    base_->batch_evaluate_candidates_equity(
+        candidates, pre_move_board, equities.data());
+    for (int i = 0; i < n; ++i) {
+        if (equities[i] > best_1ply) best_1ply = equities[i];
     }
 
     // Step 2: Filter candidates

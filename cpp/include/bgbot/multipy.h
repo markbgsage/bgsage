@@ -1,7 +1,6 @@
 #pragma once
 
 #include "strategy.h"
-#include "neural_net.h"
 #include "types.h"
 #include <memory>
 #include <array>
@@ -300,13 +299,9 @@ private:
     static std::atomic<std::uint64_t> next_cache_salt_;
 
     std::shared_ptr<Strategy> base_;
-    GamePlanStrategy* base_gps_;  // Cached downcast (null if base isn't GamePlanStrategy)
-    GamePlanPairStrategy* base_gpp_ = nullptr;  // Cached downcast for pair strategy
     // Optional separate filter strategy (for hybrid mode: fast filter + accurate leaf).
     // When null, base_ is used for filtering (standard behavior).
     std::shared_ptr<Strategy> filter_strat_;
-    GamePlanStrategy* filter_gps_ = nullptr;  // Cached downcast
-    GamePlanPairStrategy* filter_gpp_ = nullptr;  // Cached downcast for pair strategy
     const BearoffDB* bearoff_db_ = nullptr;
     std::shared_ptr<Strategy> move_prefilter_;  // Cheap filter (e.g. PubEval) for opponent candidate pruning
     int n_plies_;

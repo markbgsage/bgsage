@@ -269,8 +269,6 @@ MultiPlyStrategy::MultiPlyStrategy(std::shared_ptr<Strategy> base_strategy,
                                    bool parallel_evaluate,
                                    int parallel_threads)
     : base_(std::move(base_strategy))
-    , base_gps_(dynamic_cast<GamePlanStrategy*>(base_.get()))
-    , base_gpp_(dynamic_cast<GamePlanPairStrategy*>(base_.get()))
     , n_plies_(std::max(1, n_plies))
     , move_filter_(filter)
     , full_depth_opponent_(full_depth_opponent)
@@ -278,9 +276,6 @@ MultiPlyStrategy::MultiPlyStrategy(std::shared_ptr<Strategy> base_strategy,
     , parallel_threads_(parallel_threads)
     , cache_salt_(std::hash<const void*>{}(static_cast<const void*>(base_.get())))
 {
-    // No separate filter strategy: use base_ for filtering too
-    filter_gps_ = base_gps_;
-    filter_gpp_ = base_gpp_;
     if (move_filter_.max_moves < 1) move_filter_.max_moves = 1;
     if (move_filter_.threshold < 0.0f) move_filter_.threshold = 0.0f;
     filter_chain_ = build_filter_chain(move_filter_, n_plies_);
@@ -294,11 +289,7 @@ MultiPlyStrategy::MultiPlyStrategy(std::shared_ptr<Strategy> base_strategy,
                                    bool parallel_evaluate,
                                    int parallel_threads)
     : base_(std::move(base_strategy))
-    , base_gps_(dynamic_cast<GamePlanStrategy*>(base_.get()))
-    , base_gpp_(dynamic_cast<GamePlanPairStrategy*>(base_.get()))
     , filter_strat_(std::move(filter_strategy))
-    , filter_gps_(dynamic_cast<GamePlanStrategy*>(filter_strat_.get()))
-    , filter_gpp_(dynamic_cast<GamePlanPairStrategy*>(filter_strat_.get()))
     , n_plies_(std::max(1, n_plies))
     , move_filter_(filter)
     , full_depth_opponent_(full_depth_opponent)
@@ -523,7 +514,7 @@ std::array<float, NUM_OUTPUTS> MultiPlyStrategy::evaluate_probs_nply_impl(
                             candidate_p1_probs = invert_probs(opp_probs);
                         }
                         opp_full_depth_probs[i] = candidate_p1_probs;
-                        opp_full_depth_eq[i] = NeuralNetwork::compute_equity(candidate_p1_probs);
+                        opp_full_depth_eq[i] = compute_equity(candidate_p1_probs);
                     });
             } else {
                 for (int i = 0; i < n_opp; ++i) {
@@ -538,7 +529,7 @@ std::array<float, NUM_OUTPUTS> MultiPlyStrategy::evaluate_probs_nply_impl(
                         candidate_p1_probs = invert_probs(opp_probs);
                     }
                     opp_full_depth_probs[i] = candidate_p1_probs;
-                    opp_full_depth_eq[i] = NeuralNetwork::compute_equity(candidate_p1_probs);
+                    opp_full_depth_eq[i] = compute_equity(candidate_p1_probs);
                 }
             }
 
@@ -554,82 +545,28 @@ std::array<float, NUM_OUTPUTS> MultiPlyStrategy::evaluate_probs_nply_impl(
             p1_probs = best_p1_probs_for_opp;
         } else {
             // Fast mode (default): opponent picks best move at 1-ply (raw NN).
-            // In hybrid mode, filter_gps_ does the 1-ply scoring (fast model)
+            // In hybrid mode, filter_strat_ does the 1-ply scoring (fast model)
             // while base_ is used for leaf evaluation (accurate model).
-            // In standard mode, filter_gps_ == base_gps_.
             int best_opp_idx;
+            Strategy* filter_s = filter_strat_ ? filter_strat_.get() : base_.get();
 
             // Optimization: when plies==2 and NOT in hybrid mode, the recursion
             // would evaluate the best move at 1-ply (re-encoding + re-evaluating).
             // Instead, use batch_evaluate_candidates_best_prob to get equity + probs
             // in one pass. In hybrid mode, we can't reuse filter probs as leaf probs.
-            if (plies == 2 && base_gps_ && !filter_strat_) {
+            if (plies == 2 && !filter_strat_) {
                 std::array<float, NUM_OUTPUTS> best_probs{};
-                best_opp_idx = base_gps_->batch_evaluate_candidates_best_prob(
+                best_opp_idx = base_->batch_evaluate_candidates_best_prob(
                     opp_candidates, opp_board, nullptr, &best_probs);
                 // At plies==2, evaluate_probs_nply(best, board, 1) would just
                 // return base_->evaluate_probs(best, board). We already have those
                 // probs from the batch evaluation. Use them directly.
                 p1_probs = invert_probs(best_probs);
-            } else if (plies == 2 && base_gpp_ && !filter_strat_) {
-                std::array<float, NUM_OUTPUTS> best_probs{};
-                best_opp_idx = base_gpp_->batch_evaluate_candidates_best_prob(
-                    opp_candidates, opp_board, nullptr, &best_probs);
-                p1_probs = invert_probs(best_probs);
-            } else if (filter_gps_) {
-                // Batch evaluation with filter strategy: classify once, encode all, forward_batch
-                opp_equities.resize(opp_candidates.size());
-                best_opp_idx = filter_gps_->batch_evaluate_candidates_equity(
-                    opp_candidates, opp_board, opp_equities.data());
-
-                Board opp_best = opp_candidates[best_opp_idx];
-                GameResult opp_result = check_game_over(opp_best);
-                if (opp_result != GameResult::NOT_OVER) {
-                    p1_probs = invert_probs(terminal_probs(opp_result));
-                } else {
-                    auto opp_probs = evaluate_probs_nply_impl(opp_best, opp_board, plies - 1, false);
-                    p1_probs = invert_probs(opp_probs);
-                }
-            } else if (filter_gpp_) {
-                opp_equities.resize(opp_candidates.size());
-                best_opp_idx = filter_gpp_->batch_evaluate_candidates_equity(
-                    opp_candidates, opp_board, opp_equities.data());
-
-                Board opp_best = opp_candidates[best_opp_idx];
-                GameResult opp_result = check_game_over(opp_best);
-                if (opp_result != GameResult::NOT_OVER) {
-                    p1_probs = invert_probs(terminal_probs(opp_result));
-                } else {
-                    auto opp_probs = evaluate_probs_nply_impl(opp_best, opp_board, plies - 1, false);
-                    p1_probs = invert_probs(opp_probs);
-                }
             } else {
-                // Fallback for non-GamePlanStrategy bases
-                Strategy* filter_s = filter_strat_ ? filter_strat_.get() : base_.get();
-                double best_opp_eq = -1e30;
-                best_opp_idx = 0;
-                for (int i = 0; i < static_cast<int>(opp_candidates.size()); ++i) {
-                    GameResult r = check_game_over(opp_candidates[i]);
-                    double eq;
-                    if (r != GameResult::NOT_OVER) {
-                        switch (r) {
-                            case GameResult::WIN_SINGLE:      eq =  1.0; break;
-                            case GameResult::WIN_GAMMON:       eq =  2.0; break;
-                            case GameResult::WIN_BACKGAMMON:   eq =  3.0; break;
-                            case GameResult::LOSS_SINGLE:      eq = -1.0; break;
-                            case GameResult::LOSS_GAMMON:      eq = -2.0; break;
-                            case GameResult::LOSS_BACKGAMMON:  eq = -3.0; break;
-                            default: eq = 0.0; break;
-                        }
-                    } else {
-                        eq = NeuralNetwork::compute_equity(
-                            filter_s->evaluate_probs(opp_candidates[i], opp_board));
-                    }
-                    if (eq > best_opp_eq) {
-                        best_opp_eq = eq;
-                        best_opp_idx = i;
-                    }
-                }
+                // Batch evaluation with filter strategy (or base_ if no filter)
+                opp_equities.resize(opp_candidates.size());
+                best_opp_idx = filter_s->batch_evaluate_candidates_equity(
+                    opp_candidates, opp_board, opp_equities.data());
 
                 Board opp_best = opp_candidates[best_opp_idx];
                 GameResult opp_result = check_game_over(opp_best);
@@ -703,7 +640,7 @@ double MultiPlyStrategy::evaluate(const Board& board, bool pre_move_is_race) con
     // For the bool overload, we don't have a real pre-move board.
     // Use the post-move board itself as a reasonable proxy for game plan classification.
     auto probs = evaluate_probs_nply(board, board, n_plies_);
-    return NeuralNetwork::compute_equity(probs);
+    return compute_equity(probs);
 }
 
 std::array<float, NUM_OUTPUTS> MultiPlyStrategy::evaluate_probs(
@@ -753,25 +690,17 @@ int MultiPlyStrategy::best_move_index_impl(
         if (static_cast<int>(survivors.size()) <= 1) break;
 
         // Score survivors at this step's ply level
-        if (step.ply == 1 && filter_gps_) {
-            // Fast path: batch 1-ply evaluation via GamePlanStrategy
-            filter_gps_->batch_evaluate_candidates_equity(
-                candidates, pre_move_board, equities.data());
-        } else if (step.ply == 1 && filter_gpp_) {
-            filter_gpp_->batch_evaluate_candidates_equity(
+        if (step.ply == 1) {
+            // Batch 1-ply evaluation via virtual dispatch
+            Strategy* filter_s = filter_strat_ ? filter_strat_.get() : base_.get();
+            filter_s->batch_evaluate_candidates_equity(
                 candidates, pre_move_board, equities.data());
         } else {
             // N-ply evaluation for each survivor
             for (int idx : survivors) {
-                if (step.ply == 1) {
-                    Strategy* filter_s = filter_strat_ ? filter_strat_.get() : base_.get();
-                    equities[idx] = NeuralNetwork::compute_equity(
-                        filter_s->evaluate_probs(candidates[idx], pre_move_board));
-                } else {
-                    auto probs = evaluate_probs_nply_impl(
-                        candidates[idx], pre_move_board, step.ply, false);
-                    equities[idx] = NeuralNetwork::compute_equity(probs);
-                }
+                auto probs = evaluate_probs_nply_impl(
+                    candidates[idx], pre_move_board, step.ply, false);
+                equities[idx] = compute_equity(probs);
             }
         }
 
@@ -809,7 +738,7 @@ int MultiPlyStrategy::best_move_index_impl(
                 [&](int local_i) {
                     int idx = survivors[local_i];
                     auto probs = evaluate_probs_nply_impl(candidates[idx], pre_move_board, n_plies_, false);
-                    survivor_eq[local_i] = NeuralNetwork::compute_equity(probs);
+                    survivor_eq[local_i] = compute_equity(probs);
                 });
 
             for (int i = 0; i < static_cast<int>(survivors.size()); ++i) {
@@ -825,7 +754,7 @@ int MultiPlyStrategy::best_move_index_impl(
 
     for (int idx : survivors) {
         auto probs = evaluate_probs_nply_impl(candidates[idx], pre_move_board, n_plies_, false);
-        double eq = NeuralNetwork::compute_equity(probs);
+        double eq = compute_equity(probs);
         if (eq > best_nply) {
             best_nply = eq;
             best_idx = idx;
@@ -877,7 +806,7 @@ int MultiPlyStrategy::best_move_index(const std::vector<Board>& candidates,
     int best_idx = survivors[0];
     for (int idx : survivors) {
         auto probs = evaluate_probs_nply(candidates[idx], candidates[idx], n_plies_);
-        double eq = NeuralNetwork::compute_equity(probs);
+        double eq = compute_equity(probs);
         if (eq > best_nply) {
             best_nply = eq;
             best_idx = idx;

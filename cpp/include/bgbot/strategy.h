@@ -2,10 +2,19 @@
 
 #include "types.h"
 #include <array>
+#include <vector>
 
 namespace bgbot {
 
 constexpr int NUM_OUTPUTS = 5;  // P(win), P(gw), P(bw), P(gl), P(bl)
+
+// Compute equity from 5 output probabilities.
+// equity = 2*P(win) - 1 + P(gw) - P(gl) + P(bw) - P(bl)
+inline double compute_equity(const std::array<float, NUM_OUTPUTS>& probs) {
+    return 2.0 * probs[0] - 1.0
+         + probs[1] - probs[3]
+         + probs[2] - probs[4];
+}
 
 // Probabilities for terminal (game-over) positions from the perspective
 // of the player who is "player 1" on the board.
@@ -71,6 +80,44 @@ public:
     // Default implementation calls best_move_index(candidates, is_race(pre_move_board)).
     virtual int best_move_index(const std::vector<Board>& candidates,
                                 const Board& pre_move_board) const;
+
+    // ----- Batch evaluation methods -----
+    // These evaluate multiple candidate post-move boards efficiently.
+    // Default implementations loop over candidates calling evaluate_probs().
+    // Concrete strategies (GamePlanStrategy, etc.) override with optimized
+    // batch encoding + forward pass implementations.
+
+    // Evaluate all candidates, fill equities[0..n-1], return best index.
+    // Handles terminal positions (check_game_over) automatically.
+    virtual int evaluate_candidates_equity(
+        const std::vector<Board>& candidates,
+        const Board& pre_move_board,
+        double* equities) const;
+
+    // Batch encoding + forward pass variant of evaluate_candidates_equity.
+    // For the default implementation, identical to evaluate_candidates_equity.
+    // Concrete strategies amortize encoding and use batch forward passes.
+    virtual int batch_evaluate_candidates_equity(
+        const std::vector<Board>& candidates,
+        const Board& pre_move_board,
+        double* equities) const;
+
+    // Like batch_evaluate_candidates_equity, but also stores the full
+    // 5-output probabilities for each candidate in probs_out.
+    virtual int batch_evaluate_candidates_equity_probs(
+        const std::vector<Board>& candidates,
+        const Board& pre_move_board,
+        double* equities,
+        std::array<float, NUM_OUTPUTS>* probs_out) const;
+
+    // Like batch_evaluate_candidates_equity, but returns only the
+    // best candidate's probabilities in best_probs_out.
+    // If equities is nullptr, equity outputs are not stored.
+    virtual int batch_evaluate_candidates_best_prob(
+        const std::vector<Board>& candidates,
+        const Board& pre_move_board,
+        double* equities,
+        std::array<float, NUM_OUTPUTS>* best_probs_out) const;
 };
 
 } // namespace bgbot

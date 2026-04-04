@@ -83,11 +83,8 @@ class _CubelessBase:
     def __init__(self, weights: WeightConfig | WeightConfigPair):
         self._weights = weights
         self._is_pair = isinstance(weights, WeightConfigPair)
-        if self._is_pair:
-            paths, hiddens = weights.weight_args
-            self._strategy_1ply = bgbot_cpp.GamePlanPairStrategy(paths, hiddens)
-        else:
-            self._strategy_1ply = bgbot_cpp.GamePlanStrategy(*weights.weight_args)
+        self._strategy_1ply = bgbot_cpp.create_strategy(
+            weights.strategy_type, weights.weight_paths_list, weights.hidden_sizes_list)
         self._bearoff_db = None  # Set by BgBotAnalyzer after construction
 
     def _score_candidates_1ply(
@@ -248,21 +245,12 @@ class _MultiPlyAnalyzer(_CubelessBase):
         elif n_plies > 1:
             requested_threads = max(2, parallel_threads)
         self._parallel_threads = requested_threads
-        if self._is_pair:
-            paths, hiddens = weights.weight_args
-            self._strategy_nply = bgbot_cpp.create_multipy_pair(
-                paths, hiddens,
-                n_plies=n_plies,
-                parallel_evaluate=parallel_evaluate,
-                parallel_threads=self._parallel_threads,
-            )
-        else:
-            self._strategy_nply = bgbot_cpp.create_multipy_5nn(
-                *weights.weight_args,
-                n_plies=n_plies,
-                parallel_evaluate=parallel_evaluate,
-                parallel_threads=self._parallel_threads,
-            )
+        self._strategy_nply = bgbot_cpp.create_multipy(
+            weights.strategy_type, weights.weight_paths_list, weights.hidden_sizes_list,
+            n_plies=n_plies,
+            parallel_evaluate=parallel_evaluate,
+            parallel_threads=self._parallel_threads,
+        )
 
     def checker_play_analytics(
         self, board, die1, die2, cube_value=1, cube_owner="centered",
@@ -415,48 +403,27 @@ class _RolloutAnalyzer(_CubelessBase):
         cube_cfg = cube if cube is not None else _empty
         cube_late_cfg = cube_late if cube_late is not None else _empty
 
-        if self._is_pair:
-            paths, hiddens = weights.weight_args
-            self._rollout_strategy = bgbot_cpp.create_rollout_pair(
-                paths, hiddens,
-                n_trials=n_trials,
-                truncation_depth=truncation_depth,
-                decision_ply=decision_ply,
-                n_threads=self._parallel_threads,
-                seed=seed,
-                late_ply=late_ply,
-                late_threshold=late_threshold,
-                parallelize_trials=parallelize_trials,
-                checker=checker_cfg,
-                checker_late=checker_late_cfg,
-                cube=cube_cfg,
-                cube_late=cube_late_cfg,
-                ultra_late_threshold=ultra_late_threshold,
-            )
-            self._strategy_3ply = bgbot_cpp.create_multipy_pair(
-                paths, hiddens, n_plies=3,
-            )
-        else:
-            self._rollout_strategy = bgbot_cpp.create_rollout_5nn(
-                *weights.weight_args,
-                n_trials=n_trials,
-                truncation_depth=truncation_depth,
-                decision_ply=decision_ply,
-                n_threads=self._parallel_threads,
-                seed=seed,
-                late_ply=late_ply,
-                late_threshold=late_threshold,
-                parallelize_trials=parallelize_trials,
-                checker=checker_cfg,
-                checker_late=checker_late_cfg,
-                cube=cube_cfg,
-                cube_late=cube_late_cfg,
-                ultra_late_threshold=ultra_late_threshold,
-            )
-            # Create a 3-ply strategy for pre-filtering (accurate move count)
-            self._strategy_3ply = bgbot_cpp.create_multipy_5nn(
-                *weights.weight_args, n_plies=3,
-            )
+        self._rollout_strategy = bgbot_cpp.create_rollout(
+            weights.strategy_type, weights.weight_paths_list, weights.hidden_sizes_list,
+            n_trials=n_trials,
+            truncation_depth=truncation_depth,
+            decision_ply=decision_ply,
+            n_threads=self._parallel_threads,
+            seed=seed,
+            late_ply=late_ply,
+            late_threshold=late_threshold,
+            parallelize_trials=parallelize_trials,
+            checker=checker_cfg,
+            checker_late=checker_late_cfg,
+            cube=cube_cfg,
+            cube_late=cube_late_cfg,
+            ultra_late_threshold=ultra_late_threshold,
+        )
+        # Create a 3-ply strategy for pre-filtering (accurate move count)
+        self._strategy_3ply = bgbot_cpp.create_multipy(
+            weights.strategy_type, weights.weight_paths_list, weights.hidden_sizes_list,
+            n_plies=3,
+        )
 
     def cancel(self):
         """Request cancellation of in-progress rollout."""

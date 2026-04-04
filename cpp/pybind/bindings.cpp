@@ -107,6 +107,23 @@ struct ScenarioSet {
     }
 };
 
+// Helper: create a base Strategy from type string + weight paths/sizes.
+// Defined outside PYBIND11_MODULE so lambdas can capture by value.
+static std::shared_ptr<Strategy> make_strategy_from_type(
+    const std::string& strategy_type,
+    const std::vector<std::string>& weight_paths,
+    const std::vector<int>& hidden_sizes)
+{
+    if (strategy_type == "5nn")
+        return std::make_shared<GamePlanStrategy>(weight_paths, hidden_sizes);
+    if (strategy_type == "pair")
+        return std::make_shared<GamePlanPairStrategy>(weight_paths, hidden_sizes);
+    if (strategy_type == "backgame_pair")
+        return std::make_shared<BackgameAwarePairStrategy>(weight_paths, hidden_sizes);
+    throw std::invalid_argument("Unknown strategy type: " + strategy_type +
+        ". Valid types: 5nn, pair, backgame_pair");
+}
+
 PYBIND11_MODULE(bgbot_cpp, m) {
     m.doc() = "Backgammon bot C++ engine";
 
@@ -226,9 +243,10 @@ PYBIND11_MODULE(bgbot_cpp, m) {
     // --- NNStrategy ---
     py::class_<NNStrategy>(m, "NNStrategy")
         .def(py::init<std::shared_ptr<NeuralNetwork>>())
-        .def(py::init<const std::string&, int>(),
+        .def(py::init<const std::string&, int, int>(),
              py::arg("weights_path"),
-             py::arg("n_hidden") = 120)
+             py::arg("n_hidden") = 120,
+             py::arg("n_inputs") = NN_INPUTS)
         .def("evaluate_board", [](NNStrategy& self,
                                    const std::vector<int>& board,
                                    const std::vector<int>& pre_move_board) {
@@ -732,7 +750,7 @@ PYBIND11_MODULE(bgbot_cpp, m) {
        py::arg("seed") = 42);
 
     // --- GamePlanStrategy ---
-    py::class_<GamePlanStrategy>(m, "GamePlanStrategy")
+    py::class_<GamePlanStrategy, std::shared_ptr<GamePlanStrategy>>(m, "GamePlanStrategy")
         .def(py::init<const std::string&, const std::string&,
                       const std::string&, const std::string&,
                       const std::string&,
@@ -979,6 +997,34 @@ PYBIND11_MODULE(bgbot_cpp, m) {
         std::copy(inp.begin(), inp.end(), result.mutable_data());
         return result;
     });
+    // Batch encoding: boards [N, 26] int32 -> inputs [N, n_inputs] float32
+    m.def("encode_boards_batch", [](py::array_t<int32_t> boards_np, int n_inputs) {
+        auto info = boards_np.request();
+        if (info.ndim != 2 || info.shape[1] != 26)
+            throw std::runtime_error("boards must be shape [N, 26]");
+        int n = static_cast<int>(info.shape[0]);
+        const int32_t* data = static_cast<const int32_t*>(info.ptr);
+
+        py::array_t<float> result({n, n_inputs});
+        float* out = static_cast<float*>(result.request().ptr);
+
+        {
+            py::gil_scoped_release release;
+            for (int i = 0; i < n; ++i) {
+                Board board;
+                for (int j = 0; j < 26; ++j) board[j] = data[i * 26 + j];
+                if (n_inputs == TESAURO_INPUTS) {
+                    auto inp = compute_tesauro_inputs(board);
+                    std::copy(inp.begin(), inp.end(), out + i * n_inputs);
+                } else {
+                    auto inp = compute_extended_contact_inputs(board);
+                    std::copy(inp.data(), inp.data() + n_inputs, out + i * n_inputs);
+                }
+            }
+        }
+        return result;
+    }, "Batch-encode boards [N,26] int32 -> [N,n_inputs] float32",
+       py::arg("boards"), py::arg("n_inputs") = EXTENDED_CONTACT_INPUTS);
     m.def("compute_tesauro_inputs", [](const std::vector<int>& board) {
         auto b = list_to_board(board);
         auto inp = compute_tesauro_inputs(b);
@@ -1162,6 +1208,92 @@ PYBIND11_MODULE(bgbot_cpp, m) {
         return result;
     }, "Run GPU-accelerated supervised learning training",
        py::arg("boards"),
+       py::arg("targets"),
+       py::arg("weights_path") = "",
+       py::arg("n_hidden") = 120,
+       py::arg("n_inputs") = NN_INPUTS,
+       py::arg("alpha") = 1.0f,
+       py::arg("epochs") = 100,
+       py::arg("batch_size") = 4096,
+       py::arg("seed") = 42,
+       py::arg("print_interval") = 1,
+       py::arg("save_path") = "",
+       py::arg("benchmark_scenarios") = std::shared_ptr<ScenarioSet>(nullptr),
+       py::arg("sample_weights") = py::none(),
+       py::arg("label") = "");
+
+    // --- Pre-encoded GPU SL training (skips CPU encoding) ---
+    m.def("cuda_supervised_train_preencoded", [](py::array_t<float> inputs_np,
+                                                  py::array_t<float> targets_np,
+                                                  const std::string& weights_path,
+                                                  int n_hidden,
+                                                  int n_inputs,
+                                                  float alpha,
+                                                  int epochs,
+                                                  int batch_size,
+                                                  uint32_t seed,
+                                                  int print_interval,
+                                                  const std::string& save_path,
+                                                  std::shared_ptr<ScenarioSet> benchmark_ss,
+                                                  py::object sample_weights_obj,
+                                                  const std::string& label) {
+        auto inputs_info = inputs_np.request();
+        auto targets_info = targets_np.request();
+        if (inputs_info.ndim != 2)
+            throw std::runtime_error("inputs must be 2D array [N, n_inputs]");
+        if (targets_info.ndim != 2 || targets_info.shape[1] != 5)
+            throw std::runtime_error("targets must be shape [N, 5]");
+        int n_positions = static_cast<int>(inputs_info.shape[0]);
+        if (inputs_info.shape[1] != n_inputs)
+            throw std::runtime_error("inputs dim 1 must match n_inputs");
+        if (targets_info.shape[0] != n_positions)
+            throw std::runtime_error("inputs and targets must have same N");
+
+        const float* sample_weights_ptr = nullptr;
+        py::array_t<float> sample_weights_np;
+        if (!sample_weights_obj.is_none()) {
+            sample_weights_np = sample_weights_obj.cast<py::array_t<float>>();
+            auto sw_info = sample_weights_np.request();
+            if (sw_info.ndim != 1 || sw_info.shape[0] != n_positions)
+                throw std::runtime_error("sample_weights must be shape [N]");
+            sample_weights_ptr = static_cast<const float*>(sw_info.ptr);
+        }
+
+        const float* inputs_ptr = static_cast<const float*>(inputs_info.ptr);
+        const float* targets_ptr = static_cast<const float*>(targets_info.ptr);
+
+        SupervisedTrainConfig config;
+        config.n_hidden = n_hidden;
+        config.n_inputs = n_inputs;
+        config.alpha = alpha;
+        config.epochs = epochs;
+        config.batch_size = batch_size;
+        config.seed = seed;
+        config.starting_weights = weights_path;
+        config.save_path = save_path;
+        config.print_interval = print_interval;
+        config.inputs = inputs_ptr;
+        config.targets = targets_ptr;
+        config.sample_weights = sample_weights_ptr;
+        config.n_positions = n_positions;
+        if (benchmark_ss && !benchmark_ss->scenarios.empty()) {
+            config.benchmark_scenarios = &benchmark_ss->scenarios;
+        }
+
+        py::gil_scoped_release release;
+        SupervisedTrainResult train_result = cuda_supervised_train(config);
+        py::gil_scoped_acquire acquire;
+
+        py::dict result;
+        result["best_score"] = train_result.best_score;
+        result["best_epoch"] = train_result.best_epoch;
+        result["epochs_completed"] = train_result.epochs_completed;
+        result["total_seconds"] = train_result.total_seconds;
+        result["weights_path"] = train_result.weights_path;
+        result["best_weights_path"] = train_result.best_weights_path;
+        return result;
+    }, "GPU SL training with pre-encoded float inputs (skips CPU encoding)",
+       py::arg("inputs"),
        py::arg("targets"),
        py::arg("weights_path") = "",
        py::arg("n_hidden") = 120,
@@ -4552,4 +4684,239 @@ PYBIND11_MODULE(bgbot_cpp, m) {
             result.append(std::string(names[i]));
         return result;
     }, "Return list of 17 pair names (purerace, race_race, race_att, ...)");
+
+    // =====================================================================
+    // 19-NN Backgame-Aware Pair Strategy bindings (Stage 9)
+    // =====================================================================
+
+    py::class_<BackgameAwarePairStrategy, std::shared_ptr<BackgameAwarePairStrategy>>(m, "BackgameAwarePairStrategy")
+        .def(py::init<const std::vector<std::string>&, const std::vector<int>&>(),
+             py::arg("weight_paths"), py::arg("hidden_sizes"),
+             "Create 19-NN strategy: [0]=purerace, [1-16]=contact pairs, "
+             "[17]=player backgame, [18]=opponent backgame")
+        .def("evaluate_board", [](BackgameAwarePairStrategy& self,
+                                   const std::vector<int>& board,
+                                   const std::vector<int>& pre_move_board) {
+            auto b = list_to_board(board);
+            auto pmb = list_to_board(pre_move_board);
+            auto probs = self.evaluate_probs(b, pmb);
+            double eq = NeuralNetwork::compute_equity(probs);
+            py::dict result;
+            result["probs"] = probs;
+            result["equity"] = eq;
+            return result;
+        }, "Evaluate board at 1-ply (raw NN), returns probs and equity",
+           py::arg("board"), py::arg("pre_move_board"))
+        .def("select_nn_idx", [](BackgameAwarePairStrategy& self,
+                                  const std::vector<int>& board) {
+            // Expose select_nn_idx for testing/verification
+            auto b = list_to_board(board);
+            // Call evaluate_probs to exercise the logic, but we want the index.
+            // Since select_nn_idx is private, we replicate the logic here.
+            GamePlan player_gp = classify_game_plan(b);
+            if (player_gp == GamePlan::PURERACE) return 0;
+            Board flipped = flip(b);
+            GamePlan opponent_gp = classify_game_plan(flipped);
+            if (opponent_gp == GamePlan::PURERACE)
+                opponent_gp = GamePlan::RACING;
+
+            // Player back game check
+            if (player_gp == GamePlan::ANCHORING && opponent_gp == GamePlan::RACING) {
+                auto [pp, op] = pip_counts(b);
+                if (pp > op) {
+                    int anchors = 0;
+                    for (int pt = 19; pt <= 24; ++pt)
+                        if (b[pt] >= 2) ++anchors;
+                    if (anchors >= 2) return 17;
+                }
+            }
+            // Opponent back game check
+            if (player_gp == GamePlan::RACING && opponent_gp == GamePlan::ANCHORING) {
+                auto [pp, op] = pip_counts(b);
+                if (op > pp) {
+                    int opp_anchors = 0;
+                    for (int pt = 1; pt <= 6; ++pt)
+                        if (b[pt] <= -2) ++opp_anchors;
+                    if (opp_anchors >= 2) return 18;
+                }
+            }
+            return 1 + game_plan_pair_index(player_gp, opponent_gp);
+        }, "Return NN index (0-18) for a board position. "
+           "17=player backgame, 18=opponent backgame.",
+           py::arg("board"));
+
+    // --- Stage 9 scoring ---
+    m.def("score_benchmarks_stage9", [](const ScenarioSet& ss,
+                                        const std::vector<std::string>& weight_paths,
+                                        const std::vector<int>& hidden_sizes,
+                                        int n_threads) {
+        BackgameAwarePairStrategy strat(weight_paths, hidden_sizes);
+        py::gil_scoped_release release;
+        return run_score_benchmarks(strat, ss.scenarios, n_threads);
+    }, "Score benchmarks using 19-NN BackgameAwarePairStrategy",
+       py::arg("scenarios"),
+       py::arg("weight_paths"),
+       py::arg("hidden_sizes"),
+       py::arg("n_threads") = 0);
+
+    // --- Stage 9 multipy creation ---
+    m.def("create_multipy_stage9", [](const std::vector<std::string>& weight_paths,
+                                       const std::vector<int>& hidden_sizes,
+                                       int n_plies,
+                                       int filter_max_moves, float filter_threshold,
+                                       bool full_depth_opponent,
+                                       bool parallel_evaluate, int parallel_threads) {
+        auto base = std::make_shared<BackgameAwarePairStrategy>(weight_paths, hidden_sizes);
+        MoveFilter filter{filter_max_moves, filter_threshold};
+        return std::make_shared<MultiPlyStrategy>(
+            base, n_plies, filter, full_depth_opponent,
+            parallel_evaluate, parallel_threads);
+    }, "Create MultiPlyStrategy from 19-NN Backgame-Aware Pair base strategy",
+       py::arg("weight_paths"),
+       py::arg("hidden_sizes"),
+       py::arg("n_plies") = 2,
+       py::arg("filter_max_moves") = 5,
+       py::arg("filter_threshold") = 0.08f,
+       py::arg("full_depth_opponent") = false,
+       py::arg("parallel_evaluate") = false,
+       py::arg("parallel_threads") = 0);
+
+    // --- Stage 9 rollout creation ---
+    m.def("create_rollout_stage9", [](const std::vector<std::string>& weight_paths,
+                                       const std::vector<int>& hidden_sizes,
+                                       int n_trials, int truncation_depth, int decision_ply,
+                                       int filter_max_moves, float filter_threshold,
+                                       int n_threads, uint32_t seed,
+                                       int late_ply, int late_threshold,
+                                       bool enable_vr, bool parallelize_trials,
+                                       const TrialEvalConfig& checker,
+                                       const TrialEvalConfig& checker_late,
+                                       const TrialEvalConfig& cube,
+                                       const TrialEvalConfig& cube_late,
+                                       int ultra_late_threshold) {
+        auto base = std::make_shared<BackgameAwarePairStrategy>(weight_paths, hidden_sizes);
+        RolloutConfig rc;
+        rc.n_trials = n_trials;
+        rc.truncation_depth = truncation_depth;
+        rc.decision_ply = decision_ply;
+        rc.filter = {filter_max_moves, filter_threshold};
+        rc.n_threads = n_threads;
+        rc.seed = seed;
+        rc.late_ply = late_ply;
+        rc.late_threshold = late_threshold;
+        rc.enable_vr = enable_vr;
+        rc.parallelize_trials = parallelize_trials;
+        rc.checker = checker;
+        rc.checker_late = checker_late;
+        rc.cube = cube;
+        rc.cube_late = cube_late;
+        rc.ultra_late_threshold = ultra_late_threshold;
+        return std::make_shared<RolloutStrategy>(base, rc);
+    }, "Create RolloutStrategy from 19-NN Backgame-Aware Pair base strategy",
+       py::arg("weight_paths"),
+       py::arg("hidden_sizes"),
+       py::arg("n_trials") = 1296,
+       py::arg("truncation_depth") = 0,
+       py::arg("decision_ply") = 1,
+       py::arg("filter_max_moves") = 5,
+       py::arg("filter_threshold") = 0.08f,
+       py::arg("n_threads") = 1,
+       py::arg("seed") = 42,
+       py::arg("late_ply") = -1,
+       py::arg("late_threshold") = 20,
+       py::arg("enable_vr") = true,
+       py::arg("parallelize_trials") = true,
+       py::arg("checker") = TrialEvalConfig{},
+       py::arg("checker_late") = TrialEvalConfig{},
+       py::arg("cube") = TrialEvalConfig{},
+       py::arg("cube_late") = TrialEvalConfig{},
+       py::arg("ultra_late_threshold") = 2);
+
+    // ======================================================================
+    // Unified factory functions (strategy-type agnostic)
+    // ======================================================================
+
+    m.def("create_strategy", [](const std::string& strategy_type,
+                                               const std::vector<std::string>& weight_paths,
+                                               const std::vector<int>& hidden_sizes) {
+        return make_strategy_from_type(strategy_type, weight_paths, hidden_sizes);
+    }, "Create a base Strategy by type (5nn, pair, backgame_pair)",
+       py::arg("strategy_type"),
+       py::arg("weight_paths"),
+       py::arg("hidden_sizes"));
+
+    m.def("create_multipy", [](const std::string& strategy_type,
+                                              const std::vector<std::string>& weight_paths,
+                                              const std::vector<int>& hidden_sizes,
+                                              int n_plies,
+                                              int filter_max_moves, float filter_threshold,
+                                              bool full_depth_opponent,
+                                              bool parallel_evaluate, int parallel_threads) {
+        auto base = make_strategy_from_type(strategy_type, weight_paths, hidden_sizes);
+        MoveFilter filter{filter_max_moves, filter_threshold};
+        return std::make_shared<MultiPlyStrategy>(
+            base, n_plies, filter, full_depth_opponent,
+            parallel_evaluate, parallel_threads);
+    }, "Create MultiPlyStrategy from any base strategy type",
+       py::arg("strategy_type"),
+       py::arg("weight_paths"),
+       py::arg("hidden_sizes"),
+       py::arg("n_plies") = 2,
+       py::arg("filter_max_moves") = 5,
+       py::arg("filter_threshold") = 0.08f,
+       py::arg("full_depth_opponent") = false,
+       py::arg("parallel_evaluate") = false,
+       py::arg("parallel_threads") = 0);
+
+    m.def("create_rollout", [](const std::string& strategy_type,
+                                              const std::vector<std::string>& weight_paths,
+                                              const std::vector<int>& hidden_sizes,
+                                              int n_trials, int truncation_depth, int decision_ply,
+                                              int filter_max_moves, float filter_threshold,
+                                              int n_threads, uint32_t seed,
+                                              int late_ply, int late_threshold,
+                                              bool enable_vr, bool parallelize_trials,
+                                              const TrialEvalConfig& checker,
+                                              const TrialEvalConfig& checker_late,
+                                              const TrialEvalConfig& cube,
+                                              const TrialEvalConfig& cube_late,
+                                              int ultra_late_threshold) {
+        auto base = make_strategy_from_type(strategy_type, weight_paths, hidden_sizes);
+        RolloutConfig rc;
+        rc.n_trials = n_trials;
+        rc.truncation_depth = truncation_depth;
+        rc.decision_ply = decision_ply;
+        rc.filter = {filter_max_moves, filter_threshold};
+        rc.n_threads = n_threads;
+        rc.seed = seed;
+        rc.late_ply = late_ply;
+        rc.late_threshold = late_threshold;
+        rc.enable_vr = enable_vr;
+        rc.parallelize_trials = parallelize_trials;
+        rc.checker = checker;
+        rc.checker_late = checker_late;
+        rc.cube = cube;
+        rc.cube_late = cube_late;
+        rc.ultra_late_threshold = ultra_late_threshold;
+        return std::make_shared<RolloutStrategy>(base, rc);
+    }, "Create RolloutStrategy from any base strategy type",
+       py::arg("strategy_type"),
+       py::arg("weight_paths"),
+       py::arg("hidden_sizes"),
+       py::arg("n_trials") = 1296,
+       py::arg("truncation_depth") = 0,
+       py::arg("decision_ply") = 1,
+       py::arg("filter_max_moves") = 5,
+       py::arg("filter_threshold") = 0.08f,
+       py::arg("n_threads") = 1,
+       py::arg("seed") = 42,
+       py::arg("late_ply") = -1,
+       py::arg("late_threshold") = 20,
+       py::arg("enable_vr") = true,
+       py::arg("parallelize_trials") = true,
+       py::arg("checker") = TrialEvalConfig{},
+       py::arg("checker_late") = TrialEvalConfig{},
+       py::arg("cube") = TrialEvalConfig{},
+       py::arg("cube_late") = TrialEvalConfig{},
+       py::arg("ultra_late_threshold") = 2);
 }
