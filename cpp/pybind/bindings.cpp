@@ -4919,4 +4919,133 @@ PYBIND11_MODULE(bgbot_cpp, m) {
        py::arg("cube") = TrialEvalConfig{},
        py::arg("cube_late") = TrialEvalConfig{},
        py::arg("ultra_late_threshold") = 2);
+
+    // --- Unified 1-ply cube decision ---
+    m.def("evaluate_cube_decision_unified", [](const std::vector<int>& checkers,
+                                                int cube_value, CubeOwner owner,
+                                                const std::string& strategy_type,
+                                                const std::vector<std::string>& weight_paths,
+                                                const std::vector<int>& hidden_sizes,
+                                                int away1, int away2, bool is_crawford,
+                                                float cube_x_override, bool jacoby,
+                                                bool beaver, int max_cube_value,
+                                                const BearoffDB* bearoff_db) {
+        Board board = list_to_board(checkers);
+        auto base = make_strategy_from_type(strategy_type, weight_paths, hidden_sizes);
+        std::shared_ptr<Strategy> strat = base;
+        if (bearoff_db && bearoff_db->is_loaded()) {
+            strat = std::make_shared<BearoffStrategy>(base, bearoff_db);
+        }
+        Board flipped = flip(board);
+        bool race = is_race(board);
+        auto post_move_probs = strat->evaluate_probs(flipped, race);
+        auto pre_roll_probs = invert_probs(post_move_probs);
+        float x = (cube_x_override >= 0.0f) ? cube_x_override : cube_efficiency(board, race);
+        CubeInfo ci{cube_value, owner, {away1, away2, is_crawford}, cube_x_override, jacoby, beaver, max_cube_value};
+        auto cd = cube_decision_1ply(pre_roll_probs, ci, x);
+        float cl_eq = cubeless_equity(pre_roll_probs);
+        py::dict result;
+        result["probs"] = pre_roll_probs;
+        result["cubeless_equity"] = cl_eq;
+        result["cube_x"] = x;
+        result["equity_nd"] = cd.equity_nd;
+        result["equity_dt"] = cd.equity_dt;
+        result["equity_dp"] = cd.equity_dp;
+        result["should_double"] = cd.should_double;
+        result["should_take"] = cd.should_take;
+        result["optimal_equity"] = cd.optimal_equity;
+        result["is_beaver"] = cd.is_beaver;
+        result["is_race"] = race;
+        return result;
+    }, "Unified 1-ply cube decision for any strategy type.",
+       py::arg("checkers"),
+       py::arg("cube_value") = 1,
+       py::arg("owner") = CubeOwner::CENTERED,
+       py::arg("strategy_type"),
+       py::arg("weight_paths"),
+       py::arg("hidden_sizes"),
+       py::arg("away1") = 0, py::arg("away2") = 0, py::arg("is_crawford") = false,
+       py::arg("cube_x_override") = -1.0f, py::arg("jacoby") = true,
+       py::arg("beaver") = true, py::arg("max_cube_value") = 0,
+       py::arg("bearoff_db") = nullptr);
+
+    // --- Unified N-ply cube decision ---
+    m.def("cube_decision_nply_unified", [](const std::vector<int>& checkers,
+                                            int cube_value, CubeOwner owner,
+                                            int n_plies,
+                                            const std::string& strategy_type,
+                                            const std::vector<std::string>& weight_paths,
+                                            const std::vector<int>& hidden_sizes,
+                                            int filter_max_moves,
+                                            float filter_threshold,
+                                            int n_threads,
+                                            int away1, int away2, bool is_crawford,
+                                            float cube_x_override, bool jacoby,
+                                            bool beaver, int max_cube_value,
+                                            const BearoffDB* bearoff_db,
+                                            bool incl_2ply_details) {
+        if (incl_2ply_details && n_plies < 3) {
+            throw std::invalid_argument(
+                "incl_2ply_details requires n_plies >= 3");
+        }
+        Board board = list_to_board(checkers);
+        auto base = make_strategy_from_type(strategy_type, weight_paths, hidden_sizes);
+        std::shared_ptr<Strategy> base_strat = base;
+        if (bearoff_db && bearoff_db->is_loaded()) {
+            base_strat = std::make_shared<BearoffStrategy>(base, bearoff_db);
+        }
+        CubeInfo ci{cube_value, owner, {away1, away2, is_crawford}, cube_x_override, jacoby, beaver, max_cube_value};
+        MoveFilter filter{filter_max_moves, filter_threshold};
+        CubeDecision cd;
+        TwoPlyDetails details;
+        std::array<float, NUM_OUTPUTS> pre_roll_probs;
+        float cl_eq;
+        {
+            py::gil_scoped_release release;
+            if (incl_2ply_details) {
+                cd = cube_decision_nply_with_details(board, ci, *base_strat, n_plies, filter, n_threads, details);
+            } else {
+                cd = cube_decision_nply(board, ci, *base_strat, n_plies, filter, n_threads);
+            }
+            Board flipped = flip(board);
+            MultiPlyStrategy multipy(base_strat, n_plies, filter);
+            if (bearoff_db && bearoff_db->is_loaded()) {
+                multipy.set_bearoff_db(bearoff_db);
+            }
+            auto post_probs = multipy.evaluate_probs(flipped, flipped);
+            multipy.clear_cache();
+            pre_roll_probs = invert_probs(post_probs);
+            cl_eq = cubeless_equity(pre_roll_probs);
+        }
+        py::dict result;
+        result["probs"] = pre_roll_probs;
+        result["cubeless_equity"] = cl_eq;
+        result["equity_nd"] = cd.equity_nd;
+        result["equity_dt"] = cd.equity_dt;
+        result["equity_dp"] = cd.equity_dp;
+        result["should_double"] = cd.should_double;
+        result["should_take"] = cd.should_take;
+        result["optimal_equity"] = cd.optimal_equity;
+        result["is_beaver"] = cd.is_beaver;
+        result["n_plies"] = n_plies;
+        if (incl_2ply_details) {
+            result["player_rolls"] = two_ply_details_to_list(details);
+        }
+        return result;
+    }, "Unified N-ply cube decision for any strategy type.",
+       py::arg("checkers"),
+       py::arg("cube_value") = 1,
+       py::arg("owner") = CubeOwner::CENTERED,
+       py::arg("n_plies") = 2,
+       py::arg("strategy_type"),
+       py::arg("weight_paths"),
+       py::arg("hidden_sizes"),
+       py::arg("filter_max_moves") = 5,
+       py::arg("filter_threshold") = 0.08f,
+       py::arg("n_threads") = 1,
+       py::arg("away1") = 0, py::arg("away2") = 0, py::arg("is_crawford") = false,
+       py::arg("cube_x_override") = -1.0f, py::arg("jacoby") = true,
+       py::arg("beaver") = true, py::arg("max_cube_value") = 0,
+       py::arg("bearoff_db") = nullptr,
+       py::arg("incl_2ply_details") = false);
 }

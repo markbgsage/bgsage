@@ -82,7 +82,6 @@ class _CubelessBase:
 
     def __init__(self, weights: WeightConfig | WeightConfigPair):
         self._weights = weights
-        self._is_pair = isinstance(weights, WeightConfigPair)
         self._strategy_1ply = bgbot_cpp.create_strategy(
             weights.strategy_type, weights.weight_paths_list, weights.hidden_sizes_list)
         self._bearoff_db = None  # Set by BgBotAnalyzer after construction
@@ -212,21 +211,15 @@ class _OnePlyAnalyzer(_CubelessBase):
         if incl_2ply_details:
             raise ValueError("incl_2ply_details requires at least 3-ply evaluation")
         owner = resolve_owner(cube_owner)
-        if self._is_pair:
-            paths, hiddens = self._weights.weight_args
-            r = bgbot_cpp.evaluate_cube_decision_pair(
-                board, cube_value, owner, paths, hiddens,
-                away1=away1, away2=away2, is_crawford=is_crawford,
-                jacoby=jacoby, beaver=beaver,
-                bearoff_db=self._bearoff_db,
-            )
-        else:
-            r = bgbot_cpp.evaluate_cube_decision(
-                board, cube_value, owner, *self._weights.weight_args,
-                away1=away1, away2=away2, is_crawford=is_crawford,
-                jacoby=jacoby, beaver=beaver,
-                bearoff_db=self._bearoff_db,
-            )
+        r = bgbot_cpp.evaluate_cube_decision_unified(
+            board, cube_value, owner,
+            self._weights.strategy_type,
+            self._weights.weight_paths_list,
+            self._weights.hidden_sizes_list,
+            away1=away1, away2=away2, is_crawford=is_crawford,
+            jacoby=jacoby, beaver=beaver,
+            bearoff_db=self._bearoff_db,
+        )
         return self._format_cube_result(r, eval_level="1-ply")
 
 
@@ -308,25 +301,17 @@ class _MultiPlyAnalyzer(_CubelessBase):
         incl_2ply_details=False,
     ) -> dict:
         owner = resolve_owner(cube_owner)
-        if self._is_pair:
-            paths, hiddens = self._weights.weight_args
-            r = bgbot_cpp.cube_decision_nply_pair(
-                board, cube_value, owner, self._n_plies, paths, hiddens,
-                n_threads=self._parallel_threads,
-                away1=away1, away2=away2, is_crawford=is_crawford,
-                jacoby=jacoby, beaver=beaver,
-                bearoff_db=self._bearoff_db,
-                incl_2ply_details=incl_2ply_details,
-            )
-        else:
-            r = bgbot_cpp.cube_decision_nply(
-                board, cube_value, owner, self._n_plies, *self._weights.weight_args,
-                n_threads=self._parallel_threads,
-                away1=away1, away2=away2, is_crawford=is_crawford,
-                jacoby=jacoby, beaver=beaver,
-                bearoff_db=self._bearoff_db,
-                incl_2ply_details=incl_2ply_details,
-            )
+        r = bgbot_cpp.cube_decision_nply_unified(
+            board, cube_value, owner, self._n_plies,
+            self._weights.strategy_type,
+            self._weights.weight_paths_list,
+            self._weights.hidden_sizes_list,
+            n_threads=self._parallel_threads,
+            away1=away1, away2=away2, is_crawford=is_crawford,
+            jacoby=jacoby, beaver=beaver,
+            bearoff_db=self._bearoff_db,
+            incl_2ply_details=incl_2ply_details,
+        )
         result = self._format_cube_result(r, eval_level=f"{self._n_plies}-ply")
 
         # Pass through player_rolls if present
