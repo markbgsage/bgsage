@@ -131,13 +131,11 @@ float cl2cf_money(const std::array<float, NUM_OUTPUTS>& probs,
     // gammons count (Jacoby deactivates).
     compute_WL(probs, W, L);
 
-    // Dead-cube equity: under Jacoby with a centered cube, gammons don't
-    // count, so dead equity = 2*P(win)-1.  Otherwise full cubeless equity.
-    // This matches GNUbg's Utility() which applies arGammonPrice (0 under
-    // Jacoby+centered).
-    float e_dead = jacoby_active
-        ? (2.0f * probs[0] - 1.0f)
-        : cubeless_equity(probs);
+    // Dead-cube equity: always full cubeless equity (gammons/backgammons
+    // included).  "Dead cube" in Janowski means the cube has been turned
+    // but can never be turned again — after the double, Jacoby deactivates
+    // and gammons count at the cube value.
+    float e_dead = cubeless_equity(probs);
 
     // Live-cube equity: uses real W/L but with Jacoby clamping on the
     // extreme segments (p < TP → -1, p > CP → +1).  Matching GNUbg's

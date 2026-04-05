@@ -205,8 +205,11 @@ class WeightConfig:
         return cls.from_model(PRODUCTION_MODEL)
 
     @classmethod
-    def from_model(cls, name: str) -> WeightConfig:
-        """Build a WeightConfig from a registered model name.
+    def from_model(cls, name: str) -> "WeightConfig | WeightConfigPair":
+        """Build a weight config from a registered model name.
+
+        Auto-dispatches to :class:`WeightConfigPair` for pair/backgame_pair
+        models, so callers don't need to know the model type.
 
         Raises KeyError if the name is not in MODELS.
         """
@@ -216,6 +219,8 @@ class WeightConfig:
                 f"Unknown model {name!r}. Available: {available}"
             )
         cfg = MODELS[name]
+        if cfg.get("plans") in ("pair", "backgame_pair"):
+            return WeightConfigPair.from_model(name)
         hidden = cfg["hidden"]
         pattern = cfg["pattern"]
         models_dir = _models_dir()
