@@ -360,7 +360,7 @@ class _RolloutAnalyzer(_CubelessBase):
         parallelize_trials=True,
         checker=None, checker_late=None,
         cube=None, cube_late=None,
-        ultra_late_threshold=2,
+        ultra_late_threshold=9999,
     ):
         super().__init__(weights)
         requested_threads = n_threads
@@ -826,7 +826,7 @@ class BgBotAnalyzer:
         checker_late=None,
         cube=None,
         cube_late=None,
-        ultra_late_threshold: int = 2,
+        ultra_late_threshold: int = 9999,
     ):
         if weights is None:
             weights = default_weights()
