@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.18)
-project(bgbot LANGUAGES CXX)
+project(bgbot LANGUAGES CXX CUDA)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -44,6 +44,14 @@ target_compile_options(bgbot_lib PRIVATE ${BGBOT_OPT_FLAGS})
 find_package(Threads REQUIRED)
 target_link_libraries(bgbot_lib PUBLIC Threads::Threads)
 
+# CUDA support — real GPU training via cuBLAS
+find_package(CUDAToolkit REQUIRED)
+add_library(bgbot_cuda STATIC src/cuda_nn.cu)
+target_include_directories(bgbot_cuda PUBLIC include)
+target_link_libraries(bgbot_cuda PUBLIC bgbot_lib CUDA::cublas CUDA::cudart)
+set_target_properties(bgbot_cuda PROPERTIES CUDA_ARCHITECTURES "89")
+target_compile_options(bgbot_cuda PRIVATE $<$<COMPILE_LANGUAGE:CUDA>:--allow-unsupported-compiler>)
+
 # CUDA stub (provides cuda_available() = false, no-op cuda_supervised_train)
 add_library(bgbot_cuda_stub STATIC src/cuda_nn_stub.cpp)
 target_include_directories(bgbot_cuda_stub PUBLIC include)
@@ -81,5 +89,5 @@ target_link_libraries(profile_cube_benchmark PRIVATE bgbot_lib)
 if(BGBOT_BUILD_PYTHON)
     find_package(pybind11 CONFIG REQUIRED)
     pybind11_add_module(bgbot_cpp pybind/bindings.cpp)
-    target_link_libraries(bgbot_cpp PRIVATE bgbot_lib bgbot_cuda_stub)
+    target_link_libraries(bgbot_cpp PRIVATE bgbot_lib bgbot_cuda)
 endif()
