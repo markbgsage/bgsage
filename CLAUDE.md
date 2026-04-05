@@ -1672,6 +1672,35 @@ player's home board (points 1-6).
 
 Player back game: **45.98** (vs overall contact ER of 9.49 — 4.8× worse).
 
+### Stage 9 Back Game NN Training Process
+
+The Stage 9 back game NNs (player_bg, opponent_bg) are trained iteratively,
+re-rolling out training and benchmark data between rounds to improve target
+quality as the model improves.
+
+**Round 1 — Bootstrap from S8 rollouts:**
+1. Roll out all player/opponent back game training and benchmark positions using
+   Stage 8 pair model (1,296 trials, 3-ply cubeless decisions throughout, PubEval
+   20/15 prefilter, VR enabled). Output: `*-backgame-*-rollout` files.
+2. SL training for both player_bg and opponent_bg NNs:
+   - 100k steps @ α=3.1
+   - 250k steps @ α=1.0
+   - Starting from S8 fallback weights (anchoring pair NN)
+
+**Round 2 — Re-rollout with improved model:**
+1. Re-roll out all training and benchmark positions using the Stage 9 model
+   (same rollout settings: 1,296 trials, 3-ply, VR, PubEval prefilter). The
+   improved back game NNs produce more accurate rollout targets.
+2. Redo SL training with the same schedule:
+   - 100k steps @ α=3.1
+   - 250k steps @ α=1.0
+   - Starting from round 1's best weights
+
+The re-rollout step is necessary because the S8 rollout targets have ~22 ER
+noise on back game positions (measured by comparing S8 vs S9 rollouts on 10
+random positions). Once the model's back game ER drops below ~20, the training
+data noise becomes the limiting factor for further improvement.
+
 ## Glossary
 
 - **ER**: Error Rate — mean equity loss per decision vs GNUbg best, millipips (x1000)
