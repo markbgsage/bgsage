@@ -749,8 +749,11 @@ PYBIND11_MODULE(bgbot_cpp, m) {
        py::arg("n_hidden") = 120,
        py::arg("seed") = 42);
 
+    // --- Strategy base class (for polymorphic dispatch in unified bindings) ---
+    py::class_<Strategy, std::shared_ptr<Strategy>>(m, "Strategy");
+
     // --- GamePlanStrategy ---
-    py::class_<GamePlanStrategy, std::shared_ptr<GamePlanStrategy>>(m, "GamePlanStrategy")
+    py::class_<GamePlanStrategy, Strategy, std::shared_ptr<GamePlanStrategy>>(m, "GamePlanStrategy")
         .def(py::init<const std::string&, const std::string&,
                       const std::string&, const std::string&,
                       const std::string&,
@@ -1387,7 +1390,7 @@ PYBIND11_MODULE(bgbot_cpp, m) {
     }, "Invert probabilities from one perspective to the other");
 
     // --- Multi-Ply Strategy ---
-    py::class_<MultiPlyStrategy, std::shared_ptr<MultiPlyStrategy>>(m, "MultiPlyStrategy")
+    py::class_<MultiPlyStrategy, Strategy, std::shared_ptr<MultiPlyStrategy>>(m, "MultiPlyStrategy")
         .def("n_plies", &MultiPlyStrategy::n_plies)
         .def("clear_cache", &MultiPlyStrategy::clear_cache)
         .def("cache_size", &MultiPlyStrategy::cache_size)
@@ -1842,7 +1845,7 @@ PYBIND11_MODULE(bgbot_cpp, m) {
         .def_readonly("scalar_vr_equity", &RolloutResult::scalar_vr_equity)
         .def_readonly("scalar_vr_se", &RolloutResult::scalar_vr_se);
 
-    py::class_<RolloutStrategy, std::shared_ptr<RolloutStrategy>>(m, "RolloutStrategy")
+    py::class_<RolloutStrategy, Strategy, std::shared_ptr<RolloutStrategy>>(m, "RolloutStrategy")
         .def("config", &RolloutStrategy::config, py::return_value_policy::reference_internal)
         .def("clear_internal_caches", &RolloutStrategy::clear_internal_caches,
              "Clear thread-local N-ply caches to prevent state accumulation")
@@ -4410,7 +4413,7 @@ PYBIND11_MODULE(bgbot_cpp, m) {
         }, "Map a position index back to a 6-element checker array",
            py::arg("index"));
 
-    py::class_<BearoffStrategy, std::shared_ptr<BearoffStrategy>>(m, "BearoffStrategy")
+    py::class_<BearoffStrategy, Strategy, std::shared_ptr<BearoffStrategy>>(m, "BearoffStrategy")
         .def(py::init<std::shared_ptr<Strategy>, const BearoffDB*>(),
              py::arg("base"), py::arg("db"),
              py::keep_alive<1, 3>());  // BearoffStrategy keeps db alive
@@ -4431,7 +4434,7 @@ PYBIND11_MODULE(bgbot_cpp, m) {
     // 17-NN Game Plan Pair Strategy bindings
     // =====================================================================
 
-    py::class_<GamePlanPairStrategy, std::shared_ptr<GamePlanPairStrategy>>(m, "GamePlanPairStrategy")
+    py::class_<GamePlanPairStrategy, Strategy, std::shared_ptr<GamePlanPairStrategy>>(m, "GamePlanPairStrategy")
         .def(py::init<const std::vector<std::string>&, const std::vector<int>&>(),
              py::arg("weight_paths"), py::arg("hidden_sizes"),
              "Create 17-NN strategy: weight_paths[0]=purerace, [1-16]=contact pairs; "
@@ -4689,7 +4692,7 @@ PYBIND11_MODULE(bgbot_cpp, m) {
     // 19-NN Backgame-Aware Pair Strategy bindings (Stage 9)
     // =====================================================================
 
-    py::class_<BackgameAwarePairStrategy, std::shared_ptr<BackgameAwarePairStrategy>>(m, "BackgameAwarePairStrategy")
+    py::class_<BackgameAwarePairStrategy, Strategy, std::shared_ptr<BackgameAwarePairStrategy>>(m, "BackgameAwarePairStrategy")
         .def(py::init<const std::vector<std::string>&, const std::vector<int>&>(),
              py::arg("weight_paths"), py::arg("hidden_sizes"),
              "Create 19-NN strategy: [0]=purerace, [1-16]=contact pairs, "
@@ -4919,6 +4922,46 @@ PYBIND11_MODULE(bgbot_cpp, m) {
        py::arg("cube") = TrialEvalConfig{},
        py::arg("cube_late") = TrialEvalConfig{},
        py::arg("ultra_late_threshold") = 2);
+
+    // --- Unified cubeful_equity_nply (accepts any Strategy via shared_ptr) ---
+    m.def("cubeful_equity_nply", [](const std::vector<int>& board_vec,
+                                     CubeOwner owner,
+                                     std::shared_ptr<Strategy> strategy,
+                                     int n_plies,
+                                     int filter_max_moves,
+                                     float filter_threshold,
+                                     int n_threads,
+                                     int cube_value,
+                                     int away1, int away2, bool is_crawford,
+                                     bool jacoby, bool beaver,
+                                     const BearoffDB* bearoff_db) {
+        Board board = list_to_board(board_vec);
+        MoveFilter filter{filter_max_moves, filter_threshold};
+
+        // Wrap in BearoffStrategy if DB available
+        std::shared_ptr<Strategy> eval_strat = strategy;
+        if (bearoff_db && bearoff_db->is_loaded()) {
+            eval_strat = std::make_shared<BearoffStrategy>(strategy, bearoff_db);
+        }
+
+        py::gil_scoped_release release;
+        if (away1 > 0 && away2 > 0) {
+            CubeInfo ci{cube_value, owner, {away1, away2, is_crawford}, -1.0f, jacoby, beaver};
+            return cubeful_equity_nply(board, ci, *eval_strat, n_plies, filter, n_threads);
+        }
+        CubeInfo ci{cube_value, owner, {0, 0, false}, -1.0f, jacoby, beaver};
+        return cubeful_equity_nply(board, ci, *eval_strat, n_plies, filter, n_threads);
+    }, "Compute cubeful equity for a pre-roll position at N-ply depth (unified, any Strategy).",
+       py::arg("board"), py::arg("owner"),
+       py::arg("strategy"),
+       py::arg("n_plies") = 2,
+       py::arg("filter_max_moves") = 5,
+       py::arg("filter_threshold") = 0.08f,
+       py::arg("n_threads") = 1,
+       py::arg("cube_value") = 1,
+       py::arg("away1") = 0, py::arg("away2") = 0, py::arg("is_crawford") = false,
+       py::arg("jacoby") = true, py::arg("beaver") = true,
+       py::arg("bearoff_db") = nullptr);
 
     // --- Unified 1-ply cube decision ---
     m.def("evaluate_cube_decision_unified", [](const std::vector<int>& checkers,
