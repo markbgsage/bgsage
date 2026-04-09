@@ -227,7 +227,6 @@ NeuralNetwork::NeuralNetwork(int n_hidden, int n_inputs, float eps, uint32_t see
 std::array<float, NN_OUTPUTS> NeuralNetwork::forward(const float* inputs) const {
     const int nh = n_hidden_;
     const int ni = n_inputs_;
-    const int inp_stride = ni + 1;
     const int hid_stride = nh + 1;
 
     ensure_transposed_weights();
@@ -243,32 +242,78 @@ std::array<float, NN_OUTPUTS> NeuralNetwork::forward(const float* inputs) const 
         hiddens = hiddens_heap.data();
     }
 
-    for (int h = 0; h < nh; ++h) {
-        hiddens[h] = hidden_weights_[h * inp_stride + ni];
+    // Initialize hidden layer with biases (contiguous memcpy, cache-friendly)
+    std::memcpy(hiddens, hidden_biases_.data(), nh * sizeof(float));
+
+    // Collect non-zero inputs into compact arrays to avoid branch mispredictions
+    // and enable multi-input processing (fewer passes over hiddens array).
+    int nz_idx[256];  // max 244 inputs
+    float nz_val[256];
+    int n_nz = 0;
+    for (int i = 0; i < ni; ++i) {
+        if (inputs[i] != 0.0f) {
+            nz_idx[n_nz] = i;
+            nz_val[n_nz] = inputs[i];
+            n_nz++;
+        }
     }
 
-    for (int i = 0; i < ni; ++i) {
-        const float vi = inputs[i];
-        if (vi == 0.0f) continue;
-        const float* col = &hidden_weights_T_[i * nh];
+    // Process groups of non-zero inputs together to reduce hiddens array passes.
+    // Each group does multiple FMAs per hiddens element per pass.
+    int d = 0;
+#if defined(BGBOT_USE_AVX2)
+    // Process 4 inputs at a time (4 FMAs per hiddens load/store)
+    for (; d + 3 < n_nz; d += 4) {
+        const float* col0 = &hidden_weights_T_[nz_idx[d] * nh];
+        const float* col1 = &hidden_weights_T_[nz_idx[d + 1] * nh];
+        const float* col2 = &hidden_weights_T_[nz_idx[d + 2] * nh];
+        const float* col3 = &hidden_weights_T_[nz_idx[d + 3] * nh];
+        __m256 vv0 = _mm256_set1_ps(nz_val[d]);
+        __m256 vv1 = _mm256_set1_ps(nz_val[d + 1]);
+        __m256 vv2 = _mm256_set1_ps(nz_val[d + 2]);
+        __m256 vv3 = _mm256_set1_ps(nz_val[d + 3]);
+        int h = 0;
+        for (; h + 7 < nh; h += 8) {
+            __m256 acc = _mm256_loadu_ps(&hiddens[h]);
+            acc = _mm256_fmadd_ps(vv0, _mm256_loadu_ps(&col0[h]), acc);
+            acc = _mm256_fmadd_ps(vv1, _mm256_loadu_ps(&col1[h]), acc);
+            acc = _mm256_fmadd_ps(vv2, _mm256_loadu_ps(&col2[h]), acc);
+            acc = _mm256_fmadd_ps(vv3, _mm256_loadu_ps(&col3[h]), acc);
+            _mm256_storeu_ps(&hiddens[h], acc);
+        }
+        for (; h < nh; ++h) {
+            hiddens[h] += nz_val[d] * col0[h] + nz_val[d + 1] * col1[h]
+                        + nz_val[d + 2] * col2[h] + nz_val[d + 3] * col3[h];
+        }
+    }
+    // Process remaining pairs
+    for (; d + 1 < n_nz; d += 2) {
+        const float* col0 = &hidden_weights_T_[nz_idx[d] * nh];
+        const float* col1 = &hidden_weights_T_[nz_idx[d + 1] * nh];
+        __m256 vv0 = _mm256_set1_ps(nz_val[d]);
+        __m256 vv1 = _mm256_set1_ps(nz_val[d + 1]);
+        int h = 0;
+        for (; h + 7 < nh; h += 8) {
+            __m256 acc = _mm256_loadu_ps(&hiddens[h]);
+            acc = _mm256_fmadd_ps(vv0, _mm256_loadu_ps(&col0[h]), acc);
+            acc = _mm256_fmadd_ps(vv1, _mm256_loadu_ps(&col1[h]), acc);
+            _mm256_storeu_ps(&hiddens[h], acc);
+        }
+        for (; h < nh; ++h) {
+            hiddens[h] += nz_val[d] * col0[h] + nz_val[d + 1] * col1[h];
+        }
+    }
+#endif
+    for (; d < n_nz; ++d) {
+        const float vi = nz_val[d];
+        const float* col = &hidden_weights_T_[nz_idx[d] * nh];
         int h = 0;
 #if defined(BGBOT_USE_AVX2)
         __m256 vvi = _mm256_set1_ps(vi);
-        for (; h + 15 < nh; h += 16) {
-            __m256 acc0 = _mm256_loadu_ps(&hiddens[h]);
-            __m256 wt0  = _mm256_loadu_ps(&col[h]);
-            acc0 = _mm256_fmadd_ps(vvi, wt0, acc0);
-            _mm256_storeu_ps(&hiddens[h], acc0);
-            __m256 acc1 = _mm256_loadu_ps(&hiddens[h + 8]);
-            __m256 wt1  = _mm256_loadu_ps(&col[h + 8]);
-            acc1 = _mm256_fmadd_ps(vvi, wt1, acc1);
-            _mm256_storeu_ps(&hiddens[h + 8], acc1);
-        }
         for (; h + 7 < nh; h += 8) {
-            __m256 acc0 = _mm256_loadu_ps(&hiddens[h]);
-            __m256 wt0  = _mm256_loadu_ps(&col[h]);
-            acc0 = _mm256_fmadd_ps(vvi, wt0, acc0);
-            _mm256_storeu_ps(&hiddens[h], acc0);
+            __m256 acc = _mm256_loadu_ps(&hiddens[h]);
+            acc = _mm256_fmadd_ps(vvi, _mm256_loadu_ps(&col[h]), acc);
+            _mm256_storeu_ps(&hiddens[h], acc);
         }
 #elif defined(BGBOT_USE_NEON)
         float32x4_t vvi = vdupq_n_f32(vi);
@@ -288,10 +333,21 @@ std::array<float, NN_OUTPUTS> NeuralNetwork::forward(const float* inputs) const 
         }
     }
 
-    for (int h = 0; h < nh; ++h) {
-        hiddens[h] = fast_sigmoid(hiddens[h]);
+    // Apply sigmoid to hidden layer
+    {
+        int h = 0;
+#if defined(BGBOT_USE_AVX2)
+        for (; h + 7 < nh; h += 8) {
+            __m256 v = _mm256_loadu_ps(&hiddens[h]);
+            _mm256_storeu_ps(&hiddens[h], sigmoid256_ps(v));
+        }
+#endif
+        for (; h < nh; ++h) {
+            hiddens[h] = fast_sigmoid(hiddens[h]);
+        }
     }
 
+    // Output layer: 5 dot products with SIMD
     std::array<float, NN_OUTPUTS> outputs;
     const float* w0 = &output_weights_[0 * hid_stride];
     const float* w1 = &output_weights_[1 * hid_stride];
@@ -304,6 +360,46 @@ std::array<float, NN_OUTPUTS> NeuralNetwork::forward(const float* inputs) const 
     float o2 = w2[nh];
     float o3 = w3[nh];
     float o4 = w4[nh];
+#if defined(BGBOT_USE_AVX2)
+    {
+        __m256 s0 = _mm256_setzero_ps();
+        __m256 s1 = _mm256_setzero_ps();
+        __m256 s2 = _mm256_setzero_ps();
+        __m256 s3 = _mm256_setzero_ps();
+        __m256 s4 = _mm256_setzero_ps();
+        int h = 0;
+        for (; h + 7 < nh; h += 8) {
+            __m256 z = _mm256_loadu_ps(&hiddens[h]);
+            s0 = _mm256_fmadd_ps(_mm256_loadu_ps(&w0[h]), z, s0);
+            s1 = _mm256_fmadd_ps(_mm256_loadu_ps(&w1[h]), z, s1);
+            s2 = _mm256_fmadd_ps(_mm256_loadu_ps(&w2[h]), z, s2);
+            s3 = _mm256_fmadd_ps(_mm256_loadu_ps(&w3[h]), z, s3);
+            s4 = _mm256_fmadd_ps(_mm256_loadu_ps(&w4[h]), z, s4);
+        }
+        // Horizontal reduce each accumulator
+        auto hsum = [](__m256 v) -> float {
+            __m128 hi = _mm256_extractf128_ps(v, 1);
+            __m128 lo = _mm256_castps256_ps128(v);
+            __m128 s = _mm_add_ps(lo, hi);
+            s = _mm_hadd_ps(s, s);
+            s = _mm_hadd_ps(s, s);
+            return _mm_cvtss_f32(s);
+        };
+        o0 += hsum(s0);
+        o1 += hsum(s1);
+        o2 += hsum(s2);
+        o3 += hsum(s3);
+        o4 += hsum(s4);
+        for (; h < nh; ++h) {
+            const float z = hiddens[h];
+            o0 += w0[h] * z;
+            o1 += w1[h] * z;
+            o2 += w2[h] * z;
+            o3 += w3[h] * z;
+            o4 += w4[h] * z;
+        }
+    }
+#else
     for (int h = 0; h < nh; ++h) {
         const float z = hiddens[h];
         o0 += w0[h] * z;
@@ -312,6 +408,7 @@ std::array<float, NN_OUTPUTS> NeuralNetwork::forward(const float* inputs) const 
         o3 += w3[h] * z;
         o4 += w4[h] * z;
     }
+#endif
 
     outputs[0] = fast_sigmoid(o0);
     outputs[1] = fast_sigmoid(o1);
@@ -331,7 +428,6 @@ void NeuralNetwork::forward_batch(
 {
     const int nh = n_hidden_;
     const int ni = n_inputs_;
-    const int inp_stride = ni + 1;
     const int hid_stride = nh + 1;
 
     ensure_transposed_weights();
@@ -349,31 +445,72 @@ void NeuralNetwork::forward_batch(
     for (int b = 0; b < count; ++b) {
         const float* inputs = inputs_array + b * ni;
 
-        for (int h = 0; h < nh; ++h) {
-            hiddens[h] = hidden_weights_[h * inp_stride + ni];
-        }
+        std::memcpy(hiddens, hidden_biases_.data(), nh * sizeof(float));
+
+        // Collect non-zero inputs
+        int nz_idx[256];
+        float nz_val[256];
+        int n_nz = 0;
         for (int i = 0; i < ni; ++i) {
-            const float vi = inputs[i];
-            if (vi == 0.0f) continue;
-            const float* col = &hidden_weights_T_[i * nh];
+            if (inputs[i] != 0.0f) {
+                nz_idx[n_nz] = i;
+                nz_val[n_nz] = inputs[i];
+                n_nz++;
+            }
+        }
+
+        int d = 0;
+#if defined(BGBOT_USE_AVX2)
+        for (; d + 3 < n_nz; d += 4) {
+            const float* col0 = &hidden_weights_T_[nz_idx[d] * nh];
+            const float* col1 = &hidden_weights_T_[nz_idx[d + 1] * nh];
+            const float* col2 = &hidden_weights_T_[nz_idx[d + 2] * nh];
+            const float* col3 = &hidden_weights_T_[nz_idx[d + 3] * nh];
+            __m256 vv0 = _mm256_set1_ps(nz_val[d]);
+            __m256 vv1 = _mm256_set1_ps(nz_val[d + 1]);
+            __m256 vv2 = _mm256_set1_ps(nz_val[d + 2]);
+            __m256 vv3 = _mm256_set1_ps(nz_val[d + 3]);
+            int h = 0;
+            for (; h + 7 < nh; h += 8) {
+                __m256 acc = _mm256_loadu_ps(&hiddens[h]);
+                acc = _mm256_fmadd_ps(vv0, _mm256_loadu_ps(&col0[h]), acc);
+                acc = _mm256_fmadd_ps(vv1, _mm256_loadu_ps(&col1[h]), acc);
+                acc = _mm256_fmadd_ps(vv2, _mm256_loadu_ps(&col2[h]), acc);
+                acc = _mm256_fmadd_ps(vv3, _mm256_loadu_ps(&col3[h]), acc);
+                _mm256_storeu_ps(&hiddens[h], acc);
+            }
+            for (; h < nh; ++h) {
+                hiddens[h] += nz_val[d] * col0[h] + nz_val[d + 1] * col1[h]
+                            + nz_val[d + 2] * col2[h] + nz_val[d + 3] * col3[h];
+            }
+        }
+        for (; d + 1 < n_nz; d += 2) {
+            const float* col0 = &hidden_weights_T_[nz_idx[d] * nh];
+            const float* col1 = &hidden_weights_T_[nz_idx[d + 1] * nh];
+            __m256 vv0 = _mm256_set1_ps(nz_val[d]);
+            __m256 vv1 = _mm256_set1_ps(nz_val[d + 1]);
+            int h = 0;
+            for (; h + 7 < nh; h += 8) {
+                __m256 acc = _mm256_loadu_ps(&hiddens[h]);
+                acc = _mm256_fmadd_ps(vv0, _mm256_loadu_ps(&col0[h]), acc);
+                acc = _mm256_fmadd_ps(vv1, _mm256_loadu_ps(&col1[h]), acc);
+                _mm256_storeu_ps(&hiddens[h], acc);
+            }
+            for (; h < nh; ++h) {
+                hiddens[h] += nz_val[d] * col0[h] + nz_val[d + 1] * col1[h];
+            }
+        }
+#endif
+        for (; d < n_nz; ++d) {
+            const float vi = nz_val[d];
+            const float* col = &hidden_weights_T_[nz_idx[d] * nh];
             int h = 0;
 #if defined(BGBOT_USE_AVX2)
             __m256 vvi = _mm256_set1_ps(vi);
-            for (; h + 15 < nh; h += 16) {
-                __m256 acc0 = _mm256_loadu_ps(&hiddens[h]);
-                __m256 wt0  = _mm256_loadu_ps(&col[h]);
-                acc0 = _mm256_fmadd_ps(vvi, wt0, acc0);
-                _mm256_storeu_ps(&hiddens[h], acc0);
-                __m256 acc1 = _mm256_loadu_ps(&hiddens[h + 8]);
-                __m256 wt1  = _mm256_loadu_ps(&col[h + 8]);
-                acc1 = _mm256_fmadd_ps(vvi, wt1, acc1);
-                _mm256_storeu_ps(&hiddens[h + 8], acc1);
-            }
             for (; h + 7 < nh; h += 8) {
-                __m256 acc0 = _mm256_loadu_ps(&hiddens[h]);
-                __m256 wt0  = _mm256_loadu_ps(&col[h]);
-                acc0 = _mm256_fmadd_ps(vvi, wt0, acc0);
-                _mm256_storeu_ps(&hiddens[h], acc0);
+                __m256 acc = _mm256_loadu_ps(&hiddens[h]);
+                acc = _mm256_fmadd_ps(vvi, _mm256_loadu_ps(&col[h]), acc);
+                _mm256_storeu_ps(&hiddens[h], acc);
             }
 #elif defined(BGBOT_USE_NEON)
             float32x4_t vvi = vdupq_n_f32(vi);
@@ -392,10 +529,21 @@ void NeuralNetwork::forward_batch(
                 hiddens[h] += vi * col[h];
             }
         }
-        for (int h = 0; h < nh; ++h) {
-            hiddens[h] = fast_sigmoid(hiddens[h]);
+        // Apply sigmoid to hidden layer
+        {
+            int h = 0;
+#if defined(BGBOT_USE_AVX2)
+            for (; h + 7 < nh; h += 8) {
+                __m256 v = _mm256_loadu_ps(&hiddens[h]);
+                _mm256_storeu_ps(&hiddens[h], sigmoid256_ps(v));
+            }
+#endif
+            for (; h < nh; ++h) {
+                hiddens[h] = fast_sigmoid(hiddens[h]);
+            }
         }
 
+        // Output layer with SIMD
         auto& outputs = outputs_array[b];
         const float* w0 = &output_weights_[0 * hid_stride];
         const float* w1 = &output_weights_[1 * hid_stride];
@@ -408,6 +556,45 @@ void NeuralNetwork::forward_batch(
         float o2 = w2[nh];
         float o3 = w3[nh];
         float o4 = w4[nh];
+#if defined(BGBOT_USE_AVX2)
+        {
+            __m256 s0 = _mm256_setzero_ps();
+            __m256 s1 = _mm256_setzero_ps();
+            __m256 s2 = _mm256_setzero_ps();
+            __m256 s3 = _mm256_setzero_ps();
+            __m256 s4 = _mm256_setzero_ps();
+            int h = 0;
+            for (; h + 7 < nh; h += 8) {
+                __m256 z = _mm256_loadu_ps(&hiddens[h]);
+                s0 = _mm256_fmadd_ps(_mm256_loadu_ps(&w0[h]), z, s0);
+                s1 = _mm256_fmadd_ps(_mm256_loadu_ps(&w1[h]), z, s1);
+                s2 = _mm256_fmadd_ps(_mm256_loadu_ps(&w2[h]), z, s2);
+                s3 = _mm256_fmadd_ps(_mm256_loadu_ps(&w3[h]), z, s3);
+                s4 = _mm256_fmadd_ps(_mm256_loadu_ps(&w4[h]), z, s4);
+            }
+            auto hsum = [](__m256 v) -> float {
+                __m128 hi = _mm256_extractf128_ps(v, 1);
+                __m128 lo = _mm256_castps256_ps128(v);
+                __m128 s = _mm_add_ps(lo, hi);
+                s = _mm_hadd_ps(s, s);
+                s = _mm_hadd_ps(s, s);
+                return _mm_cvtss_f32(s);
+            };
+            o0 += hsum(s0);
+            o1 += hsum(s1);
+            o2 += hsum(s2);
+            o3 += hsum(s3);
+            o4 += hsum(s4);
+            for (; h < nh; ++h) {
+                const float z = hiddens[h];
+                o0 += w0[h] * z;
+                o1 += w1[h] * z;
+                o2 += w2[h] * z;
+                o3 += w3[h] * z;
+                o4 += w4[h] * z;
+            }
+        }
+#else
         for (int h = 0; h < nh; ++h) {
             const float z = hiddens[h];
             o0 += w0[h] * z;
@@ -416,6 +603,7 @@ void NeuralNetwork::forward_batch(
             o3 += w3[h] * z;
             o4 += w4[h] * z;
         }
+#endif
         outputs[0] = fast_sigmoid(o0);
         outputs[1] = fast_sigmoid(o1);
         outputs[2] = fast_sigmoid(o2);
@@ -450,11 +638,9 @@ std::array<float, NN_OUTPUTS> NeuralNetwork::forward_save_base(
         hiddens = hiddens_heap.data();
     }
 
-    for (int h = 0; h < nh; ++h) {
-        float sum = hidden_weights_[h * inp_stride + ni];
-        saved_base[h] = sum;          // save pre-sigmoid sum
-        hiddens[h] = sum;
-    }
+    // Initialize with cached biases (contiguous memcpy)
+    std::memcpy(hiddens, hidden_biases_.data(), nh * sizeof(float));
+    std::memcpy(saved_base, hidden_biases_.data(), nh * sizeof(float));
     for (int i = 0; i < ni; ++i) {
         const float vi = inputs[i];
         if (vi == 0.0f) continue;
@@ -516,11 +702,21 @@ std::array<float, NN_OUTPUTS> NeuralNetwork::forward_save_base(
         }
     }
 
-    for (int h = 0; h < nh; ++h) {
-        hiddens[h] = fast_sigmoid(hiddens[h]);
+    // Apply sigmoid to hidden layer
+    {
+        int h = 0;
+#if defined(BGBOT_USE_AVX2)
+        for (; h + 7 < nh; h += 8) {
+            __m256 v = _mm256_loadu_ps(&hiddens[h]);
+            _mm256_storeu_ps(&hiddens[h], sigmoid256_ps(v));
+        }
+#endif
+        for (; h < nh; ++h) {
+            hiddens[h] = fast_sigmoid(hiddens[h]);
+        }
     }
 
-    // Output layer (same as normal forward)
+    // Output layer with SIMD
     std::array<float, NN_OUTPUTS> outputs;
     const float* w0 = &output_weights_[0 * hid_stride];
     const float* w1 = &output_weights_[1 * hid_stride];
@@ -533,6 +729,45 @@ std::array<float, NN_OUTPUTS> NeuralNetwork::forward_save_base(
     float o2 = w2[nh];
     float o3 = w3[nh];
     float o4 = w4[nh];
+#if defined(BGBOT_USE_AVX2)
+    {
+        __m256 s0 = _mm256_setzero_ps();
+        __m256 s1 = _mm256_setzero_ps();
+        __m256 s2 = _mm256_setzero_ps();
+        __m256 s3 = _mm256_setzero_ps();
+        __m256 s4 = _mm256_setzero_ps();
+        int h = 0;
+        for (; h + 7 < nh; h += 8) {
+            __m256 z = _mm256_loadu_ps(&hiddens[h]);
+            s0 = _mm256_fmadd_ps(_mm256_loadu_ps(&w0[h]), z, s0);
+            s1 = _mm256_fmadd_ps(_mm256_loadu_ps(&w1[h]), z, s1);
+            s2 = _mm256_fmadd_ps(_mm256_loadu_ps(&w2[h]), z, s2);
+            s3 = _mm256_fmadd_ps(_mm256_loadu_ps(&w3[h]), z, s3);
+            s4 = _mm256_fmadd_ps(_mm256_loadu_ps(&w4[h]), z, s4);
+        }
+        auto hsum = [](__m256 v) -> float {
+            __m128 hi = _mm256_extractf128_ps(v, 1);
+            __m128 lo = _mm256_castps256_ps128(v);
+            __m128 s = _mm_add_ps(lo, hi);
+            s = _mm_hadd_ps(s, s);
+            s = _mm_hadd_ps(s, s);
+            return _mm_cvtss_f32(s);
+        };
+        o0 += hsum(s0);
+        o1 += hsum(s1);
+        o2 += hsum(s2);
+        o3 += hsum(s3);
+        o4 += hsum(s4);
+        for (; h < nh; ++h) {
+            const float z = hiddens[h];
+            o0 += w0[h] * z;
+            o1 += w1[h] * z;
+            o2 += w2[h] * z;
+            o3 += w3[h] * z;
+            o4 += w4[h] * z;
+        }
+    }
+#else
     for (int h = 0; h < nh; ++h) {
         const float z = hiddens[h];
         o0 += w0[h] * z;
@@ -541,6 +776,7 @@ std::array<float, NN_OUTPUTS> NeuralNetwork::forward_save_base(
         o3 += w3[h] * z;
         o4 += w4[h] * z;
     }
+#endif
     outputs[0] = fast_sigmoid(o0);
     outputs[1] = fast_sigmoid(o1);
     outputs[2] = fast_sigmoid(o2);
@@ -641,12 +877,18 @@ std::array<float, NN_OUTPUTS> NeuralNetwork::forward_from_base(
     // Apply sigmoid to updated hidden sums
     {
         int h = 0;
+#if defined(BGBOT_USE_AVX2)
+        for (; h + 7 < nh; h += 8) {
+            __m256 v = _mm256_loadu_ps(&hiddens[h]);
+            _mm256_storeu_ps(&hiddens[h], sigmoid256_ps(v));
+        }
+#endif
         for (; h < nh; ++h) {
             hiddens[h] = fast_sigmoid(hiddens[h]);
         }
     }
 
-    // Output layer (same as normal forward)
+    // Output layer with SIMD
     std::array<float, NN_OUTPUTS> outputs;
     const float* w0 = &output_weights_[0 * hid_stride];
     const float* w1 = &output_weights_[1 * hid_stride];
@@ -659,6 +901,45 @@ std::array<float, NN_OUTPUTS> NeuralNetwork::forward_from_base(
     float o2 = w2[nh];
     float o3 = w3[nh];
     float o4 = w4[nh];
+#if defined(BGBOT_USE_AVX2)
+    {
+        __m256 s0 = _mm256_setzero_ps();
+        __m256 s1 = _mm256_setzero_ps();
+        __m256 s2 = _mm256_setzero_ps();
+        __m256 s3 = _mm256_setzero_ps();
+        __m256 s4 = _mm256_setzero_ps();
+        int h = 0;
+        for (; h + 7 < nh; h += 8) {
+            __m256 z = _mm256_loadu_ps(&hiddens[h]);
+            s0 = _mm256_fmadd_ps(_mm256_loadu_ps(&w0[h]), z, s0);
+            s1 = _mm256_fmadd_ps(_mm256_loadu_ps(&w1[h]), z, s1);
+            s2 = _mm256_fmadd_ps(_mm256_loadu_ps(&w2[h]), z, s2);
+            s3 = _mm256_fmadd_ps(_mm256_loadu_ps(&w3[h]), z, s3);
+            s4 = _mm256_fmadd_ps(_mm256_loadu_ps(&w4[h]), z, s4);
+        }
+        auto hsum = [](__m256 v) -> float {
+            __m128 hi = _mm256_extractf128_ps(v, 1);
+            __m128 lo = _mm256_castps256_ps128(v);
+            __m128 s = _mm_add_ps(lo, hi);
+            s = _mm_hadd_ps(s, s);
+            s = _mm_hadd_ps(s, s);
+            return _mm_cvtss_f32(s);
+        };
+        o0 += hsum(s0);
+        o1 += hsum(s1);
+        o2 += hsum(s2);
+        o3 += hsum(s3);
+        o4 += hsum(s4);
+        for (; h < nh; ++h) {
+            const float z = hiddens[h];
+            o0 += w0[h] * z;
+            o1 += w1[h] * z;
+            o2 += w2[h] * z;
+            o3 += w3[h] * z;
+            o4 += w4[h] * z;
+        }
+    }
+#else
     for (int h = 0; h < nh; ++h) {
         const float z = hiddens[h];
         o0 += w0[h] * z;
@@ -667,6 +948,7 @@ std::array<float, NN_OUTPUTS> NeuralNetwork::forward_from_base(
         o3 += w3[h] * z;
         o4 += w4[h] * z;
     }
+#endif
     outputs[0] = fast_sigmoid(o0);
     outputs[1] = fast_sigmoid(o1);
     outputs[2] = fast_sigmoid(o2);
@@ -687,6 +969,12 @@ void NeuralNetwork::build_transposed_weights() const {
         for (int h = 0; h < nh; ++h) {
             hidden_weights_T_[i * nh + h] = hidden_weights_[h * inp_stride + i];
         }
+    }
+
+    // Cache bias vector (contiguous) for fast memcpy initialization
+    hidden_biases_.resize(nh);
+    for (int h = 0; h < nh; ++h) {
+        hidden_biases_[h] = hidden_weights_[h * inp_stride + ni];
     }
 }
 

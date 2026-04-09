@@ -144,6 +144,8 @@ private:
     // Column i of hidden_weights_ (stride n_inputs_+1) becomes row i of this.
     // Built lazily on first forward_from_base call, or after load_weights.
     mutable std::vector<float> hidden_weights_T_;
+    // Cached hidden bias vector (contiguous copy for fast memcpy initialization)
+    mutable std::vector<float> hidden_biases_;
     mutable volatile bool transposed_weights_valid_ = false;
     mutable std::mutex transposed_weights_mutex_;
     void build_transposed_weights() const;

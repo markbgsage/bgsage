@@ -86,6 +86,9 @@ target_link_libraries(profile_3t_detailed PRIVATE bgbot_lib)
 add_executable(profile_cube_benchmark src/profile_cube_benchmark.cpp)
 target_link_libraries(profile_cube_benchmark PRIVATE bgbot_lib)
 
+add_executable(profile_nn_inference src/profile_nn_inference.cpp)
+target_link_libraries(profile_nn_inference PRIVATE bgbot_lib)
+
 if(BGBOT_BUILD_PYTHON)
     find_package(pybind11 CONFIG REQUIRED)
     pybind11_add_module(bgbot_cpp pybind/bindings.cpp)
