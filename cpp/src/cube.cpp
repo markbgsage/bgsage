@@ -1598,6 +1598,96 @@ static float terminal_equity_for_cube(
 }
 
 // ---------------------------------------------------------------------------
+// Helper: extract per-opponent-roll cubeful equities for one L2 cube state pair.
+//
+// detail.opponent_rolls must already be resized to 21 with dice/boards set.
+// nd_idx/dt_idx: L2 expansion indices for the ND/DT of this branch.
+// branch_cv: effective cube value for the ND state of this branch.
+// redouble_cv: effective cube value if the opponent redoubles (DT of this branch).
+// initial_cv: the original cube value (for scaling to per-initial-cube units).
+// ---------------------------------------------------------------------------
+static void extract_opp_roll_equities(
+    PlayerRollDetail& detail,
+    const std::array<std::array<float, MAX_CCI * 2>, 21>& opp_roll_results,
+    const float arCf_L2[],
+    const CubeInfo aci_L2_uninv[],
+    int nd_idx, int dt_idx,
+    int branch_cv,
+    int redouble_cv,
+    int initial_cv,
+    int away1, int away2, bool is_crawford,
+    bool is_money)
+{
+    bool opp_dt_available = (aci_L2_uninv[dt_idx].cube_value > 0);
+
+    if (opp_dt_available) {
+        float rND_opp = arCf_L2[nd_idx];
+        float rDT_opp, rDP_opp;
+        if (is_money) {
+            rDT_opp = 2.0f * arCf_L2[dt_idx];
+            rDP_opp = 1.0f;
+        } else {
+            rDT_opp = arCf_L2[dt_idx];
+            rDP_opp = dp_mwc(aci_L2_uninv[nd_idx].match.away1,
+                              aci_L2_uninv[nd_idx].match.away2,
+                              aci_L2_uninv[nd_idx].cube_value,
+                              aci_L2_uninv[nd_idx].match.is_crawford);
+        }
+        // Beaver check
+        if (is_money && aci_L2_uninv[nd_idx].beaver && rDT_opp < 0.0f) {
+            rDT_opp = 2.0f * rDT_opp;
+        }
+        bool opp_should_double = (rDT_opp >= rND_opp && rDP_opp >= rND_opp);
+        bool opp_should_take = opp_should_double ? (rDT_opp <= rDP_opp) : true;
+
+        if (opp_should_double && !opp_should_take) {
+            // D/P: opponent doubles (or redoubles), player passes
+            detail.opponent_dp = true;
+            detail.opponent_rolls.clear();
+        } else if (opp_should_double) {
+            // D/T: use DT branch per-roll values, scaled to per-initial-cube
+            float scale = static_cast<float>(redouble_cv) / static_cast<float>(initial_cv);
+            for (int opp_r = 0; opp_r < 21; opp_r++) {
+                float raw = opp_roll_results[opp_r][dt_idx];
+                float eq;
+                if (is_money) {
+                    eq = scale * raw;
+                } else {
+                    eq = mwc2eq(raw, away1, away2, redouble_cv, is_crawford);
+                }
+                detail.opponent_rolls[opp_r].cubeful_equity = eq;
+            }
+        } else {
+            // ND: use ND branch per-roll values, scaled to per-initial-cube
+            float scale = static_cast<float>(branch_cv) / static_cast<float>(initial_cv);
+            for (int opp_r = 0; opp_r < 21; opp_r++) {
+                float raw = opp_roll_results[opp_r][nd_idx];
+                float eq;
+                if (is_money) {
+                    eq = scale * raw;
+                } else {
+                    eq = mwc2eq(raw, away1, away2, branch_cv, is_crawford);
+                }
+                detail.opponent_rolls[opp_r].cubeful_equity = eq;
+            }
+        }
+    } else {
+        // No DT branch available: ND only
+        float scale = static_cast<float>(branch_cv) / static_cast<float>(initial_cv);
+        for (int opp_r = 0; opp_r < 21; opp_r++) {
+            float raw = opp_roll_results[opp_r][nd_idx];
+            float eq;
+            if (is_money) {
+                eq = scale * raw;
+            } else {
+                eq = mwc2eq(raw, away1, away2, branch_cv, is_crawford);
+            }
+            detail.opponent_rolls[opp_r].cubeful_equity = eq;
+        }
+    }
+}
+
+// ---------------------------------------------------------------------------
 // cube_decision_nply_with_details: N-ply cube decision with per-roll details.
 // Manually implements the top two levels of the cubeful recursion to capture
 // per-roll data, delegating to cubeful_recursive_multi for deeper levels.
@@ -1635,8 +1725,10 @@ CubeDecision cube_decision_nply_with_details(
     float arCf_L1[MAX_CCI * 2] = {};
 
     // Prepare details output
-    details.player_rolls.clear();
-    details.player_rolls.resize(21);
+    details.nd_player_rolls.clear();
+    details.nd_player_rolls.resize(21);
+    details.dt_player_rolls.clear();
+    details.dt_player_rolls.resize(21);
 
     // --- Level 1: loop over 21 player rolls ---
     // Per-roll storage for later accumulation
@@ -1647,10 +1739,13 @@ CubeDecision cube_decision_nply_with_details(
 
     auto evaluate_player_roll = [&](int roll_idx) {
         const auto& roll = ALL_ROLLS[roll_idx];
-        auto& detail = details.player_rolls[roll_idx];
+        auto& nd_detail = details.nd_player_rolls[roll_idx];
+        auto& dt_detail = details.dt_player_rolls[roll_idx];
         auto& l1r = l1_results[roll_idx];
-        detail.die1 = roll.d1;
-        detail.die2 = roll.d2;
+        nd_detail.die1 = roll.d1;
+        nd_detail.die2 = roll.d2;
+        dt_detail.die1 = roll.d1;
+        dt_detail.die2 = roll.d2;
 
         // Generate legal moves and pick best
         thread_local std::vector<Board> candidates;
@@ -1659,7 +1754,8 @@ CubeDecision cube_decision_nply_with_details(
 
         if (best_idx < 0) {
             // No legal moves (dancing): standing pat
-            detail.post_move_board = board;
+            nd_detail.post_move_board = board;
+            dt_detail.post_move_board = board;
             Board opp_board = flip(board);
 
             // --- Run level 2 for this player roll (standing pat) ---
@@ -1672,15 +1768,18 @@ CubeDecision cube_decision_nply_with_details(
             std::array<std::array<float, MAX_CCI * 2>, 21> opp_roll_results;
             std::array<Board, 21> opp_boards;
             std::array<bool, 21> opp_terminal;
-            detail.opponent_rolls.resize(21);
+            nd_detail.opponent_rolls.resize(21);
+            dt_detail.opponent_rolls.resize(21);
 
             float arCf_L2[MAX_CCI * 2] = {};
 
             for (int opp_r = 0; opp_r < 21; opp_r++) {
                 const auto& opp_roll = ALL_ROLLS[opp_r];
-                auto& opp_detail = detail.opponent_rolls[opp_r];
-                opp_detail.die1 = opp_roll.d1;
-                opp_detail.die2 = opp_roll.d2;
+                // Populate dice/boards for both ND and DT details
+                nd_detail.opponent_rolls[opp_r].die1 = opp_roll.d1;
+                nd_detail.opponent_rolls[opp_r].die2 = opp_roll.d2;
+                dt_detail.opponent_rolls[opp_r].die1 = opp_roll.d1;
+                dt_detail.opponent_rolls[opp_r].die2 = opp_roll.d2;
                 opp_terminal[opp_r] = false;
 
                 thread_local std::vector<Board> opp_candidates;
@@ -1689,7 +1788,6 @@ CubeDecision cube_decision_nply_with_details(
 
                 Board opp_post_move;
                 if (opp_best < 0) {
-                    // Opponent dancing: standing pat
                     opp_post_move = opp_board;
                 } else {
                     opp_post_move = opp_candidates[opp_best];
@@ -1697,14 +1795,13 @@ CubeDecision cube_decision_nply_with_details(
 
                 // Record board from PLAYER's perspective
                 opp_boards[opp_r] = flip(opp_post_move);
-                opp_detail.post_move_board = opp_boards[opp_r];
+                nd_detail.opponent_rolls[opp_r].post_move_board = opp_boards[opp_r];
+                dt_detail.opponent_rolls[opp_r].post_move_board = opp_boards[opp_r];
 
                 // Check terminal
                 GameResult post_result = check_game_over(opp_post_move);
                 if (post_result != GameResult::NOT_OVER) {
                     opp_terminal[opp_r] = true;
-                    // Terminal from mover (opponent) perspective. Invert for accumulated
-                    // perspective (same as cubeful_recursive_multi convention).
                     for (int i = 0; i < expanded_cci_L2; i++) {
                         opp_roll_results[opp_r][i] = terminal_equity_for_cube(
                             post_result, aci_L2[i], /*invert_perspective=*/true);
@@ -1747,106 +1844,31 @@ CubeDecision cube_decision_nply_with_details(
             float arCubeful_L2[MAX_CCI * 2];
             get_ecf3(arCubeful_L2, expanded_cci_L1, arCf_L2, aci_L2_uninv);
 
-            // Determine opponent's cube decision for the ND state (index 0 in L1 expanded)
-            // The ND state at L2 is expanded pair (2*0, 2*0+1) = (0, 1)
-            {
-                bool opp_dt_available = (aci_L2_uninv[1].cube_value > 0);
-                if (opp_dt_available) {
-                    float rND_opp = arCf_L2[0];
-                    float rDT_opp, rDP_opp;
-                    if (is_money) {
-                        rDT_opp = 2.0f * arCf_L2[1];
-                        rDP_opp = 1.0f;
-                    } else {
-                        rDT_opp = arCf_L2[1];
-                        rDP_opp = dp_mwc(aci_L2_uninv[0].match.away1,
-                                          aci_L2_uninv[0].match.away2,
-                                          aci_L2_uninv[0].cube_value,
-                                          aci_L2_uninv[0].match.is_crawford);
-                    }
-                    // Beaver check
-                    if (is_money && aci_L2_uninv[0].beaver && rDT_opp < 0.0f) {
-                        rDT_opp = 2.0f * rDT_opp;
-                    }
-                    bool opp_should_double = (rDT_opp >= rND_opp && rDP_opp >= rND_opp);
-                    bool opp_should_take = opp_should_double ? (rDT_opp <= rDP_opp) : true;
+            int cv = cube.cube_value;
+            int a1 = cube.match.away1, a2 = cube.match.away2;
+            bool craw = cube.match.is_crawford;
 
-                    if (opp_should_double && !opp_should_take) {
-                        // D/P: opponent doubles, player passes
-                        detail.opponent_dp = true;
-                        detail.opponent_rolls.clear();
-                    } else if (opp_should_double) {
-                        // D/T: use DT branch per-roll values (scaled to initial cube)
-                        for (int opp_r = 0; opp_r < 21; opp_r++) {
-                            float raw = opp_roll_results[opp_r][1]; // DT branch, player's perspective
-                            // Perspective flip per-roll: negate for money, complement for match
-                            float opp_view;
-                            if (is_money) {
-                                opp_view = -raw;
-                            } else {
-                                opp_view = 1.0f - raw;
-                            }
-                            // Scale to initial cube for money (DT has 2x cube)
-                            float eq;
-                            if (is_money) {
-                                eq = -2.0f * opp_view;  // negate back to player's, scale 2x
-                            } else {
-                                eq = mwc2eq(1.0f - opp_view,
-                                            cube.match.away1, cube.match.away2,
-                                            2 * cube.cube_value, cube.match.is_crawford);
-                            }
-                            detail.opponent_rolls[opp_r].cubeful_equity = eq;
-                        }
-                    } else {
-                        // ND: use ND branch per-roll values
-                        for (int opp_r = 0; opp_r < 21; opp_r++) {
-                            float raw = opp_roll_results[opp_r][0]; // ND branch, player's perspective
-                            float opp_view;
-                            if (is_money) {
-                                opp_view = -raw;
-                            } else {
-                                opp_view = 1.0f - raw;
-                            }
-                            float eq;
-                            if (is_money) {
-                                eq = -opp_view;  // negate back to player's
-                            } else {
-                                eq = mwc2eq(1.0f - opp_view,
-                                            cube.match.away1, cube.match.away2,
-                                            cube.cube_value, cube.match.is_crawford);
-                            }
-                            detail.opponent_rolls[opp_r].cubeful_equity = eq;
-                        }
-                    }
-                } else {
-                    // No DT branch available: ND only
-                    for (int opp_r = 0; opp_r < 21; opp_r++) {
-                        float raw = opp_roll_results[opp_r][0];
-                        float eq;
-                        if (is_money) {
-                            eq = raw;  // Already player's perspective from recursion, negate twice cancels
-                        } else {
-                            float player_mwc = 1.0f - (1.0f - raw);  // = raw
-                            eq = mwc2eq(player_mwc,
-                                        cube.match.away1, cube.match.away2,
-                                        cube.cube_value, cube.match.is_crawford);
-                        }
-                        detail.opponent_rolls[opp_r].cubeful_equity = eq;
-                    }
-                }
-            }
+            // ND opponent-roll equities (L2 indices 0,1)
+            extract_opp_roll_equities(nd_detail, opp_roll_results,
+                arCf_L2, aci_L2_uninv, 0, 1, cv, 2*cv, cv, a1, a2, craw, is_money);
 
-            // Player-roll equity: from get_ecf3 output for ND state (index 0)
-            // arCubeful_L2[0] is from the opponent's perspective
-            float player_eq;
+            // DT opponent-roll equities (L2 indices 4,5)
+            extract_opp_roll_equities(dt_detail, opp_roll_results,
+                arCf_L2, aci_L2_uninv, 4, 5, 2*cv, 4*cv, cv, a1, a2, craw, is_money);
+
+            // ND player-roll equity: arCubeful_L2[0] from opponent's perspective
             if (is_money) {
-                player_eq = -arCubeful_L2[0];
+                nd_detail.cubeful_equity = -arCubeful_L2[0];
             } else {
-                player_eq = mwc2eq(1.0f - arCubeful_L2[0],
-                                    cube.match.away1, cube.match.away2,
-                                    cube.cube_value, cube.match.is_crawford);
+                nd_detail.cubeful_equity = mwc2eq(1.0f - arCubeful_L2[0], a1, a2, cv, craw);
             }
-            detail.cubeful_equity = player_eq;
+
+            // DT player-roll equity: arCubeful_L2[2] from opponent's perspective, per-2x-cube
+            if (is_money) {
+                dt_detail.cubeful_equity = -2.0f * arCubeful_L2[2];
+            } else {
+                dt_detail.cubeful_equity = mwc2eq(1.0f - arCubeful_L2[2], a1, a2, 2*cv, craw);
+            }
 
             // Accumulate for level 1
             for (int i = 0; i < expanded_cci_L1; i++)
@@ -1855,29 +1877,42 @@ CubeDecision cube_decision_nply_with_details(
         }
 
         const Board& best_board = candidates[best_idx];
-        detail.post_move_board = best_board;
+        nd_detail.post_move_board = best_board;
+        dt_detail.post_move_board = best_board;
 
         // Check if player's move is terminal
         GameResult post_result = check_game_over(best_board);
         if (post_result != GameResult::NOT_OVER) {
-            detail.is_terminal = true;
+            nd_detail.is_terminal = true;
+            dt_detail.is_terminal = true;
             // Terminal equity from opponent's perspective (for level 1 accumulation)
             for (int i = 0; i < expanded_cci_L1; i++) {
                 l1r.arCfLocal[i] = roll.weight * terminal_equity_for_cube(
                     post_result, aci_L1[i], /*invert_perspective=*/true);
             }
-            // Player's equity
+            // ND player's equity (per initial cube)
             auto tp = terminal_probs(post_result);
-            detail.cubeful_equity = cubeless_equity(tp);
+            nd_detail.cubeful_equity = cubeless_equity(tp);
             if (is_money && cube.jacoby_active()) {
-                detail.cubeful_equity = 2.0f * tp[0] - 1.0f;
+                nd_detail.cubeful_equity = 2.0f * tp[0] - 1.0f;
             }
             if (!is_money) {
-                detail.cubeful_equity = mwc2eq(
+                nd_detail.cubeful_equity = mwc2eq(
                     cubeless_mwc(tp, cube.match.away1, cube.match.away2,
                                   cube.cube_value, cube.match.is_crawford),
                     cube.match.away1, cube.match.away2,
                     cube.cube_value, cube.match.is_crawford);
+            }
+            // DT player's equity (per initial cube, at doubled cube level)
+            // Jacoby is never active in DT (cube is turned)
+            if (is_money) {
+                dt_detail.cubeful_equity = 2.0f * cubeless_equity(tp);
+            } else {
+                dt_detail.cubeful_equity = mwc2eq(
+                    cubeless_mwc(tp, cube.match.away1, cube.match.away2,
+                                  2 * cube.cube_value, cube.match.is_crawford),
+                    cube.match.away1, cube.match.away2,
+                    2 * cube.cube_value, cube.match.is_crawford);
             }
             return;
         }
@@ -1894,15 +1929,18 @@ CubeDecision cube_decision_nply_with_details(
         std::array<std::array<float, MAX_CCI * 2>, 21> opp_roll_results;
         std::array<Board, 21> opp_boards;
         std::array<bool, 21> opp_terminal;
-        detail.opponent_rolls.resize(21);
+        nd_detail.opponent_rolls.resize(21);
+        dt_detail.opponent_rolls.resize(21);
 
         float arCf_L2[MAX_CCI * 2] = {};
 
         for (int opp_r = 0; opp_r < 21; opp_r++) {
             const auto& opp_roll = ALL_ROLLS[opp_r];
-            auto& opp_detail = detail.opponent_rolls[opp_r];
-            opp_detail.die1 = opp_roll.d1;
-            opp_detail.die2 = opp_roll.d2;
+            // Populate dice/boards for both ND and DT details
+            nd_detail.opponent_rolls[opp_r].die1 = opp_roll.d1;
+            nd_detail.opponent_rolls[opp_r].die2 = opp_roll.d2;
+            dt_detail.opponent_rolls[opp_r].die1 = opp_roll.d1;
+            dt_detail.opponent_rolls[opp_r].die2 = opp_roll.d2;
             opp_terminal[opp_r] = false;
 
             thread_local std::vector<Board> opp_candidates;
@@ -1917,7 +1955,8 @@ CubeDecision cube_decision_nply_with_details(
             }
 
             opp_boards[opp_r] = flip(opp_post_move);
-            opp_detail.post_move_board = opp_boards[opp_r];
+            nd_detail.opponent_rolls[opp_r].post_move_board = opp_boards[opp_r];
+            dt_detail.opponent_rolls[opp_r].post_move_board = opp_boards[opp_r];
 
             GameResult opp_post_result = check_game_over(opp_post_move);
             if (opp_post_result != GameResult::NOT_OVER) {
@@ -1963,112 +2002,31 @@ CubeDecision cube_decision_nply_with_details(
         float arCubeful_L2[MAX_CCI * 2];
         get_ecf3(arCubeful_L2, expanded_cci_L1, arCf_L2, aci_L2_uninv);
 
-        // Determine opponent's cube decision for the ND state
-        {
-            bool opp_dt_available = (aci_L2_uninv[1].cube_value > 0);
-            if (opp_dt_available) {
-                float rND_opp = arCf_L2[0];
-                float rDT_opp, rDP_opp;
-                if (is_money) {
-                    rDT_opp = 2.0f * arCf_L2[1];
-                    rDP_opp = 1.0f;
-                } else {
-                    rDT_opp = arCf_L2[1];
-                    rDP_opp = dp_mwc(aci_L2_uninv[0].match.away1,
-                                      aci_L2_uninv[0].match.away2,
-                                      aci_L2_uninv[0].cube_value,
-                                      aci_L2_uninv[0].match.is_crawford);
-                }
-                if (is_money && aci_L2_uninv[0].beaver && rDT_opp < 0.0f) {
-                    rDT_opp = 2.0f * rDT_opp;
-                }
-                bool opp_should_double = (rDT_opp >= rND_opp && rDP_opp >= rND_opp);
-                bool opp_should_take = opp_should_double ? (rDT_opp <= rDP_opp) : true;
+        int cv = cube.cube_value;
+        int a1 = cube.match.away1, a2 = cube.match.away2;
+        bool craw = cube.match.is_crawford;
 
-                if (opp_should_double && !opp_should_take) {
-                    detail.opponent_dp = true;
-                    detail.opponent_rolls.clear();
-                } else if (opp_should_double) {
-                    // D/T: DT branch values
-                    for (int opp_r = 0; opp_r < 21; opp_r++) {
-                        if (opp_terminal[opp_r]) {
-                            // Terminal: use DT cube state for terminal equity
-                            // opp_roll_results already has the right value for the DT branch
-                            float raw = opp_roll_results[opp_r][1];
-                            float eq;
-                            if (is_money) {
-                                eq = 2.0f * raw;  // raw is player's perspective, scale to initial cube
-                            } else {
-                                eq = mwc2eq(raw,
-                                            cube.match.away1, cube.match.away2,
-                                            2 * cube.cube_value, cube.match.is_crawford);
-                            }
-                            detail.opponent_rolls[opp_r].cubeful_equity = eq;
-                        } else {
-                            float raw = opp_roll_results[opp_r][1];
-                            // raw is from plies-2 recursion (player's perspective at DT cube)
-                            // After perspective flip: -raw (money) = opponent's view
-                            // Per-roll equity from player's view, scaled to initial cube:
-                            float eq;
-                            if (is_money) {
-                                // raw is player's equity per DT-cube. Scale to initial: 2x.
-                                // But we need to undo the perspective convention.
-                                // The recursion at plies-2 was from player's view.
-                                // After level 2 flip: -raw = opponent's view.
-                                // Player's view: -(-raw) = raw. Scale: 2 * raw.
-                                eq = 2.0f * raw;
-                            } else {
-                                // raw is player's MWC at DT cube
-                                float player_mwc = raw;
-                                eq = mwc2eq(player_mwc,
-                                            cube.match.away1, cube.match.away2,
-                                            2 * cube.cube_value, cube.match.is_crawford);
-                            }
-                            detail.opponent_rolls[opp_r].cubeful_equity = eq;
-                        }
-                    }
-                } else {
-                    // ND: ND branch values
-                    for (int opp_r = 0; opp_r < 21; opp_r++) {
-                        float raw = opp_roll_results[opp_r][0];
-                        float eq;
-                        if (is_money) {
-                            eq = raw;  // player's perspective, no scaling needed (cube unchanged)
-                        } else {
-                            eq = mwc2eq(raw,
-                                        cube.match.away1, cube.match.away2,
-                                        cube.cube_value, cube.match.is_crawford);
-                        }
-                        detail.opponent_rolls[opp_r].cubeful_equity = eq;
-                    }
-                }
-            } else {
-                // No DT available: ND only
-                for (int opp_r = 0; opp_r < 21; opp_r++) {
-                    float raw = opp_roll_results[opp_r][0];
-                    float eq;
-                    if (is_money) {
-                        eq = raw;
-                    } else {
-                        eq = mwc2eq(raw,
-                                    cube.match.away1, cube.match.away2,
-                                    cube.cube_value, cube.match.is_crawford);
-                    }
-                    detail.opponent_rolls[opp_r].cubeful_equity = eq;
-                }
-            }
-        }
+        // ND opponent-roll equities (L2 indices 0,1)
+        extract_opp_roll_equities(nd_detail, opp_roll_results,
+            arCf_L2, aci_L2_uninv, 0, 1, cv, 2*cv, cv, a1, a2, craw, is_money);
 
-        // Player-roll equity from the get_ecf3 output
-        float player_eq;
+        // DT opponent-roll equities (L2 indices 4,5)
+        extract_opp_roll_equities(dt_detail, opp_roll_results,
+            arCf_L2, aci_L2_uninv, 4, 5, 2*cv, 4*cv, cv, a1, a2, craw, is_money);
+
+        // ND player-roll equity: arCubeful_L2[0] from opponent's perspective
         if (is_money) {
-            player_eq = -arCubeful_L2[0];
+            nd_detail.cubeful_equity = -arCubeful_L2[0];
         } else {
-            player_eq = mwc2eq(1.0f - arCubeful_L2[0],
-                                cube.match.away1, cube.match.away2,
-                                cube.cube_value, cube.match.is_crawford);
+            nd_detail.cubeful_equity = mwc2eq(1.0f - arCubeful_L2[0], a1, a2, cv, craw);
         }
-        detail.cubeful_equity = player_eq;
+
+        // DT player-roll equity: arCubeful_L2[2] from opponent's perspective, per-2x-cube
+        if (is_money) {
+            dt_detail.cubeful_equity = -2.0f * arCubeful_L2[2];
+        } else {
+            dt_detail.cubeful_equity = mwc2eq(1.0f - arCubeful_L2[2], a1, a2, 2*cv, craw);
+        }
 
         // Accumulate for level 1
         for (int i = 0; i < expanded_cci_L1; i++)

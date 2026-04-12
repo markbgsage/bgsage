@@ -266,31 +266,42 @@ cube = analyzer.cube_action(board, cube_value=1, cube_owner="centered")
 cube = analyzer.cube_action(board, cube_value=1, cube_owner="centered",
                              away1=5, away2=3, is_crawford=False)
 
-# 2-ply details: per-roll breakdown of the No Double scenario (requires >= 3-ply)
+# 2-ply details: per-roll breakdown for ND and DT scenarios (requires >= 3-ply)
 cube = analyzer.cube_action(board, cube_value=1, cube_owner="centered",
                              incl_2ply_details=True)
-# cube.player_rolls: list of 21 dicts, one per player dice roll
+# cube.details: dict with "nd" and "dt" keys, each a list of 21 player roll dicts
 # See "2-Ply Detail Fields" below for structure
+nd_rolls = cube.details["nd"]   # No Double scenario
+dt_rolls = cube.details["dt"]   # Double/Take scenario
 ```
 
 **2-Ply Detail Fields** (`incl_2ply_details=True`, requires >= 3-ply):
 
-Returns per-roll details for the first two turns under the No Double scenario.
-All boards are from the original player's perspective. All equities are
-per-initial-cube (matching `equity_nd`/`equity_dt`/`equity_dp`), from the
-player's perspective. No extra computational cost — data is captured from the
+Returns per-roll details for the first two turns under both the **ND** (No Double)
+and **DT** (Double/Take) scenarios. The ND section shows equities assuming the
+player does not double; the DT section shows equities assuming the player doubles
+and the opponent takes — even when those are not the optimal decisions. All boards
+are from the original player's perspective. All equities are per-initial-cube, from
+the player's perspective. No extra computational cost — data is captured from the
 interior of the existing N-ply cubeful recursion.
 
-`cube.player_rolls` — list of 21 dicts (one per unique dice combination):
+`cube.details` — dict with two keys:
+- `"nd"` — list of 21 player roll dicts (No Double scenario)
+- `"dt"` — list of 21 player roll dicts (Double/Take scenario)
+
+Boards (`checkers`) are identical in both sections (move selection is cubeless,
+so cube state doesn't affect which move is chosen). Only the equities differ.
+
+Each player roll dict (in both `"nd"` and `"dt"`):
 
 | Field | Type | Description |
 |-------|------|-------------|
 | `die1` | int | First die (1-6) |
 | `die2` | int | Second die (1-6) |
 | `checkers` | list[int] | 26-element post-move board after optimal checker play |
-| `cubeful_equity` | float | Cubeful equity incorporating opponent's optimal cube decision. Equals -1.0 when opponent has D/P. |
-| `opponent_dp` | bool | Present and `True` when opponent has Double/Pass (game over) |
-| `opponent_rolls` | list[dict] | 21 opponent roll details. **Absent** if the player's move is terminal (game over) or opponent has D/P. |
+| `cubeful_equity` | float | Cubeful equity incorporating opponent's optimal cube decision within this scenario. |
+| `opponent_dp` | bool | Present and `True` when opponent has D/P in this scenario (game over) |
+| `opponent_rolls` | list[dict] | 21 opponent roll details. **Absent** if the player's move is terminal or opponent has D/P. |
 
 Each element of `opponent_rolls`:
 
@@ -299,15 +310,22 @@ Each element of `opponent_rolls`:
 | `die1` | int | First die (1-6) |
 | `die2` | int | Second die (1-6) |
 | `checkers` | list[int] | 26-element post-move board (player's perspective) |
-| `cubeful_equity` | float | Cubeful equity incorporating player's optimal cube decision. If the opponent doubled and the player took, this is scaled to initial-cube units (2× the per-DT-cube equity). Equals +1.0 (or +2.0 after DT) when player has D/P. |
+| `cubeful_equity` | float | Cubeful equity incorporating player's optimal cube decision, scaled to initial-cube units. |
+
+**ND section**: Cube remains at its current value. The opponent may double (if
+they own or it's centered); per-roll equities reflect the opponent's optimal cube
+action. The weighted average of `cubeful_equity` across all 21 ND player rolls
+(doubles weight 1, non-doubles weight 2, divided by 36) equals `equity_nd`.
+
+**DT section**: Cube is doubled (2× initial), opponent owns. The opponent may
+redouble; per-roll equities reflect the opponent's optimal cube action at the
+doubled cube level, scaled back to per-initial-cube units. The weighted average
+of `cubeful_equity` across all 21 DT player rolls equals `equity_dt`.
 
 Move selection at both levels uses 1-ply cubeless equity (matching the cubeful
 recursion's internal behavior). Equities are evaluated at (N-1)-ply for player
 rolls and (N-2)-ply for opponent rolls — so at 3-ply, player-roll equities are
 2-ply accurate and opponent-roll equities use 1-ply Janowski.
-
-The weighted average of `cubeful_equity` across all 21 `player_rolls` (doubles
-weight 1, non-doubles weight 2, divided by 36) equals `equity_nd`.
 
 **Python (batch, pre-roll)** — `batch_evaluate()` (`python/bgsage/batch.py`):
 ```python
@@ -452,7 +470,7 @@ results = batch_post_move_evaluate(positions, eval_level="1ply", weights=weights
 | `CheckerPlayResult` | `checker_play()` | `.moves` (list[MoveAnalysis]), `.board`, `.die1`, `.die2` |
 | `MoveAnalysis` | In CheckerPlayResult | `.board`, `.equity`, `.cubeless_equity`, `.probs`, `.equity_diff` |
 | `PostMoveAnalysis` | `post_move_analytics()`, `batch_post_move_evaluate()` | `.probs`, `.cubeless_equity`, `.cubeful_equity` |
-| `CubeActionResult` | `cube_action()` | `.equity_nd/dt/dp`, `.should_double`, `.should_take`, `.optimal_action`, `.probs`, `.player_rolls` (optional, with `incl_2ply_details`) |
+| `CubeActionResult` | `cube_action()` | `.equity_nd/dt/dp`, `.should_double`, `.should_take`, `.optimal_action`, `.probs`, `.details` (optional dict with `"nd"`/`"dt"` keys, with `incl_2ply_details`) |
 | `PositionEval` | `batch_evaluate()` | `.probs`, `.cubeless_equity`, `.cubeful_equity`, `.equity_nd/dt/dp`, `.optimal_action` |
 | `GamePlanResult` | `classify_game_plans()` | `.player`, `.opponent` |
 | `Probabilities` | In all analysis types | `.win`, `.gammon_win`, `.backgammon_win`, `.gammon_loss`, `.backgammon_loss`, `.equity` |

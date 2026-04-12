@@ -51,10 +51,10 @@ static std::vector<int> board_to_list(const Board& b) {
     return std::vector<int>(b.begin(), b.end());
 }
 
-// Convert TwoPlyDetails to a Python list of dicts
-static py::list two_ply_details_to_list(const TwoPlyDetails& details) {
-    py::list player_rolls_list;
-    for (const auto& pr : details.player_rolls) {
+// Convert a vector of PlayerRollDetail to a Python list of dicts
+static py::list player_rolls_to_list(const std::vector<PlayerRollDetail>& rolls) {
+    py::list result;
+    for (const auto& pr : rolls) {
         py::dict d;
         d["die1"] = pr.die1;
         d["die2"] = pr.die2;
@@ -77,9 +77,17 @@ static py::list two_ply_details_to_list(const TwoPlyDetails& details) {
             }
             d["opponent_rolls"] = opp_list;
         }
-        player_rolls_list.append(d);
+        result.append(d);
     }
-    return player_rolls_list;
+    return result;
+}
+
+// Convert TwoPlyDetails to a Python dict with "nd" and "dt" sections
+static py::dict two_ply_details_to_dict(const TwoPlyDetails& details) {
+    py::dict result;
+    result["nd"] = player_rolls_to_list(details.nd_player_rolls);
+    result["dt"] = player_rolls_to_list(details.dt_player_rolls);
+    return result;
 }
 
 // C++ container for benchmark scenarios — avoids pybind11 vector copy issues
@@ -2449,7 +2457,7 @@ PYBIND11_MODULE(bgbot_cpp, m) {
         result["is_beaver"] = cd.is_beaver;
         result["n_plies"] = n_plies;
         if (incl_2ply_details) {
-            result["player_rolls"] = two_ply_details_to_list(details);
+            result["details"] = two_ply_details_to_dict(details);
         }
         return result;
     }, "N-ply cube decision using 17-NN pair strategy.",
@@ -2638,7 +2646,7 @@ PYBIND11_MODULE(bgbot_cpp, m) {
         result["is_beaver"] = cd.is_beaver;
         result["n_plies"] = n_plies;
         if (incl_2ply_details) {
-            result["player_rolls"] = two_ply_details_to_list(details);
+            result["details"] = two_ply_details_to_dict(details);
         }
         return result;
     }, "N-ply cube decision for a pre-roll position.\n"
@@ -5072,7 +5080,7 @@ PYBIND11_MODULE(bgbot_cpp, m) {
         result["is_beaver"] = cd.is_beaver;
         result["n_plies"] = n_plies;
         if (incl_2ply_details) {
-            result["player_rolls"] = two_ply_details_to_list(details);
+            result["details"] = two_ply_details_to_dict(details);
         }
         return result;
     }, "Unified N-ply cube decision for any strategy type.",

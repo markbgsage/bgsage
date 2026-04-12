@@ -157,9 +157,11 @@ struct PlayerRollDetail {
     std::vector<OpponentRollDetail> opponent_rolls; // 21 entries (empty if terminal/DP)
 };
 
-// Per-roll details for the first two turns of a cube decision analysis (ND scenario).
+// Per-roll details for the first two turns of a cube decision analysis.
+// Two sections: ND (No Double) and DT (Double/Take) scenarios.
 struct TwoPlyDetails {
-    std::vector<PlayerRollDetail> player_rolls; // 21 entries
+    std::vector<PlayerRollDetail> nd_player_rolls; // ND scenario: 21 entries
+    std::vector<PlayerRollDetail> dt_player_rolls; // DT scenario: 21 entries
 };
 
 // Compute cube decision for a pre-roll position (1-ply / raw NN).

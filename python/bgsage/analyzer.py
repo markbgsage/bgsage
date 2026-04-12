@@ -314,9 +314,9 @@ class _MultiPlyAnalyzer(_CubelessBase):
         )
         result = self._format_cube_result(r, eval_level=f"{self._n_plies}-ply")
 
-        # Pass through player_rolls if present
-        if "player_rolls" in r:
-            result["player_rolls"] = r["player_rolls"]
+        # Pass through 2-ply details if present
+        if "details" in r:
+            result["details"] = r["details"]
 
         # The C++ binding already computes N-ply cubeless probs (with bearoff DB
         # when applicable). Only override if the binding didn't use bearoff DB,
@@ -1108,7 +1108,7 @@ class BgBotAnalyzer:
                 ownership) after being doubled. Money games only.
                 Auto-disabled for match play.
             incl_2ply_details: If True, include per-roll details for the
-                first two turns under the No Double scenario. Requires
+                first two turns under both ND and DT scenarios. Requires
                 3-ply or higher evaluation.
         """
         if away1 > 0 or away2 > 0:
@@ -1139,7 +1139,7 @@ class BgBotAnalyzer:
             cubeless_se=raw.get("cubeless_se"),
             equity_nd_se=raw.get("equity_nd_se"),
             equity_dt_se=raw.get("equity_dt_se"),
-            player_rolls=raw.get("player_rolls"),
+            details=raw.get("details"),
         )
 
 

@@ -100,7 +100,7 @@ class CubeActionResult:
     cubeless_se: float | None = None  # Rollout cubeless standard error
     equity_nd_se: float | None = None  # Rollout ND cubeful standard error
     equity_dt_se: float | None = None  # Rollout DT cubeful standard error
-    player_rolls: list[dict] | None = None  # Per-roll 2-ply details (only when incl_2ply_details=True)
+    details: dict | None = None  # 2-ply details {"nd": [...], "dt": [...]} (only when incl_2ply_details=True)
 
 
 @dataclass
