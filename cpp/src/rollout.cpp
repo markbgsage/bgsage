@@ -263,18 +263,26 @@ static void build_rollout_strategies(
     cube_inner_rollout = make_inner_rollout(cube_eval_config);
     cube_late_inner_rollout = make_inner_rollout(cube_late_eval_config);
 
-    // Build truncation evaluation strategy (unchanged logic)
+    // Build truncation evaluation strategy. Always create a separate instance
+    // (not shared with checker_strat) so it can use more aggressive PubEval
+    // filtering. Truncation evaluations are averaged over hundreds of trials,
+    // so slightly noisier individual evaluations wash out in the mean.
     int effective_trunc_ply = (config.truncation_ply >= 1) ? config.truncation_ply : config.decision_ply;
-    if (effective_trunc_ply == checker_ply && !config.checker.is_set()) {
-        truncation_strat = checker_strat;
-    } else if (effective_trunc_ply > 1) {
+    if (effective_trunc_ply > 1) {
+        std::shared_ptr<MultiPlyStrategy> trunc_mp;
         if (filter_base) {
-            truncation_strat = std::make_shared<MultiPlyStrategy>(
+            trunc_mp = std::make_shared<MultiPlyStrategy>(
                 base, filter_base, effective_trunc_ply, internal_filter);
         } else {
-            truncation_strat = std::make_shared<MultiPlyStrategy>(
+            trunc_mp = std::make_shared<MultiPlyStrategy>(
                 base, effective_trunc_ply, internal_filter);
         }
+        // More aggressive PubEval filtering for truncation: activate earlier
+        // (threshold 8 vs 20) and keep fewer candidates (6 vs 15). This
+        // reduces the number of NN encodings per opponent roll in the N-ply
+        // recursion, which is the dominant cost of truncation evaluation.
+        trunc_mp->set_prefilter_params(8, 6);
+        truncation_strat = trunc_mp;
     } else {
         truncation_strat = base;
     }
@@ -1279,6 +1287,7 @@ RolloutStrategy::TrialResult RolloutStrategy::run_trial_unified(
     int trunc_move = std::min(truncation, max_moves);
     bool trunc_race = is_race(last_mover_board);
     const auto& trunc_strat = *truncation_strat_;
+
     auto last_mover_probs = trunc_strat.evaluate_probs(last_mover_board, last_mover_board);
     ROLLOUT_TIMER_ADD(trunc_time_ns);
 #ifdef ROLLOUT_PROFILE
@@ -1294,7 +1303,13 @@ RolloutStrategy::TrialResult RolloutStrategy::run_trial_unified(
             // N-ply cubeful evaluation at truncation point.
             // `board` is the next mover's pre-roll position; branches[b].cube
             // is from the next mover's perspective.
-            MoveFilter trunc_filter = {2, 0.03f};
+            //
+            // Use a single-candidate filter {1, 0.0} instead of {2, 0.03} to
+            // reduce the cubeful tree size by ~8x. Move selection is already
+            // 1-ply cubeless at each node, so keeping only the 1-ply best move
+            // per roll introduces negligible error while avoiding redundant
+            // evaluation of the 2nd-best candidate through the full cubeful tree.
+            MoveFilter trunc_filter = {1, 0.0f};
             for (int b = 0; b < n_branches; ++b) {
                 if (branches[b].finished) continue;
                 const Strategy& cf_strat = base_bearoff_ ? *base_bearoff_ : *base_;
@@ -1304,18 +1319,14 @@ RolloutStrategy::TrialResult RolloutStrategy::run_trial_unified(
                     move_filter_.get());
                 double sp_val;
                 if (is_match) {
-                    // cubeful_equity_nply returns equity; convert back to MWC
-                    // (branch final_equity uses MWC space for match play).
                     float mwc = eq2mwc(cf,
                         branches[b].cube.match.away1,
                         branches[b].cube.match.away2,
                         branches[b].cube.cube_value,
                         branches[b].cube.match.is_crawford);
-                    // mwc is next mover's match winning chance
                     sp_val = last_mover_is_sp ? (1.0 - static_cast<double>(mwc))
                                               : static_cast<double>(mwc);
                 } else {
-                    // cf is per-cube-unit equity from next mover's perspective
                     double points = cf * branches[b].cube.cube_value;
                     sp_val = points / branches[b].basis_cube;
                     if (last_mover_is_sp) sp_val = -sp_val;

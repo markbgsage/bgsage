@@ -285,6 +285,15 @@ public:
     // candidates in N-ply evaluation before full-model scoring.
     void set_move_prefilter(std::shared_ptr<Strategy> filter) { move_prefilter_ = std::move(filter); }
 
+    // PubEval prefilter parameters for N-ply evaluation. When the number of
+    // opponent candidates exceeds prefilter_threshold, PubEval narrows them to
+    // prefilter_keep before the batch NN evaluation. Lower values save encoding
+    // cost at the risk of dropping the NN-best candidate.
+    void set_prefilter_params(int threshold, int keep) {
+        prefilter_threshold_ = threshold;
+        prefilter_keep_ = keep;
+    }
+
     // Enable/disable position cache (for profiling).
     void set_cache_enabled(bool enabled) { cache_enabled_ = enabled; }
     bool cache_enabled() const { return cache_enabled_; }
@@ -304,6 +313,8 @@ private:
     std::shared_ptr<Strategy> filter_strat_;
     const BearoffDB* bearoff_db_ = nullptr;
     std::shared_ptr<Strategy> move_prefilter_;  // Cheap filter (e.g. PubEval) for opponent candidate pruning
+    int prefilter_threshold_ = 20;  // PubEval activates when candidates > this
+    int prefilter_keep_ = 15;       // PubEval keeps this many after filtering
     int n_plies_;
     MoveFilter move_filter_;
     std::vector<MoveFilterStep> filter_chain_;

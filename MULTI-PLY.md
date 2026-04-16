@@ -1131,8 +1131,13 @@ DT section.
 
 | Constant | Value | Description |
 |----------|-------|-------------|
-| PREFILTER_THRESHOLD | 20 | Apply PubEval pre-filter if > 20 opponent moves |
-| PREFILTER_KEEP | 15 | Keep top 15 after pre-filtering |
+| PREFILTER_THRESHOLD | 20 (default) | Apply PubEval pre-filter if > this many opponent moves |
+| PREFILTER_KEEP | 15 (default) | Keep this many after pre-filtering |
+
+These defaults are configurable per `MultiPlyStrategy` instance via
+`set_prefilter_params(threshold, keep)`. The rollout truncation strategy
+uses aggressive values (8/6) since truncation evaluations are averaged
+over hundreds of trials.
 
 ### Position Cache (Checker Play)
 
