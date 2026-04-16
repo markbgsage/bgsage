@@ -1283,8 +1283,8 @@ static void cubeful_recursive_multi(
         // Two-stage filtering: if move_filter is set and we have enough candidates,
         // use the cheap filter (e.g. PubEval) to narrow to top K, then evaluate
         // survivors with the full model.
-        static constexpr int MOVE_FILTER_THRESHOLD = 14;
-        static constexpr int MOVE_FILTER_KEEP = 12;
+        static constexpr int MOVE_FILTER_THRESHOLD = 16;
+        static constexpr int MOVE_FILTER_KEEP = 15;
 
         int best_idx = 0;
         const std::vector<Board>* eval_candidates = &candidates;
@@ -1515,8 +1515,8 @@ static int pick_best_move_for_roll(
     if (n_cand == 0) return -1;
     if (n_cand == 1) return 0;
 
-    static constexpr int PREFILTER_THRESHOLD = 14;
-    static constexpr int PREFILTER_KEEP = 12;
+    static constexpr int PREFILTER_THRESHOLD = 16;
+    static constexpr int PREFILTER_KEEP = 15;
 
     // Pre-filter with cheap evaluator (e.g. PubEval) if available
     const std::vector<Board>* eval_candidates = &candidates;

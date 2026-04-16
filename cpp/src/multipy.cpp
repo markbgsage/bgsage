@@ -347,8 +347,7 @@ int MultiPlyStrategy::parallel_thread_count(int plies) const {
 
     if (plies > 1) {
         const int target_cores = 4 * std::max(1, plies - 1);
-        const int effective_target = (plies >= 4) ? std::min(8, target_cores) : target_cores;
-        n_threads = std::min(n_threads, effective_target);
+        n_threads = std::min(n_threads, target_cores);
     }
 
     return n_threads;

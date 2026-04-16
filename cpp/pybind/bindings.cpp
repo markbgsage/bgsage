@@ -5051,15 +5051,21 @@ PYBIND11_MODULE(bgbot_cpp, m) {
         TwoPlyDetails details;
         std::array<float, NUM_OUTPUTS> pre_roll_probs;
         float cl_eq;
+        // PubEval prefilter for move selection in the cubeful recursion:
+        // narrows candidate moves before full 1-ply scoring at each node.
+        static PubEval pubeval_filter;
         {
             py::gil_scoped_release release;
             if (incl_2ply_details) {
-                cd = cube_decision_nply_with_details(board, ci, *base_strat, n_plies, filter, n_threads, details);
+                cd = cube_decision_nply_with_details(board, ci, *base_strat, n_plies, filter, n_threads, details, &pubeval_filter);
             } else {
-                cd = cube_decision_nply(board, ci, *base_strat, n_plies, filter, n_threads);
+                cd = cube_decision_nply(board, ci, *base_strat, n_plies, filter, n_threads, &pubeval_filter);
             }
             Board flipped = flip(board);
-            MultiPlyStrategy multipy(base_strat, n_plies, filter);
+            MultiPlyStrategy multipy(base_strat, n_plies, filter,
+                                     /*full_depth_opponent=*/false,
+                                     /*parallel_evaluate=*/n_threads > 1,
+                                     /*parallel_threads=*/n_threads);
             if (bearoff_db && bearoff_db->is_loaded()) {
                 multipy.set_bearoff_db(bearoff_db);
             }

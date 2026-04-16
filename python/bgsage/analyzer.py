@@ -318,26 +318,8 @@ class _MultiPlyAnalyzer(_CubelessBase):
         if "details" in r:
             result["details"] = r["details"]
 
-        # The C++ binding already computes N-ply cubeless probs (with bearoff DB
-        # when applicable). Only override if the binding didn't use bearoff DB,
-        # to get N-ply probs instead of 1-ply probs for the cubeless display.
-        if self._bearoff_db is None or not self._bearoff_db.is_bearoff(board):
-            flipped = bgbot_cpp.flip_board(board)
-            nply_eval = self._strategy_nply.evaluate_board(flipped, board)
-            nply_probs = list(nply_eval["probs"])
-            nply_pre_roll = [
-                1.0 - nply_probs[0],
-                nply_probs[3],
-                nply_probs[4],
-                nply_probs[1],
-                nply_probs[2],
-            ]
-            result["probs"] = nply_pre_roll
-            result["cubeless_equity"] = (
-                2.0 * nply_pre_roll[0] - 1.0
-                + nply_pre_roll[1] - nply_pre_roll[3]
-                + nply_pre_roll[2] - nply_pre_roll[4]
-            )
+        # The C++ binding computes N-ply cubeless probs with parallelism and
+        # bearoff DB. No need to recompute in Python.
 
         # Always clear the shared position cache after cube analysis.
         # cube_decision_nply() fills the cache internally; without clearing,

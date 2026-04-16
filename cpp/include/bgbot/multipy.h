@@ -339,7 +339,7 @@ private:
     };
 
     struct PosCache {
-        static constexpr std::size_t CAPACITY = 2 * 1024 * 1024;  // must be power of 2
+        static constexpr std::size_t CAPACITY = 256 * 1024;  // must be power of 2
         static constexpr std::size_t MASK = CAPACITY - 1;
         static constexpr int MAX_PROBE = 8;
 
