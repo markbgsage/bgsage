@@ -1488,9 +1488,12 @@ PYBIND11_MODULE(bgbot_cpp, m) {
             purerace_w, racing_w, attacking_w, priming_w, anchoring_w,
             n_h_purerace, n_h_racing, n_h_attacking, n_h_priming, n_h_anchoring);
         MoveFilter filter{filter_max_moves, filter_threshold};
-        return std::make_shared<MultiPlyStrategy>(
+        auto strat = std::make_shared<MultiPlyStrategy>(
             base, n_plies, filter, full_depth_opponent,
             parallel_evaluate, parallel_threads);
+        static auto pubeval = std::make_shared<PubEval>();
+        strat->set_move_prefilter(pubeval);
+        return strat;
     }, "Create N-ply strategy wrapping 5-NN GamePlanStrategy",
        py::arg("purerace_weights"),
        py::arg("racing_weights"),
@@ -1541,9 +1544,12 @@ PYBIND11_MODULE(bgbot_cpp, m) {
             filter_n_h_purerace, filter_n_h_racing, filter_n_h_attacking,
             filter_n_h_priming, filter_n_h_anchoring);
         MoveFilter mf{filter_max_moves, filter_threshold};
-        return std::make_shared<MultiPlyStrategy>(
+        auto strat = std::make_shared<MultiPlyStrategy>(
             leaf, filter, n_plies, mf, full_depth_opponent,
             parallel_evaluate, parallel_threads);
+        static auto pubeval = std::make_shared<PubEval>();
+        strat->set_move_prefilter(pubeval);
+        return strat;
     }, "Create hybrid N-ply strategy with separate filter and leaf 5-NN strategies",
        py::arg("purerace_weights"), py::arg("racing_weights"),
        py::arg("attacking_weights"), py::arg("priming_weights"),
@@ -4599,9 +4605,12 @@ PYBIND11_MODULE(bgbot_cpp, m) {
                                      bool parallel_evaluate, int parallel_threads) {
         auto base = std::make_shared<GamePlanPairStrategy>(weight_paths, hidden_sizes);
         MoveFilter filter{filter_max_moves, filter_threshold};
-        return std::make_shared<MultiPlyStrategy>(
+        auto strat = std::make_shared<MultiPlyStrategy>(
             base, n_plies, filter, full_depth_opponent,
             parallel_evaluate, parallel_threads);
+        static auto pubeval = std::make_shared<PubEval>();
+        strat->set_move_prefilter(pubeval);
+        return strat;
     }, "Create MultiPlyStrategy from 17-NN Pair base strategy",
        py::arg("weight_paths"),
        py::arg("hidden_sizes"),
@@ -4779,9 +4788,12 @@ PYBIND11_MODULE(bgbot_cpp, m) {
                                        bool parallel_evaluate, int parallel_threads) {
         auto base = std::make_shared<BackgameAwarePairStrategy>(weight_paths, hidden_sizes);
         MoveFilter filter{filter_max_moves, filter_threshold};
-        return std::make_shared<MultiPlyStrategy>(
+        auto strat = std::make_shared<MultiPlyStrategy>(
             base, n_plies, filter, full_depth_opponent,
             parallel_evaluate, parallel_threads);
+        static auto pubeval = std::make_shared<PubEval>();
+        strat->set_move_prefilter(pubeval);
+        return strat;
     }, "Create MultiPlyStrategy from 19-NN Backgame-Aware Pair base strategy",
        py::arg("weight_paths"),
        py::arg("hidden_sizes"),
@@ -4865,9 +4877,14 @@ PYBIND11_MODULE(bgbot_cpp, m) {
                                               bool parallel_evaluate, int parallel_threads) {
         auto base = make_strategy_from_type(strategy_type, weight_paths, hidden_sizes);
         MoveFilter filter{filter_max_moves, filter_threshold};
-        return std::make_shared<MultiPlyStrategy>(
+        auto strat = std::make_shared<MultiPlyStrategy>(
             base, n_plies, filter, full_depth_opponent,
             parallel_evaluate, parallel_threads);
+        // PubEval prefilter for opponent candidate pruning in N-ply evaluation.
+        // Narrows opponent moves before full 1-ply scoring when > 20 candidates.
+        static auto pubeval = std::make_shared<PubEval>();
+        strat->set_move_prefilter(pubeval);
+        return strat;
     }, "Create MultiPlyStrategy from any base strategy type",
        py::arg("strategy_type"),
        py::arg("weight_paths"),
