@@ -341,14 +341,21 @@ Each half-move in a trial proceeds through 6 phases:
 **Phase 1 — Cube Check (cubeful only, move > 0):**
 
 If any branch has an active (non-dead) cube, evaluate whether the mover should
-double. Three cube evaluation modes are supported:
+double. All active branches share the same board and strategy and differ only
+in their `CubeInfo`, so they are evaluated together in a single batched call
+whenever the evaluator supports it. Three cube evaluation modes are supported:
 
-- **1-ply Janowski:** Get pre-roll probs at 1-ply, compute cube decision via
-  `cube_decision_1ply`. Fastest.
-- **N-ply cubeful recursion:** Call `cube_decision_nply` for full evaluate-all-
-  and-decide cubeful analysis.
-- **Truncated rollout:** Call inner `RolloutStrategy.cubeful_cube_decision`
-  (single-threaded) for the deepest evaluation.
+- **1-ply Janowski:** Get pre-roll probs once at 1-ply, then apply Janowski per
+  branch via `cube_decision_1ply(probs, branches[b].cube, cube_x)`. Fastest.
+- **N-ply cubeful recursion:** Call `cube_decision_nply_multi(board, cubes[],
+  n, base, ply, …)` once over all active branches. One shared `cubeful_recursive_multi`
+  call with `cci = 2*n` and `fTop=true` produces ND/DT equities for every
+  branch in a single pass, sharing move selection and NN evaluations across
+  branches.
+- **Truncated rollout:** Per-branch, call inner
+  `RolloutStrategy.cubeful_cube_decision(board, branch.cube)` (single-threaded).
+  This mode is not batched across branches because each inner rollout has its
+  own dice sequence and internal state; branches are processed sequentially.
 
 The cube evaluation strategy depends on the move number:
 - Ultra-late (>= `ultra_late_threshold`): always 1-ply Janowski
@@ -360,6 +367,11 @@ If the mover doubles:
 - **Beaver:** `cube_value *= 4`, opponent owns (double + immediate redouble)
 - **Pass:** Branch terminates with DP equity (the value of winning the current
   cube), VR-corrected: `final_equity = dp_value - accumulated_vr_luck`
+
+Because each branch's cube decision depends only on its own cube state and the
+shared board, the decisions produced by the batched call are applied
+sequentially to `branches[]` after the call returns with no cross-branch
+dependency.
 
 If all branches terminate (all D/P'd), the trial ends early with a 1-ply
 cubeless evaluation of the current position.
@@ -423,9 +435,10 @@ If the trial reaches `truncation_depth` without terminating:
 1. Evaluate the last mover's post-move position using the truncation strategy
    (a separate `MultiPlyStrategy` instance with aggressive PubEval prefiltering;
    see §11 for details).
-2. For cubeful branches with N-ply truncation (`truncation_ply > 1`): call
-   `cubeful_equity_nply` with a tight single-candidate move filter `{1, 0.0}`
-   to minimize the cubeful tree size (see §11).
+2. For cubeful branches with N-ply truncation (`truncation_ply > 1`): make a
+   single `cubeful_equity_nply_multi` call over all unfinished branches with
+   a tight single-candidate move filter `{1, 0.0}` so the cubeful tree and
+   its move selection are shared across branches (see §11).
 3. For cubeful branches with 1-ply truncation: apply Janowski to the cubeless
    probs.
 4. Convert to SP perspective, VR-correct, and return.
@@ -592,20 +605,36 @@ independently from checker play strategy.
 ### Evaluation Modes
 
 **1-ply Janowski (default):**
-- Get pre-roll probs: `invert(base.evaluate_probs(flip(board), flip(board)))`.
-- Call `cube_decision_1ply(probs, branch.cube, cube_x)`.
+- Get pre-roll probs once: `invert(base.evaluate_probs(flip(board), flip(board)))`.
+- For each active branch, call `cube_decision_1ply(probs, branch.cube, cube_x)`.
+  The NN evaluation that produced `probs` is shared across branches; only the
+  per-branch Janowski conversion runs per branch.
 - Fastest mode, using the standard Janowski interpolation.
 
-**N-ply cubeful recursion:**
-- Call `cube_decision_nply(board, branch.cube, base, ply, filter, 1, ...)`.
-- Full evaluate-all-and-decide algorithm from `MULTI-PLY.md` section 4.
+**N-ply cubeful recursion (batched across active branches):**
+- Collect the cube state of every active branch that `can_double()`.
+- Call `cube_decision_nply_multi(board, cubes[], n, base, ply, out[], filter, 1, …)`.
+- Internally this runs a single `cubeful_recursive_multi` with
+  `cci = 2*n` and `fTop=true`. The state layout is
+  `[branch0_ND, branch0_DT, branch1_ND, branch1_DT, …]`; `fTop=true` suppresses
+  `make_cube_pos`'s top-level DT expansion so the caller-constructed DT
+  variants are used directly.
+- Move selection (cubeless 1-ply, see §8 and `MULTI-PLY.md` §6) and the
+  recursive cubeless NN evaluations are shared across all branches; only the
+  per-state Janowski leaf conversions and `get_ecf3` cube-decision collapses
+  differ per state.
+- Numerically equivalent to calling `cube_decision_nply` individually per
+  branch, up to floating-point ordering in the cubeful cache.
 - Uses internal filter `{max_moves=2, threshold=0.03}`.
 - Serial (1 thread) to avoid nested parallelism within trials.
 
-**Truncated rollout:**
-- Call inner `RolloutStrategy.cubeful_cube_decision(board, branch.cube)`.
+**Truncated rollout (per-branch):**
+- For each active branch, call
+  `RolloutStrategy.cubeful_cube_decision(board, branch.cube)`.
 - The inner strategy is a lightweight single-threaded rollout.
 - Provides the deepest evaluation — a truncated rollout within a rollout.
+- Not batched across branches: each inner rollout carries its own dice
+  sequence, move0/move1 caches and per-trial state.
 
 ### Strategy Selection
 
@@ -720,15 +749,24 @@ The truncation strategy can be:
 
 ### Cubeful Truncation
 
-For cubeful branches at truncation:
+For cubeful branches at truncation, all active branches share the same
+truncation board (every branch evolved through the same dice sequence and the
+same cubeless move selections) and differ only in cube state. They are
+therefore evaluated together in a single batched call.
 
 **N-ply cubeful truncation** (`truncation_ply > 1`):
-- Call `cubeful_equity_nply(board, branch.cube, base, truncation_ply, filter, ...)`.
+- Collect the cube state of every unfinished branch into an array `cubes[n]`.
+- Call `cubeful_equity_nply_multi(board, cubes[], n, base, truncation_ply,
+  out[], filter, 1, …)`.
+- Internally this runs a single `cubeful_recursive_multi` with `cci = n` and
+  `fTop = false`. Move selection (cubeless 1-ply) and the recursive cubeless
+  NN evaluations are shared across branches; only the per-state Janowski leaf
+  conversions and `get_ecf3` cube-decision collapses differ per state.
 - Uses a tight single-candidate move filter `{max_moves=1, threshold=0.0}` instead
   of the usual `{2, 0.03}`. Since move selection inside the cubeful recursion is
   always 1-ply cubeless, keeping only the 1-ply best move per roll at each node
   reduces the cubeful tree by up to 2^depth while producing the same result.
-- Returns a single cubeful equity value that accounts for future cube actions.
+- Returns a cubeful equity per branch that accounts for future cube actions.
 - The `board` is the **next mover's** pre-roll position (after Phase 6 flip).
 
 **1-ply Janowski truncation** (`truncation_ply == 1`):
@@ -736,8 +774,8 @@ For cubeful branches at truncation:
 - Requires flipping the cube ownership to match the last mover's view:
   `last_cube = flip_cube_perspective(branch.cube)`.
 
-In both cases, the result is VR-corrected:
-`branch.final_equity = truncation_value - branch.vr_luck`.
+In both cases, each branch's result is VR-corrected:
+`branch.final_equity = truncation_value[b] - branch.vr_luck`.
 
 ## 12. Parallelization
 
@@ -913,7 +951,8 @@ branch tracking.
 - **Double/Pass:** `dp_mwc(away1, away2, cube_value, is_crawford)`
 - **Cube VR:** `cl2cf_match(probs, branch.cube, cube_x)` per-branch
 - **Truncation (1-ply):** `cl2cf_match(probs, last_cube, trunc_x)`
-- **Truncation (N-ply):** `cubeful_equity_nply(...)` → `eq2mwc(...)` back to MWC
+- **Truncation (N-ply):** `cubeful_equity_nply_multi(...)` (batched over all
+  active branches) → `eq2mwc(...)` back to MWC per branch
 
 ### Perspective Flips in Match Play
 
@@ -986,7 +1025,7 @@ contamination.
 |----------|-------|-------------|
 | Trial chunk size | 8 | Work-stealing granularity |
 | Internal filter (N-ply trials) | {2, 0.03} | MoveFilter inside trial MultiPly strategies |
-| Cubeful truncation filter | {1, 0.0} | MoveFilter for `cubeful_equity_nply` at truncation |
+| Cubeful truncation filter | {1, 0.0} | MoveFilter for `cubeful_equity_nply_multi` at truncation |
 | Truncation PubEval threshold | 8 | PubEval activates at this many opponent candidates |
 | Truncation PubEval keep | 6 | PubEval keeps this many after filtering |
 | VR pre-filter threshold | 0.12 | 1-ply threshold for N-ply VR candidate narrowing |

@@ -864,16 +864,47 @@ RolloutStrategy::TrialResult RolloutStrategy::run_trial_unified(
                     cube_x_ready = true;
                 }
 
-                for (int b = 0; b < n_branches; ++b) {
-                    if (branches[b].finished) continue;
-                    if (!can_double(branches[b].cube)) continue;
+                // --- Batch-friendly path for N-ply cubeful cube decisions ---
+                //
+                // When cube_rollout is null (i.e. the cube evaluator is plain
+                // N-ply cubeful, not a truncated rollout), all branches with
+                // can_double=true share the same board and N-ply evaluator,
+                // differing only in cube state.  Collect them and evaluate in
+                // a single cube_decision_nply_multi call that shares move
+                // selection and NN evaluations across branches.
+                //
+                // For the truncated-rollout cube evaluator (cube_rollout != null)
+                // we keep the per-branch loop because each inner rollout has
+                // its own dice sequence and state; batching is not trivial.
+                CubeDecision cds[8];                // n_branches is small (2)
+                int cd_branch[8];
+                int n_cd = 0;
 
-                    CubeDecision cd;
-                    if (cube_rollout) {
-                        // Cubeful rollout: run inner truncated rollout
+                if (cube_rollout == nullptr) {
+                    CubeInfo cubes_in[8];
+                    for (int b = 0; b < n_branches; ++b) {
+                        if (branches[b].finished) continue;
+                        if (!can_double(branches[b].cube)) continue;
+                        cd_branch[n_cd] = b;
+                        cubes_in[n_cd]  = branches[b].cube;
+                        ++n_cd;
+                    }
+                    if (n_cd > 0) {
+                        const Strategy& cf_base = base_bearoff_ ? *base_bearoff_ : *base_;
+                        cube_decision_nply_multi(
+                            board, cubes_in, n_cd, cf_base,
+                            cube_cfg->ply, cds, cube_filter,
+                            1 /*serial*/, move_filter_.get());
+                    }
+                } else {
+                    // Truncated-rollout cube decisions: still per-branch.
+                    for (int b = 0; b < n_branches; ++b) {
+                        if (branches[b].finished) continue;
+                        if (!can_double(branches[b].cube)) continue;
+
+                        CubeDecision cd = {};
                         auto cfr = cube_rollout->cubeful_cube_decision(
                             board, branches[b].cube);
-                        // Extract decision from rollout result
                         if (branches[b].cube.is_money()) {
                             float nd_eq = static_cast<float>(cfr.nd_equity);
                             float dt_eq = static_cast<float>(cfr.dt_equity);
@@ -899,46 +930,46 @@ RolloutStrategy::TrialResult RolloutStrategy::run_trial_unified(
                             float best = std::min(dt_m, dp_m);
                             cd.should_double = (best > nd_m);
                             cd.should_take = (dt_m <= dp_m);
-                            // Convert to equity for consistency (not strictly needed)
                             cd.equity_nd = nd_m;
                             cd.equity_dt = dt_m;
                             cd.equity_dp = dp_m;
                         }
-                    } else {
-                        // N-ply cubeful recursion
-                        const Strategy& cf_base = base_bearoff_ ? *base_bearoff_ : *base_;
-                        cd = cube_decision_nply(
-                            board, branches[b].cube, cf_base,
-                            cube_cfg->ply, cube_filter, 1 /*serial*/,
-                            move_filter_.get());
+                        cd_branch[n_cd] = b;
+                        cds[n_cd]       = cd;
+                        ++n_cd;
                     }
+                }
 
-                    // Same double/take/pass handling as 1-ply path
-                    if (cd.should_double) {
-                        if (cd.is_beaver) {
-                            branches[b].cube.cube_value *= 4;
-                            branches[b].cube.owner = CubeOwner::OPPONENT;
-                        } else if (cd.should_take) {
-                            branches[b].cube.cube_value *= 2;
-                            branches[b].cube.owner = CubeOwner::OPPONENT;
+                // Apply decisions.  Each branch's decision depends only on its
+                // own cube state + board, so order of application doesn't
+                // matter.
+                for (int k = 0; k < n_cd; ++k) {
+                    int b = cd_branch[k];
+                    const CubeDecision& cd = cds[k];
+                    if (!cd.should_double) continue;
+                    if (cd.is_beaver) {
+                        branches[b].cube.cube_value *= 4;
+                        branches[b].cube.owner = CubeOwner::OPPONENT;
+                    } else if (cd.should_take) {
+                        branches[b].cube.cube_value *= 2;
+                        branches[b].cube.owner = CubeOwner::OPPONENT;
+                    } else {
+                        double sp_val;
+                        if (is_match) {
+                            float mwc = dp_mwc(
+                                branches[b].cube.match.away1,
+                                branches[b].cube.match.away2,
+                                branches[b].cube.cube_value,
+                                branches[b].cube.match.is_crawford);
+                            sp_val = is_sp_turn ? static_cast<double>(mwc)
+                                                : (1.0 - static_cast<double>(mwc));
                         } else {
-                            double sp_val;
-                            if (is_match) {
-                                float mwc = dp_mwc(
-                                    branches[b].cube.match.away1,
-                                    branches[b].cube.match.away2,
-                                    branches[b].cube.cube_value,
-                                    branches[b].cube.match.is_crawford);
-                                sp_val = is_sp_turn ? static_cast<double>(mwc)
-                                                    : (1.0 - static_cast<double>(mwc));
-                            } else {
-                                sp_val = static_cast<double>(branches[b].cube.cube_value)
-                                         / branches[b].basis_cube;
-                                if (!is_sp_turn) sp_val = -sp_val;
-                            }
-                            branches[b].final_equity = sp_val - branches[b].vr_luck;
-                            branches[b].finished = true;
+                            sp_val = static_cast<double>(branches[b].cube.cube_value)
+                                     / branches[b].basis_cube;
+                            if (!is_sp_turn) sp_val = -sp_val;
                         }
+                        branches[b].final_equity = sp_val - branches[b].vr_luck;
+                        branches[b].finished = true;
                     }
                 }
             } // end N-ply / rollout cube path
@@ -1309,30 +1340,56 @@ RolloutStrategy::TrialResult RolloutStrategy::run_trial_unified(
             // 1-ply cubeless at each node, so keeping only the 1-ply best move
             // per roll introduces negligible error while avoiding redundant
             // evaluation of the 2nd-best candidate through the full cubeful tree.
+            //
+            // All active branches share the same truncation board and dice
+            // sequence -- only the cube state differs.  Batch them into a
+            // single cubeful_equity_nply_multi call so the N-ply cubeless
+            // recursion tree (move selection + NN evaluation) is shared
+            // across branches.  This is numerically equivalent to calling
+            // the single-cube variant per branch, but roughly ~n_active x
+            // cheaper because the dominant per-node cost (1-ply scoring of
+            // ~15 candidates) is done once instead of per-branch.
             MoveFilter trunc_filter = {1, 0.0f};
+            const Strategy& cf_strat = base_bearoff_ ? *base_bearoff_ : *base_;
+
+            // Collect active branches.
+            int active_idx[8];  // n_branches is small (2 in practice)
+            CubeInfo active_cubes[8];
+            int n_active = 0;
             for (int b = 0; b < n_branches; ++b) {
                 if (branches[b].finished) continue;
-                const Strategy& cf_strat = base_bearoff_ ? *base_bearoff_ : *base_;
-                float cf = cubeful_equity_nply(
-                    board, branches[b].cube, cf_strat,
-                    truncation_ply_, trunc_filter, 1 /*serial*/,
-                    move_filter_.get());
-                double sp_val;
-                if (is_match) {
-                    float mwc = eq2mwc(cf,
-                        branches[b].cube.match.away1,
-                        branches[b].cube.match.away2,
-                        branches[b].cube.cube_value,
-                        branches[b].cube.match.is_crawford);
-                    sp_val = last_mover_is_sp ? (1.0 - static_cast<double>(mwc))
-                                              : static_cast<double>(mwc);
-                } else {
-                    double points = cf * branches[b].cube.cube_value;
-                    sp_val = points / branches[b].basis_cube;
-                    if (last_mover_is_sp) sp_val = -sp_val;
+                active_idx[n_active] = b;
+                active_cubes[n_active] = branches[b].cube;
+                ++n_active;
+            }
+
+            if (n_active > 0) {
+                float cfs[8];
+                cubeful_equity_nply_multi(
+                    board, active_cubes, n_active, cf_strat,
+                    truncation_ply_, cfs, trunc_filter,
+                    1 /*serial*/, move_filter_.get());
+
+                for (int k = 0; k < n_active; ++k) {
+                    int b = active_idx[k];
+                    float cf = cfs[k];
+                    double sp_val;
+                    if (is_match) {
+                        float mwc = eq2mwc(cf,
+                            branches[b].cube.match.away1,
+                            branches[b].cube.match.away2,
+                            branches[b].cube.cube_value,
+                            branches[b].cube.match.is_crawford);
+                        sp_val = last_mover_is_sp ? (1.0 - static_cast<double>(mwc))
+                                                  : static_cast<double>(mwc);
+                    } else {
+                        double points = cf * branches[b].cube.cube_value;
+                        sp_val = points / branches[b].basis_cube;
+                        if (last_mover_is_sp) sp_val = -sp_val;
+                    }
+                    branches[b].final_equity = sp_val - branches[b].vr_luck;
+                    branches[b].finished = true;
                 }
-                branches[b].final_equity = sp_val - branches[b].vr_luck;
-                branches[b].finished = true;
             }
         } else {
             // 1-ply: Janowski on cubeless probs (original behavior)

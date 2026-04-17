@@ -218,6 +218,53 @@ float cubeful_equity_nply(
     int n_threads = 1,
     const Strategy* move_filter = nullptr);
 
+// Batched version: evaluate cubeful equity for the SAME board at N-ply depth
+// against MULTIPLE cube states simultaneously. Returns one equity per cube
+// state in `out`, in the same order as `cubes`.
+//
+// This is the key optimization for rollout truncation with two cube branches
+// (ND and DT): the cubeful recursion shares move selection, cubeless NN
+// evaluations and recursive tree traversal across cube states -- only the
+// Janowski leaf conversions and the cube-decision collapses at internal nodes
+// differ per state. Result is numerically equivalent to calling the single-
+// cube `cubeful_equity_nply` once per state, but typically ~Nx faster when
+// there are N cube states sharing the same tree.
+//
+// All cubes must be the same flavor (all money OR all match, and if match
+// the same away1/away2/is_crawford). In practice the rollout's ND and DT
+// branches satisfy this by construction.
+//
+// The returned values are equities (money game) or equities-via-mwc2eq
+// (match play), matching the single-cube overload's return semantics.
+void cubeful_equity_nply_multi(
+    const Board& board,
+    const CubeInfo* cubes,
+    int n_cubes,
+    const Strategy& strategy,
+    int n_plies,
+    float* out,                              // size n_cubes
+    const MoveFilter& filter = MoveFilters::TINY,
+    int n_threads = 1,
+    const Strategy* move_filter = nullptr,
+    bool fTop = false);                      // true: caller already built ND+DT pairs
+
+// Batched cube decision: evaluate cube decisions for multiple branches that
+// share the same board.  For each input cube in `cubes`, this is exactly
+// equivalent to calling `cube_decision_nply` individually.  Internally all
+// branches are processed in a single recursion with cci = 2 * n_cubes and
+// fTop = true, so move selection and the cubeless NN evaluations are shared
+// across all branches.  Writes N CubeDecision results into `out`.
+void cube_decision_nply_multi(
+    const Board& board,
+    const CubeInfo* cubes,
+    int n_cubes,
+    const Strategy& strategy,
+    int n_plies,
+    CubeDecision* out,                       // size n_cubes
+    const MoveFilter& filter = MoveFilters::TINY,
+    int n_threads = 1,
+    const Strategy* move_filter = nullptr);
+
 // Compute full cube decision at N-ply depth.
 // `board` is pre-roll from the player's perspective.
 // Returns CubeDecision with ND/DT/DP equities and optimal play decisions.
