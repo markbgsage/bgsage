@@ -185,7 +185,7 @@ class _OnePlyAnalyzer(_CubelessBase):
     def checker_play_analytics(
         self, board, die1, die2, cube_value=1, cube_owner="centered",
         progress_callback=None,
-        away1=0, away2=0, is_crawford=False, jacoby=True,
+        away1=0, away2=0, is_crawford=False, jacoby=True, beaver=True,
     ) -> list[dict]:
         candidates = bgbot_cpp.possible_moves(board, die1, die2)
         if not candidates:
@@ -248,7 +248,7 @@ class _MultiPlyAnalyzer(_CubelessBase):
     def checker_play_analytics(
         self, board, die1, die2, cube_value=1, cube_owner="centered",
         progress_callback=None,
-        away1=0, away2=0, is_crawford=False, jacoby=True,
+        away1=0, away2=0, is_crawford=False, jacoby=True, beaver=True,
     ) -> list[dict]:
         candidates = bgbot_cpp.possible_moves(board, die1, die2)
         if not candidates:
@@ -410,7 +410,7 @@ class _RolloutAnalyzer(_CubelessBase):
     def checker_play_analytics(
         self, board, die1, die2, cube_value=1, cube_owner="centered",
         progress_callback=None,
-        away1=0, away2=0, is_crawford=False, jacoby=True,
+        away1=0, away2=0, is_crawford=False, jacoby=True, beaver=True,
     ) -> list[dict]:
         candidates = bgbot_cpp.possible_moves(board, die1, die2)
         if not candidates:
