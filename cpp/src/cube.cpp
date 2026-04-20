@@ -609,7 +609,14 @@ float cl2cf(const std::array<float, NUM_OUTPUTS>& probs,
                   cube.cube_value, cube.match.is_crawford);
 }
 
-float cube_efficiency(const Board& board, bool is_race_pos) {
+float cube_efficiency(
+    const std::array<float, NUM_OUTPUTS>& /*probs*/,
+    bool is_race_pos,
+    int player_pips,
+    int opponent_pips)
+{
+    // Current implementation ignores probs; reserved for a future ML formula
+    // trained on (probs, is_race, pips) -> implied Janowski cube life index.
     if (!is_race_pos) {
         return 0.68f;  // Contact/crashed
     }
@@ -617,8 +624,7 @@ float cube_efficiency(const Board& board, bool is_race_pos) {
     // Using the average instead of just the roller's pips makes the Janowski
     // cubeful conversion perspective-independent, eliminating a systematic
     // bias at odd ply levels in N-ply match play evaluation.
-    auto [player_pips, opponent_pips] = pip_counts(board);
-    float avg_pips = static_cast<float>(player_pips + opponent_pips) / 2.0f;
+    float avg_pips = static_cast<float>(player_pips + opponent_pips) * 0.5f;
     float x = 0.55f + 0.00125f * avg_pips;
     return std::clamp(x, 0.6f, 0.7f);
 }
@@ -785,8 +791,13 @@ CubeDecision cube_decision_1ply(
     const Board& board,
     bool is_race_pos)
 {
-    float x = (cube.cube_x_override >= 0.0f) ? cube.cube_x_override
-                                               : cube_efficiency(board, is_race_pos);
+    float x;
+    if (cube.cube_x_override >= 0.0f) {
+        x = cube.cube_x_override;
+    } else {
+        auto [pp, op] = pip_counts(board);
+        x = cube_efficiency(probs, is_race_pos, pp, op);
+    }
     return cube_decision_1ply(probs, cube, x);
 }
 
@@ -957,9 +968,13 @@ static void put_cached_cubeful(
 }
 
 // Resolve cube efficiency: use override if set, otherwise auto-detect.
-static float resolve_cube_x(const CubeInfo& cube, const Board& board, bool race) {
+static float resolve_cube_x(
+    const std::array<float, NUM_OUTPUTS>& probs,
+    const CubeInfo& cube, const Board& board, bool race)
+{
     if (cube.cube_x_override >= 0.0f) return cube.cube_x_override;
-    return cube_efficiency(board, race);
+    auto [pp, op] = pip_counts(board);
+    return cube_efficiency(probs, race, pp, op);
 }
 
 // Helper: evaluate a pre-roll board at 1-ply Janowski cubeful.
@@ -989,7 +1004,7 @@ static float eval_pre_roll_cubeful_1ply(
 
     auto post_probs = strategy.evaluate_probs(flipped, race);
     auto pre_roll_probs = invert_probs(post_probs);
-    float x = resolve_cube_x(cube, board, race);
+    float x = resolve_cube_x(pre_roll_probs, cube, board, race);
 
     if (cube.is_money()) {
         return cl2cf_money(pre_roll_probs, cube.owner, x, cube.jacoby_active());
@@ -1161,6 +1176,7 @@ static void cubeful_recursive_multi(
         auto post_probs = strategy.evaluate_probs(flipped, race);
         auto pre_roll_probs = invert_probs(post_probs);
         float default_x = resolve_cube_x(
+            pre_roll_probs,
             (cci > 0 && aciCubePos[0].cube_value > 0) ? aciCubePos[0] : CubeInfo{},
             board, race);
 
@@ -1589,7 +1605,7 @@ void cube_decision_nply_multi(
         auto post_probs = strategy.evaluate_probs(flipped, race);
         auto pre_roll_probs = invert_probs(post_probs);
         for (int i = 0; i < n_cubes; ++i) {
-            float x = resolve_cube_x(cubes[i], board, race);
+            float x = resolve_cube_x(pre_roll_probs, cubes[i], board, race);
             out[i] = cube_decision_1ply(pre_roll_probs, cubes[i], x);
         }
         return;
@@ -2341,7 +2357,7 @@ CubeDecision cube_decision_nply(
         bool race = is_race(board);
         auto post_probs = strategy.evaluate_probs(flipped, race);
         auto pre_roll_probs = invert_probs(post_probs);
-        float x = resolve_cube_x(cube, board, race);
+        float x = resolve_cube_x(pre_roll_probs, cube, board, race);
         return cube_decision_1ply(pre_roll_probs, cube, x);
     }
 

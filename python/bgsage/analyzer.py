@@ -107,7 +107,8 @@ class _CubelessBase:
             probs = list(r["probs"])
             if owner is not None:
                 race = bgbot_cpp.is_race(bl)
-                x = bgbot_cpp.cube_efficiency(bl, race)
+                pp, op = bgbot_cpp.pip_counts(bl)
+                x = bgbot_cpp.cube_efficiency(probs, race, pp, op)
                 if is_match:
                     cf_eq = bgbot_cpp.cl2cf(probs, cube_value, owner, x,
                                             away1, away2, is_crawford,
@@ -575,7 +576,8 @@ class _CubefulAnalyzer:
         is_match = away1 > 0 or away2 > 0
         if self._cubeful_ply == 1:
             race = bgbot_cpp.is_race(post_move_board)
-            x = bgbot_cpp.cube_efficiency(post_move_board, race)
+            pp, op = bgbot_cpp.pip_counts(post_move_board)
+            x = bgbot_cpp.cube_efficiency(probs, race, pp, op)
             if is_match:
                 return bgbot_cpp.cl2cf(probs, cube_value, owner, x,
                                        away1, away2, is_crawford,
@@ -1038,7 +1040,8 @@ class BgBotAnalyzer:
         # Cubeful equity via Janowski
         owner = resolve_owner(cube_owner)
         race = bgbot_cpp.is_race(board)
-        x = bgbot_cpp.cube_efficiency(board, race)
+        pp, op = bgbot_cpp.pip_counts(board)
+        x = bgbot_cpp.cube_efficiency(probs_list, race, pp, op)
         is_match = away1 > 0 or away2 > 0
         if is_match:
             cf_eq = bgbot_cpp.cl2cf(probs_list, cube_value, owner, x,

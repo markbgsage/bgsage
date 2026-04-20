@@ -2369,7 +2369,13 @@ PYBIND11_MODULE(bgbot_cpp, m) {
         bool race = is_race(board);
         auto post_move_probs = strat->evaluate_probs(flipped, race);
         auto pre_roll_probs = invert_probs(post_move_probs);
-        float x = (cube_x_override >= 0.0f) ? cube_x_override : cube_efficiency(board, race);
+        float x;
+        if (cube_x_override >= 0.0f) {
+            x = cube_x_override;
+        } else {
+            auto [pp, op] = pip_counts(board);
+            x = cube_efficiency(pre_roll_probs, race, pp, op);
+        }
         CubeInfo ci{cube_value, owner, {away1, away2, is_crawford}, cube_x_override, jacoby, beaver, max_cube_value};
         auto cd = cube_decision_1ply(pre_roll_probs, ci, x);
         float cl_eq = cubeless_equity(pre_roll_probs);
@@ -2482,10 +2488,28 @@ PYBIND11_MODULE(bgbot_cpp, m) {
        py::arg("bearoff_db") = nullptr,
        py::arg("incl_2ply_details") = false);
 
-    m.def("cube_efficiency", [](const std::vector<int>& board, bool is_race_pos) {
-        return cube_efficiency(list_to_board(board), is_race_pos);
-    }, "Cube efficiency for a position (0.68 contact, pip-dependent race)",
-       py::arg("board"), py::arg("is_race"));
+    m.def("cube_efficiency",
+          [](const std::vector<float>& probs_vec, bool is_race_pos,
+             int player_pips, int opponent_pips) {
+              std::array<float, NUM_OUTPUTS> probs{};
+              for (size_t i = 0; i < std::min(probs_vec.size(), probs.size()); ++i) {
+                  probs[i] = probs_vec[i];
+              }
+              return cube_efficiency(probs, is_race_pos, player_pips, opponent_pips);
+          },
+          "Cube life index (Janowski x). Current impl: 0.68 for contact, "
+          "clamp(0.55 + 0.00125*avg_pips, 0.6, 0.7) for race; probs reserved "
+          "for a future ML-based formula.",
+          py::arg("probs"), py::arg("is_race"),
+          py::arg("player_pips"), py::arg("opponent_pips"));
+
+    m.def("pip_counts",
+          [](const std::vector<int>& board) {
+              auto [pp, op] = pip_counts(list_to_board(board));
+              return std::make_tuple(pp, op);
+          },
+          "Return (player_pips, opponent_pips) for a 26-element board.",
+          py::arg("board"));
 
     m.def("cube_decision_1ply", [](const std::array<float, NUM_OUTPUTS>& probs,
                                     int cube_value, CubeOwner owner, float cube_x,
@@ -2533,7 +2557,13 @@ PYBIND11_MODULE(bgbot_cpp, m) {
         auto pre_roll_probs = invert_probs(post_move_probs);
 
         // Cube efficiency (use override if provided)
-        float x = (cube_x_override >= 0.0f) ? cube_x_override : cube_efficiency(board, race);
+        float x;
+        if (cube_x_override >= 0.0f) {
+            x = cube_x_override;
+        } else {
+            auto [pp, op] = pip_counts(board);
+            x = cube_efficiency(pre_roll_probs, race, pp, op);
+        }
 
         // Cube decision
         CubeInfo ci{cube_value, owner, {away1, away2, is_crawford}, cube_x_override, jacoby, beaver, max_cube_value};
@@ -2953,7 +2983,8 @@ PYBIND11_MODULE(bgbot_cpp, m) {
                 out.cubeless_equity = cubeless_equity(out.probs);
 
                 // Cubeful equity via Janowski (unified money/match)
-                float x = cube_efficiency(inp.board, race);
+                auto [_pp, _op] = pip_counts(inp.board);
+                float x = cube_efficiency(out.probs, race, _pp, _op);
                 CubeInfo ci{inp.cube_value, inp.owner, inp.match, -1.0f, jacoby, beaver};
                 out.cubeful_equity = cl2cf(out.probs, ci, x);
 
@@ -3084,7 +3115,8 @@ PYBIND11_MODULE(bgbot_cpp, m) {
                 out.probs = invert_probs(post_probs);
                 out.cubeless_equity = cubeless_equity(out.probs);
 
-                float x = cube_efficiency(inp.board, race);
+                auto [_pp, _op] = pip_counts(inp.board);
+                float x = cube_efficiency(out.probs, race, _pp, _op);
                 CubeInfo ci{inp.cube_value, inp.owner, inp.match, -1.0f, jacoby, beaver};
                 out.cubeful_equity = cl2cf(out.probs, ci, x);
 
@@ -3208,7 +3240,8 @@ PYBIND11_MODULE(bgbot_cpp, m) {
                 out.probs = invert_probs(post_probs);
                 out.cubeless_equity = cubeless_equity(out.probs);
 
-                float x = cube_efficiency(inp.board, race);
+                auto [_pp, _op] = pip_counts(inp.board);
+                float x = cube_efficiency(out.probs, race, _pp, _op);
                 CubeInfo ci{inp.cube_value, inp.owner, inp.match, -1.0f, jacoby, beaver};
                 out.cubeful_equity = cl2cf(out.probs, ci, x);
 
@@ -3338,7 +3371,8 @@ PYBIND11_MODULE(bgbot_cpp, m) {
                 out.cubeless_equity = NeuralNetwork::compute_equity(out.probs);
 
                 // Cubeful equity via Janowski (unified money/match)
-                float x = cube_efficiency(inp.board, race);
+                auto [_pp, _op] = pip_counts(inp.board);
+                float x = cube_efficiency(out.probs, race, _pp, _op);
                 CubeInfo ci{inp.cube_value, inp.owner, inp.match, -1.0f, jacoby};
                 out.cubeful_equity = cl2cf(out.probs, ci, x);
             };
@@ -3440,7 +3474,8 @@ PYBIND11_MODULE(bgbot_cpp, m) {
                 out.probs = strategy.evaluate_probs(inp.board, race);
                 out.cubeless_equity = NeuralNetwork::compute_equity(out.probs);
 
-                float x = cube_efficiency(inp.board, race);
+                auto [_pp, _op] = pip_counts(inp.board);
+                float x = cube_efficiency(out.probs, race, _pp, _op);
                 CubeInfo ci{inp.cube_value, inp.owner, inp.match, -1.0f, jacoby};
                 out.cubeful_equity = cl2cf(out.probs, ci, x);
             };
@@ -3541,7 +3576,8 @@ PYBIND11_MODULE(bgbot_cpp, m) {
                 out.probs = strategy->evaluate_probs(inp.board, race);
                 out.cubeless_equity = NeuralNetwork::compute_equity(out.probs);
 
-                float x = cube_efficiency(inp.board, race);
+                auto [_pp, _op] = pip_counts(inp.board);
+                float x = cube_efficiency(out.probs, race, _pp, _op);
                 CubeInfo ci{inp.cube_value, inp.owner, inp.match, -1.0f, jacoby};
                 out.cubeful_equity = cl2cf(out.probs, ci, x);
             };
@@ -3679,7 +3715,8 @@ PYBIND11_MODULE(bgbot_cpp, m) {
                         candidates[j], inp.board);
                     float cl_eq = NeuralNetwork::compute_equity(post_probs);
                     bool race = is_race(candidates[j]);
-                    float x = cube_efficiency(candidates[j], race);
+                    auto [_pp, _op] = pip_counts(candidates[j]);
+                    float x = cube_efficiency(post_probs, race, _pp, _op);
                     float cf_eq = cl2cf(post_probs, ci, x);
                     scored[j] = {candidates[j], post_probs, cl_eq, cf_eq};
                 }
@@ -3840,7 +3877,8 @@ PYBIND11_MODULE(bgbot_cpp, m) {
                         candidates[j], inp.board);
                     float cl_eq = NeuralNetwork::compute_equity(post_probs);
                     bool race = is_race(candidates[j]);
-                    float x = cube_efficiency(candidates[j], race);
+                    auto [_pp, _op] = pip_counts(candidates[j]);
+                    float x = cube_efficiency(post_probs, race, _pp, _op);
                     float cf_eq = cl2cf(post_probs, ci, x);
                     scored[j] = {candidates[j], post_probs, cl_eq, cf_eq};
                 }
@@ -4032,7 +4070,8 @@ PYBIND11_MODULE(bgbot_cpp, m) {
                         candidates[j], inp.board);
                     float cl_eq = NeuralNetwork::compute_equity(post_probs);
                     bool race = is_race(candidates[j]);
-                    float x = cube_efficiency(candidates[j], race);
+                    auto [_pp, _op] = pip_counts(candidates[j]);
+                    float x = cube_efficiency(post_probs, race, _pp, _op);
                     float cf_eq = cl2cf(post_probs, ci, x);
                     scored[j] = {candidates[j], post_probs, cl_eq, cf_eq};
                 }
@@ -4260,7 +4299,8 @@ PYBIND11_MODULE(bgbot_cpp, m) {
                         candidates[j], inp.board);
                     float cl_eq = NeuralNetwork::compute_equity(post_probs);
                     bool race = is_race(candidates[j]);
-                    float x = cube_efficiency(candidates[j], race);
+                    auto [_pp, _op] = pip_counts(candidates[j]);
+                    float x = cube_efficiency(post_probs, race, _pp, _op);
                     float cf_eq = cl2cf(post_probs, ci, x);
                     scored[j] = {candidates[j], post_probs, cl_eq, cf_eq};
                 }
@@ -5008,7 +5048,13 @@ PYBIND11_MODULE(bgbot_cpp, m) {
         bool race = is_race(board);
         auto post_move_probs = strat->evaluate_probs(flipped, race);
         auto pre_roll_probs = invert_probs(post_move_probs);
-        float x = (cube_x_override >= 0.0f) ? cube_x_override : cube_efficiency(board, race);
+        float x;
+        if (cube_x_override >= 0.0f) {
+            x = cube_x_override;
+        } else {
+            auto [pp, op] = pip_counts(board);
+            x = cube_efficiency(pre_roll_probs, race, pp, op);
+        }
         CubeInfo ci{cube_value, owner, {away1, away2, is_crawford}, cube_x_override, jacoby, beaver, max_cube_value};
         auto cd = cube_decision_1ply(pre_roll_probs, ci, x);
         float cl_eq = cubeless_equity(pre_roll_probs);

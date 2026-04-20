@@ -593,7 +593,6 @@ void RolloutStrategy::populate_move1_cache_entry(
     const Board& move0_chosen = move0_cache.chosen[first_roll_idx];
     const Board move1_board = flip(move0_chosen);
     entry.race = is_race(move1_board);
-    entry.cube_x = cube_efficiency(move1_board, entry.race);
 
     // Move1 uses 1-ply (base_) for move selection. The VR averaging over many
     // trials makes higher-ply move selection unnecessary here.
@@ -610,6 +609,10 @@ void RolloutStrategy::populate_move1_cache_entry(
         entry.mover_probs = bearoff_db_->lookup_probs(move1_board);
     } else {
         entry.mover_probs = invert_probs(base_->evaluate_probs(opp_board, opp_board));
+    }
+    {
+        auto [pp, op] = pip_counts(move1_board);
+        entry.cube_x = cube_efficiency(entry.mover_probs, entry.race, pp, op);
     }
 
     for (size_t second_roll = 0; second_roll < ALL_ROLLS.size(); ++second_roll) {
@@ -807,13 +810,15 @@ RolloutStrategy::TrialResult RolloutStrategy::run_trial_unified(
                     cube_x_ready = true;
                 } else if (bearoff_db_ && bearoff_db_->is_bearoff(board)) {
                     mover_probs = bearoff_db_->lookup_probs(board);
-                    cube_x = cube_efficiency(board, race);
+                    auto [pp, op] = pip_counts(board);
+                    cube_x = cube_efficiency(mover_probs, race, pp, op);
                     cube_x_ready = true;
                 } else {
                     Board opp_board = flip(board);
                     auto opp_probs = base_->evaluate_probs(opp_board, opp_board);
                     mover_probs = invert_probs(opp_probs);
-                    cube_x = cube_efficiency(board, race);
+                    auto [pp, op] = pip_counts(board);
+                    cube_x = cube_efficiency(mover_probs, race, pp, op);
                     cube_x_ready = true;
                 }
 
@@ -859,8 +864,16 @@ RolloutStrategy::TrialResult RolloutStrategy::run_trial_unified(
 
                 // Also compute 1-ply cube_x for the cubeful VR mean later
                 if (!cube_x_ready) {
-                    cube_x = move1_entry ? move1_entry->cube_x
-                                         : cube_efficiency(board, race);
+                    if (move1_entry) {
+                        cube_x = move1_entry->cube_x;
+                    } else {
+                        // Probs not computed in this branch; current cube_efficiency
+                        // impl ignores them. When the ML-based formula lands, compute
+                        // probs here or plumb them through.
+                        std::array<float, NUM_OUTPUTS> dummy_probs{};
+                        auto [pp, op] = pip_counts(board);
+                        cube_x = cube_efficiency(dummy_probs, race, pp, op);
+                    }
                     cube_x_ready = true;
                 }
 
@@ -1048,7 +1061,15 @@ RolloutStrategy::TrialResult RolloutStrategy::run_trial_unified(
         std::array<std::array<float, NUM_OUTPUTS>, 21> roll_best_probs;
         std::array<int, 21> best_candidate_idx{};
         if (cube_active && !cube_x_ready) {
-            cube_x = move1_entry ? move1_entry->cube_x : cube_efficiency(board, race);
+            if (move1_entry) {
+                cube_x = move1_entry->cube_x;
+            } else {
+                // Probs not yet computed in this branch; current cube_efficiency
+                // impl ignores them. Revisit when ML-based formula lands.
+                std::array<float, NUM_OUTPUTS> dummy_probs{};
+                auto [pp, op] = pip_counts(board);
+                cube_x = cube_efficiency(dummy_probs, race, pp, op);
+            }
             cube_x_ready = true;
         }
 
@@ -1393,7 +1414,8 @@ RolloutStrategy::TrialResult RolloutStrategy::run_trial_unified(
             }
         } else {
             // 1-ply: Janowski on cubeless probs (original behavior)
-            float trunc_x = cube_efficiency(last_mover_board, trunc_race);
+            auto [last_pp, last_op] = pip_counts(last_mover_board);
+            float trunc_x = cube_efficiency(last_mover_probs, trunc_race, last_pp, last_op);
             for (int b = 0; b < n_branches; ++b) {
                 if (branches[b].finished) continue;
                 // Cube is from next mover's perspective; flip to last mover's

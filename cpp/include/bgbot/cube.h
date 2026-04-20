@@ -103,10 +103,20 @@ float cl2cf_money(const std::array<float, NUM_OUTPUTS>& probs,
 float cl2cf_money(const std::array<float, NUM_OUTPUTS>& probs,
                   CubeOwner owner, float cube_x, bool jacoby_active);
 
-// Cube efficiency for a position.
-// Contact/crashed: 0.68
-// Race: 0.55 + 0.00125 * roller_pip_count, clamped to [0.6, 0.7]
-float cube_efficiency(const Board& board, bool is_race_pos);
+// Cube efficiency (Janowski cube life index x) for a position.
+// Single canonical entry point for all cube life index calculations.
+// The 5 cubeless probabilities are passed in as well as is_race and both pip
+// counts, so a future ML-based formula can replace the current simple logic
+// without needing further call-site changes.
+//
+// Current implementation:
+//   Contact/crashed:  0.68 (probs ignored)
+//   Race:             clamp(0.55 + 0.00125 * avg_pips, 0.6, 0.7) (probs ignored)
+float cube_efficiency(
+    const std::array<float, NUM_OUTPUTS>& probs,
+    bool is_race_pos,
+    int player_pips,
+    int opponent_pips);
 
 // ---------------------------------------------------------------------------
 // Match play cubeful evaluation (Janowski in MWC space)
