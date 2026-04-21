@@ -1,10 +1,10 @@
 [build-system]
-requires = ["setuptools>=68.0"]
-build-backend = "setuptools.build_meta"
+requires = ["scikit-build-core>=0.10", "pybind11>=2.12"]
+build-backend = "scikit_build_core.build"
 
 [project]
 name = "bgsage"
-version = "0.1.0"
+version = "0.1.20260421"
 description = "Open Sage bot engine — a neural-network backgammon engine"
 readme = "README.md"
 license = "MIT"
@@ -13,11 +13,21 @@ authors = [
     { name = "Mark Higgins" },
 ]
 keywords = ["backgammon", "neural-network", "game-ai"]
+dependencies = [
+    "numpy>=1.24",
+]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
     "License :: OSI Approved :: MIT License",
+    "Operating System :: POSIX :: Linux",
+    "Operating System :: MacOS",
+    "Operating System :: Microsoft :: Windows",
     "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "Programming Language :: C++",
     "Topic :: Games/Entertainment :: Board Games",
     "Topic :: Scientific/Engineering :: Artificial Intelligence",
@@ -26,6 +36,86 @@ classifiers = [
 [project.urls]
 Homepage = "https://github.com/markbgsage/bgsage"
 Repository = "https://github.com/markbgsage/bgsage"
+Issues = "https://github.com/markbgsage/bgsage/issues"
 
-[tool.setuptools.packages.find]
-where = ["python"]
+# ---------------------------------------------------------------------------
+# scikit-build-core: CMake-driven build of the pybind11 extension (bgbot_cpp)
+# ---------------------------------------------------------------------------
+[tool.scikit-build]
+minimum-version = "0.10"
+build-dir = "build/{wheel_tag}"
+cmake.version = ">=3.18"
+cmake.build-type = "Release"
+# The Python package tree lives under python/, not at the repo root.
+wheel.packages = ["python/bgsage"]
+# Bundled model weights + bearoff DB are copied in by CMake install(FILES …).
+# Don't let scikit-build-core strip them from the wheel.
+wheel.exclude = []
+# Only ship source files we actually need for a source distribution.
+sdist.include = [
+    "CMakeLists.txt",
+    "pyproject.toml",
+    "README.md",
+    "LICENSE",
+    "cpp/CMakeLists_cpu.txt",
+    "cpp/include/**/*.h",
+    "cpp/src/**/*.cpp",
+    "cpp/pybind/**/*.cpp",
+    "python/bgsage/**/*.py",
+    "models/sl_s9_*.weights.best",
+    "data/bearoff_1sided.db",
+]
+sdist.exclude = [
+    "build/",
+    "build_*/",
+    "models/*.weights",
+    "models/*.checkpoint",
+    "models/exp_*",
+    "models/sl_s3_*",
+    "models/sl_s4_*",
+    "models/sl_s5_*",
+    "models/sl_s5s_*",
+    "models/sl_s6_*",
+    "models/sl_s7_*",
+    "models/sl_s8_*",
+    "models/td_*",
+    "models/s*_gpw_scan/",
+    "data/*-train-data",
+    "data/*-benchmark-data",
+    "data/*-rollout*",
+    "data/*.bm",
+    "data/benchmark_*",
+    ".github/",
+    ".claude/",
+    "scripts/",
+    "tests/",
+]
+
+# ---------------------------------------------------------------------------
+# cibuildwheel: build wheels for Py 3.10-3.13 on Linux/macOS/Windows
+# ---------------------------------------------------------------------------
+[tool.cibuildwheel]
+build = "cp310-* cp311-* cp312-* cp313-*"
+skip = [
+    "*-musllinux_*",    # glibc only
+    "*_i686",           # no 32-bit
+    "*-win32",          # no 32-bit Windows
+    "pp*",              # no PyPy
+]
+build-verbosity = 1
+# Smoke-test the built wheel: import the package, run a trivial analysis.
+test-command = "python -c \"from bgsage import BgBotAnalyzer, STARTING_BOARD; a = BgBotAnalyzer(); r = a.checker_play(STARTING_BOARD, 3, 1); print('ok', r.moves[0].equity)\""
+
+[tool.cibuildwheel.linux]
+# manylinux_2_28 gives us GCC 12+ which supports -mavx2/-mfma out of the box.
+# The compiled binary requires AVX2 (Haswell+, 2013+).
+manylinux-x86_64-image = "manylinux_2_28"
+archs = ["x86_64"]
+
+[tool.cibuildwheel.macos]
+# Universal build: Intel (x86_64) and Apple Silicon (arm64).
+archs = ["x86_64", "arm64"]
+# arm64 uses NEON; x86_64 uses AVX2 (set in CMakeLists_cpu.txt).
+
+[tool.cibuildwheel.windows]
+archs = ["AMD64"]

@@ -25,6 +25,11 @@ __pycache__/
 dist/
 *.egg
 
+# Wheel / sdist build artifacts (scikit-build-core + cibuildwheel)
+wheelhouse/
+_skbuild/
+python/bgsage/_assets/
+
 # Data files (too large for git — download separately)
 data/*.bm
 data/*-train-data

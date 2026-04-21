@@ -6,6 +6,15 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 option(BGBOT_BUILD_PYTHON "Build the pybind11 Python extension" ON)
+# When this file is the top-level CMakeLists (dev / Docker builds), build the
+# benchmark & profiler executables. The wheel build in ../CMakeLists.txt sets
+# this to OFF to keep the pybind11 module as the only compiled target.
+option(BGBOT_BUILD_APPS "Build benchmark/profiler executables" ON)
+
+# Paths are written relative to this listfile's directory so the file can be
+# either used as the top-level CMakeLists (cmake -S cpp -f CMakeLists_cpu.txt)
+# or include()'d from the pip build's root CMakeLists.txt.
+set(BGBOT_CPU_ROOT "${CMAKE_CURRENT_LIST_DIR}")
 
 # Optimization flags — compiler-specific
 if(MSVC)
@@ -22,22 +31,22 @@ endif()
 
 # Core library (CPU only)
 add_library(bgbot_lib STATIC
-    src/board.cpp
-    src/moves.cpp
-    src/strategy.cpp
-    src/pubeval.cpp
-    src/game.cpp
-    src/benchmark.cpp
-    src/encoding.cpp
-    src/neural_net.cpp
-    src/training.cpp
-    src/multipy.cpp
-    src/rollout.cpp
-    src/cube.cpp
-    src/match_equity.cpp
-    src/bearoff.cpp
+    ${BGBOT_CPU_ROOT}/src/board.cpp
+    ${BGBOT_CPU_ROOT}/src/moves.cpp
+    ${BGBOT_CPU_ROOT}/src/strategy.cpp
+    ${BGBOT_CPU_ROOT}/src/pubeval.cpp
+    ${BGBOT_CPU_ROOT}/src/game.cpp
+    ${BGBOT_CPU_ROOT}/src/benchmark.cpp
+    ${BGBOT_CPU_ROOT}/src/encoding.cpp
+    ${BGBOT_CPU_ROOT}/src/neural_net.cpp
+    ${BGBOT_CPU_ROOT}/src/training.cpp
+    ${BGBOT_CPU_ROOT}/src/multipy.cpp
+    ${BGBOT_CPU_ROOT}/src/rollout.cpp
+    ${BGBOT_CPU_ROOT}/src/cube.cpp
+    ${BGBOT_CPU_ROOT}/src/match_equity.cpp
+    ${BGBOT_CPU_ROOT}/src/bearoff.cpp
 )
-target_include_directories(bgbot_lib PUBLIC include)
+target_include_directories(bgbot_lib PUBLIC ${BGBOT_CPU_ROOT}/include)
 target_compile_options(bgbot_lib PRIVATE ${BGBOT_OPT_FLAGS})
 
 # Threading support
@@ -45,41 +54,43 @@ find_package(Threads REQUIRED)
 target_link_libraries(bgbot_lib PUBLIC Threads::Threads)
 
 # CUDA stub (provides cuda_available() = false, no-op cuda_supervised_train)
-add_library(bgbot_cuda_stub STATIC src/cuda_nn_stub.cpp)
-target_include_directories(bgbot_cuda_stub PUBLIC include)
+add_library(bgbot_cuda_stub STATIC ${BGBOT_CPU_ROOT}/src/cuda_nn_stub.cpp)
+target_include_directories(bgbot_cuda_stub PUBLIC ${BGBOT_CPU_ROOT}/include)
 target_link_libraries(bgbot_cuda_stub PUBLIC bgbot_lib)
 
-# 4-ply cube profiler
-add_executable(bgbot_profile_4ply src/profile_cube_4ply.cpp)
-target_link_libraries(bgbot_profile_4ply PRIVATE bgbot_lib)
+if(BGBOT_BUILD_APPS)
+    # 4-ply cube profiler
+    add_executable(bgbot_profile_4ply ${BGBOT_CPU_ROOT}/src/profile_cube_4ply.cpp)
+    target_link_libraries(bgbot_profile_4ply PRIVATE bgbot_lib)
 
-# Truncated rollout benchmark/profilers
-add_executable(benchmark_truncated_rollout src/benchmark_truncated_rollout.cpp)
-target_link_libraries(benchmark_truncated_rollout PRIVATE bgbot_lib)
+    # Truncated rollout benchmark/profilers
+    add_executable(benchmark_truncated_rollout ${BGBOT_CPU_ROOT}/src/benchmark_truncated_rollout.cpp)
+    target_link_libraries(benchmark_truncated_rollout PRIVATE bgbot_lib)
 
-add_executable(benchmark_3t src/benchmark_3t.cpp)
-target_link_libraries(benchmark_3t PRIVATE bgbot_lib)
+    add_executable(benchmark_3t ${BGBOT_CPU_ROOT}/src/benchmark_3t.cpp)
+    target_link_libraries(benchmark_3t PRIVATE bgbot_lib)
 
-add_executable(benchmark_4ply src/benchmark_4ply.cpp)
-target_link_libraries(benchmark_4ply PRIVATE bgbot_lib)
+    add_executable(benchmark_4ply ${BGBOT_CPU_ROOT}/src/benchmark_4ply.cpp)
+    target_link_libraries(benchmark_4ply PRIVATE bgbot_lib)
 
-add_executable(benchmark_4ply_opt src/benchmark_4ply_opt.cpp)
-target_link_libraries(benchmark_4ply_opt PRIVATE bgbot_lib)
+    add_executable(benchmark_4ply_opt ${BGBOT_CPU_ROOT}/src/benchmark_4ply_opt.cpp)
+    target_link_libraries(benchmark_4ply_opt PRIVATE bgbot_lib)
 
-add_executable(test_4ply_accuracy src/test_4ply_accuracy.cpp)
-target_link_libraries(test_4ply_accuracy PRIVATE bgbot_lib)
+    add_executable(test_4ply_accuracy ${BGBOT_CPU_ROOT}/src/test_4ply_accuracy.cpp)
+    target_link_libraries(test_4ply_accuracy PRIVATE bgbot_lib)
 
-add_executable(profile_3t src/profile_3t.cpp)
-target_link_libraries(profile_3t PRIVATE bgbot_lib)
+    add_executable(profile_3t ${BGBOT_CPU_ROOT}/src/profile_3t.cpp)
+    target_link_libraries(profile_3t PRIVATE bgbot_lib)
 
-add_executable(profile_3t_detailed src/profile_3t_detailed.cpp)
-target_link_libraries(profile_3t_detailed PRIVATE bgbot_lib)
+    add_executable(profile_3t_detailed ${BGBOT_CPU_ROOT}/src/profile_3t_detailed.cpp)
+    target_link_libraries(profile_3t_detailed PRIVATE bgbot_lib)
 
-add_executable(profile_cube_benchmark src/profile_cube_benchmark.cpp)
-target_link_libraries(profile_cube_benchmark PRIVATE bgbot_lib)
+    add_executable(profile_cube_benchmark ${BGBOT_CPU_ROOT}/src/profile_cube_benchmark.cpp)
+    target_link_libraries(profile_cube_benchmark PRIVATE bgbot_lib)
+endif()
 
 if(BGBOT_BUILD_PYTHON)
     find_package(pybind11 CONFIG REQUIRED)
-    pybind11_add_module(bgbot_cpp pybind/bindings.cpp)
+    pybind11_add_module(bgbot_cpp ${BGBOT_CPU_ROOT}/pybind/bindings.cpp)
     target_link_libraries(bgbot_cpp PRIVATE bgbot_lib bgbot_cuda_stub)
 endif()

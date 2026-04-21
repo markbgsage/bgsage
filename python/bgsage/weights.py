@@ -85,16 +85,34 @@ BEAROFF_DB_FILENAME = "bearoff_1sided.db"
 
 
 def _models_dir() -> str:
-    """Return the absolute path to bgsage/models/."""
+    """Return the absolute path to the directory containing weight files.
+
+    Prefers the bundled-asset location (``bgsage/_assets/models/`` inside the
+    installed package) when present — this is what ``pip install bgsage``
+    produces. Falls back to the source-tree layout (``bgsage/models/``) for
+    editable installs and in-repo execution.
+    """
+    pkg_dir = os.path.dirname(__file__)
+    bundled = os.path.join(pkg_dir, "_assets", "models")
+    if os.path.isdir(bundled):
+        return bundled
     return os.path.normpath(
-        os.path.join(os.path.dirname(__file__), os.pardir, os.pardir, "models")
+        os.path.join(pkg_dir, os.pardir, os.pardir, "models")
     )
 
 
 def _data_dir() -> str:
-    """Return the absolute path to bgsage/data/."""
+    """Return the absolute path to the directory containing data files.
+
+    Same discovery order as :func:`_models_dir`: bundled assets first, then the
+    source-tree ``bgsage/data/`` directory.
+    """
+    pkg_dir = os.path.dirname(__file__)
+    bundled = os.path.join(pkg_dir, "_assets", "data")
+    if os.path.isdir(bundled):
+        return bundled
     return os.path.normpath(
-        os.path.join(os.path.dirname(__file__), os.pardir, os.pardir, "data")
+        os.path.join(pkg_dir, os.pardir, os.pardir, "data")
     )
 
 
