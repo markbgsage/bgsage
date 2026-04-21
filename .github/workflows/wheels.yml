@@ -1,8 +1,10 @@
 name: Build wheels
 
 on:
+  # Release: pushing a v* tag builds wheels and publishes to PyPI.
+  # Test-only: PRs to main and manual dispatch build wheels without publishing.
+  # Plain pushes to main do NOT trigger CI — commit freely without burning runner time.
   push:
-    branches: [main]
     tags: ["v*"]
   pull_request:
     branches: [main]
