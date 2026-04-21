@@ -7,7 +7,8 @@ name = "bgsage"
 version = "0.1.20260421"
 description = "Open Sage bot engine — a neural-network backgammon engine"
 readme = "README.md"
-license = "MIT"
+license = "AGPL-3.0-or-later"
+license-files = ["LICENSE"]
 requires-python = ">=3.10"
 authors = [
     { name = "Mark Higgins" },
@@ -19,7 +20,6 @@ dependencies = [
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
-    "License :: OSI Approved :: MIT License",
     "Operating System :: POSIX :: Linux",
     "Operating System :: MacOS",
     "Operating System :: Microsoft :: Windows",
@@ -43,34 +43,16 @@ Issues = "https://github.com/markbgsage/bgsage/issues"
 # ---------------------------------------------------------------------------
 [tool.scikit-build]
 minimum-version = "0.10"
-build-dir = "build/{wheel_tag}"
-cmake.version = ">=3.18"
 cmake.build-type = "Release"
 # The Python package tree lives under python/, not at the repo root.
 wheel.packages = ["python/bgsage"]
-# Bundled model weights + bearoff DB are copied in by CMake install(FILES …).
-# Don't let scikit-build-core strip them from the wheel.
-wheel.exclude = []
-# Only ship source files we actually need for a source distribution.
-sdist.include = [
-    "CMakeLists.txt",
-    "pyproject.toml",
-    "README.md",
-    "LICENSE",
-    "cpp/CMakeLists_cpu.txt",
-    "cpp/include/**/*.h",
-    "cpp/src/**/*.cpp",
-    "cpp/pybind/**/*.cpp",
-    "python/bgsage/**/*.py",
-    "models/sl_s9_*.weights.best",
-    "data/bearoff_1sided.db",
-]
+
+# sdist contents: by default scikit-build-core ships git-tracked files.
+# We strip everything that isn't needed to rebuild the wheel — non-production
+# model weights, training intermediates, benchmark data, rollout dumps.
+# The wheel itself only bundles stage9 weights + the bearoff DB (via CMake).
 sdist.exclude = [
-    "build/",
-    "build_*/",
-    "models/*.weights",
-    "models/*.checkpoint",
-    "models/exp_*",
+    # Non-production trained weights (only S9 ships with the wheel)
     "models/sl_s3_*",
     "models/sl_s4_*",
     "models/sl_s5_*",
@@ -78,15 +60,24 @@ sdist.exclude = [
     "models/sl_s6_*",
     "models/sl_s7_*",
     "models/sl_s8_*",
+    "models/sl_anchoring*",
+    "models/sl_attacking*",
+    "models/sl_priming*",
+    "models/sl_purerace*",
+    "models/sl_racing*",
+    "models/exp_*",
+    # TD (temporal-difference) training snapshots
     "models/td_*",
+    # Training intermediates (GPW scan checkpoints)
     "models/s*_gpw_scan/",
+    # Benchmark + rollout data (used for training, not runtime)
+    "data/benchmark_pr/",
+    "data/benchmark_cubeful_pr/",
+    "data/*-rollout*",
     "data/*-train-data",
     "data/*-benchmark-data",
-    "data/*-rollout*",
     "data/*.bm",
-    "data/benchmark_*",
-    ".github/",
-    ".claude/",
+    # Dev tooling — not needed to rebuild the wheel
     "scripts/",
     "tests/",
 ]
