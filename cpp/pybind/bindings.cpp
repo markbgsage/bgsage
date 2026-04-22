@@ -2260,6 +2260,24 @@ PYBIND11_MODULE(bgbot_cpp, m) {
        py::arg("away1") = 0, py::arg("away2") = 0, py::arg("is_crawford") = false,
        py::arg("jacoby") = true);
 
+    // Live-cube cash points for match play (GNUbg GetPoints recursion).
+    // Returns (player_cp, opp_cp) each in the respective player's P(win) space.
+    // Player's live-cube take point = 1 - opp_cp.
+    m.def("match_live_cash_points", [](int away1, int away2, int cube_value,
+                                        bool is_crawford,
+                                        float rG0, float rBG0,
+                                        float rG1, float rBG1) {
+        float player_cp = 0.0f, opp_cp = 0.0f;
+        get_match_points(away1, away2, cube_value, is_crawford,
+                         rG0, rBG0, rG1, rBG1, player_cp, opp_cp);
+        return std::make_tuple(player_cp, opp_cp);
+    }, "Live-cube cash points for match play (recursive GetPoints). "
+       "Returns (player_cp, opp_cp) in each player's P(win) space.",
+       py::arg("away1"), py::arg("away2"), py::arg("cube_value"),
+       py::arg("is_crawford") = false,
+       py::arg("rG0") = 0.0f, py::arg("rBG0") = 0.0f,
+       py::arg("rG1") = 0.0f, py::arg("rBG1") = 0.0f);
+
     m.def("cubeful_equity_nply", [](const std::vector<int>& board_vec,
                                      CubeOwner owner,
                                      GamePlanStrategy& strategy,

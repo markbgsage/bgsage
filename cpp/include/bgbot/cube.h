@@ -122,6 +122,24 @@ float cube_efficiency(
 // Match play cubeful evaluation (Janowski in MWC space)
 // ---------------------------------------------------------------------------
 
+// Live-cube cash points for match play (GNUbg GetPoints recursion).
+// Works from the highest cube level where both players can survive a recube
+// (nDead) back down to `cv`, handling dead-cube and live-cube branches and
+// automatic redoubles per the MET. Gammon/backgammon ratios are from the
+// player's perspective (rG0/rBG0 for player wins, rG1/rBG1 for player losses).
+// Returns via out parameters the live-cube cash points in each player's own
+// P(win) space:
+//   player_cp = above this P(win), opponent would pass the player's double
+//   opp_cp    = above opponent's P(win) = 1 - p, opponent would cash by doubling
+// Player's live-cube take point (their own P(win) threshold below which they
+// pass an opponent's double) = 1 - opp_cp.
+void get_match_points(
+    int away1, int away2, int cv, bool craw,
+    float rG0, float rBG0,        // gammon/bg ratios for player's wins
+    float rG1, float rBG1,        // gammon/bg ratios for player's losses
+    float& player_cp,             // out: player's cash point
+    float& opp_cp);               // out: opponent's cash point
+
 // Cubeless-to-cubeful for match play (returns MWC).
 // Uses Janowski interpolation in MWC space with MET-based anchor points.
 // Three internal variants by ownership (centered/owned/unavailable).

@@ -205,7 +205,7 @@ static int get_cube_prime_value(int away_i, int away_j, int cv) {
 //
 // Parameters use 1-indexed away values. Gammon ratios are from the player's
 // perspective: rG0/rBG0 for player's wins, rG1/rBG1 for player's losses.
-static void get_match_points(
+void get_match_points(
     int away1, int away2, int cv, bool craw,
     float rG0, float rBG0,        // gammon/bg ratios for player's wins
     float rG1, float rBG1,        // gammon/bg ratios for player's losses
