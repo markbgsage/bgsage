@@ -2436,9 +2436,9 @@ PYBIND11_MODULE(bgbot_cpp, m) {
                                          bool beaver, int max_cube_value,
                                          const BearoffDB* bearoff_db,
                                          bool incl_2ply_details) {
-        if (incl_2ply_details && n_plies < 3) {
+        if (incl_2ply_details && n_plies < 2) {
             throw std::invalid_argument(
-                "incl_2ply_details requires n_plies >= 3 (analysis depth not deep enough)");
+                "incl_2ply_details requires n_plies >= 2 (analysis depth not deep enough)");
         }
 
         Board board = list_to_board(checkers);
@@ -2645,9 +2645,9 @@ PYBIND11_MODULE(bgbot_cpp, m) {
                                     bool beaver, int max_cube_value,
                                     const BearoffDB* bearoff_db,
                                     bool incl_2ply_details) {
-        if (incl_2ply_details && n_plies < 3) {
+        if (incl_2ply_details && n_plies < 2) {
             throw std::invalid_argument(
-                "incl_2ply_details requires n_plies >= 3 (analysis depth not deep enough)");
+                "incl_2ply_details requires n_plies >= 2 (analysis depth not deep enough)");
         }
 
         Board board = list_to_board(checkers);
@@ -5116,9 +5116,9 @@ PYBIND11_MODULE(bgbot_cpp, m) {
                                             bool beaver, int max_cube_value,
                                             const BearoffDB* bearoff_db,
                                             bool incl_2ply_details) {
-        if (incl_2ply_details && n_plies < 3) {
+        if (incl_2ply_details && n_plies < 2) {
             throw std::invalid_argument(
-                "incl_2ply_details requires n_plies >= 3");
+                "incl_2ply_details requires n_plies >= 2");
         }
         Board board = list_to_board(checkers);
         auto base = make_strategy_from_type(strategy_type, weight_paths, hidden_sizes);

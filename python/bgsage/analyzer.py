@@ -210,7 +210,7 @@ class _OnePlyAnalyzer(_CubelessBase):
         incl_2ply_details=False,
     ) -> dict:
         if incl_2ply_details:
-            raise ValueError("incl_2ply_details requires at least 3-ply evaluation")
+            raise ValueError("incl_2ply_details requires at least 2-ply evaluation")
         owner = resolve_owner(cube_owner)
         r = bgbot_cpp.evaluate_cube_decision_unified(
             board, cube_value, owner,
