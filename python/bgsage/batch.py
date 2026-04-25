@@ -222,7 +222,6 @@ def batch_post_move_evaluate(
     """
     if weights is None:
         weights = default_weights()
-    is_pair = isinstance(weights, WeightConfigPair)
 
     # Build (board, CubeOwner[, cube_value, away1, away2, is_crawford]) tuples for C++
     cpp_positions = []
@@ -243,12 +242,16 @@ def batch_post_move_evaluate(
     has_match = any(p.get("away1", 0) > 0 or p.get("away2", 0) > 0 for p in positions)
     effective_jacoby = jacoby and not has_match
 
+    # Strategy construction goes through the unified ``create_strategy`` /
+    # ``create_multipy`` factories — same path BgBotAnalyzer uses — so all
+    # registered model types (5nn, pair, 19-NN backgame_pair) work
+    # transparently against the production model.
     if eval_level == "1ply":
-        if is_pair:
-            paths, hiddens = weights.weight_args
-            strategy = bgbot_cpp.GamePlanPairStrategy(paths, hiddens)
-        else:
-            strategy = bgbot_cpp.GamePlanStrategy(*weights.weight_args)
+        strategy = bgbot_cpp.create_strategy(
+            weights.strategy_type,
+            weights.weight_paths_list,
+            weights.hidden_sizes_list,
+        )
         raw_results = bgbot_cpp.batch_evaluate_post_move(
             cpp_positions, strategy, n_threads,
             jacoby=effective_jacoby,
@@ -256,25 +259,18 @@ def batch_post_move_evaluate(
         level_label = "1-ply"
     elif eval_level in ("2ply", "3ply", "4ply"):
         n_plies = int(eval_level[0])
-        if is_pair:
-            paths, hiddens = weights.weight_args
-            strategy = bgbot_cpp.create_multipy_pair(
-                paths, hiddens,
-                n_plies=n_plies,
-                filter_max_moves=filter_max_moves,
-                filter_threshold=filter_threshold,
-                parallel_evaluate=False,
-                parallel_threads=0,
-            )
-        else:
-            strategy = bgbot_cpp.create_multipy_5nn(
-                *weights.weight_args,
-                n_plies=n_plies,
-                filter_max_moves=filter_max_moves,
-                filter_threshold=filter_threshold,
-                parallel_evaluate=False,
-                parallel_threads=0,
-            )
+        # parallel_evaluate=False so each N-ply eval is serial;
+        # parallelism is across positions in the C++ batch function.
+        strategy = bgbot_cpp.create_multipy(
+            weights.strategy_type,
+            weights.weight_paths_list,
+            weights.hidden_sizes_list,
+            n_plies=n_plies,
+            filter_max_moves=filter_max_moves,
+            filter_threshold=filter_threshold,
+            parallel_evaluate=False,
+            parallel_threads=0,
+        )
         raw_results = bgbot_cpp.batch_evaluate_post_move(
             cpp_positions, strategy, n_threads,
             jacoby=effective_jacoby,
