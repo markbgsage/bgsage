@@ -37,8 +37,11 @@ MODELS: dict[str, dict[str, Any]] = {
         "pattern": "sl_s9_{plan}.weights.best",   # all 19 base NNs are Stage 9's
         "plans": "backgame_pair",
         "canonical_map": [0,1,2,3,4,5,6,7,8,9,10,12,12,13,14,12,12,17,18],
-        "extra_backgame": ["sl_s10_player_bg.weights.best",
-                           "sl_s10_opponent_bg.weights.best"],
+        # v3 = the pasko nets retrained on the S10-gated benchmark/train sets and
+        # warm-restarted twice (see CLAUDE.md Stage 10). Gated-benchmark 1-ply ER:
+        # 31.62 (v1 shipped nets) -> 28.97 (v3). The gate/blend logic is unchanged.
+        "extra_backgame": ["sl_s10_player_bg_v3.weights.best",
+                           "sl_s10_opponent_bg_v3.weights.best"],
     },
     "stage9": {
         "hidden": (100,) + (400,) * 18,  # 1 purerace + 18 contact (incl 2 backgame)

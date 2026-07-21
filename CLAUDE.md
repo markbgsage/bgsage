@@ -2016,8 +2016,20 @@ standard-game play is byte-equal to S9 outside rare deep backgames.
 `blended_backgame_probs` + `select_nn_idx` in `cpp/src/neural_net.cpp` (sentinel
 handling in the batch methods and in `cube_eval.cpp`'s `eval_groups_pair`);
 constants in `neural_net.h`; the `stage10` registry entry (`extra_backgame`
-list) and 21-length `plan_names` in `python/bgsage/weights.py`. Weight files:
-`sl_s10_player_bg.weights.best`, `sl_s10_opponent_bg.weights.best`.
+list) and 21-length `plan_names` in `python/bgsage/weights.py`. Weight files
+(**v3** — the pasko nets retrained on the S10-gated benchmark/train sets and
+warm-restarted twice): `sl_s10_player_bg_v3.weights.best`,
+`sl_s10_opponent_bg_v3.weights.best`. The original shipped nets
+(`sl_s10_*_bg.weights.best`) are kept for A/B.
+
+**Retrained pasko nets (v3).** The gate footprint (~9%/43% of standard/pasko
+backgames) barely intersects the full-game benchmarks, so the pasko nets are
+better re-benchmarked and re-trained on a **gated-only** backgame set — the
+positions where the blend weight > 0 (`generate_pasko_data.py --gate`). On a new
+20k/side gated benchmark, 1-ply cubeless ER: **S9 49.51 → S10 v1 31.62 → S10 v3
+28.97** (−42% vs S9). v3 = SL on the gated 100k/side train set warm-started from
+the shipped v1 nets, then one warm-restart. (Warm-starting from the TD net lands
+~1.4 ER worse; a further restart gains <0.1 — converged.)
 
 ## Glossary
 
