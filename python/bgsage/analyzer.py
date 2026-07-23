@@ -76,6 +76,26 @@ def _default_parallel_threads() -> int:
     return max(parsed, 0)
 
 
+def _normalize_trial_eval_config(value, parameter: str):
+    """Normalize a rollout checker/cube evaluator specification.
+
+    Public callers may use a named shorthand (``"3P"``, ``"2T"``), an
+    existing ``TrialEvalConfig``, or a complete ``RolloutConfig``.
+    """
+    if value is None:
+        return bgbot_cpp.TrialEvalConfig()
+    if isinstance(value, bgbot_cpp.TrialEvalConfig):
+        return value
+    if isinstance(value, str):
+        return bgbot_cpp.TrialEvalConfig(value)
+    if isinstance(value, bgbot_cpp.RolloutConfig):
+        return bgbot_cpp.TrialEvalConfig(rollout=value)
+    raise TypeError(
+        f"{parameter} must be a level string, TrialEvalConfig, "
+        f"RolloutConfig, or None; got {type(value).__name__}"
+    )
+
+
 # ---------------------------------------------------------------------------
 # Internal cubeless analyzers
 # ---------------------------------------------------------------------------
@@ -398,6 +418,7 @@ class _RolloutAnalyzer(_CubelessBase):
         max_batches=50,
         filter_max_moves=None,
         filter_threshold=None,
+        minimum_rollout_moves=2,
     ):
         super().__init__(weights)
         # Candidate-selection filter for checker_play_analytics: how many of
@@ -443,12 +464,11 @@ class _RolloutAnalyzer(_CubelessBase):
         }
         self._cancel_event = threading.Event()
 
-        # Convert None to default TrialEvalConfig
-        _empty = bgbot_cpp.TrialEvalConfig()
-        checker_cfg = checker if checker is not None else _empty
-        checker_late_cfg = checker_late if checker_late is not None else _empty
-        cube_cfg = cube if cube is not None else _empty
-        cube_late_cfg = cube_late if cube_late is not None else _empty
+        checker_cfg = _normalize_trial_eval_config(checker, "checker")
+        checker_late_cfg = _normalize_trial_eval_config(
+            checker_late, "checker_late")
+        cube_cfg = _normalize_trial_eval_config(cube, "cube")
+        cube_late_cfg = _normalize_trial_eval_config(cube_late, "cube_late")
 
         self._rollout_strategy = bgbot_cpp.create_rollout(
             weights.strategy_type, weights.weight_paths_list, weights.hidden_sizes_list,
@@ -470,6 +490,8 @@ class _RolloutAnalyzer(_CubelessBase):
             cubeful_late_threshold=cubeful_late_threshold,
             target_se=target_se,
             max_batches=max_batches,
+            prefilter_threshold=prefilter_threshold,
+            minimum_rollout_moves=minimum_rollout_moves,
         )
 
     def set_seed(self, seed):
@@ -1007,6 +1029,43 @@ def _optimal_action(should_double: bool, should_take: bool,
     return "Double/Pass"
 
 
+def _named_truncated_analyzer(
+    weights,
+    level: str,
+    *,
+    parallel_threads: int,
+    seed: int,
+    cubeful_trial_moves: bool,
+    cubeful_late_threshold: int,
+    prefilter_threshold: float,
+) -> _RolloutAnalyzer:
+    """Build a named T-level from the canonical C++ configuration."""
+    config = bgbot_cpp.rollout_config_from_level(level)
+    return _RolloutAnalyzer(
+        weights,
+        n_trials=config.n_trials,
+        truncation_depth=config.truncation_depth,
+        decision_ply=config.decision_ply,
+        truncation_ply=config.truncation_ply,
+        n_threads=parallel_threads,
+        seed=seed,
+        late_ply=config.late_ply,
+        late_threshold=config.late_threshold,
+        parallelize_trials=config.parallelize_trials,
+        checker=config.checker,
+        checker_late=config.checker_late,
+        cube=config.cube,
+        cube_late=config.cube_late,
+        ultra_late_threshold=config.ultra_late_threshold,
+        cubeful_trial_moves=cubeful_trial_moves,
+        cubeful_late_threshold=cubeful_late_threshold,
+        prefilter_threshold=prefilter_threshold,
+        filter_max_moves=config.filter.max_moves,
+        filter_threshold=config.filter.threshold,
+        minimum_rollout_moves=config.minimum_rollout_moves,
+    )
+
+
 class BgBotAnalyzer:
     """High-level interface to the Open Sage bot engine.
 
@@ -1035,10 +1094,12 @@ class BgBotAnalyzer:
             (-1 = same as ``decision_ply``).
         late_threshold: Half-move index where decision ply switches to ``late_ply``.
         seed: RNG seed for rollout.
-        checker: TrialEvalConfig for checker play during rollout trials.
-        checker_late: TrialEvalConfig for late-game checker play.
-        cube: TrialEvalConfig for cube decisions during rollout trials.
-        cube_late: TrialEvalConfig for late-game cube decisions.
+        checker: Checker evaluator during rollout trials. Accepts a named
+            string (for example ``"3P"`` or ``"2T"``), TrialEvalConfig, or a
+            complete RolloutConfig.
+        checker_late: Late-game checker evaluator in the same forms.
+        cube: Cube evaluator during rollout trials in the same forms.
+        cube_late: Late-game cube evaluator in the same forms.
         prefilter_threshold: Two-stage checker_play filter for rollout levels.
             When > 0, stage 1 culls candidates with > prefilter_threshold
             1-ply equity error from best (no count cap), then stage 2 applies
@@ -1137,16 +1198,14 @@ class BgBotAnalyzer:
             # exactly stratified. XG Roller's 42 is not, which 2x over-weights
             # 6 ordered first rolls and biases the result (benchmark PR 2.23 ->
             # 0.50 going 42 -> 72). Otherwise XG-Roller-style: trunc-5, 1-ply.
-            inner = _RolloutAnalyzer(
+            inner = _named_truncated_analyzer(
                 weights,
-                n_trials=72,
-                truncation_depth=5,
-                decision_ply=1,
-                n_threads=parallel_threads,
+                "1T",
+                parallel_threads=parallel_threads,
                 seed=seed,
-                ultra_late_threshold=2,
                 cubeful_trial_moves=self._cubeful_trial_moves,
                 cubeful_late_threshold=self._cubeful_late_threshold,
+                prefilter_threshold=self._prefilter_threshold,
             )
         elif eval_level == "truncated2":
             # 2T: trunc-7, 360 trials. Checker 2-ply on the first ply then
@@ -1155,19 +1214,11 @@ class BgBotAnalyzer:
             # (benchmark PR 0.89 -> 0.36). Was: late_threshold=2, ultra_late=2,
             # 1-ply late cube + 1-ply truncation eval (the ply-drop economies
             # that cost ~0.5 PR).
-            inner = _RolloutAnalyzer(
+            inner = _named_truncated_analyzer(
                 weights,
-                n_trials=360,
-                truncation_depth=7,
-                decision_ply=2,
-                truncation_ply=2,
-                n_threads=parallel_threads,
+                "2T",
+                parallel_threads=parallel_threads,
                 seed=seed,
-                late_ply=1,
-                late_threshold=1,
-                cube=bgbot_cpp.TrialEvalConfig(ply=2),
-                cube_late=bgbot_cpp.TrialEvalConfig(ply=2),
-                ultra_late_threshold=9999,
                 cubeful_trial_moves=self._cubeful_trial_moves,
                 cubeful_late_threshold=self._cubeful_late_threshold,
                 prefilter_threshold=self._prefilter_threshold,
@@ -1175,16 +1226,11 @@ class BgBotAnalyzer:
         elif eval_level == "truncated3":
             # 3T: trunc-7, 3-ply early then 2-ply late (ultra_late=9999 disables
             # the 1-ply drop). Closer to XG Roller++. (Was trunc-5 / 1-ply late.)
-            inner = _RolloutAnalyzer(
+            inner = _named_truncated_analyzer(
                 weights,
-                n_trials=360,
-                truncation_depth=7,
-                decision_ply=3,
-                n_threads=parallel_threads,
+                "3T",
+                parallel_threads=parallel_threads,
                 seed=seed,
-                late_ply=2,
-                late_threshold=2,
-                ultra_late_threshold=9999,
                 cubeful_trial_moves=self._cubeful_trial_moves,
                 cubeful_late_threshold=self._cubeful_late_threshold,
                 prefilter_threshold=self._prefilter_threshold,

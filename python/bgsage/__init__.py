@@ -45,12 +45,16 @@ from .luck import luck_from_equities, roll_luck
 from .types import LuckResult, RollEquity
 from .weights import MODELS, PRODUCTION_MODEL, WeightConfig, WeightConfigPair, default_weights
 
-# Re-export TrialEvalConfig from the C++ bindings for convenient access
+# Re-export rollout evaluator config types for convenient access.
 try:
     import bgbot_cpp as _cpp
     TrialEvalConfig = _cpp.TrialEvalConfig
+    RolloutConfig = _cpp.RolloutConfig
+    rollout_config_from_level = _cpp.rollout_config_from_level
 except (ImportError, AttributeError):
     TrialEvalConfig = None
+    RolloutConfig = None
+    rollout_config_from_level = None
 
 __all__ = [
     "BgBotAnalyzer",
@@ -91,4 +95,6 @@ __all__ = [
     "invert_probs",
     "can_double_match",
     "TrialEvalConfig",
+    "RolloutConfig",
+    "rollout_config_from_level",
 ]

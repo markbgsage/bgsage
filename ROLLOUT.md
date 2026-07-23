@@ -414,8 +414,13 @@ whenever the evaluator supports it. Three cube evaluation modes are supported:
   cube-decision cache (see section 10).
 - **Truncated rollout:** Per-branch, call inner
   `RolloutStrategy.cubeful_cube_decision(board, branch.cube)` (single-threaded).
-  This mode is not batched across branches because each inner rollout has its
-  own dice sequence and internal state; branches are processed sequentially.
+  Named T levels use the same 1-ply screen/escalate convention as N-ply cube
+  evaluation, so the inner rollout runs only for candidate doubles. Legacy
+  scalar configs and arbitrary full configs default to unscreened behavior;
+  full configs can opt in with `nested_cube_1ply_screen`. At half-move 1,
+  complete inner-rollout decisions are cached once per first roll and cube
+  state. This mode is not batched across branches because each inner rollout
+  has its own dice sequence and internal state.
 
 Cube take/pass decisions are evaluated at the configured `cube` strategy
 (defaulting to `decision_ply`) for the **entire trial** — unlike checker-play
@@ -771,9 +776,10 @@ Strategies are built from `TrialEvalConfig` at `RolloutStrategy` construction:
 - **N-ply** (`ply > 1`): Wraps `base_` in `MultiPlyStrategy` with internal filter
   `{max_moves=2, threshold=0.03}`. Serial evaluation (`parallel_evaluate = false`)
   because parallelism operates across trials, not within them.
-- **Truncated rollout** (`rollout_trials > 0`): Creates a child `RolloutStrategy`
-  with `n_threads=1` (single-threaded inner rollout). This provides the deepest
-  evaluation level available.
+- **Truncated rollout** (`rollout_trials > 0` or `rollout_config` set): Creates
+  a child `RolloutStrategy` with `n_threads=1` (single-threaded inner rollout).
+  `rollout_config` is the general form and preserves all rollout parameters;
+  the three legacy scalar fields remain backward compatible.
 
 ### Hybrid Mode
 
@@ -837,6 +843,10 @@ independently from checker play strategy.
 - Provides the deepest evaluation — a truncated rollout within a rollout.
 - Not batched across branches: each inner rollout carries its own dice
   sequence, move0/move1 caches and per-trial state.
+- Named 1T/2T/3T configs first use the standard 1-ply cube screen. Deep
+  rollouts run only for branches the screen identifies as candidate doubles.
+- Half-move-1 results are shared exactly across all outer trials with the same
+  first roll, including in-flight suppression between worker threads.
 
 ### Strategy Selection
 
@@ -1394,6 +1404,9 @@ into it.
 | `late_ply` | -1 | Default late-game ply (-1 = same as `decision_ply`) |
 | `late_threshold` | 20 | Half-move index where late strategies activate |
 | `ultra_late_threshold` | 2 | Half-move where checker/cube drop to 1-ply |
+| `prefilter_threshold` | 0 | When >0, loose 1-ply cull followed by the final filter at 2-ply |
+| `minimum_rollout_moves` | 1 | Minimum filtered checker candidates evaluated by rollout (named T levels use 2) |
+| `nested_cube_1ply_screen` | false | When embedded as a cube evaluator, screen at 1-ply and escalate candidate doubles (named T levels enable it) |
 | `checker` | unset | TrialEvalConfig: checker play strategy override |
 | `checker_late` | unset | TrialEvalConfig: late-game checker play override |
 | `cube` | unset | TrialEvalConfig: cube decision strategy override |
@@ -1410,6 +1423,20 @@ into it.
 | `rollout_trials` | 0 | 0 = N-ply mode, >0 = truncated rollout with this many trials |
 | `rollout_depth` | 5 | Truncation depth for inner rollout |
 | `rollout_ply` | 1 | Decision ply within inner rollout |
+| `rollout_config` | null | Complete inner `RolloutConfig`; overrides the legacy rollout scalar fields |
+
+Python accepts evaluator specifications in three interchangeable forms:
+
+```python
+checker="3P"                                  # named N-ply
+cube="2T"                                     # canonical named truncated level
+checker=bgbot_cpp.TrialEvalConfig(ply=3)      # legacy/explicit wrapper
+cube=custom_rollout_config                    # complete RolloutConfig object
+```
+
+Named aliases are case-insensitive and punctuation-insensitive: `2T`,
+`truncated2`, `3P`, `3-ply`, and `3ply` are accepted. The P range is 1P-4P;
+the T range is 1T-3T.
 
 ### Internal Constants
 
@@ -1438,11 +1465,11 @@ into it.
 (2T also pins cube at 2-ply early **and** late and uses a 2-ply truncation eval
 (`truncation_ply=2`) — neither is shown as a column above.)
 
-These per-level defaults are defined in one place — the `BgBotAnalyzer.__init__`
-dispatch in [python/bgsage/analyzer.py](python/bgsage/analyzer.py), in the
-`elif eval_level == "truncated1"/"truncated2"/"truncated3"/"rollout":` blocks.
-Change them there and all callers (including the host app) pick up the new
-defaults.
+The 1T/2T/3T defaults are defined once by
+`rollout_config_from_level()` in `cpp/src/rollout.cpp`. Both standalone named
+analysis and nested evaluator strings use that definition, so their trial
+counts, truncation, early/late checker depths, cube depth, truncation ply,
+filtering, and ultra-late behavior cannot drift apart.
 
 For full rollouts (`truncation_depth = 0`), `ultra_late_threshold` is set high
 (9999) to keep configured checker/cube strategies active for the entire game.

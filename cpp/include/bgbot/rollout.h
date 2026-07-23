@@ -13,10 +13,12 @@
 #include <atomic>
 #include <functional>
 #include <stdexcept>
+#include <string>
 
 namespace bgbot {
 
 class BearoffDB;  // forward declaration
+struct RolloutConfig;
 
 // Configuration for evaluation strength of a specific purpose (checker play or
 // cube decisions) within rollout trials.
@@ -24,18 +26,27 @@ class BearoffDB;  // forward declaration
 // When is_set() is false (ply=0, rollout_trials=0), the purpose inherits from
 // the legacy decision_ply / late_ply fields in RolloutConfig.
 //
-// Two modes:
+// Three modes:
 //   N-ply:  set ply >= 1 (1 = raw NN, 2+ = multi-ply lookahead)
-//   Truncated rollout:  set rollout_trials > 0 (overrides ply)
+//   Legacy truncated rollout: set rollout_trials > 0 (overrides ply)
+//   Full rollout spec: set rollout_config (overrides legacy scalar fields)
 struct TrialEvalConfig {
     int ply = 0;                    // 0 = unset (inherit default), 1+ = N-ply depth
-    // Truncated rollout mode (when rollout_trials > 0, overrides ply)
+    // Legacy truncated rollout mode (when rollout_trials > 0, overrides ply)
     int rollout_trials = 0;         // 0 = N-ply mode, >0 = truncated rollout
     int rollout_depth = 5;          // Truncation depth for inner rollout
     int rollout_ply = 1;            // Decision ply within inner rollout
+    // Complete inner-rollout configuration. This is the general form used by
+    // named truncated levels and supports every RolloutConfig parameter.
+    std::shared_ptr<RolloutConfig> rollout_config;
 
-    bool is_set() const { return ply > 0 || rollout_trials > 0; }
-    bool is_rollout() const { return rollout_trials > 0; }
+    bool is_set() const {
+        return ply > 0 || rollout_trials > 0 ||
+               static_cast<bool>(rollout_config);
+    }
+    bool is_rollout() const {
+        return rollout_trials > 0 || static_cast<bool>(rollout_config);
+    }
 };
 
 // Exception thrown when a rollout is cancelled via cancel_flag.
@@ -60,6 +71,25 @@ struct RolloutConfig {
     int late_ply = -1;           // Default late ply for both checker and cube (-1 = same as decision_ply)
     int late_threshold = 20;     // Half-move index where we switch to late strategies
     int ultra_late_threshold = 2; // Half-move where checker/cube drop to 1-ply (set high to disable)
+
+    // Optional two-stage checker candidate filter. When > 0, first retain all
+    // moves inside this 1-ply equity window, then apply `filter` at 2-ply.
+    // Named 2T/3T use 0.15, matching their standalone Python analyzers.
+    double prefilter_threshold = 0.0;
+
+    // Minimum number of legal checker candidates to evaluate at rollout
+    // strength after filtering (when available). Named truncated levels use 2,
+    // matching standalone analysis. The legacy default of 1 preserves existing
+    // direct RolloutStrategy behavior.
+    int minimum_rollout_moves = 1;
+
+    // When this config is embedded as another rollout's cube evaluator, use a
+    // cheap 1-ply cube-action screen and run the inner rollout only for
+    // candidate doubles. This matches the established N-ply screen/escalate
+    // path and is enabled by the named T levels. The default is off so legacy
+    // scalar configs and arbitrary full config objects retain exact, unscreened
+    // behavior unless callers opt in.
+    bool nested_cube_1ply_screen = false;
 
     // When true (default), trial-level checker move selection uses CUBEFUL
     // equity (cl2cf) against the branch's current cube state instead of
@@ -105,6 +135,16 @@ struct RolloutConfig {
     double target_se = 0.0;
     int max_batches = 50;   // safety cap on the number of batches
 };
+
+// Parse an evaluator shorthand. Accepted forms are 1P..4P (plus the existing
+// 1ply..4ply spellings) and 1T..3T (plus truncated1..truncated3).
+// Throws std::invalid_argument for unknown levels.
+TrialEvalConfig trial_eval_config_from_level(const std::string& level);
+
+// Return the canonical complete rollout configuration for 1T, 2T, or 3T.
+// This is the single definition used by nested evaluator shorthands and the
+// Python standalone named levels.
+RolloutConfig rollout_config_from_level(const std::string& level);
 
 // Result of rolling out a single position.
 struct RolloutResult {
@@ -163,6 +203,7 @@ public:
     RolloutStrategy(std::shared_ptr<Strategy> base,
                     std::shared_ptr<Strategy> filter_base,
                     RolloutConfig config);
+    ~RolloutStrategy() override = default;
 
     // Strategy interface
     double evaluate(const Board& board, bool pre_move_is_race) const override;
@@ -274,11 +315,7 @@ public:
     // independent seeded batches of the same position while keeping the
     // SharedPosCache warm (e.g. lockstep target-SE checker rollouts driven
     // from Python). Clears the cached dice so the next rollout regenerates them.
-    void set_seed(uint32_t seed) {
-        config_.seed = seed;
-        cached_dice_.clear();
-        cached_max_moves_ = 0;
-    }
+    void set_seed(uint32_t seed);
 
     // Bearoff DB: when set, positions in the DB are evaluated exactly.
     // Input positions that are bearoff get immediate results (no simulation).
@@ -329,6 +366,9 @@ private:
 
     // Late-game checker play strategy (used after late_threshold half-moves).
     std::shared_ptr<Strategy> checker_late_strat_;
+
+    // Optional 2-ply scorer for the canonical 2T/3T two-stage move filter.
+    std::shared_ptr<MultiPlyStrategy> rollout_prefilter_strat_;
 
     // Cube decision evaluation configs (resolved from RolloutConfig).
     // Used to dispatch to the right cube decision function during trials:

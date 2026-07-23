@@ -1902,25 +1902,56 @@ PYBIND11_MODULE(bgbot_cpp, m) {
 
     // ======================== Rollout Strategy ========================
 
-    py::class_<RolloutConfig>(m, "RolloutConfig")
+    // Register both recursive config types before adding fields: RolloutConfig
+    // contains TrialEvalConfig values, while TrialEvalConfig can point at a
+    // complete RolloutConfig for nested truncated evaluators.
+    py::class_<RolloutConfig, std::shared_ptr<RolloutConfig>>
+        rollout_config_cls(m, "RolloutConfig");
+    py::class_<TrialEvalConfig>
+        trial_eval_config_cls(m, "TrialEvalConfig");
+
+    rollout_config_cls
         .def(py::init<>())
         .def_readwrite("n_trials", &RolloutConfig::n_trials)
         .def_readwrite("truncation_depth", &RolloutConfig::truncation_depth)
         .def_readwrite("decision_ply", &RolloutConfig::decision_ply)
         .def_readwrite("truncation_ply", &RolloutConfig::truncation_ply)
         .def_readwrite("enable_vr", &RolloutConfig::enable_vr)
+        .def_readwrite("parallelize_trials", &RolloutConfig::parallelize_trials)
         .def_readwrite("filter", &RolloutConfig::filter)
         .def_readwrite("n_threads", &RolloutConfig::n_threads)
         .def_readwrite("seed", &RolloutConfig::seed)
+        .def_readwrite("late_ply", &RolloutConfig::late_ply)
+        .def_readwrite("late_threshold", &RolloutConfig::late_threshold)
         .def_readwrite("ultra_late_threshold", &RolloutConfig::ultra_late_threshold)
+        .def_readwrite("prefilter_threshold", &RolloutConfig::prefilter_threshold)
+        .def_readwrite("minimum_rollout_moves", &RolloutConfig::minimum_rollout_moves)
+        .def_readwrite("nested_cube_1ply_screen", &RolloutConfig::nested_cube_1ply_screen)
         .def_readwrite("cubeful_trial_moves", &RolloutConfig::cubeful_trial_moves)
         .def_readwrite("cubeful_late_threshold", &RolloutConfig::cubeful_late_threshold)
+        .def_readwrite("checker", &RolloutConfig::checker)
+        .def_readwrite("checker_late", &RolloutConfig::checker_late)
+        .def_readwrite("cube", &RolloutConfig::cube)
+        .def_readwrite("cube_late", &RolloutConfig::cube_late)
         .def_readwrite("target_se", &RolloutConfig::target_se)
         .def_readwrite("max_batches", &RolloutConfig::max_batches);
 
     // TrialEvalConfig: per-purpose evaluation config for rollout trials
-    py::class_<TrialEvalConfig>(m, "TrialEvalConfig")
+    trial_eval_config_cls
         .def(py::init<>())
+        .def(py::init([](const std::string& level) {
+            return trial_eval_config_from_level(level);
+        }), "Create an evaluator from 1P..4P or 1T..3T shorthand",
+           py::arg("level"))
+        .def(py::init([](std::shared_ptr<RolloutConfig> rollout) {
+            if (!rollout) {
+                throw std::invalid_argument("rollout config cannot be None");
+            }
+            TrialEvalConfig c;
+            c.rollout_config = std::move(rollout);
+            return c;
+        }), "Create an evaluator from a complete RolloutConfig",
+           py::arg("rollout"))
         .def(py::init([](int ply, int rollout_trials, int rollout_depth, int rollout_ply) {
             TrialEvalConfig c;
             c.ply = ply;
@@ -1937,8 +1968,16 @@ PYBIND11_MODULE(bgbot_cpp, m) {
         .def_readwrite("rollout_trials", &TrialEvalConfig::rollout_trials)
         .def_readwrite("rollout_depth", &TrialEvalConfig::rollout_depth)
         .def_readwrite("rollout_ply", &TrialEvalConfig::rollout_ply)
+        .def_readwrite("rollout_config", &TrialEvalConfig::rollout_config)
         .def("is_set", &TrialEvalConfig::is_set)
         .def("is_rollout", &TrialEvalConfig::is_rollout);
+
+    m.def("rollout_config_from_level", &rollout_config_from_level,
+          "Return the canonical complete RolloutConfig for 1T, 2T, or 3T",
+          py::arg("level"));
+    m.def("trial_eval_config_from_level", &trial_eval_config_from_level,
+          "Return a TrialEvalConfig for 1P..4P or 1T..3T",
+          py::arg("level"));
 
     py::class_<RolloutResult>(m, "RolloutResult")
         .def_readonly("equity", &RolloutResult::equity)
@@ -5222,7 +5261,9 @@ PYBIND11_MODULE(bgbot_cpp, m) {
                                               bool cubeful_trial_moves,
                                               int cubeful_late_threshold,
                                               double target_se,
-                                              int max_batches, int truncation_ply) {
+                                              int max_batches, int truncation_ply,
+                                              double prefilter_threshold,
+                                              int minimum_rollout_moves) {
         auto base = make_strategy_from_type(strategy_type, weight_paths, hidden_sizes);
         RolloutConfig rc;
         rc.n_trials = n_trials;
@@ -5245,6 +5286,8 @@ PYBIND11_MODULE(bgbot_cpp, m) {
         rc.target_se = target_se;
         rc.max_batches = max_batches;
         rc.truncation_ply = truncation_ply;
+        rc.prefilter_threshold = prefilter_threshold;
+        rc.minimum_rollout_moves = minimum_rollout_moves;
         return std::make_shared<RolloutStrategy>(base, rc);
     }, "Create RolloutStrategy from any base strategy type",
        py::arg("strategy_type"),
@@ -5270,7 +5313,9 @@ PYBIND11_MODULE(bgbot_cpp, m) {
        py::arg("cubeful_late_threshold") = 0,
        py::arg("target_se") = 0.0,
        py::arg("max_batches") = 50,
-       py::arg("truncation_ply") = -1);
+       py::arg("truncation_ply") = -1,
+       py::arg("prefilter_threshold") = 0.0,
+       py::arg("minimum_rollout_moves") = 1);
 
     // --- Unified cubeful_equity_nply (accepts any Strategy via shared_ptr) ---
     m.def("cubeful_equity_nply", [](const std::vector<int>& board_vec,

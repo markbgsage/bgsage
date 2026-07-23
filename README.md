@@ -26,6 +26,41 @@ It also supports full rollout calculations, which are simulations playing out th
 
 Truncated and full rollouts both include variance reduction and efficiently parallelize on CPUs.
 
+Full rollouts can choose checker-play and cube-decision evaluators independently.
+Each evaluator can be a named shorthand (`"1P"` through `"4P"`, or `"1T"`
+through `"3T"`), a `TrialEvalConfig`, or a complete `RolloutConfig`:
+
+```python
+from bgsage import BgBotAnalyzer, RolloutConfig
+
+# Full rollout: 3-ply checker decisions, 2T cube decisions.
+analyzer = BgBotAnalyzer(
+    eval_level="rollout",
+    checker="3P",
+    cube="2T",
+    parallel_threads=16,
+)
+
+# Arbitrary inner rollout configuration.
+custom = RolloutConfig()
+custom.n_trials = 144
+custom.truncation_depth = 6
+custom.decision_ply = 2
+custom.late_ply = 1
+custom.late_threshold = 2
+
+analyzer = BgBotAnalyzer(
+    eval_level="rollout",
+    checker=custom,
+    cube="3P",
+    parallel_threads=16,
+)
+```
+
+The old `TrialEvalConfig(ply=...)` and
+`TrialEvalConfig(rollout_trials=..., rollout_depth=..., rollout_ply=...)`
+forms remain supported.
+
 ## What are Its Interfaces?
 
 It offers both Python and C++ interfaces for:

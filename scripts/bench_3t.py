@@ -1,11 +1,12 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2026 Mark Higgins
-"""3T (XG Roller++) cube-action optimization benchmark.
+"""Cube-action rollout evaluation-level benchmark.
 
 Reads the cube-action reference positions from ``refpos.txt`` (one level up
-from the bgsage repo root) and evaluates each at the production 3T level
-(``eval_level="truncated3"``). Always uses 16 threads (production hardware has
-16 CPUs).
+from the bgsage repo root). By default it evaluates production 3T; use
+``--full-rollout --checker-eval 3P --cube-eval 1T`` to benchmark a full
+outer rollout with independent named checker/cube evaluators. Always uses
+16 threads.
 
 Saves results to JSON and compares a later run against a saved baseline,
 flagging any value that moved more than the "material" band:
@@ -17,6 +18,9 @@ Usage:
     python scripts/bench_3t.py --save baseline.json
     python scripts/bench_3t.py --compare baseline.json
     python scripts/bench_3t.py --repeat 3 --compare baseline.json
+    python scripts/bench_3t.py --full-rollout --checker-eval 3P --cube-eval 1T
+
+Set ``BGSAGE_BUILD_DIR`` to benchmark a non-default extension build.
 
 Runs correctly regardless of the current working directory.
 """
@@ -33,7 +37,7 @@ from pathlib import Path
 # ── Path / DLL bootstrap (works from any CWD) ────────────────────────────────
 
 _REPO_ROOT = Path(__file__).resolve().parent.parent          # bgsage repo root
-_BUILD_DIR = _REPO_ROOT / "build"
+_BUILD_DIR = Path(os.getenv("BGSAGE_BUILD_DIR", _REPO_ROOT / "build")).resolve()
 _PY_PKG = _REPO_ROOT / "python"
 _REFPOS_DEFAULT = _REPO_ROOT.parent / "refpos.txt"           # parent (bgbot) folder
 
@@ -69,11 +73,26 @@ TRUNCATED3 = dict(
     cubeful_late_threshold=0,
 )
 
+FULL_ROLLOUT = dict(
+    n_trials=1296,
+    truncation_depth=0,
+    decision_ply=1,
+    truncation_ply=-1,
+    late_ply=-1,
+    late_threshold=20,
+    ultra_late_threshold=9999,
+    cubeful_late_threshold=0,
+)
+
 
 def build_analyzer(args) -> BgBotAnalyzer:
-    if args.truncated3:
+    if args.named_level:
+        return BgBotAnalyzer(
+            eval_level=args.named_level, parallel_threads=N_THREADS)
+    if (args.truncated3 and not args.checker_eval and not args.cube_eval
+            and not args.full_rollout):
         return BgBotAnalyzer(eval_level="truncated3", parallel_threads=N_THREADS)
-    cfg = dict(TRUNCATED3)
+    cfg = dict(FULL_ROLLOUT if args.full_rollout else TRUNCATED3)
     if args.n_trials is not None:        cfg["n_trials"] = args.n_trials
     if args.trunc_depth is not None:     cfg["truncation_depth"] = args.trunc_depth
     if args.decision_ply is not None:    cfg["decision_ply"] = args.decision_ply
@@ -85,6 +104,10 @@ def build_analyzer(args) -> BgBotAnalyzer:
         cfg["checker"] = bgbot_cpp.TrialEvalConfig(ply=args.checker_ply)
     if args.cube_ply is not None:
         cfg["cube"] = bgbot_cpp.TrialEvalConfig(ply=args.cube_ply)
+    if args.checker_eval is not None:
+        cfg["checker"] = args.checker_eval
+    if args.cube_eval is not None:
+        cfg["cube"] = args.cube_eval
     return BgBotAnalyzer(eval_level="rollout", parallel_threads=N_THREADS, **cfg)
 
 
@@ -146,6 +169,16 @@ def evaluate(analyzer: BgBotAnalyzer, positions: list[dict]) -> dict:
             "time": elapsed,
         })
     return {"results": results, "total_time": total_time}
+
+
+def warm_up(analyzer: BgBotAnalyzer, board: list[int]) -> None:
+    """Touch the selected model and hot code paths without running a rollout."""
+    inner = analyzer._analyzer
+    if hasattr(inner, "_inner"):
+        inner = inner._inner
+    strategy = inner._strategy_1ply
+    for _ in range(8):
+        strategy.evaluate_board(board, board)
 
 
 def _fmt(x) -> str:
@@ -223,9 +256,18 @@ def main() -> None:
     parser.add_argument("--compare", default=None)
     parser.add_argument("--repeat", type=int, default=1,
                         help="run the set N times; report the fastest run")
+    parser.add_argument("--limit", type=int, default=0,
+                        help="benchmark only the first N positions (0 = all)")
     parser.add_argument("--label", default="")
     parser.add_argument("--truncated3", action="store_true",
                         help="use eval_level='truncated3' directly (canonical)")
+    parser.add_argument(
+        "--named-level",
+        choices=("truncated1", "truncated2", "truncated3"),
+        help="benchmark a canonical standalone truncated level",
+    )
+    parser.add_argument("--full-rollout", action="store_true",
+                        help="use a full 1296-trial, play-to-completion outer rollout")
     parser.add_argument("--n-trials", type=int, default=None)
     parser.add_argument("--trunc-depth", type=int, default=None)
     parser.add_argument("--decision-ply", type=int, default=None)
@@ -235,6 +277,10 @@ def main() -> None:
     parser.add_argument("--cubeful-late", type=int, default=None)
     parser.add_argument("--checker-ply", type=int, default=None)
     parser.add_argument("--cube-ply", type=int, default=None)
+    parser.add_argument("--checker-eval", default=None,
+                        help="checker evaluator shorthand, e.g. 3P or 2T")
+    parser.add_argument("--cube-eval", default=None,
+                        help="cube evaluator shorthand, e.g. 3P or 2T")
     args = parser.parse_args()
 
     refpos_path = Path(args.refpos)
@@ -242,12 +288,29 @@ def main() -> None:
         print(f"ERROR: refpos.txt not found at {refpos_path}")
         sys.exit(1)
     positions = parse_refpos(refpos_path)
+    if args.limit > 0:
+        positions = positions[:args.limit]
     analyzer = build_analyzer(args)
-    mode = "truncated3" if args.truncated3 else "rollout(config-driven)"
+    if args.named_level:
+        mode = args.named_level
+    elif args.truncated3 and not args.full_rollout:
+        mode = "truncated3"
+    elif args.full_rollout:
+        mode = "full rollout"
+    else:
+        mode = "rollout(config-driven 3T)"
+    if args.checker_eval or args.cube_eval:
+        mode += (
+            f", checker={args.checker_eval or 'inherited'},"
+            f" cube={args.cube_eval or 'inherited'}"
+        )
 
-    print(f"3T Cube-Action Optimization Benchmark   {args.label}")
+    warm_up(analyzer, positions[0]["board"])
+
+    print(f"Cube-Action Rollout Benchmark   {args.label}")
     print(f"Model: {PRODUCTION_MODEL}   Threads: {N_THREADS}   "
           f"Positions: {len(positions)}   Mode: {mode}")
+    print(f"Extension: {Path(bgbot_cpp.__file__).resolve()}")
     print(f"refpos: {refpos_path}")
     print("=" * 90)
 
