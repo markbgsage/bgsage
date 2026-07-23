@@ -82,6 +82,10 @@ def main(argv=None):
                         help=f"Pristine native .xg folder to copy (default: {MASTER})")
     parser.add_argument("--force", action="store_true",
                         help="Overwrite an existing per-level folder (default: skip it)")
+    parser.add_argument("--sync", action="store_true",
+                        help="Add only NEW master games to each existing level folder "
+                             "(never overwrites already-analyzed .xg). Use after extending "
+                             "the game set; missing folders are stamped fresh.")
     parser.add_argument("--list", action="store_true", help="Print the level mapping and exit")
     args = parser.parse_args(argv)
 
@@ -100,6 +104,30 @@ def main(argv=None):
     n_master = len(list(args.master.glob("seed_*.xg")))
     if n_master == 0:
         raise SystemExit(f"No seed_*.xg in {args.master} -- export the games first.")
+
+    if args.sync:
+        print(f"Master: {args.master}  ({n_master} games)\n")
+        print(f"{'folder':<34}  {'XG level':<22}  status")
+        print(f"{'-'*34}  {'-'*22}  ------")
+        for tag in tags:
+            dest = args.master.parent / f"{args.master.name}_{tag}"
+            xg = LEVELS[tag][0]
+            if not dest.is_dir():
+                shutil.copytree(args.master, dest)
+                print(f"{dest.name:<34}  {xg:<22}  created ({n_master} games)")
+                continue
+            added = 0
+            for src in sorted(args.master.glob("seed_*.xg")):
+                d = dest / src.name
+                if not d.exists():
+                    shutil.copy2(src, d)
+                    added += 1
+            total = len(list(dest.glob("seed_*.xg")))
+            print(f"{dest.name:<34}  {xg:<22}  +{added} new (now {total}); "
+                  f"existing analysis untouched")
+        print("\nRe-run XG Batch Analyze on each folder (it skips already-analyzed games), "
+              "then harvest with benchmark_pr_xg_pasko.py --xg-dir <folder>.")
+        return
 
     print(f"Master: {args.master}  ({n_master} games)\n")
     print(f"{'folder':<34}  {'XG level to pick':<22}  {'Sage equiv':<10}  status")

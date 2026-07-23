@@ -51,6 +51,7 @@ from __future__ import annotations
 import argparse
 import struct
 import sys
+from concurrent.futures import ProcessPoolExecutor, as_completed
 from pathlib import Path
 
 _SCRIPT_DIR = Path(__file__).resolve().parent
@@ -386,6 +387,9 @@ def main(argv=None) -> None:
                         help="Real .xg archive to clone record templates from")
     parser.add_argument("--out-dir", type=Path, default=DEFAULT_OUT_DIR,
                         help=f"Output directory (default: {DEFAULT_OUT_DIR})")
+    parser.add_argument("--workers", type=int, default=16,
+                        help="Parallel export processes (re-simulation is the cost; "
+                             "default 16, like pass-1). Pass 1 for serial.")
     args = parser.parse_args(argv)
 
     seeds = args.seeds
@@ -400,14 +404,25 @@ def main(argv=None) -> None:
     tpl = _templates(args.template)
 
     print(f"Exporting {len(seeds)} Paskogammon games to {args.out_dir} "
-          f"(template: {args.template.name})")
-    for seed in seeds:
-        st = export_seed(seed, tpl, args.template, args.out_dir)
+          f"(template: {args.template.name}, workers={args.workers})", flush=True)
+
+    def _report(st):
         r = st["result"]
-        print(f"  seed_{seed}.xg: {st['moves']} moves, {st['cube_actions']} cube actions, "
-              f"P{'1' if r['winner'] == 1 else '2'} wins {r['points']} ({r['win_type']}) -- verified")
-    print("\nAll games re-simulated, transcript-verified, written, and re-parse-verified.")
-    print("Next: XG -> Batch Analyze this folder ('Save games after analyze' ON).")
+        print(f"  seed_{st['seed']}.xg: {st['moves']} moves, {st['cube_actions']} cube actions, "
+              f"P{'1' if r['winner'] == 1 else '2'} wins {r['points']} ({r['win_type']}) -- verified",
+              flush=True)
+
+    if args.workers <= 1:
+        for seed in seeds:
+            _report(export_seed(seed, tpl, args.template, args.out_dir))
+    else:
+        # Re-simulation (3-ply replay) is the cost; parallelize across seeds like pass-1.
+        with ProcessPoolExecutor(max_workers=args.workers) as ex:
+            futs = {ex.submit(export_seed, s, tpl, args.template, args.out_dir): s for s in seeds}
+            for fut in as_completed(futs):
+                _report(fut.result())
+    print("\nAll games re-simulated, transcript-verified, written, and re-parse-verified.", flush=True)
+    print("Next: XG -> Batch Analyze this folder ('Save games after analyze' ON).", flush=True)
 
 
 if __name__ == "__main__":
