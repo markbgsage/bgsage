@@ -802,7 +802,23 @@ class _CubefulAnalyzer:
             # rollouts here — that's the cost of getting the displayed best
             # right at the rollout level.
             inner_ro = inner  # _RolloutAnalyzer
+            # The trial loop's denominator (survivors x n_trials) was fixed
+            # before any promotion, so it cannot cover the extra rollouts below
+            # — and promotions are discovered one at a time, so no honest
+            # percentage exists here. Keep reporting past that total instead:
+            # ``completed > total`` is the caller's signal that the planned
+            # trials are done and we are finalizing the best move. Without this
+            # the caller sees a legitimate 100% and then silence for however
+            # long the promotions take.
+            n_trials_ro = inner_ro._rollout_config["n_trials"]
+            trial_total = n_trials_ro * sum(
+                1 for r in results if r.get("eval_level") == "Rollout"
+            )
+            promoted = 0
             while (results and "rollout_cubeful_equity" not in results[0]):
+                promoted += 1
+                if progress_callback:
+                    progress_callback(trial_total + promoted, trial_total, results)
                 m = results[0]
                 try:
                     pr = inner_ro._rollout_strategy.cubeful_evaluate_board(
