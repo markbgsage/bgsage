@@ -402,11 +402,37 @@ whenever the evaluator supports it. Three cube evaluation modes are supported:
   as doubles escalate to a single batched `cube_decision_nply_multi(board,
   cubes[], n, base, ply, …)` call over all flagged branches (one shared
   cubeful recursion with `cci = 2*n` and `fTop=true`, with the deep PubEval
-  pre-filter enabled — see `MULTI-PLY.md` section 6). A 1-ply false-negative
-  merely misses a double — a safe, conservative under-count — and the cube
-  can only turn via the deep decision, so the screen never introduces
-  take-quality errors. This keeps the deep recursion off the common
-  no-double moves.
+  pre-filter enabled — see `MULTI-PLY.md` section 6). This keeps the deep
+  recursion off the common no-double moves.
+
+  **In the endgame the screen runs twice per branch** — once at the position's
+  `cube_x` and, if that clears the branch, again at a dead cube (`x = 0`) —
+  and the branch escalates if either wants to double. A screen false-negative
+  is not a harmless under-count: it freezes that branch's cube for the rest of
+  the trial, silently overriding the configured cube evaluator, and the missed
+  double belongs to whichever side is on roll, so it can move the reported
+  equity either way. Screening at `cube_x` alone does exactly that near the end
+  of a game, where `cube_efficiency` floors a race at x = 0.6 but the real cube
+  is dead, so Janowski's live-cube term overvalues holding it (a 7-vs-6-pip
+  bearoff at 63.9% wins: 1-ply ND +0.47 / DT +0.34, no double; true cubeful
+  ND +0.278 / DT +0.556, a clear double — a 0.13 gap, so no epsilon tolerance
+  would catch it). The `x = 0` retry maximizes the doubling advantage
+  `min(DT, DP) − ND` over x, since `DT = 2·cl2cf(OPPONENT, x)` falls as x rises
+  while `ND = cl2cf(owner, x)` rises when the mover owns the cube; a branch
+  both screens clear wants no double at **any** cube efficiency in [0, 1].
+
+  The retry is closed-form on probs already in hand, but the escalations it
+  admits are not free — a dead cube says "double whenever ahead", so running it
+  unconditionally puts the deep recursion on roughly every move the mover
+  leads (measured 1.56x / 1.47x / 1.48x wall-clock on the cube-action,
+  checker-play and post-move rollout benchmarks). `is_endgame_cube_position()`
+  therefore gates it to boards whose cube is genuinely near-dead — **at most
+  two checkers a side (bar included) and at least one side within 24 pips** —
+  which is where the mispricing lives. Gated, the same three benchmarks cost
+  1.13x / 1.03x / 1.01x with values unchanged (worst equity delta 0.0000 /
+  0.0043 / 0.0000). Mid-game positions keep the cheap `cube_x`-only screen,
+  where the 0.68 live-cube model is calibrated and the cube really does stay
+  live.
 
   At half-move 1 the board (one of 21, determined by the first roll) and the
   branch cube states are identical across every trial, so escalated move-1
@@ -812,9 +838,13 @@ independently from checker play strategy.
 
 **N-ply cubeful recursion (screen + escalate, batched across branches):**
 - A 1-ply Janowski screen on shared pre-roll probs flags candidate doubles;
-  branches the screen clears keep their cube unchanged (no double). The cube
-  can only turn via the deep evaluation below, so a screen false-negative is
-  a safe, conservative miss.
+  branches the screen clears keep their cube unchanged (no double). The screen
+  is evaluated at the position's `cube_x` and, on endgame boards
+  (`is_endgame_cube_position()`: at most two checkers a side, one side within
+  24 pips), again at a dead cube (`x = 0`), escalating if either wants to
+  double — so where the cube is near-dead it cannot veto a double the
+  configured evaluator would make at any cube efficiency in [0, 1]. See §5,
+  Phase 1 for why a false-negative is not a safe miss.
 - For the flagged branches, call `cube_decision_nply_multi(board, cubes[], n,
   base, ply, out[], …, deep_prefilter=true)`.
 - Internally this runs a single cubeful recursion with `cci = 2*n` and

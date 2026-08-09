@@ -862,6 +862,26 @@ void RolloutStrategy::prefill_move1_cache(
     }
 }
 
+// End-of-game test gating the dead-cube retry of the cube-decision screen
+// (see run_trial_unified, Phase 1). True only when the game is close enough to
+// over that the cube is effectively dead — both sides down to at most two
+// checkers (bar included) and at least one side within 24 pips. That is the
+// regime where cube_efficiency's race floor (x >= 0.6) misprices holding the
+// cube; everywhere else the live-cube model is calibrated and the cheap
+// cube_x-only screen stands.
+static bool is_endgame_cube_position(const Board& board) {
+    // Bars are stored as non-negative counts: index 25 = mover, index 0 = opp.
+    int mover = board[25];
+    int opp   = board[0];
+    for (int i = 1; i <= 24; ++i) {
+        if (board[i] > 0)      mover += board[i];
+        else if (board[i] < 0) opp   -= board[i];
+        if (mover > 2 || opp > 2) return false;
+    }
+    auto [player_pips, opp_pips] = pip_counts(board);
+    return player_pips <= 24 || opp_pips <= 24;
+}
+
 // ======================== Unified Trial Function ========================
 //
 // Single function for both cubeless (n_branches=0) and cubeful (n_branches>0)
@@ -1132,16 +1152,58 @@ RolloutStrategy::TrialResult RolloutStrategy::run_trial_unified(
                     // 1-ply screen + escalate. A branch is sent to the deep
                     // decision_ply cube recursion only when a cheap 1-ply
                     // decision already wants to double; branches the screen
-                    // clears keep their cube unchanged (no double). Because the
-                    // cube can only TURN via the deep decision applied below, a
-                    // 1-ply false-negative merely misses a double — a safe,
-                    // conservative under-count — and can never reintroduce the
-                    // take-driven >1.0 leak. This keeps the deep recursion off
-                    // the common no-double moves (it dominates the cost on
-                    // contact positions where the cube stays live for many
-                    // moves). cube_x is already resolved above for the VR mean.
+                    // clears keep their cube unchanged (no double). This keeps
+                    // the deep recursion off the common no-double moves (it
+                    // dominates the cost on contact positions where the cube
+                    // stays live for many moves).
+                    //
+                    // The screen is a COST filter, not a decision: a false
+                    // negative silently overrides the configured cube evaluator
+                    // and freezes that branch's cube for the rest of the trial.
+                    // That is NOT a conservative under-count in any direction —
+                    // a missed double belongs to whichever side is on roll, so
+                    // it can inflate or deflate the reported equity.
+                    //
+                    // Screening at the position's cube_x alone produces exactly
+                    // such false negatives, most sharply in near-terminal races:
+                    // cube_efficiency floors a race at x = 0.6, but a last-roll
+                    // bearoff has an effectively DEAD cube, and Janowski's
+                    // live-cube term then badly overvalues HOLDING it. Worked
+                    // example — a 7-vs-6-pip bearoff, cube owned by the mover at
+                    // 63.9% wins: 1-ply says ND +0.47 / DT +0.34 (no double)
+                    // while the true cubeful answer is ND +0.278 / DT +0.556 (a
+                    // clear double). The gap is 0.13, so no epsilon tolerance on
+                    // the screen would catch it; the redouble was simply never
+                    // evaluated, and the cube froze for the rest of the trial.
+                    //
+                    // So in the endgame a branch the cube_x screen clears is
+                    // retried at a dead cube (x = 0), which MAXIMIZES the
+                    // doubling advantage min(DT, DP) − ND over x:
+                    // DT = 2·cl2cf(OPPONENT, x) falls as x rises (the taker's
+                    // cube gets livelier) while ND = cl2cf(owner, x) rises when
+                    // the mover owns the cube. The two screens can therefore
+                    // only disagree one way — x = 0 wanting a double the
+                    // position's x does not — so a branch both clear wants no
+                    // double at ANY cube efficiency in [0, 1].
+                    //
+                    // The retry is closed-form on probs already in hand (no
+                    // extra NN evaluation), but the escalations it ADMITS are
+                    // not free: a dead cube says "double whenever ahead", so
+                    // running it unconditionally puts the deep recursion on
+                    // roughly every move the mover leads — measured at ~1.5-1.7x
+                    // wall-clock across the three cubeful rollout benchmarks.
+                    // is_endgame_cube_position() confines it to the positions
+                    // whose cube is genuinely near-dead (<= 2 checkers a side,
+                    // one side within 24 pips), which is where the mispricing
+                    // lives; mid-game positions keep the cube_x-only screen,
+                    // where the 0.68 live-cube model is calibrated and the cube
+                    // really does stay live. cube_x is resolved above for the
+                    // VR mean.
                     std::array<float, NUM_OUTPUTS> screen_probs;
                     bool screen_ready = false;
+                    // Endgame test for the dead-cube retry: board-only, so it
+                    // is computed at most once per move, not per branch.
+                    bool endgame = false, endgame_ready = false;
                     CubeInfo cubes_in[8];
                     for (int b = 0; b < n_branches; ++b) {
                         if (branches[b].finished) continue;
@@ -1162,7 +1224,18 @@ RolloutStrategy::TrialResult RolloutStrategy::run_trial_unified(
                         }
                         CubeDecision cd1 =
                             cube_decision_1ply(screen_probs, branches[b].cube, cube_x);
-                        if (!cd1.should_double) continue;  // screen: no double
+                        if (!cd1.should_double) {
+                            if (!endgame_ready) {
+                                endgame = is_endgame_cube_position(board);
+                                endgame_ready = true;
+                            }
+                            if (!endgame) continue;  // screen: no double
+                            // Retry at a dead cube (x = 0), which maximizes the
+                            // doubling advantage — see above.
+                            CubeDecision cd0 = cube_decision_1ply(
+                                screen_probs, branches[b].cube, 0.0f);
+                            if (!cd0.should_double) continue;  // screen: no double
+                        }
                         cd_branch[n_cd] = b;
                         cubes_in[n_cd]  = branches[b].cube;
                         ++n_cd;
