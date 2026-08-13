@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: AGPL-3.0-or-later
+# SPDX-License-Identifier: MPL-2.0
 # Copyright (C) 2026 Mark Higgins
 """Evaluate a position with Stage 5 and GNUbg side-by-side.
 

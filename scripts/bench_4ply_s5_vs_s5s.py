@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: AGPL-3.0-or-later
+# SPDX-License-Identifier: MPL-2.0
 # Copyright (C) 2026 Mark Higgins
 """Benchmark 4-ply checker play: compare old (single-pass) vs new (iterative deepening).
 

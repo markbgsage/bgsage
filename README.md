@@ -40,3 +40,26 @@ It offers both Python and C++ interfaces for:
 We tested money games and match play against eXtreme Gammon (XG), another popular backgammon analysis application. In particular, we tested Open Sage's 3T evaluations (truncated rollouts) to XG Roller ++ (an equivalent truncated rollout). The two bots were very close, with some weak evidence that Sage 3T is a bit stronger.
 
 Details of the tests, and instructions on how to replicate them, are in XG_COMPARISON.md
+
+## License
+
+Open Sage is released under the **Mozilla Public License 2.0** — see [LICENSE](LICENSE).
+
+That covers everything in this repository, including the **trained model weights** in
+`models/` and the bearoff database in `data/`. Those aren't source code, so to be
+unambiguous: they are licensed on exactly the same terms as the code, and you are free to
+use them in a commercial product.
+
+In plain English:
+
+* **You can use Open Sage in a commercial, closed-source product.** Import it, link it,
+  bundle the weights, ship it. Your own code stays yours, under whatever license you choose.
+* **If you modify a file that came from Open Sage and distribute it, publish that file's
+  source** under the MPL, so the improvement comes back to everyone. Files *you* write remain
+  entirely yours, even when they sit right alongside ours.
+* **Private use carries no obligations at all.** Experiment, retrain, tinker — if you aren't
+  distributing it, nothing is asked of you.
+
+The MPL is file-level copyleft, so the obligation is narrow and predictable: it attaches only
+to the files you changed, and never to the code you build around them. If you do improve the
+engine or train better weights, a pull request is very welcome.

@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: AGPL-3.0-or-later
+# SPDX-License-Identifier: MPL-2.0
 # Copyright (C) 2026 Mark Higgins
 """
 Rollout benchmark: find top-100 worst 1-ply errors, compare with 2-ply, 3-ply, and rollout.

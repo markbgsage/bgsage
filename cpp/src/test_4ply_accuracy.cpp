@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: AGPL-3.0-or-later
+// SPDX-License-Identifier: MPL-2.0
 // Copyright (C) 2026 Mark Higgins
 // Test 4-ply cube accuracy across multiple positions.
 // Compares values with and without the prefilter optimization.

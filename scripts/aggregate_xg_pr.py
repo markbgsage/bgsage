@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: AGPL-3.0-or-later
+# SPDX-License-Identifier: MPL-2.0
 # Copyright (C) 2026 Mark Higgins
 """Aggregate per-game PR stats across all .xg files in a folder, re-analyze
 every XG-flagged Sage decision at 2T (truncated2 / XGRoller+), then roll out

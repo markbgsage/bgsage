@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# SPDX-License-Identifier: AGPL-3.0-or-later
+# SPDX-License-Identifier: MPL-2.0
 # Copyright (C) 2026 Mark Higgins
 """Stamp per-XG-eval-level copies of the pristine native .xg folder for Batch Analyze.
 

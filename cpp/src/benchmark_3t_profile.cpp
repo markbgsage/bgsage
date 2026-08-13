@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: AGPL-3.0-or-later
+// SPDX-License-Identifier: MPL-2.0
 // Copyright (C) 2026 Mark Higgins
 // Profiling benchmark for 3T truncated rollout.
 // Measures time spent in: move0 prefill, move1 prefill, trial loop, truncation evals.

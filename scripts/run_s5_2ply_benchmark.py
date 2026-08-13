@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: AGPL-3.0-or-later
+# SPDX-License-Identifier: MPL-2.0
 # Copyright (C) 2026 Mark Higgins
 """Run Stage 5 3-ply contact + race benchmarks, output to stdout."""
 import bgbot_cpp, os, sys, time

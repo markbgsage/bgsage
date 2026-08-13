@@ -7,7 +7,7 @@ name = "bgsage"
 version = "1.4.20260809"
 description = "Open Sage bot engine — a neural-network backgammon engine"
 readme = "README.md"
-license = "AGPL-3.0-or-later"
+license = "MPL-2.0"
 license-files = ["LICENSE"]
 requires-python = ">=3.10"
 authors = [

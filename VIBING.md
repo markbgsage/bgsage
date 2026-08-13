@@ -30,7 +30,7 @@ How do you do stuff with it? You just ask at the chat prompt (in the Code tab of
 
 You can also write your own code that uses the library as a component - ask Claude Code what the specific interfaces are for things like checker play and cube action analytics. Then ask it to write whatever other code you want that ends up calling those interfaces. 
 
-This library is released under an open source license, the AGPL (see the LICENSE file for details). You can use it for commercial use, but if you use a modified version, you need to make the source code for it available under the same license terms. If you're not worried about commercial use, and you're just using it youself, generally don't worry: make whatever changes you like!
+This library is released under an open source license, the Mozilla Public License 2.0 (see the LICENSE file for details). You can use it commercially, including inside a closed-source product, and your own code stays yours - the license doesn't reach it. What it does ask is that if you change one of *our* files and then ship it, you publish that file's source under the same license, so the improvement comes back to everyone. The trained model weights are covered on exactly the same terms, so you're free to ship those too. And if you're just using it yourself and not distributing anything, there's nothing to worry about at all: make whatever changes you like!
 
 ## Submitting Changes
 

@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: AGPL-3.0-or-later
+// SPDX-License-Identifier: MPL-2.0
 // Copyright (C) 2026 Mark Higgins
 // Experiment: Compare 3T with different truncation evaluation plies.
 // Tests: decision_ply=3 (baseline), decision_ply=2 (faster truncation).

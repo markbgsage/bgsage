@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: AGPL-3.0-or-later
+# SPDX-License-Identifier: MPL-2.0
 # Copyright (C) 2026 Mark Higgins
 """
 Stage 7 SL Training — Phases 3+4 only (resuming from GPW scan Phase 2 weights).

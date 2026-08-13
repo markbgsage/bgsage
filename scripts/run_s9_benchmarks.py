@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: AGPL-3.0-or-later
+# SPDX-License-Identifier: MPL-2.0
 """Stage 9 benchmarks matching what Stage 8 reports.
 
 Sections:

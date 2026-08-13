@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: AGPL-3.0-or-later
+// SPDX-License-Identifier: MPL-2.0
 // Copyright (C) 2026 Mark Higgins
 // Detailed profiling of 3T per-trial cost breakdown.
 // Runs single-threaded 36-trial rollout and reports per-move timing.
