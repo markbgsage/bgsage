@@ -6,6 +6,9 @@
 
 #include <atomic>
 #include <chrono>
+#include <exception>
+#include <functional>
+#include <mutex>
 #include <random>
 #include <algorithm>
 #include <iostream>
@@ -37,6 +40,69 @@ static BenchmarkResult run_score_benchmarks(const Strategy& strategy,
                                              int n_threads) {
     return score_benchmarks(strategy, scenarios, n_threads);
 }
+
+// Bridges rollout progress reports to a Python callable.
+//
+// Progress is reported from the rollout's WORKER threads: the binding releases
+// the GIL for the rollout and each reporting thread re-acquires it to call into
+// Python. If that call raises, pybind11 turns it into a C++ py::error_already_set
+// — and letting that unwind out of the worker lambda reaches the thread runner,
+// which calls std::terminate (0xC0000409 on Windows). When the faulted worker
+// still holds the GIL it wedges instead: every other reporting thread blocks in
+// gil_scoped_acquire forever. Either way the process is lost, and a caller that
+// simply mistyped its callback signature gets no diagnosis at all.
+//
+// So the first exception is captured here rather than escaping, the rollout is
+// asked to stop, and no later report calls into Python. The binding rethrows on
+// the main thread once the GIL is back, so the error still reaches user code as
+// an ordinary Python exception.
+class ProgressBridge {
+public:
+    // `cancel` is invoked once, from the failing worker thread, to stop the
+    // rollout early; it may be null when the caller has nothing to cancel.
+    ProgressBridge(py::object cb, std::function<void()> cancel)
+        : cb_(std::move(cb)), cancel_(std::move(cancel)) {}
+
+    // The returned callback captures `this`, so the bridge must outlive the
+    // rollout call and must not be copied or moved.
+    ProgressBridge(const ProgressBridge&) = delete;
+    ProgressBridge& operator=(const ProgressBridge&) = delete;
+
+    RolloutProgressCallback callback() {
+        if (cb_.is_none()) return nullptr;
+        return [this](int completed, int total) {
+            // Once one report has raised, stop calling into Python entirely:
+            // the caller is going to get that first error regardless, and a
+            // callback that raises once generally raises every time.
+            if (failed_.load(std::memory_order_acquire)) return;
+            py::gil_scoped_acquire acquire;
+            try {
+                cb_(completed, total);
+            } catch (...) {
+                std::lock_guard<std::mutex> lock(mu_);
+                if (!err_) err_ = std::current_exception();
+                failed_.store(true, std::memory_order_release);
+                if (cancel_) cancel_();
+            }
+        };
+    }
+
+    bool failed() const { return failed_.load(std::memory_order_acquire); }
+
+    // Call on the main thread with the GIL held, after the rollout returns.
+    // Rethrowing here destroys the captured py::error_already_set under the
+    // GIL, which is why it cannot be done from the worker thread.
+    void rethrow_if_failed() const {
+        if (err_) std::rethrow_exception(err_);
+    }
+
+private:
+    py::object cb_;
+    std::function<void()> cancel_;
+    std::atomic<bool> failed_{false};
+    std::mutex mu_;
+    std::exception_ptr err_;
+};
 
 // Convert a Python list of 26 ints to a Board
 static Board list_to_board(const std::vector<int>& v) {
@@ -1975,16 +2041,23 @@ PYBIND11_MODULE(bgbot_cpp, m) {
                                    const std::vector<int>& pre_move_board,
                                    py::object progress_callback) {
             auto b = list_to_board(board_vec);
-            RolloutProgressCallback cpp_progress;
-            if (!progress_callback.is_none()) {
-                cpp_progress = [cb = progress_callback](int completed, int total) {
-                    py::gil_scoped_acquire acquire;
-                    cb(completed, total);
-                };
+            ProgressBridge bridge(progress_callback, [&self]() { self.cancel(); });
+            RolloutProgressCallback cpp_progress = bridge.callback();
+            RolloutResult r;
+            {
+                py::gil_scoped_release release;
+                try {
+                    r = self.rollout_position(b, cpp_progress);
+                } catch (const RolloutCancelled&) {
+                    // Our own cancel, if the callback raised; rethrown below as
+                    // the user's exception. A genuine external cancel re-throws.
+                    if (!bridge.failed()) throw;
+                }
             }
-            py::gil_scoped_release release;
-            auto r = self.rollout_position(b, cpp_progress);
-            py::gil_scoped_acquire acquire;
+            if (bridge.failed()) {
+                self.reset_cancel();
+                bridge.rethrow_if_failed();
+            }
             py::dict result;
             result["probs"] = r.mean_probs;
             result["equity"] = r.equity;
@@ -2013,18 +2086,21 @@ PYBIND11_MODULE(bgbot_cpp, m) {
             CubeInfo ci{cube_value, owner, {away1, away2, is_crawford},
                         cube_x_override, jacoby, beaver, max_cube_value};
 
-            RolloutProgressCallback cpp_progress;
-            if (!progress_callback.is_none()) {
-                cpp_progress = [cb = progress_callback](int completed, int total) {
-                    py::gil_scoped_acquire acquire;
-                    cb(completed, total);
-                };
-            }
+            ProgressBridge bridge(progress_callback, [&self]() { self.cancel(); });
+            RolloutProgressCallback cpp_progress = bridge.callback();
 
             RolloutStrategy::CubefulPositionResult cpr;
             {
                 py::gil_scoped_release release;
-                cpr = self.cubeful_rollout_position(b, ci, cpp_progress);
+                try {
+                    cpr = self.cubeful_rollout_position(b, ci, cpp_progress);
+                } catch (const RolloutCancelled&) {
+                    if (!bridge.failed()) throw;
+                }
+            }
+            if (bridge.failed()) {
+                self.reset_cancel();
+                bridge.rethrow_if_failed();
             }
 
             const auto& cl = cpr.cubeless;
@@ -2077,21 +2153,24 @@ PYBIND11_MODULE(bgbot_cpp, m) {
             CubeInfo ci{cube_value, owner, {away1, away2, is_crawford},
                         cube_x_override, jacoby, beaver, max_cube_value};
 
-            RolloutProgressCallback cpp_progress;
-            if (!progress_callback.is_none()) {
-                cpp_progress = [cb = progress_callback](int completed, int total) {
-                    py::gil_scoped_acquire acquire;
-                    cb(completed, total);
-                };
-            }
+            ProgressBridge bridge(progress_callback, [&self]() { self.cancel(); });
+            RolloutProgressCallback cpp_progress = bridge.callback();
 
             RolloutStrategy::CubefulRolloutResult cfr;
             {
                 py::gil_scoped_release release;
-                if (self.config().target_se > 0.0)
-                    cfr = self.cubeful_cube_decision_batched(board, ci, cpp_progress);
-                else
-                    cfr = self.cubeful_cube_decision(board, ci, cpp_progress);
+                try {
+                    if (self.config().target_se > 0.0)
+                        cfr = self.cubeful_cube_decision_batched(board, ci, cpp_progress);
+                    else
+                        cfr = self.cubeful_cube_decision(board, ci, cpp_progress);
+                } catch (const RolloutCancelled&) {
+                    if (!bridge.failed()) throw;
+                }
+            }
+            if (bridge.failed()) {
+                self.reset_cancel();
+                bridge.rethrow_if_failed();
             }
 
             const auto& cl = cfr.cubeless;
@@ -3040,18 +3119,20 @@ PYBIND11_MODULE(bgbot_cpp, m) {
         CubeInfo ci{cube_value, owner, {away1, away2, is_crawford}, cube_x_override, jacoby, beaver, max_cube_value};
 
         // Build C++ progress callback that acquires GIL to call Python
-        RolloutProgressCallback cpp_progress;
-        if (!progress_callback.is_none()) {
-            cpp_progress = [cb = progress_callback](int completed, int total) {
-                py::gil_scoped_acquire acquire;
-                cb(completed, total);
-            };
-        }
+        ProgressBridge bridge(progress_callback, [&rollout]() { rollout->cancel(); });
+        RolloutProgressCallback cpp_progress = bridge.callback();
 
         RolloutStrategy::CubefulRolloutResult cfr;
         {
             py::gil_scoped_release release;
-            cfr = rollout->cubeful_cube_decision(board, ci, cpp_progress);
+            try {
+                cfr = rollout->cubeful_cube_decision(board, ci, cpp_progress);
+            } catch (const RolloutCancelled&) {
+                if (!bridge.failed()) throw;
+            }
+        }
+        if (bridge.failed()) {
+            bridge.rethrow_if_failed();
         }
 
         // Cubeless probs come from the cubeful rollout's integrated cubeless rollout
