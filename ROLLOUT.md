@@ -195,12 +195,14 @@ At each half-move, VR computes:
 
 **1. VR Mean (expected value over all 21 rolls):**
 
-For each of the 21 possible dice outcomes, find the best move and evaluate the
-resulting position at 1-ply. The weighted average is the expected value:
+For each of the 21 possible dice outcomes, find the move the trial's own
+selection rule would play and evaluate the resulting position at 1-ply. The
+weighted average is the expected value:
 
 ```
 for each of 21 rolls (d1, d2, weight):
-    best_probs[i] = evaluate_best_move_probs(board, d1, d2, base_strategy)
+    best_probs[i] = evaluate_best_move_probs(board, d1, d2, base_strategy,
+                                             selection_cubes)
 
 mean_probs[k] = sum(weight[i] * best_probs[i][k]) / 36.0   for k in 0..4
 mean_equity = compute_equity(mean_probs)
@@ -246,6 +248,27 @@ else:
     accumulated_luck[4] += luck_probs[2]       // P(bw) -> P(bl) for SP
     scalar_luck -= luck_equity
 ```
+
+### Selection-Rule Agreement
+
+Luck has zero mean only if the per-roll baseline the VR mean averages over is
+produced by the **same selection rule** the trial uses to pick the move it
+actually plays. Sharing the evaluator for the probabilities is not sufficient —
+the *move* must match. Three things therefore agree between mean and actual:
+
+- **Ranking objective** — cubeful (`cl2cf` against the active branches' cube
+  states, `branches[0]` driving) whenever cube-aware selection is in force for
+  the half-move; cubeless otherwise. `selection_cubes` above is non-empty
+  exactly when the trial's own pick is cube-aware.
+- **Tie-break** — candidates whose ranking values tie resolve to the higher
+  money cubeless equity on both sides.
+- **Evaluator** — the DB-aware 1-ply variant at bearoff positions, so the
+  baseline ranks by exact DB equity where the trial plays the DB-optimal move.
+
+Any divergence gives the luck term a non-zero mean. Because the correction is
+subtracted from every trial, the resulting bias is unbounded: it does not
+shrink with trial count, it moves the reported equity, and it can push a
+rolled-out probability outside [0, 1].
 
 ### VR Decoupling from Decision Strategy
 
@@ -748,7 +771,11 @@ whose cubeless equity sits well below the cubeless-best, including the
 match-defensive plays preferred at extreme away scores (e.g. 1-away with
 cube=2). The filter scores all candidates with the batched delta-evaluation
 kernel (`batch_evaluate_candidates_equity_probs`), classified from the
-pre-move board.
+pre-move board. Candidates whose cubeful scores are equal are ordered by
+money cubeless equity, so survival is decided on merit rather than on sort
+order — at scores where a gammon and a backgammon lose alike, every
+candidate can carry an identical cubeful score, and a move dropped here
+cannot be recovered by the rescore.
 
 The union survivors are then evaluated at the configured N-ply via
 `cubeful_equity_nply_multi` (serial, with the deep PubEval pre-filter
@@ -759,7 +786,9 @@ expects a pre-roll position from the player-on-roll's POV and returns the
 equity in that POV, so for a post-move candidate (mover already moved) we
 flip first. The returned per-cube equities are then in the opponent's POV,
 so the mover's best move is the one that **minimizes** the opponent's
-equity (argmin per cube). This matches the `_cubeful_equity` helper in
+equity (argmin per cube). When several survivors share the minimum, the
+tie resolves to the highest money cubeless equity of the mover's own
+post-move board, evaluated at 1-ply and only for the tied survivors. This matches the `_cubeful_equity` helper in
 the Python analyzer, which uses the same flip-and-negate pattern.
 
 For 4-ply targets the filter chain has an intermediate 3-ply step that
@@ -773,10 +802,13 @@ branch cube states and call `best_move_index_cubeful_multi` instead of
 `best_move_index`. Each trial then reuses the cached `chosen[]` at moves
 0 and 1 — no per-trial cubeful BMI cost at those moves, and trial outputs
 are deterministic across runs because every trial picks the same move at
-each cache hit. Move1Cache's `mover_probs`, `roll_best_probs`, and the
-`cl_mean` fields are cube-state-independent (1-ply cubeless) and shared
-between cubeless and cube-aware modes — they feed the per-move cube
-decisions and the cubeless VR mean.
+each cache hit. Move1Cache's `mover_probs` is cube-state-independent (1-ply cubeless) and
+feeds the per-move cube decisions. Its `roll_best_probs`,
+`best_candidate_idx` and `cl_mean` fields follow the entry's selection
+mode: populated cube-aware, they hold the cubeful-best move per roll, the
+same move the cached `chosen[]` replays. That is what keeps the cubeless
+VR mean's baseline on the move the trial actually plays (see
+"Selection-Rule Agreement" in §4).
 
 The `cubeful_late_threshold` config caps cube-aware selection to early
 half-moves: at moves >= this threshold the trial falls back to cubeless

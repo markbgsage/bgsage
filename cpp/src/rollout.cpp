@@ -481,8 +481,30 @@ int RolloutStrategy::rollout_thread_count(int n_trials) const
 
 std::array<float, NUM_OUTPUTS> RolloutStrategy::best_move_probs_for_candidates(
     const Board& board, const std::vector<Board>& candidates,
-    const Strategy& strat, int* best_index) const
+    const Strategy& strat, int* best_index,
+    const CubeInfo* sel_cubes, int n_sel_cubes, float sel_cube_x) const
 {
+    // VR CONTRACT (see header): when the trial picks its move by cubeful
+    // equity, rank candidates here by the SAME criterion, using the SAME
+    // function the trial calls. Ranking cubelessly while the trial plays
+    // the cubeful-best move gives luck a non-zero mean, which biases the
+    // result without bound (it is what produced negative rolled-out
+    // backgammon probabilities in decided races).
+    if (sel_cubes && n_sel_cubes > 0 && candidates.size() > 1) {
+        std::array<int, 4> picks{0, 0, 0, 0};
+        strat.best_move_index_cubeful_multi(
+            candidates, board, sel_cubes,
+            std::min(n_sel_cubes, 4), sel_cube_x, picks.data());
+        int idx = picks[0];
+        if (idx < 0 || idx >= static_cast<int>(candidates.size())) idx = 0;
+        if (best_index) *best_index = idx;
+        GameResult tr = check_game_over(candidates[idx]);
+        if (tr != GameResult::NOT_OVER) return terminal_probs(tr);
+        auto probs = strat.evaluate_probs(candidates[idx], board);
+        clamp_probs_to_board(probs, candidates[idx]);
+        return probs;
+    }
+
     if (candidates.empty()) {
         if (best_index) *best_index = -1;
         // No legal moves: pass. Probs describe `board` itself (the player
@@ -775,9 +797,14 @@ void RolloutStrategy::populate_move1_cache_entry(
                                  ALL_ROLLS[second_roll].d2,
                                  candidates);
 
+        // VR CONTRACT: rank by the same rule used to pick `chosen` below, so
+        // entry.cl_mean_probs (built from roll_best_probs) is the mean over
+        // the moves the trial will actually play.
         int best_idx = -1;
         entry.roll_best_probs[second_roll] = best_move_probs_for_candidates(
-            move1_board, candidates, current_strat, &best_idx);
+            move1_board, candidates, current_strat, &best_idx,
+            cube_aware ? m1_cubes.data() : nullptr,
+            cube_aware ? n_select_cubes : 0, entry.cube_x);
         entry.best_candidate_idx[second_roll] = best_idx;
 
         Board chosen;
@@ -1448,6 +1475,12 @@ RolloutStrategy::TrialResult RolloutStrategy::run_trial_unified(
                                    && config_.n_trials >= kVrThinningMinTrials);
         bool do_vr = vr_enabled && !skip_vr_this_move;
 
+        // Per-move gate for cube-aware selection. Defined here (rather than in
+        // Phase 4) because the Phase 3 VR mean must rank candidates by the same
+        // rule Phase 4 uses to pick the played move.
+        const bool use_cubeful_select_now =
+            use_cubeful_select && (move_num < cubeful_late_threshold);
+
         ROLLOUT_TIMER_START;
         if (move1_entry) {
             // Fully precomputed for move 1.
@@ -1520,10 +1553,26 @@ RolloutStrategy::TrialResult RolloutStrategy::run_trial_unified(
                 // luck doesn't fully sum to zero unless the trial count
                 // stratifies all the way to that move.
                 const Strategy& vr_base = base_bearoff_ ? *base_bearoff_ : *base_;
+
+                // Mirror Phase 4's selection rule: when the trial plays the
+                // cubeful-best move, the mean must be over cubeful-best moves
+                // too. Same cube set and driver branch as Phase 4 (picks[0]).
+                std::array<CubeInfo, 4> vr_sel_cubes;
+                int vr_n_sel = 0;
+                if (use_cubeful_select_now) {
+                    for (int b = 0; b < n_branches && vr_n_sel < 4; ++b) {
+                        if (!branches[b].finished)
+                            vr_sel_cubes[vr_n_sel++] = branches[b].cube;
+                    }
+                }
+                const CubeInfo* vr_sel_ptr =
+                    (vr_n_sel > 0) ? vr_sel_cubes.data() : nullptr;
+
                 for (size_t i = 0; i < ALL_ROLLS.size(); ++i) {
                     int idx = -1;
                     roll_best_probs[i] = best_move_probs_for_candidates(
-                        board, move_candidates[i], vr_base, &idx);
+                        board, move_candidates[i], vr_base, &idx,
+                        vr_sel_ptr, vr_n_sel, cube_x);
                     best_candidate_idx[i] = idx;
                 }
 
@@ -1593,9 +1642,6 @@ RolloutStrategy::TrialResult RolloutStrategy::run_trial_unified(
         // cubeful-late threshold (Idea 3). Cache hits at moves 0/1 are
         // still cube-stamped, so the cubeful path is taken for those moves
         // regardless of this threshold.
-        const bool use_cubeful_select_now =
-            use_cubeful_select && (move_num < cubeful_late_threshold);
-
         Board chosen;
         bool used_move0_cache = false;
         if (use_cubeful_select_now) {

@@ -388,7 +388,7 @@ void leaf_from_post_probs(
             continue;
         }
         if (cube_is_dead(aci[i])) {
-            arCf[i] = cubeless_equity(pre_roll_probs);
+            arCf[i] = cubeless_value(pre_roll_probs, aci[i]);
             continue;
         }
         float x = (aci[i].cube_x_override >= 0.0f)
@@ -419,7 +419,7 @@ void accumulate_terminal(
             continue;
         }
         if (cube_is_dead(aci[i])) {
-            arCfLocal[i] = weight * cubeless_equity(tp);
+            arCfLocal[i] = weight * cubeless_value(tp, aci[i]);
             continue;
         }
         if (aci[i].is_money()) {
@@ -498,7 +498,7 @@ void cubeful_eval_recursive(
                 continue;
             }
             if (cube_is_dead(aciCubePos[ici])) {
-                arCubeful[ici] = cubeless_equity(t_probs);
+                arCubeful[ici] = cubeless_value(t_probs, aciCubePos[ici]);
                 continue;
             }
             if (aciCubePos[ici].is_money()) {
@@ -561,7 +561,7 @@ void cubeful_eval_recursive(
             const auto p = *res.probs;
             for (int i = 0; i < cci; ++i) {
                 arCubeful[i] = (aciCubePos[i].cube_value <= 0)
-                    ? 0.0f : cubeless_equity(p);
+                    ? 0.0f : cubeless_value(p, aciCubePos[i]);
             }
             if (arProbsOut) *arProbsOut = p;
             g_cubeful_eval_cache.put(key, fp, board, plies, cci, fTop,
@@ -716,19 +716,22 @@ void cubeful_eval_recursive(
 
             // Cubeful pick vs the primary cube state: every interior pick
             // is match/cube-aware without forking the recursion per cube.
-            float best_cf = -std::numeric_limits<float>::infinity();
-            int local_best = 0;
+            // Ties on the cubeful value are broken by money cubeless equity
+            // (pick_best_with_tiebreak in cube.h): at scores where a gammon
+            // and a backgammon lose the match alike, EVERY move can score
+            // identically, and an arbitrary pick here leaves checkers in the
+            // opponent's home board and invents backgammon losses at the leaf.
+            thread_local std::vector<float> cf_vals;
+            cf_vals.resize(n_eval);
             for (int c = 0; c < n_eval; ++c) {
                 const Board& cand = (*eval_candidates)[c];
                 bool crace = is_race(cand);
                 auto [pp, op] = pip_counts(cand);
                 float cube_x = cube_efficiency(cand_probs[c], crace, pp, op);
-                float cf = cl2cf(cand_probs[c], aciCubePos[0], cube_x);
-                if (cf > best_cf) {
-                    best_cf = cf;
-                    local_best = c;
-                }
+                cf_vals[c] = cl2cf(cand_probs[c], aciCubePos[0], cube_x);
             }
+            const int local_best =
+                pick_best_with_tiebreak(cf_vals.data(), cand_probs.data(), n_eval);
             chosen = (*eval_candidates)[local_best];
             chosen_post_probs = cand_probs[local_best];
             chosen_terminal = (check_game_over(chosen) != GameResult::NOT_OVER);
@@ -817,7 +820,7 @@ void cubeful_eval_recursive(
         // cache (the two accumulation orders differ in the last ulp).
         for (int i = 0; i < cci; ++i) {
             arCubeful[i] = (aciCubePos[i].cube_value <= 0)
-                ? 0.0f : cubeless_equity(probs_final);
+                ? 0.0f : cubeless_value(probs_final, aciCubePos[i]);
         }
     }
     if (can_cache) {

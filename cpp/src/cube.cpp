@@ -169,12 +169,23 @@ float cl2cf_money(const std::array<float, NUM_OUTPUTS>& probs,
 // This happens when the cube value is enough for both players to win the match
 // on any win, or during Crawford game.
 static bool is_dead_cube(const CubeInfo& cube) {
+    if (cube_is_dead(cube)) return true;          // structural cap
     if (cube.is_money()) return false;
     if (cube.match.is_crawford) return true;
-    // If both players win the match with a normal win at current cube value
-    if (cube.match.away1 <= cube.cube_value && cube.match.away2 <= cube.cube_value)
-        return true;
-    return false;
+    // A cube can only be turned again by a player who BOTH may double it
+    // (ownership) AND gains by doing so -- a player whose win at the current
+    // cube value already takes the match gains nothing. Ownership matters:
+    // with an owned cube only the owner can turn it, so the owner's away score
+    // alone decides. Requiring BOTH away scores to be covered is correct only
+    // for a CENTERED cube, and left e.g. 3-away/2-away with the cube on 2 owned
+    // by the trailer looking live.
+    const bool player_can_turn =
+        (cube.owner == CubeOwner::CENTERED || cube.owner == CubeOwner::PLAYER)
+        && cube.match.away1 > cube.cube_value;
+    const bool opponent_can_turn =
+        (cube.owner == CubeOwner::CENTERED || cube.owner == CubeOwner::OPPONENT)
+        && cube.match.away2 > cube.cube_value;
+    return !player_can_turn && !opponent_can_turn;
 }
 
 // Compute MWC-space take point and cash point for match play.
@@ -1205,7 +1216,7 @@ static void cubeful_recursive_multi(
             }
             // Dead cube (max_cube_value reached): pure cubeless equity, gammons count
             if (cube_is_dead(aciCubePos[ici])) {
-                arCubeful[ici] = cubeless_equity(t_probs);
+                arCubeful[ici] = cubeless_value(t_probs, aciCubePos[ici]);
                 continue;
             }
             if (aciCubePos[ici].is_money()) {
@@ -1254,7 +1265,7 @@ static void cubeful_recursive_multi(
             }
             // Dead cube: skip Janowski, return pure cubeless equity
             if (cube_is_dead(aci[i])) {
-                arCf[i] = cubeless_equity(pre_roll_probs);
+                arCf[i] = cubeless_value(pre_roll_probs, aci[i]);
                 continue;
             }
             float x = (aci[i].cube_x_override >= 0.0f)
@@ -1340,7 +1351,7 @@ static void cubeful_recursive_multi(
                     }
                     // Dead cube: pure cubeless equity, gammons count
                     if (cube_is_dead(aci[i])) {
-                        arCfLocal[i] = roll.weight * cubeless_equity(tp);
+                        arCfLocal[i] = roll.weight * cubeless_value(tp, aci[i]);
                         continue;
                     }
                     if (aci[i].is_money()) {
@@ -1507,7 +1518,7 @@ static void cubeful_recursive_multi(
                 }
                 // Dead cube: pure cubeless equity, gammons count
                 if (cube_is_dead(aci[i])) {
-                    arCfLocal[i] = roll.weight * cubeless_equity(tp);
+                    arCfLocal[i] = roll.weight * cubeless_value(tp, aci[i]);
                     continue;
                 }
                 if (aci[i].is_money()) {

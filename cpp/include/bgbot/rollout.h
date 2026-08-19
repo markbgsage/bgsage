@@ -491,10 +491,22 @@ private:
 
     // Internal helper: evaluate the best move among pre-generated candidate
     // boards (used by both VR mean computation and internal move loops).
+    //
+    // VR CONTRACT: the rule used here to pick the best candidate MUST match
+    // the rule the trial uses to pick the move it actually plays. VR's luck
+    // term is (value of the move played) - (mean over rolls of the value of
+    // the move the policy would play); that has zero mean ONLY if both sides
+    // rank candidates identically. When the trial selects by cubeful equity
+    // (cubeful_trial_moves), pass `sel_cubes`/`n_sel_cubes`/`sel_cube_x` so
+    // the mean ranks by the same cubeful criterion. Omitting them while the
+    // trial selects cubefully biases every rolled-out probability and equity.
     std::array<float, NUM_OUTPUTS> best_move_probs_for_candidates(
         const Board& board, const std::vector<Board>& candidates,
         const Strategy& strat,
-        int* best_index = nullptr) const;
+        int* best_index = nullptr,
+        const CubeInfo* sel_cubes = nullptr,
+        int n_sel_cubes = 0,
+        float sel_cube_x = 0.0f) const;
 
     // Precompute the move-0 choice for each opening roll.
     //

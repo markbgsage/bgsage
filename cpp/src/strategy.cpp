@@ -69,17 +69,17 @@ int Strategy::best_move_index_cubeful(
     batch_evaluate_candidates_equity_probs(candidates, pre_move_board,
                                            nullptr, probs_per.data());
 
-    int best_idx = 0;
-    float best_cf = -std::numeric_limits<float>::infinity();
+    // Same ranking rule as best_move_index_cubeful_multi below -- cubeful
+    // equity, ties broken on money cubeless equity. These two must never
+    // diverge: they are the cube-aware selection entry points, and a rollout's
+    // VR mean and its played move have to agree on the rule or luck stops
+    // having zero mean.
+    std::vector<float> cf_vals(n);
     for (int i = 0; i < n; ++i) {
         clamp_probs_to_board(probs_per[i], candidates[i]);
-        float cf = cl2cf(probs_per[i], ci, cube_x);
-        if (cf > best_cf) {
-            best_cf = cf;
-            best_idx = i;
-        }
+        cf_vals[i] = cl2cf(probs_per[i], ci, cube_x);
     }
-    return best_idx;
+    return pick_best_with_tiebreak(cf_vals.data(), probs_per.data(), n);
 }
 
 void Strategy::best_move_index_cubeful_multi(
@@ -110,17 +110,15 @@ void Strategy::best_move_index_cubeful_multi(
         clamp_probs_to_board(probs_per[i], candidates[i]);
     }
 
+    // Rank by cubeful equity, breaking exact ties on money cubeless equity
+    // (see pick_best_with_tiebreak in cube.h). probs_per is already in hand,
+    // so the tie-break costs a handful of flops per candidate.
+    std::vector<float> cf_vals(n);
     for (int c = 0; c < n_cubes; ++c) {
-        int best_idx = 0;
-        float best_cf = -std::numeric_limits<float>::infinity();
         for (int i = 0; i < n; ++i) {
-            float cf = cl2cf(probs_per[i], cubes[c], cube_x);
-            if (cf > best_cf) {
-                best_cf = cf;
-                best_idx = i;
-            }
+            cf_vals[i] = cl2cf(probs_per[i], cubes[c], cube_x);
         }
-        out_indices[c] = best_idx;
+        out_indices[c] = pick_best_with_tiebreak(cf_vals.data(), probs_per.data(), n);
     }
 }
 

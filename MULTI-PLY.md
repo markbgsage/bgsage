@@ -492,6 +492,17 @@ itself is cubeful, interior play is cube- and match-aware throughout the tree
 (e.g. match-defensive moves at extreme away scores are picked where a cubeless
 pick would not choose them).
 
+Candidates whose cubeful equity ties within `MOVE_TIE_EPSILON` are separated by
+their money cubeless equity, highest first. The cubeful objective can be
+genuinely flat across every legal move — at a score where a single, a gammon
+and a backgammon all lose the match alike, every candidate scores identically —
+and an arbitrary pick there propagates to the leaves, where positions the mover
+would never have played into contribute their gammon and backgammon rates to
+the reported probabilities. Ranking the flat set on raw cubeless merit costs a
+few floating-point operations per candidate (the probability vectors are
+already in hand) and leaves every non-tied pick untouched. The maximum is found
+before the tie scan, so the result never depends on candidate ordering.
+
 ### Batched Candidate Evaluation
 
 The per-candidate 1-ply probabilities that feed the pick are computed by a
@@ -541,6 +552,7 @@ NN evaluation (terminal candidates always survive):
 ### Move Selection Constants
 
 ```
+MOVE_TIE_EPSILON = 1e-6        // Selection values within this count as tied
 MOVE_FILTER_THRESHOLD = 16     // Entry-ply: pre-filter if > 16 candidates
 MOVE_FILTER_KEEP = 15          // Entry-ply: keep top 15
 DEEP_FILTER_THRESHOLD = 16     // Deep nodes: pre-filter if > 16 candidates
@@ -1162,6 +1174,25 @@ Three `cl2cf_match` variants by ownership:
 - **Player owns:** 2-region (below CP | above CP)
 - **Opponent owns (unavailable):** 2-region (below opponent CP | above)
 
+### Dead Cubes in Match Play
+
+A cube can be turned again only by a player who both may double it and gains
+something by doing so. A player whose win at the current cube value already
+takes the match gains nothing — doubling only raises what they lose. Ownership
+therefore decides which away score matters:
+
+- **Owned cube:** only the owner can turn it, so the cube is dead when the
+  owner's away score is at most the cube value.
+- **Centered cube:** either player can turn it, so both away scores must be at
+  most the cube value.
+- **Crawford game:** dead, no doubling allowed.
+
+A dead cube bypasses Janowski entirely and evaluates to the cubeless value.
+That value is expressed in the units the surrounding computation carries —
+MWC for match play, equity for money — because the recursion works in MWC
+space at a match score (see below). The same rule governs `can_double()`, so
+the doubling decision and the equity conversion never disagree.
+
 ### Match Play in the N-Ply Recursion
 
 The recursion operates entirely in MWC space for match play:
@@ -1170,6 +1201,9 @@ The recursion operates entirely in MWC space for match play:
 - Perspective flip: `1 - MWC/36` (complement) instead of `-E/36` (negate)
 - Terminal positions: `cubeless_mwc(terminal_probs, ...)` instead of
   `cubeless_equity()`
+- Dead-cube short-circuits: `cubeless_mwc()` for match, `cubeless_equity()`
+  for money — a cubeless value inserted in the wrong units is silently
+  rescaled by the final `mwc2eq()` conversion
 - get_ecf3: DP value from `dp_mwc()`, DT not scaled (already in MWC space)
 - Final result: converted to equity via `mwc2eq()` for display
 

@@ -75,6 +75,15 @@ inline bool can_double(const CubeInfo& ci) {
 // Used to skip all cubeful overhead (Janowski, cubeful VR, cube checks).
 // Typical use: max_cube_value=1 makes the entire game cubeless.
 inline bool cube_is_dead(const CubeInfo& ci) {
+    // STRUCTURAL cap only (max_cube_value=1 makes the whole game cubeless).
+    //
+    // Deliberately NOT match-aware. Widening this to cover match-dead cubes is
+    // correct in principle but flips cube_active off in the rollout trial loop,
+    // and is_match is derived from cube_active (rollout.cpp), so a match
+    // position starts being treated with money conventions -- and it made a 2T
+    // checker play on a match-dead cube 20x slower (0.59s -> 11.9s). The
+    // match-aware rule lives in is_dead_cube() in cube.cpp, which is what the
+    // Janowski conversion consults; see that function.
     return ci.max_cube_value > 0 && ci.cube_value >= ci.max_cube_value;
 }
 
@@ -93,6 +102,75 @@ float money_live(float W, float L, float p_win, CubeOwner owner,
 // E = 2*P(win) - 1 + P(gw) - P(gl) + P(bw) - P(bl)
 inline float cubeless_equity(const std::array<float, NUM_OUTPUTS>& probs) {
     return 2.0f * probs[0] - 1.0f + probs[1] - probs[3] + probs[2] - probs[4];
+}
+
+// Epsilon within which two candidate selection values count as TIED for
+// move-selection purposes. See pick_best_with_tiebreak().
+inline constexpr float MOVE_TIE_EPSILON = 1e-6f;
+
+// Choose the best candidate index given per-candidate selection `values`
+// (higher is better) and their cubeless probability vectors, breaking ties on
+// money cubeless equity.
+//
+// WHY. The selection value can be genuinely flat across every legal move: at
+// 3-away/2-away with the cube on 2, a single, a gammon and a backgammon all
+// simply lose the match, so all 105 moves of a 5-5 came out at EXACTLY the
+// same equity (measured spread 0.000000). Selection was then arbitrary and the
+// engine happily left checkers in the opponent's home board, reporting a 3.57%
+// backgammon loss for a position whose true value is 0% -- the unlimited game,
+// where the same position has a real 0.12 equity spread, gets it right. Where
+// the primary value cannot distinguish two moves, prefer the one that is
+// better on raw cubeless merit; it costs nothing and it is what a human does.
+//
+// This does NOT change any reported equity -- only which of several
+// equal-equity moves is picked, so attributed error (and therefore PR) is
+// unchanged.
+//
+// Deterministic and order-independent: the maximum is found first, so the
+// result never depends on candidate ordering (a running-best comparison with
+// an epsilon would).
+//
+// PERSPECTIVE: this MAXIMISES, so `values` and `probs` must both be in the
+// MOVER's perspective. Some rankings (the N-ply cubeful rescore in
+// multipy.cpp) hold opponent-POV values and argmin them; applying this
+// helper there unchanged would select the WORST move in every flat
+// position. Rank the mover's own post-move probs instead.
+//
+// VR CONTRACT: rollout variance reduction requires the move the trial PLAYS
+// and the move the VR MEAN assumes to be selected by an IDENTICAL rule. Any
+// site that adopts this tie-break must be reachable from both, or luck stops
+// having zero mean and every rolled-out probability is biased.
+inline int pick_best_with_tiebreak(const float* values,
+                                   const std::array<float, NUM_OUTPUTS>* probs,
+                                   int n)
+{
+    if (n <= 0) return 0;
+    float best_v = values[0];
+    for (int i = 1; i < n; ++i) {
+        if (values[i] > best_v) best_v = values[i];
+    }
+    int best = 0;
+    float best_cl = -1e30f;
+    for (int i = 0; i < n; ++i) {
+        if (values[i] < best_v - MOVE_TIE_EPSILON) continue;
+        const float cl = cubeless_equity(probs[i]);
+        if (cl > best_cl) { best_cl = cl; best = i; }
+    }
+    return best;
+}
+
+// Cubeless value of a position expressed in the units the cubeful evaluation
+// carries: EQUITY for money, MWC for match play. The N-ply cubeful recursion
+// works entirely in MWC space for match (cl2cf_match returns MWC), so a dead
+// cube that short-circuits the Janowski interpolation must insert a cubeless
+// MWC there -- inserting money equity silently corrupts the result once it is
+// normalised (observed: a 2-ply match ND of +10.43 where +0.31 was correct).
+// Money behaviour is exactly cubeless_equity(), unchanged.
+inline float cubeless_value(const std::array<float, NUM_OUTPUTS>& probs,
+                            const CubeInfo& ci) {
+    if (ci.is_money()) return cubeless_equity(probs);
+    return cubeless_mwc(probs, ci.match.away1, ci.match.away2,
+                        ci.cube_value, ci.match.is_crawford);
 }
 
 // Cubeless-to-cubeful conversion (Janowski interpolation).

@@ -1002,10 +1002,23 @@ void MultiPlyStrategy::best_move_index_cubeful_multi(
                 float cf = cl2cf(probs_per[i], cubes[c], cube_x);
                 cube_eqs.emplace_back(cf, i);
             }
+            // Ties broken on money cubeless equity. This decides WHICH
+            // candidates survive to the cubeful rescore, and a move dropped
+            // here can never be recovered -- at a score where every cubeful
+            // key is bit-identical, survival was otherwise decided by
+            // introsort partitioning order.
+            //
+            // The tie test is exact equality, NOT MOVE_TIE_EPSILON: an
+            // epsilon comparator is not a strict weak ordering (a~b, b~c,
+            // a!~c), which is undefined behaviour in std::sort. Exact
+            // equality gives a plain lexicographic order and covers the
+            // bit-identical case that actually occurs.
             std::sort(cube_eqs.begin(), cube_eqs.end(),
-                      [](const std::pair<float, int>& a,
-                         const std::pair<float, int>& b) {
-                          return a.first > b.first;
+                      [&](const std::pair<float, int>& a,
+                          const std::pair<float, int>& b) {
+                          if (a.first != b.first) return a.first > b.first;
+                          return cubeless_equity(probs_per[a.second])
+                               > cubeless_equity(probs_per[b.second]);
                       });
             float best_cf = cube_eqs[0].first;
             int keep = 0;
@@ -1133,6 +1146,42 @@ void MultiPlyStrategy::best_move_index_cubeful_multi(
             if (cf_equities[i][c] < best_cf) {
                 best_cf = cf_equities[i][c];
                 best_surv_i = i;
+            }
+        }
+
+        // Tie-break, PAID ONLY WHEN A TIE EXISTS. This is the pick the trial
+        // actually plays at decision_ply > 1, so a flat score would otherwise
+        // send every tie to survivors[0] and undo the tie-break applied deeper
+        // in the search.
+        //
+        // The probs are re-derived at 1-ply here rather than threaded out of
+        // cubeful_equity_nply_multi: asking that call for probs makes every
+        // survivor miss any cache entry stored without them (see the
+        // out_probs note on CubefulEvalCache::get), which measured ~29% slower
+        // on the checker benchmark. Ties are rare, so this pays nothing in the
+        // common case.
+        //
+        // Ranked on the MOVER's own post-move probs and MAXIMISED -- unlike
+        // cf_equities above, which is opponent-POV and hence argmin'd.
+        int n_tied = 0;
+        for (int i = 0; i < n_surv; ++i) {
+            if (cf_equities[i][c] <= best_cf + MOVE_TIE_EPSILON) ++n_tied;
+        }
+        if (n_tied > 1) {
+            float best_cl = -1e30f;
+            for (int i = 0; i < n_surv; ++i) {
+                if (cf_equities[i][c] > best_cf + MOVE_TIE_EPSILON) continue;
+                const Board& cand = candidates[survivors[i]];
+                std::array<float, NUM_OUTPUTS> p;
+                GameResult gr = check_game_over(cand);
+                if (gr != GameResult::NOT_OVER) {
+                    p = terminal_probs(gr);
+                } else {
+                    p = base_->evaluate_probs(cand, pre_move_board);
+                }
+                clamp_probs_to_board(p, cand);
+                const float cl = cubeless_equity(p);
+                if (cl > best_cl) { best_cl = cl; best_surv_i = i; }
             }
         }
         out_indices[c] = survivors[best_surv_i];
