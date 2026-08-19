@@ -224,12 +224,14 @@ class _OnePlyAnalyzer(_CubelessBase):
         self, board, die1, die2, cube_value=1, cube_owner="centered",
         progress_callback=None,
         away1=0, away2=0, is_crawford=False, jacoby=True, beaver=True,
-        force_boards=None,
+        force_boards=None, finalize_progress=None,
     ) -> list[dict]:
         # ``force_boards`` is a no-op at 1-ply: every candidate is already
         # evaluated at the full level, so there's nothing to force into a
-        # filtered deep-eval set. Accepted for call-signature symmetry.
-        del force_boards
+        # filtered deep-eval set. Accepted for call-signature symmetry, as is
+        # ``finalize_progress`` — only the cubeful wrapper has a finalizing
+        # phase to report.
+        del force_boards, finalize_progress
         candidates = bgbot_cpp.possible_moves(board, die1, die2)
         if not candidates:
             return []
@@ -292,8 +294,11 @@ class _MultiPlyAnalyzer(_CubelessBase):
         self, board, die1, die2, cube_value=1, cube_owner="centered",
         progress_callback=None,
         away1=0, away2=0, is_crawford=False, jacoby=True, beaver=True,
-        force_boards=None,
+        force_boards=None, finalize_progress=None,
     ) -> list[dict]:
+        # Only the cubeful wrapper runs the finalizing (promotion) phase, so
+        # there is nothing here to report against ``finalize_progress``.
+        del finalize_progress
         candidates = bgbot_cpp.possible_moves(board, die1, die2)
         if not candidates:
             return []
@@ -496,8 +501,11 @@ class _RolloutAnalyzer(_CubelessBase):
         self, board, die1, die2, cube_value=1, cube_owner="centered",
         progress_callback=None,
         away1=0, away2=0, is_crawford=False, jacoby=True, beaver=True,
-        force_boards=None,
+        force_boards=None, finalize_progress=None,
     ) -> list[dict]:
+        # Only the cubeful wrapper runs the finalizing (promotion) phase, so
+        # there is nothing here to report against ``finalize_progress``.
+        del finalize_progress
         candidates = bgbot_cpp.possible_moves(board, die1, die2)
         if not candidates:
             return []
@@ -755,7 +763,7 @@ class _CubefulAnalyzer:
         self, board, die1, die2, cube_value=1, cube_owner="centered",
         progress_callback=None,
         away1=0, away2=0, is_crawford=False, jacoby=True, beaver=True,
-        force_boards=None,
+        force_boards=None, finalize_progress=None,
     ) -> list[dict]:
         owner = resolve_owner(cube_owner)
         inner = self._inner
@@ -810,6 +818,12 @@ class _CubefulAnalyzer:
             # trials are done and we are finalizing the best move. Without this
             # the caller sees a legitimate 100% and then silence for however
             # long the promotions take.
+            #
+            # Each promotion IS a full rollout, though, so its own trials do
+            # have an honest percentage: ``finalize_progress`` reports that
+            # 0 -> n_trials arc, restarting per promoted move, which is what
+            # lets a caller show a live bar through the finalizing phase
+            # instead of a motionless full one.
             n_trials_ro = inner_ro._rollout_config["n_trials"]
             trial_total = n_trials_ro * sum(
                 1 for r in results if r.get("eval_level") == "Rollout"
@@ -819,6 +833,11 @@ class _CubefulAnalyzer:
                 promoted += 1
                 if progress_callback:
                     progress_callback(trial_total + promoted, trial_total, results)
+                if finalize_progress:
+                    # Restart the sub-arc before the trials begin, so the bar
+                    # drops to 0 as this move's rollout starts rather than
+                    # sitting at the previous promotion's 100%.
+                    finalize_progress(0, n_trials_ro)
                 m = results[0]
                 try:
                     pr = inner_ro._rollout_strategy.cubeful_evaluate_board(
@@ -826,6 +845,7 @@ class _CubefulAnalyzer:
                         cube_value=cube_value, owner=owner,
                         away1=away1, away2=away2, is_crawford=is_crawford,
                         jacoby=jacoby, beaver=beaver,
+                        progress=finalize_progress,
                     )
                 except bgbot_cpp.RolloutCancelled:
                     raise RolloutCancelled()
@@ -1321,6 +1341,7 @@ class BgBotAnalyzer:
         jacoby: bool = True,
         beaver: bool = True,
         force_boards: list[list[int]] | None = None,
+        finalize_progress: Any | None = None,
     ) -> CheckerPlayResult:
         """Analyze all legal moves for a checker play decision.
 
@@ -1336,6 +1357,13 @@ class BgBotAnalyzer:
                 ``opponent_game_plan`` on each :class:`MoveAnalysis`.
             progress_callback: Optional ``callback(completed, total, partial)``
                 for rollout progress.
+            finalize_progress: Optional ``callback(completed, total)`` for the
+                rollout's finalizing phase, where moves the filter dropped are
+                promoted and rolled out one at a time (see
+                ``_CubefulAnalyzer.checker_play_analytics``). Reports each
+                promotion's own 0 -> n_trials trial arc, restarting per move,
+                so a UI can keep a live progress bar through a phase that
+                ``progress_callback`` can only report as "past 100%".
             away1: Points player needs to win (0 = money game).
             away2: Points opponent needs to win (0 = money game).
             is_crawford: True if this is the Crawford game.
@@ -1356,6 +1384,7 @@ class BgBotAnalyzer:
             board, die1, die2, cube_value, cube_owner, progress_callback,
             away1=away1, away2=away2, is_crawford=is_crawford, jacoby=jacoby,
             beaver=beaver, force_boards=force_boards,
+            finalize_progress=finalize_progress,
         )
         moves = [_dict_to_move_analysis(d, include_game_plans) for d in raw]
         eval_level = moves[0].eval_level if moves else self._eval_level
