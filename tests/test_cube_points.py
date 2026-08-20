@@ -21,7 +21,11 @@ import unittest
 
 # Setup paths (same pattern as other bgsage tests)
 script_dir = os.path.dirname(os.path.abspath(__file__))
-project_dir = os.path.dirname(os.path.dirname(script_dir))
+# Resolve INSIDE this repo. dirname(dirname(tests/)) is the HOST project when
+# bgsage is vendored as a submodule, so this used to load the host's stale
+# bgbot_cpp instead of the one built here -- tests then silently exercised a
+# different binary than the developer just compiled.
+project_dir = os.path.dirname(script_dir)
 build_dir = os.path.join(project_dir, "build")
 
 if sys.platform == "win32":
@@ -31,7 +35,7 @@ if sys.platform == "win32":
     if os.path.isdir(build_dir):
         os.add_dll_directory(build_dir)
 sys.path.insert(0, build_dir)
-sys.path.insert(0, os.path.join(project_dir, "bgsage", "python"))
+sys.path.insert(0, os.path.join(project_dir, "python"))
 
 from bgsage.cube_points import cube_action_points  # noqa: E402
 

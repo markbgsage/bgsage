@@ -176,7 +176,10 @@ def write_shard(games, out_path, template_path, tpl):
     for gi, g in enumerate(games):
         P, (d1, d2), B, hmoves = g["pre"], g["dice"], g["post"], g["half_moves"]
         stream += xf.build_game_header(tpl[xf.TS_HEADER_GAME], P, gi + 1, 0, gi)
-        stream += xf.build_cube_record(tpl[xf.TS_CUBE], P, actif=1)
+        # Structural filler so XG can replay the turn -- only the checker move is
+        # harvested here, so double=-2 ("no cube access") keeps XG from spending
+        # analysis time on a cube decision nobody reads.
+        stream += xf.build_cube_record(tpl[xf.TS_CUBE], P, actif=1, double=-2)
         stream += xf.build_move_record(tpl[xf.TS_MOVE], P, B, d1, d2, hmoves, actif=1)
         if xf.TS_FOOTER_GAME in tpl:   # each 1-turn game "ends" with P1 resigning a single
             stream += xf.build_game_footer(tpl[xf.TS_FOOTER_GAME], 0, gi + 1, -1, 1, 101)

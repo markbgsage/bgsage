@@ -19,7 +19,11 @@ import unittest
 
 # Setup paths
 script_dir = os.path.dirname(os.path.abspath(__file__))
-project_dir = os.path.dirname(os.path.dirname(script_dir))
+# Resolve INSIDE this repo. dirname(dirname(tests/)) is the HOST project when
+# bgsage is vendored as a submodule, so this used to load the host's stale
+# bgbot_cpp instead of the one built here -- tests then silently exercised a
+# different binary than the developer just compiled.
+project_dir = os.path.dirname(script_dir)
 build_dir = os.path.join(project_dir, "build")
 
 if sys.platform == "win32":
@@ -29,14 +33,14 @@ if sys.platform == "win32":
     if os.path.isdir(build_dir):
         os.add_dll_directory(build_dir)
 sys.path.insert(0, build_dir)
-sys.path.insert(0, os.path.join(project_dir, "bgsage", "python"))
+sys.path.insert(0, os.path.join(project_dir, "python"))
 
 from bgsage import BgBotAnalyzer
 from bgsage.batch import batch_checker_play
 from bgsage.data import board_from_gnubg_position_string
 from bgsage.weights import default_weights
 
-DATA_DIR = os.path.join(project_dir, "bgsage", "data")
+DATA_DIR = os.path.join(project_dir, "data")
 CONTACT_BM = os.path.join(DATA_DIR, "contact.bm")
 
 SEED = 54321
@@ -83,68 +87,19 @@ class TestBatchCheckerPlay(unittest.TestCase):
     # 0-ply tests
     # ------------------------------------------------------------------
 
-    def test_0ply_batch_matches_serial(self):
-        """batch_checker_play at 0-ply matches BgBotAnalyzer.checker_play."""
-        analyzer = BgBotAnalyzer(eval_level="0ply", cubeful=True)
-        batch_results = batch_checker_play(
-            self.positions, eval_level="0ply",
-            weights=self.weights, n_threads=0,
-        )
+    def test_invalid_eval_level_rejected(self):
+        """bgsage uses the XG convention: 1-ply IS the raw NN, there is no 0-ply.
 
-        self.assertEqual(len(batch_results), len(self.positions))
-        for i, (br, pos) in enumerate(zip(batch_results, self.positions)):
-            with self.subTest(position=i):
-                sr = analyzer.checker_play(
-                    pos["board"], pos["die1"], pos["die2"],
-                    cube_value=pos["cube_value"],
-                    cube_owner=pos["cube_owner"],
-                )
-                # Same number of moves
-                self.assertEqual(
-                    len(br.moves), len(sr.moves),
-                    msg=f"pos {i}: move count mismatch "
-                        f"({len(br.moves)} vs {len(sr.moves)})",
-                )
-                # Best move equity matches
-                if br.moves:
-                    self.assertAlmostEqual(
-                        br.moves[0].equity, sr.moves[0].equity, places=4,
-                        msg=f"pos {i}: best equity mismatch",
-                    )
-                    # Best move board matches
-                    self.assertEqual(
-                        br.moves[0].board, sr.moves[0].board,
-                        msg=f"pos {i}: best move board mismatch",
-                    )
-                    # Check equity_diff of best is 0
-                    self.assertAlmostEqual(
-                        br.moves[0].equity_diff, 0.0, places=6,
-                    )
-
-    def test_0ply_parallel_matches_serial(self):
-        """batch_checker_play at 0-ply: parallel vs n_threads=1."""
-        serial = batch_checker_play(
-            self.positions, eval_level="0ply",
-            weights=self.weights, n_threads=1,
-        )
-        parallel = batch_checker_play(
-            self.positions, eval_level="0ply",
-            weights=self.weights, n_threads=0,
-        )
-
-        self.assertEqual(len(serial), len(parallel))
-        for i, (s, p) in enumerate(zip(serial, parallel)):
-            with self.subTest(position=i):
-                self.assertEqual(len(s.moves), len(p.moves))
-                if s.moves:
-                    self.assertAlmostEqual(
-                        s.moves[0].equity, p.moves[0].equity, places=6,
-                    )
-                    self.assertEqual(s.moves[0].board, p.moves[0].board)
-
-    # ------------------------------------------------------------------
-    # 1-ply tests
-    # ------------------------------------------------------------------
+        These used to be test_0ply_* and failed permanently against a level the
+        API has never accepted; the real 0-ply-equivalent coverage is the
+        test_1ply_* pair below.
+        """
+        with self.assertRaises(ValueError):
+            batch_checker_play(self.positions[:1], eval_level="0ply",
+                               weights=self.weights)
+        with self.assertRaises(ValueError):
+            batch_checker_play(self.positions[:1], eval_level="5ply",
+                               weights=self.weights)
 
     def test_1ply_batch_matches_serial(self):
         """batch_checker_play at 1-ply matches BgBotAnalyzer.checker_play exactly."""
@@ -224,14 +179,14 @@ class TestBatchCheckerPlay(unittest.TestCase):
 
     def test_empty_input(self):
         """batch_checker_play with empty list returns empty list."""
-        results = batch_checker_play([], eval_level="0ply", weights=self.weights)
+        results = batch_checker_play([], eval_level="1ply", weights=self.weights)
         self.assertEqual(results, [])
 
     def test_result_structure(self):
         """Verify CheckerPlayResult fields are populated correctly."""
         pos = self.positions[0]
         results = batch_checker_play(
-            [pos], eval_level="0ply", weights=self.weights,
+            [pos], eval_level="1ply", weights=self.weights,
         )
         self.assertEqual(len(results), 1)
         r = results[0]
@@ -240,7 +195,7 @@ class TestBatchCheckerPlay(unittest.TestCase):
         self.assertEqual(r.board, list(pos["board"]))
         self.assertEqual(r.die1, pos["die1"])
         self.assertEqual(r.die2, pos["die2"])
-        self.assertEqual(r.eval_level, "0-ply")
+        self.assertEqual(r.eval_level, "1-ply")
 
         # MoveAnalysis fields
         self.assertGreater(len(r.moves), 0)
@@ -249,7 +204,7 @@ class TestBatchCheckerPlay(unittest.TestCase):
         self.assertIsInstance(m.equity, float)
         self.assertIsInstance(m.cubeless_equity, float)
         self.assertAlmostEqual(m.equity_diff, 0.0, places=6)
-        self.assertEqual(m.eval_level, "0-ply")
+        self.assertEqual(m.eval_level, "1-ply")
         self.assertIsNotNone(m.probs)
         self.assertGreaterEqual(m.probs.win, 0.0)
         self.assertLessEqual(m.probs.win, 1.0)
@@ -257,7 +212,7 @@ class TestBatchCheckerPlay(unittest.TestCase):
     def test_moves_sorted_descending(self):
         """Moves are sorted by equity descending (best first)."""
         results = batch_checker_play(
-            self.positions[:20], eval_level="0ply", weights=self.weights,
+            self.positions[:20], eval_level="1ply", weights=self.weights,
         )
         for i, r in enumerate(results):
             with self.subTest(position=i):

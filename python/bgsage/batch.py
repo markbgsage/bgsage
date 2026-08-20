@@ -124,8 +124,11 @@ def batch_evaluate(
 
     if eval_level == "1ply":
         if is_pair:
+            # Same dispatch bug as batch_checker_play had: hardcoding
+            # GamePlanPairStrategy rejects every backgame-aware model.
             paths, hiddens = weights.weight_args
-            strategy = bgbot_cpp.GamePlanPairStrategy(paths, hiddens)
+            strategy = bgbot_cpp.create_strategy(
+                getattr(weights, "strategy_type", "pair"), paths, hiddens)
         else:
             strategy = bgbot_cpp.GamePlanStrategy(*weights.weight_args)
         raw_results = bgbot_cpp.batch_evaluate_positions(
@@ -138,8 +141,8 @@ def batch_evaluate(
         # parallelism is across positions in the C++ batch function.
         if is_pair:
             paths, hiddens = weights.weight_args
-            strategy = bgbot_cpp.create_multipy_pair(
-                paths, hiddens,
+            strategy = bgbot_cpp.create_multipy(
+                getattr(weights, "strategy_type", "pair"), paths, hiddens,
                 n_plies=n_plies,
                 filter_max_moves=filter_max_moves,
                 filter_threshold=filter_threshold,
@@ -442,8 +445,13 @@ def batch_checker_play(
         cpp_inputs.append(d)
 
     if is_pair:
+        # Dispatch on the config's own strategy type. Hardcoding
+        # GamePlanPairStrategy here rejected every backgame-aware model
+        # ("requires exactly 17 weight paths, got 19"), which silently pushed
+        # the production model off the batch path onto the serial one.
         paths, hiddens = weights.weight_args
-        strategy_1ply = bgbot_cpp.GamePlanPairStrategy(paths, hiddens)
+        strategy_1ply = bgbot_cpp.create_strategy(
+            getattr(weights, "strategy_type", "pair"), paths, hiddens)
     else:
         strategy_1ply = bgbot_cpp.GamePlanStrategy(*weights.weight_args)
 
@@ -462,8 +470,8 @@ def batch_checker_play(
         n_plies = int(eval_level[0])
         if is_pair:
             paths, hiddens = weights.weight_args
-            strategy_nply = bgbot_cpp.create_multipy_pair(
-                paths, hiddens,
+            strategy_nply = bgbot_cpp.create_multipy(
+                getattr(weights, "strategy_type", "pair"), paths, hiddens,
                 n_plies=n_plies,
                 filter_max_moves=filter_max_moves,
                 filter_threshold=filter_threshold,

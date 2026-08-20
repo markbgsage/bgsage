@@ -18,7 +18,11 @@ import unittest
 
 # Setup paths
 script_dir = os.path.dirname(os.path.abspath(__file__))
-project_dir = os.path.dirname(os.path.dirname(script_dir))
+# Resolve INSIDE this repo. dirname(dirname(tests/)) is the HOST project when
+# bgsage is vendored as a submodule, so this used to load the host's stale
+# bgbot_cpp instead of the one built here -- tests then silently exercised a
+# different binary than the developer just compiled.
+project_dir = os.path.dirname(script_dir)
 build_dir = os.path.join(project_dir, "build")
 
 if sys.platform == "win32":
@@ -28,14 +32,14 @@ if sys.platform == "win32":
     if os.path.isdir(build_dir):
         os.add_dll_directory(build_dir)
 sys.path.insert(0, build_dir)
-sys.path.insert(0, os.path.join(project_dir, "bgsage", "python"))
+sys.path.insert(0, os.path.join(project_dir, "python"))
 
 import bgbot_cpp
 from bgsage.batch import batch_evaluate
 from bgsage.data import board_from_gnubg_position_string
 from bgsage.weights import default_weights
 
-DATA_DIR = os.path.join(project_dir, "bgsage", "data")
+DATA_DIR = os.path.join(project_dir, "data")
 CONTACT_BM = os.path.join(DATA_DIR, "contact.bm")
 
 # Fixed seed for reproducibility
@@ -58,7 +62,7 @@ def _load_boards_from_bm(filepath: str, n: int, seed: int) -> list[list[int]]:
     return boards
 
 
-def _serial_evaluate_0ply(
+def _serial_evaluate_1ply(
     boards: list[list[int]], weights: WeightConfig
 ) -> list[dict]:
     """Evaluate each position one at a time at 0-ply.
@@ -128,12 +132,17 @@ class TestBatchEvaluate(unittest.TestCase):
     # 0-ply tests
     # ------------------------------------------------------------------
 
-    def test_0ply_batch_matches_serial(self):
-        """batch_evaluate at 0-ply matches one-at-a-time C++ evaluation."""
+    def test_1ply_batch_matches_direct_cpp(self):
+        """batch_evaluate matches one-at-a-time C++ evaluation.
+
+        Was "0ply": bgsage uses the XG convention where 1-ply IS the raw
+        NN, so that level string was never accepted and this test could
+        not have passed.
+        """
         batch_results = batch_evaluate(
-            self.positions, eval_level="0ply", weights=self.weights, n_threads=0,
+            self.positions, eval_level="1ply", weights=self.weights, n_threads=0,
         )
-        serial_results = _serial_evaluate_0ply(self.boards, self.weights)
+        serial_results = _serial_evaluate_1ply(self.boards, self.weights)
 
         self.assertEqual(len(batch_results), len(serial_results))
         for i, (br, sr) in enumerate(zip(batch_results, serial_results)):
@@ -157,13 +166,13 @@ class TestBatchEvaluate(unittest.TestCase):
                         msg=f"pos {i}: prob[{j}] mismatch",
                     )
 
-    def test_0ply_parallel_matches_serial_batch(self):
-        """batch_evaluate at 0-ply: parallel vs n_threads=1 give same results."""
+    def test_1ply_parallel_matches_serial_batch(self):
+        """batch_evaluate: parallel vs n_threads=1 give the same results."""
         serial = batch_evaluate(
-            self.positions, eval_level="0ply", weights=self.weights, n_threads=1,
+            self.positions, eval_level="1ply", weights=self.weights, n_threads=1,
         )
         parallel = batch_evaluate(
-            self.positions, eval_level="0ply", weights=self.weights, n_threads=0,
+            self.positions, eval_level="1ply", weights=self.weights, n_threads=0,
         )
 
         self.assertEqual(len(serial), len(parallel))

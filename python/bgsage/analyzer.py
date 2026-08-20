@@ -81,6 +81,19 @@ def _default_parallel_threads() -> int:
 # ---------------------------------------------------------------------------
 
 
+
+def _move_order_key(m: dict):
+    """Deterministic total order for a checker-play result list.
+
+    Cubeful equity alone is not a total order: it saturates at the pass value in
+    lost positions, so entire candidate lists tie exactly and the "best" move
+    then depends on list insertion order. Ties break on cubeless equity, then on
+    the board itself, so the same position always yields the same ranking -- and
+    so batch_checker_play can agree with this path exactly.
+    """
+    return (-m["equity"], -m.get("cubeless_equity", m["equity"]), tuple(m["board"]))
+
+
 class _CubelessBase:
     """Shared infrastructure for cubeless analyzers."""
 
@@ -179,7 +192,7 @@ class _CubelessBase:
 
     @staticmethod
     def _promote_second_best(results: list, board: list[int], evaluate_fn) -> None:
-        results.sort(key=lambda x: -x["equity"])
+        results.sort(key=_move_order_key)
         while len(results) >= 2 and results[1].get("is_1ply_only"):
             r = results[1]
             equity, probs, eval_level, extra = evaluate_fn(r["board"], board)
@@ -188,11 +201,11 @@ class _CubelessBase:
             r["eval_level"] = eval_level
             r.pop("is_1ply_only", None)
             r.update(extra)
-            results.sort(key=lambda x: -x["equity"])
+            results.sort(key=_move_order_key)
 
     @staticmethod
     def _finalize_results(results: list[dict]) -> list[dict]:
-        results.sort(key=lambda x: -x["equity"])
+        results.sort(key=_move_order_key)
         if results:
             best = results[0]["equity"]
             for r in results:
@@ -798,7 +811,7 @@ class _CubefulAnalyzer:
                 m["cubeless_equity"] = cubeless_eq
                 m["equity"] = cf_eq
 
-            results.sort(key=lambda x: -x["equity"])
+            results.sort(key=_move_order_key)
 
             # Promote non-rollout entries that rank above any rollout entry,
             # so the top of the displayed list is at rollout-level cubeful and
@@ -863,7 +876,7 @@ class _CubefulAnalyzer:
                 m["rollout_cubeful_se"] = pr["cubeful_se"]
                 m["eval_level"] = "Rollout"
                 m.pop("is_1ply_only", None)
-                results.sort(key=lambda x: -x["equity"])
+                results.sort(key=_move_order_key)
 
             if results:
                 best = results[0]["equity"]
@@ -948,7 +961,7 @@ class _CubefulAnalyzer:
                 m["cubeless_equity"] = m["equity"]
                 m["equity"] = cf_eq
 
-        results.sort(key=lambda x: -x["equity"])
+        results.sort(key=_move_order_key)
 
         def _nply_eval(b, board_ref):
             if isinstance(inner, _MultiPlyAnalyzer):
@@ -977,7 +990,7 @@ class _CubefulAnalyzer:
             r["eval_level"] = eval_level
             r.pop("is_1ply_only", None)
             r.update(extra)
-            results.sort(key=lambda x: -x["equity"])
+            results.sort(key=_move_order_key)
 
         if results:
             best = results[0]["equity"]

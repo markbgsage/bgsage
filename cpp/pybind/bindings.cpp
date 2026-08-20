@@ -2656,7 +2656,8 @@ PYBIND11_MODULE(bgbot_cpp, m) {
     // Pair-strategy overload of cubeful_equity_nply
     m.def("cubeful_equity_nply", [](const std::vector<int>& board_vec,
                                      CubeOwner owner,
-                                     GamePlanPairStrategy& strategy,
+                                     Strategy& strategy,   // widened: backgame-aware models (19/21 NNs)
+                      // derive from Strategy, not GamePlanPairStrategy
                                      int n_plies,
                                      int filter_max_moves,
                                      float filter_threshold,
@@ -2671,7 +2672,7 @@ PYBIND11_MODULE(bgbot_cpp, m) {
         // Wrap in BearoffStrategy if DB available
         std::shared_ptr<Strategy> wrapped;
         if (bearoff_db && bearoff_db->is_loaded()) {
-            auto gps_ptr = std::shared_ptr<GamePlanPairStrategy>(&strategy, [](auto*){});
+            auto gps_ptr = std::shared_ptr<Strategy>(&strategy, [](auto*){});
             wrapped = std::make_shared<BearoffStrategy>(gps_ptr, bearoff_db);
         }
         const Strategy& eval_strat = wrapped
@@ -3567,7 +3568,8 @@ PYBIND11_MODULE(bgbot_cpp, m) {
     // Overload that takes a GamePlanPairStrategy (1-ply) directly
     m.def("batch_evaluate_positions", [](
             py::list positions,
-            GamePlanPairStrategy& strategy,
+            Strategy& strategy,   // widened: backgame-aware models (19/21 NNs)
+                      // derive from Strategy, not GamePlanPairStrategy
             int n_threads,
             bool jacoby,
             bool beaver) {
@@ -3803,7 +3805,8 @@ PYBIND11_MODULE(bgbot_cpp, m) {
     // Overload that takes a GamePlanPairStrategy (1-ply) directly
     m.def("batch_evaluate_post_move", [](
             py::list positions,
-            GamePlanPairStrategy& strategy,
+            Strategy& strategy,   // widened: backgame-aware models (19/21 NNs)
+                      // derive from Strategy, not GamePlanPairStrategy
             int n_threads,
             bool jacoby) {
         struct PosInput {
@@ -4018,6 +4021,19 @@ PYBIND11_MODULE(bgbot_cpp, m) {
     // Moves sorted by equity descending (best first).
 
     // 1-ply overload: GamePlanStrategy only
+    // NOTE: candidate evaluation passes the pre-move BOARD, so the NN is chosen
+    // once from the pre-move position for all candidates. This MATCHES
+    // BgBotAnalyzer.checker_play, which reaches Strategy::evaluate_board and
+    // hence evaluate_probs(board, pre_move_board). Passing is_race(pre_move)
+    // instead would select per-candidate and diverge from the serial path by up
+    // to ~0.02 equity. (Whether per-candidate selection is *better* is a real
+    // question -- cube_eval.cpp uses it -- but it must be changed in BOTH paths
+    // together, not silently here.)
+    // Sorts are STABLE so ties keep candidate order, matching
+    // BgBotAnalyzer.checker_play (Python's sort is stable). Cubeful equity
+    // saturates at the pass value in lost positions, so whole candidate
+    // lists tie exactly; with std::sort the winner was arbitrary and the
+    // batch path disagreed with the serial one on ~11% of positions.
     m.def("batch_checker_play", [](
             py::list inputs,
             GamePlanStrategy& strategy_1ply,
@@ -4101,9 +4117,13 @@ PYBIND11_MODULE(bgbot_cpp, m) {
                 }
 
                 // Sort by cubeful equity desc
-                std::sort(scored.begin(), scored.end(),
+                std::stable_sort(scored.begin(), scored.end(),
                     [](const Scored& a, const Scored& b) {
-                        return a.cubeful_equity > b.cubeful_equity;
+                        if (a.cubeful_equity != b.cubeful_equity)
+                            return a.cubeful_equity > b.cubeful_equity;
+                        if (a.cubeless_equity != b.cubeless_equity)
+                            return a.cubeless_equity > b.cubeless_equity;
+                        return a.board < b.board;   // total order: never arbitrary
                     });
 
                 // Filter
@@ -4182,7 +4202,13 @@ PYBIND11_MODULE(bgbot_cpp, m) {
     // 1-ply overload: GamePlanPairStrategy
     m.def("batch_checker_play", [](
             py::list inputs,
-            GamePlanPairStrategy& strategy_1ply,
+            // Widened from GamePlanPairStrategy& to Strategy&: the body only
+            // calls the virtual evaluate_probs, and BackgameAwarePairStrategy
+            // (Stage 9's 19 NNs / Stage 10's 21) derives from Strategy, NOT from
+            // GamePlanPairStrategy, so it could not bind to the narrower type.
+            // The GamePlanStrategy overloads are registered first and still win
+            // for 5-NN models.
+            Strategy& strategy_1ply,
             int filter_max_moves,
             float filter_threshold,
             int n_threads,
@@ -4262,9 +4288,13 @@ PYBIND11_MODULE(bgbot_cpp, m) {
                     scored[j] = {candidates[j], post_probs, cl_eq, cf_eq};
                 }
 
-                std::sort(scored.begin(), scored.end(),
+                std::stable_sort(scored.begin(), scored.end(),
                     [](const Scored& a, const Scored& b) {
-                        return a.cubeful_equity > b.cubeful_equity;
+                        if (a.cubeful_equity != b.cubeful_equity)
+                            return a.cubeful_equity > b.cubeful_equity;
+                        if (a.cubeless_equity != b.cubeless_equity)
+                            return a.cubeless_equity > b.cubeless_equity;
+                        return a.board < b.board;   // total order: never arbitrary
                     });
 
                 float best_eq = scored[0].cubeful_equity;
@@ -4456,9 +4486,13 @@ PYBIND11_MODULE(bgbot_cpp, m) {
                 }
 
                 // Sort by cubeful equity desc
-                std::sort(scored.begin(), scored.end(),
+                std::stable_sort(scored.begin(), scored.end(),
                     [](const Scored0& a, const Scored0& b) {
-                        return a.cubeful_equity > b.cubeful_equity;
+                        if (a.cubeful_equity != b.cubeful_equity)
+                            return a.cubeful_equity > b.cubeful_equity;
+                        if (a.cubeless_equity != b.cubeless_equity)
+                            return a.cubeless_equity > b.cubeless_equity;
+                        return a.board < b.board;   // total order: never arbitrary
                     });
 
                 // Filter
@@ -4493,9 +4527,13 @@ PYBIND11_MODULE(bgbot_cpp, m) {
                 }
 
                 // Sort by cubeful equity desc
-                std::sort(out.moves.begin(), out.moves.end(),
+                std::stable_sort(out.moves.begin(), out.moves.end(),
                     [](const MoveResult& a, const MoveResult& b) {
-                        return a.cubeful_equity > b.cubeful_equity;
+                        if (a.cubeful_equity != b.cubeful_equity)
+                            return a.cubeful_equity > b.cubeful_equity;
+                        if (a.cubeless_equity != b.cubeless_equity)
+                            return a.cubeless_equity > b.cubeless_equity;
+                        return a.board < b.board;   // total order: never arbitrary
                     });
 
                 // Promote-second-best: if #2 is 1-ply-only, promote to N-ply
@@ -4508,9 +4546,13 @@ PYBIND11_MODULE(bgbot_cpp, m) {
                     m.cubeless_equity = NeuralNetwork::compute_equity(nply_probs);
                     m.cubeful_equity = compute_cubeful(m.board, inp.owner, inp.match);
                     m.is_survivor = true;
-                    std::sort(out.moves.begin(), out.moves.end(),
+                    std::stable_sort(out.moves.begin(), out.moves.end(),
                         [](const MoveResult& a, const MoveResult& b) {
+                        if (a.cubeful_equity != b.cubeful_equity)
                             return a.cubeful_equity > b.cubeful_equity;
+                        if (a.cubeless_equity != b.cubeless_equity)
+                            return a.cubeless_equity > b.cubeless_equity;
+                        return a.board < b.board;   // total order: never arbitrary
                         });
                 }
             };
@@ -4575,7 +4617,13 @@ PYBIND11_MODULE(bgbot_cpp, m) {
     // N-ply overload: GamePlanPairStrategy for 1-ply filter + N-ply rescore
     m.def("batch_checker_play", [](
             py::list inputs,
-            GamePlanPairStrategy& strategy_1ply,
+            // Widened from GamePlanPairStrategy& to Strategy&: the body only
+            // calls the virtual evaluate_probs, and BackgameAwarePairStrategy
+            // (Stage 9's 19 NNs / Stage 10's 21) derives from Strategy, NOT from
+            // GamePlanPairStrategy, so it could not bind to the narrower type.
+            // The GamePlanStrategy overloads are registered first and still win
+            // for 5-NN models.
+            Strategy& strategy_1ply,
             std::shared_ptr<MultiPlyStrategy> strategy_nply,
             int filter_max_moves,
             float filter_threshold,
@@ -4684,9 +4732,13 @@ PYBIND11_MODULE(bgbot_cpp, m) {
                     scored[j] = {candidates[j], post_probs, cl_eq, cf_eq};
                 }
 
-                std::sort(scored.begin(), scored.end(),
+                std::stable_sort(scored.begin(), scored.end(),
                     [](const Scored0& a, const Scored0& b) {
-                        return a.cubeful_equity > b.cubeful_equity;
+                        if (a.cubeful_equity != b.cubeful_equity)
+                            return a.cubeful_equity > b.cubeful_equity;
+                        if (a.cubeless_equity != b.cubeless_equity)
+                            return a.cubeless_equity > b.cubeless_equity;
+                        return a.board < b.board;   // total order: never arbitrary
                     });
 
                 float best_eq = scored[0].cubeful_equity;
@@ -4718,9 +4770,13 @@ PYBIND11_MODULE(bgbot_cpp, m) {
                     }
                 }
 
-                std::sort(out.moves.begin(), out.moves.end(),
+                std::stable_sort(out.moves.begin(), out.moves.end(),
                     [](const MoveResult& a, const MoveResult& b) {
-                        return a.cubeful_equity > b.cubeful_equity;
+                        if (a.cubeful_equity != b.cubeful_equity)
+                            return a.cubeful_equity > b.cubeful_equity;
+                        if (a.cubeless_equity != b.cubeless_equity)
+                            return a.cubeless_equity > b.cubeless_equity;
+                        return a.board < b.board;   // total order: never arbitrary
                     });
 
                 while (out.moves.size() >= 2 && !out.moves[1].is_survivor) {
@@ -4731,9 +4787,13 @@ PYBIND11_MODULE(bgbot_cpp, m) {
                     m.cubeless_equity = NeuralNetwork::compute_equity(nply_probs);
                     m.cubeful_equity = compute_cubeful(m.board, inp.owner, inp.match);
                     m.is_survivor = true;
-                    std::sort(out.moves.begin(), out.moves.end(),
+                    std::stable_sort(out.moves.begin(), out.moves.end(),
                         [](const MoveResult& a, const MoveResult& b) {
+                        if (a.cubeful_equity != b.cubeful_equity)
                             return a.cubeful_equity > b.cubeful_equity;
+                        if (a.cubeless_equity != b.cubeless_equity)
+                            return a.cubeless_equity > b.cubeless_equity;
+                        return a.board < b.board;   // total order: never arbitrary
                         });
                 }
             };

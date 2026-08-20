@@ -469,12 +469,30 @@ def build_move_record(template: bytes, board_mover, post_mover, die1: int, die2:
     return bytes(rec)
 
 
-def build_cube_record(template: bytes, board_mover, actif: int = 1) -> bytes:
-    """A tsCube record (no-cube decision) at ``board_mover`` (mover frame), unanalyzed."""
+def build_cube_record(template: bytes, board_mover, actif: int = 1,
+                      double: int = 0, take: int = -1, cube_b: int = 0) -> bytes:
+    """A tsCube record at ``board_mover`` (mover frame), with analysis cleared.
+
+    ``double`` is what the mover did with the cube, and it decides whether XG
+    analyzes the record at all: ``0`` = had cube access and did not double,
+    ``1`` = doubled (then ``take`` is 0 for pass / 1 for take), ``-2`` = no cube
+    access. XG analyzes 0 and 1 and *silently skips* -2 -- measured over 6412
+    cube records in ``data/money_benchmark/xg``, every -2 record came back
+    unanalyzed (flag_double = -100) and every 0/1 record came back analyzed.
+    These fields must therefore be written rather than inherited: real templates
+    routinely carry -2, which would suppress the cube analysis being asked for.
+
+    ``cube_b`` is the cube state and is genuine game state (it varies
+    independently of ``double``), so a caller building a full game must pass the
+    value its cube history implies; the default 0 is a centred 1-cube.
+    """
     raw = board_mover if actif == 1 else flip_board(list(board_mover))
     rec = bytearray(template)
     struct.pack_into('<26b', rec, _CUBE_POSITION, *sign_bars(raw))
     struct.pack_into('<i', rec, _CUBE_ACTIF, actif)
+    struct.pack_into('<i', rec, _CUBE_DOUBLE, double)
+    struct.pack_into('<i', rec, _CUBE_TAKE, take)
+    struct.pack_into('<i', rec, _CUBE_B, cube_b)
     struct.pack_into('<i', rec, _CUBE_ANALYZE_C, -1)
     struct.pack_into('<i', rec, _CUBE_ANALYZE_CR, -1)
     struct.pack_into('<i', rec, _CUBE_ROLLOUT_INDEX, -1)

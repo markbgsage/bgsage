@@ -194,17 +194,13 @@ def _build_cube_rec(tpl: dict, board_mover, actif: int,
                     double: int, take: int, cube_b: int) -> bytes:
     """A tsCube record with the double/take/cube fields set explicitly.
 
-    ``build_cube_record`` clears the analysis fields but leaves Double/Take/CubeB
-    at the template's values -- for full games those must reflect the actual cube
-    history or XG mis-reconstructs the game state.
+    For full games those must reflect the actual cube history or XG
+    mis-reconstructs the game state.
     """
     from bgsage import xg_file as xf
 
-    rec = bytearray(xf.build_cube_record(tpl[xf.TS_CUBE], board_mover, actif=actif))
-    struct.pack_into("<i", rec, xf._CUBE_DOUBLE, double)
-    struct.pack_into("<i", rec, xf._CUBE_TAKE, take)
-    struct.pack_into("<i", rec, xf._CUBE_B, cube_b)
-    return bytes(rec)
+    return xf.build_cube_record(tpl[xf.TS_CUBE], board_mover, actif=actif,
+                                double=double, take=take, cube_b=cube_b)
 
 
 def _build_move_rec(tpl: dict, pre_mover, post_mover, d1: int, d2: int,

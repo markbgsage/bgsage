@@ -324,8 +324,15 @@ def xg_level_picks(paths: BenchmarkPaths, level: str, seed: int,
         if d["kind"] == "checker":
             rec = xg_file.parse_move_record(tx, off)
             if rec["moves"]:
-                best = max(rec["moves"], key=lambda m: m["eval"][6])
-                out[d["key"]] = {"checker": tuple(best["board"])}
+                # XG stores its candidates already ranked, so moves[0] IS its
+                # pick. Do not take the argmax of the stored equities: XG
+                # evaluates its leading candidates deeply and the tail shallowly
+                # (94.8% of move records carry mixed eval levels), so a 1-ply
+                # tail candidate can carry a bigger number than the 3-ply best.
+                # Over 7129 records in data/money_benchmark/xg the argmax picks
+                # a different move 3.1% of the time -- always one XG evaluated
+                # less deeply and would never actually play.
+                out[d["key"]] = {"checker": tuple(rec["moves"][0]["board"])}
         else:
             rec = xg_file.parse_cube_record(tx, off)
             out[d["key"]] = {"cube": (rec["flag_double"] > 0,

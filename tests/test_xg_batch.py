@@ -167,3 +167,49 @@ def test_cube_rollout_nd_only_not_cached_as_rollout():
     assert rec["eval_level"] == "4ply"                  # stayed at stored level
     assert rec["equity_nd"] == pytest.approx(0.50)      # stored eval, not rollout
     assert "trials_nd" not in rec
+
+
+# ---------------------------------------------------------------------------
+# XG's move ranking: moves[0] is its pick, NOT argmax of the stored equities.
+# ---------------------------------------------------------------------------
+
+_XG_DIR = _ROOT / "data" / "money_benchmark" / "xg"
+
+
+@pytest.mark.skipif(not (_XG_DIR / "seed_1_pp.xg").exists(),
+                    reason="money benchmark XG data not present")
+def test_xg_move_order_is_the_pick_not_the_argmax():
+    """XG evaluates leading candidates deeply and the tail shallowly, so the
+    biggest stored equity is often a move XG would never play.
+
+    xg_level_picks must take moves[0]. Over the full money benchmark the argmax
+    disagrees on ~3% of records; this pins that the two genuinely differ (so the
+    choice matters) and that the disagreement is always the shallow-eval trap.
+    """
+    n_rec = n_div = n_mixed = 0
+    shallower = 0
+    for path in sorted(_XG_DIR.glob("seed_*.xg"))[:40]:
+        tempxg = xg_file.XgArchive.load(path).get("temp.xg")
+        for off, rt in xg_file.iter_records(tempxg):
+            if rt != xg_file.TS_MOVE:
+                continue
+            moves = xg_file.parse_move_record(tempxg, off)["moves"]
+            if len(moves) < 2:
+                continue
+            n_rec += 1
+            if len({m["level"] for m in moves}) > 1:
+                n_mixed += 1
+            eqs = [m["eval"][6] for m in moves]
+            am = max(range(len(moves)), key=lambda i: eqs[i])
+            if am != 0:
+                n_div += 1
+                # The usurper is always evaluated no deeper than XG's own pick.
+                if moves[am]["level"] <= moves[0]["level"]:
+                    shallower += 1
+
+    assert n_rec > 100, f"too few move records to be meaningful ({n_rec})"
+    assert n_mixed > n_rec // 2, "expected most records to carry mixed eval levels"
+    assert n_div > 0, "argmax never diverged -- the fix would be untestable here"
+    assert shallower == n_div, (
+        f"{n_div - shallower} argmax winners were evaluated DEEPER than moves[0]; "
+        "the shallow-eval explanation for the divergence no longer holds")

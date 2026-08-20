@@ -168,3 +168,54 @@ def test_rollout_context_layout_constants():
     assert ctx["duration"] == pytest.approx(123.5)
     assert ctx["rolled2"] == 648
     assert (ctx["ver_maj"], ctx["ver_min"]) == (2, 10)
+
+
+def _cube_template():
+    """A real tsCube record to clone (these carry Double = -2 in practice)."""
+    tempxg = xg_file.XgArchive.load(_SAMPLE).get("temp.xg")
+    for off, rt in xg_file.iter_records(tempxg):
+        if rt == xg_file.TS_CUBE:
+            return tempxg[off:off + xg_file.TSAVEREC_SIZE]
+    pytest.skip("no tsCube record in sample")
+
+
+def test_cube_double_field_gates_whether_xg_analyzes():
+    """Double = -2 ("no cube access") means XG never analyzes the record.
+
+    Measured over data/money_benchmark/xg: every -2 record comes back
+    unanalyzed, every 0/1 record comes back analyzed. This is why
+    build_cube_record must WRITE the field rather than inherit it.
+    """
+    seen = {}
+    for path in sorted(_XG_DIR.glob("seed_*.xg"))[:20]:
+        tempxg = xg_file.XgArchive.load(path).get("temp.xg")
+        for off, rt in xg_file.iter_records(tempxg):
+            if rt != xg_file.TS_CUBE:
+                continue
+            r = xg_file.parse_cube_record(tempxg, off)
+            analyzed = r["flag_double"] != -100
+            seen.setdefault(r["double"], set()).add(analyzed)
+    assert -2 in seen and seen[-2] == {False}, seen
+    assert 0 in seen and seen[0] == {True}, seen
+
+
+def test_build_cube_record_writes_double_take_cube_b():
+    """The template's Double/Take/CubeB must never leak into a built record."""
+    template = _cube_template()
+    assert xg_file.parse_cube_record(template, 0)["double"] == -2, \
+        "expected a template carrying the -2 that used to be inherited"
+    board = [0, -2, 0, 0, 0, 0, 5, 0, 3, 0, 0, 0, -5,
+             5, 0, 0, 0, -3, 0, -5, 0, 0, 0, 0, 2, 0]
+
+    default = xg_file.parse_cube_record(
+        xg_file.build_cube_record(template, board), 0)
+    assert (default["double"], default["take"], default["cube_b"]) == (0, -1, 0)
+    assert tuple(default["mover_board"]) == tuple(board)
+
+    doubled = xg_file.parse_cube_record(
+        xg_file.build_cube_record(template, board, double=1, take=1, cube_b=1), 0)
+    assert (doubled["double"], doubled["take"], doubled["cube_b"]) == (1, 1, 1)
+
+    filler = xg_file.parse_cube_record(
+        xg_file.build_cube_record(template, board, double=-2), 0)
+    assert filler["double"] == -2
