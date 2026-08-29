@@ -1,0 +1,42 @@
+# Positions XG gets wrong - starting positions, imported from the XG reference files.
+# One position per line: cube_value cube_owner board(26 ints).
+# cube_owner is "centered" | "player" | "opponent", relative to player 1
+# (the positive checkers). Cube values above 2 are clamped to 2.
+# Laila - making both ace points is wrong.xgp: does NOT match the "Positions XG gets wrong" filter - check the filing
+# Laila - XG doesn_t know how to play against the 31 backgame.xgp: cube 4 clamped to 2
+# Paul Lamford 01.xgp: cube 4 clamped to 2
+# Positions XG gets wrong manual.txt #1: does NOT match the "Positions XG gets wrong" filter
+# Positions XG gets wrong manual.txt #2: does NOT match the "Positions XG gets wrong" filter
+# Positions XG gets wrong manual.txt #3: does NOT match the "Positions XG gets wrong" filter
+# Positions XG gets wrong manual.txt #4: does NOT match the "Positions XG gets wrong" filter
+# Positions XG gets wrong manual.txt #5: does NOT match the "Positions XG gets wrong" filter
+#
+# Laila - making both ace points is wrong.xgp
+2 player 0 1 0 2 2 3 2 0 0 0 0 0 0 0 0 0 0 1 1 0 0 -2 -1 -5 2 1
+#
+# Laila - making the ace point is wrong.xgp
+2 player 0 1 0 1 2 3 0 0 1 0 0 0 2 0 0 0 0 0 0 0 -2 -8 2 -5 3 0
+#
+# Laila - XG doesn_t know how to play against the 31 backgame.xgp
+2 player 2 -2 2 -4 2 2 2 1 2 2 1 0 0 0 0 0 0 1 0 0 -2 -2 -1 -2 0 0
+#
+# Paul Lamford 01.xgp
+2 opponent 0 -1 2 2 0 -1 2 1 0 0 0 -1 0 0 0 0 0 0 0 2 0 2 1 0 2 1
+#
+# Snake fail.xgp
+1 centered 0 0 0 -1 0 0 0 0 0 0 0 0 0 1 0 1 0 2 3 3 2 2 1 -7 -7 0
+#
+# Positions XG gets wrong manual.txt #1
+1 centered 1 0 0 0 0 0 0 2 2 2 2 2 2 1 0 0 0 1 0 0 1 -3 -3 -3 -2 0
+#
+# Positions XG gets wrong manual.txt #2
+1 centered 0 3 3 3 4 -2 0 0 0 0 0 2 0 0 -1 0 -2 -2 -2 -2 -2 -2 0 0 0 0
+#
+# Positions XG gets wrong manual.txt #3
+1 centered 0 3 3 3 4 -2 0 0 0 0 0 2 0 0 0 -1 -2 -2 -3 -3 -2 0 0 0 0 0
+#
+# Positions XG gets wrong manual.txt #4
+1 centered 0 3 3 3 4 -2 0 0 0 0 0 2 0 -2 -2 -2 -2 -2 -2 -1 0 0 0 0 0 0
+#
+# Positions XG gets wrong manual.txt #5
+1 centered 0 3 3 3 4 -2 0 0 0 0 0 2 -1 -1 -1 -2 -2 -2 -2 -2 0 0 0 0 0 0

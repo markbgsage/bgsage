@@ -1,0 +1,16 @@
+# 54 backgame - starting positions, imported from the XG reference files.
+# One position per line: cube_value cube_owner board(26 ints).
+# cube_owner is "centered" | "player" | "opponent", relative to player 1
+# (the positive checkers). Cube values above 2 are clamped to 2.
+#
+# 54 earlier more complex good timing.xgp
+2 player 0 0 -1 0 2 0 2 1 2 0 0 0 -2 2 0 -2 -2 -3 -2 -3 3 2 0 0 1 0
+#
+# 54 late bad timing.xgp
+2 player 0 0 2 0 2 2 2 2 0 0 0 0 -3 0 0 -2 -2 -3 -2 -3 2 3 0 0 0 0
+#
+# 54 late ok timing.xgp
+2 player 0 0 0 0 2 2 2 1 1 0 0 0 -3 2 0 -2 -2 -3 -2 -3 2 2 0 0 1 0
+#
+# 54 late with anchor.xgp
+2 player 0 0 0 2 0 -2 3 0 3 0 0 0 -2 2 0 0 -2 -2 -3 -2 2 3 -2 0 0 0

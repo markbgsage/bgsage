@@ -58,3 +58,16 @@ profile.*
 
 # Runtime output (xg transcripts, rollout caches, training logs, etc.)
 logs/
+
+# Back game reference positions: the curated XG source files are Mark's private
+# working copies (and include large book scans). The benchmark/ directory built
+# from them by scripts/backgame_benchmark.py IS committed.
+backgame_ref_positions/Positions for Mark/
+# Resume bookkeeping for a generate run, not benchmark data.
+backgame_ref_positions/benchmark/*.state.json
+backgame_ref_positions/benchmark/*.lock
+backgame_ref_positions/benchmark/status_samples.json
+# Per-batch rollout resume sidecars: tens of MB, pure bookkeeping, and
+# regenerable by re-running the rollout. The pooled rollout.jsonl beside
+# them IS the benchmark reference and is committed.
+backgame_ref_positions/benchmark/*rollout.batches.jsonl

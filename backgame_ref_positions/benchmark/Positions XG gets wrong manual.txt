@@ -1,0 +1,35 @@
+# Positions XG gets wrong - hand-transcribed seed positions.
+#
+# These reference positions exist only as photographs / book diagrams in
+# "Positions for Mark/Positions XG gets wrong/", not as .xgp files, so they were
+# transcribed by hand in Sage Pro and read back from the saved positions of
+# user 8 (miggins@gmail.com) under the tag
+# "Positions for Mark-Positions XG gets wrong".
+#
+# "import" merges this file into "<category> starting.txt" after the .xgp files,
+# deduped against them. It lives here, in the committed benchmark directory, so
+# that re-running import never drops them.
+#
+# Same format as starting.txt: cube_value cube_owner board(26 ints), player-1
+# frame (positive checkers = player 1).
+#
+# NOTE: none of these five hold a two-anchor back game, so under the category's
+# "any back game" filter (anchors on 2+ of the opponent's 1- to 5-points) they
+# seed games but never themselves qualify. Four are single deep anchors on the
+# opponent's 5-point; the Laila position has no home-board anchor either side.
+
+# Laila - XG doesnt get it when 6pnt isnt made  (source image:
+#   "Laila - XG doesn_t get it when the 6pt isn_t made.jpg")
+1 centered 1 0 0 0 0 0 0 2 2 2 2 2 2 1 0 0 0 1 0 0 1 -3 -3 -3 -2 0
+
+# Lamford BB p264  (source image: "Lamford BB p264.png")
+1 centered 0 3 3 3 4 -2 0 0 0 0 0 2 0 0 -1 0 -2 -2 -2 -2 -2 -2 0 0 0 0
+
+# Lamford BB p265  (source image: "Lamford BB p265.png")
+1 centered 0 3 3 3 4 -2 0 0 0 0 0 2 0 0 0 -1 -2 -2 -3 -3 -2 0 0 0 0 0
+
+# Lamford BB p266  (source image: "Lamford BB p266.png")
+1 centered 0 3 3 3 4 -2 0 0 0 0 0 2 0 -2 -2 -2 -2 -2 -2 -1 0 0 0 0 0 0
+
+# Lamford BB p267  (source image: "Lamford BB p267.png")
+1 centered 0 3 3 3 4 -2 0 0 0 0 0 2 -1 -1 -1 -2 -2 -2 -2 -2 0 0 0 0 0 0
