@@ -264,10 +264,14 @@ std::array<float, NUM_OUTPUTS> BearoffDB::lookup_probs(
     //     Player bears off in i rolls, opponent has had i-1 rolls.
     //
     //   post-move (post_move=true): opponent rolls first.
-    //     P(win) = sum_{i=1} P_p[i] * (1 - CDF_o[i])
+    //     P(win) = P_p[0] + sum_{i=1} P_p[i] * (1 - CDF_o[i])
     //     Player bears off in i rolls, opponent has had i rolls.
     //     Ties go to opponent (they completed their i-th roll before player).
-    //     p_dist[0] contributes 0: player already off means game was over before this eval.
+    //     P_p[0] = 1 exactly when the player has borne off every checker --
+    //     the move that just ended the game, so the opponent never rolls and
+    //     it is a certain win. Game-ending boards ARE valid inputs here: the
+    //     move-selection paths rank every legal candidate, winning ones
+    //     included.
 
     float p_win = 0.0f;
     if (!post_move) {
@@ -280,6 +284,7 @@ std::array<float, NUM_OUTPUTS> BearoffDB::lookup_probs(
         }
     } else {
         // Post-move: opponent rolls first, wins ties
+        p_win += p_dist[0] * SCALE;  // game just ended = certain win
         for (int i = 1; i < MAX_ROLLS; ++i) {
             float p_player_i = p_dist[i] * SCALE;
             if (p_player_i == 0.0f) continue;
@@ -319,6 +324,7 @@ std::array<float, NUM_OUTPUTS> BearoffDB::lookup_probs(
         // Post-move gammons (opponent rolls first)
         // P(gammon_win): player off in i rolls, opp has 0 off after i rolls
         if (opp_gammon) {
+            p_gammon_win += p_dist[0] * SCALE;  // game just ended, opp had 0 rolls
             for (int i = 1; i < MAX_ROLLS; ++i) {
                 float p_player_i = p_dist[i] * SCALE;
                 if (p_player_i == 0.0f) continue;

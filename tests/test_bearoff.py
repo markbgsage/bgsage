@@ -166,6 +166,57 @@ def test_roller_pp_cubeless_matches_db():
     print(f"  PASS: Roller++ P(win) = {cube.probs.win:.6f} matches DB exactly")
 
 
+def test_game_over_post_move_lookup():
+    """A board where the mover just bore off the last checker is a certain win.
+
+    Move candidates include game-ending boards, and the cube-aware selection
+    paths rank them through lookup_probs(post_move=True). Returning zeros there
+    made the rollout engine avoid winning moves entirely.
+    """
+    db = load_db()
+
+    # Opponent has borne some off: plain win.
+    over = [0]*26
+    over[20] = -1
+    over[24] = -1
+    probs = db.lookup_probs(over, post_move=True)
+    assert probs[0] == 1.0, f"P(win) should be 1.0 for a just-won board, got {probs[0]}"
+    assert probs[1] == 0.0, f"No gammon when opponent has checkers off, got {probs[1]}"
+
+    # Opponent has all 15 on board: gammon win.
+    gammon = [0]*26
+    gammon[19] = -5
+    gammon[20] = -5
+    gammon[21] = -5
+    probs_g = db.lookup_probs(gammon, post_move=True)
+    assert probs_g[0] == 1.0, f"P(win) should be 1.0, got {probs_g[0]}"
+    assert probs_g[1] == 1.0, f"P(gw) should be 1.0 vs 15 on board, got {probs_g[1]}"
+
+    print("  PASS: game-over post-move lookups return certain win")
+
+
+def test_rollout_cube_action_last_roll():
+    """2T cube action on a 2-vs-2 checker race must track the exact game tree.
+
+    Board [0,1,...,1(pt6),...,-1(pt20),...,-1(pt24)], cube 2 owned by player:
+    exact expectimax gives ND +0.2546 / DT +0.1852 (3-ply and 4-ply match it
+    to 4 decimals). When game-over candidates evaluated as certain losses,
+    trials avoided bearing off and reported ND +0.66 / DT +1.79. Bands are
+    wide (several rollout SEs plus /fp:fast cross-build wobble) but exclude
+    the broken values by a large margin.
+    """
+    board = [0,1,0,0,0,0,1, 0,0,0,0,0,0, 0,0,0,0,0,0, 0,-1,0,0,0,-1, 0]
+    analyzer = BgBotAnalyzer(eval_level='truncated2', bearoff_db=True)
+    cube = analyzer.cube_action(board, cube_value=2, cube_owner='player')
+
+    assert 0.10 < cube.equity_nd < 0.45, (
+        f"2T ND {cube.equity_nd:+.4f} far from exact +0.2546")
+    assert -0.15 < cube.equity_dt < 0.60, (
+        f"2T DT {cube.equity_dt:+.4f} far from exact +0.1852")
+    print(f"  PASS: 2T ND {cube.equity_nd:+.4f} / DT {cube.equity_dt:+.4f} "
+          f"(exact +0.2546 / +0.1852)")
+
+
 if __name__ == "__main__":
     tests = [
         ("Position indexing roundtrip", test_position_indexing_roundtrip),
@@ -175,6 +226,8 @@ if __name__ == "__main__":
         ("Analyzer integration", test_analyzer_integration),
         ("4-ply cubeless matches DB", test_4ply_cubeless_matches_db),
         ("Roller++ cubeless matches DB", test_roller_pp_cubeless_matches_db),
+        ("Game-over post-move lookup", test_game_over_post_move_lookup),
+        ("Rollout cube action, last-roll race", test_rollout_cube_action_last_roll),
     ]
 
     passed = 0
