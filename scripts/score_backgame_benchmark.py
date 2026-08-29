@@ -1,72 +1,225 @@
+#!/usr/bin/env python3
 # SPDX-License-Identifier: MPL-2.0
 # Copyright (C) 2026 Mark Higgins
-"""Score S9 back game benchmark ER against S9 rollout targets.
+"""Score the engine against a back game benchmark category's rollout reference.
 
-Evaluates each position with the full 19-NN BackgameAwarePairStrategy at 1-ply,
-compares cubeless equity against the rollout target equity.
+Reads ``<category> rollout.jsonl`` -- the rollout-grade reference produced for
+every decision in ``<category> benchmark.txt`` -- plays each decision at one or
+more evaluation levels, and reports a Performance Rating: the average equity
+error per decision x 500 (the XG convention).
 
-Usage:
-    python bgsage/scripts/score_backgame_benchmark.py
-    python bgsage/scripts/score_backgame_benchmark.py --side player
-    python bgsage/scripts/score_backgame_benchmark.py --side opponent
+The scoring formulas are imported from ``benchmark_money`` rather than restated,
+so this benchmark and the money/match ones can never disagree about what an
+error is:
+
+* **Checker**: the bot's chosen play against the reference's best.
+  ``error = max(0, best_equity - chosen_equity)``.
+* **Cube**: up to two sub-decisions per position. The doubler's error is
+  ``max(0, max(ND, min(DT,DP)) - actual)``; the receiver's is
+  ``max(0, actual - min(DT,DP))``.
+
+Which cube sub-decisions count is decided HERE, from the rollout reference,
+rather than trusted from the 2T/3P screen that generated the decision list --
+the rollout is the better evidence for whether a double was ever a live
+question. A position whose doubler decision is trivial (an obvious no-double,
+too-good or hopeless spot) contributes only its take decision, or nothing.
+
+One caveat the numbers do not show on their own. The reference carries EVERY
+legal move, but only the handful that survived the move filter carry
+rollout-grade equities; the rest carry the 1-ply or 2-ply value the filter
+scored them at. When a bot picks one of those, its error mixes precision
+scales. That is the same convention ``benchmark_money`` uses -- the filter drops
+a move precisely because it is clearly worse -- but the report prints how often
+each level's pick was rollout-grade, so a level whose picks are mostly
+filter-grade can be read with the appropriate suspicion.
+
+Usage::
+
+    py -3.14 scripts/score_backgame_benchmark.py --category "21 backgame"
+    py -3.14 scripts/score_backgame_benchmark.py --category "21 backgame" \\
+        --level 1ply 2ply 3ply
+    py -3.14 scripts/score_backgame_benchmark.py --category "21 backgame" \\
+        --level 3ply --limit 200
 """
 
+from __future__ import annotations
+
 import argparse
+import json
 import os
 import sys
+import time
+from pathlib import Path
 
-sys.path.insert(0, "build")
-os.add_dll_directory(r"C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v13.1\bin\x64")
-import bgbot_cpp
+_SCRIPT_DIR = Path(__file__).resolve().parent
+_PROJECT_ROOT = _SCRIPT_DIR.parent
+for _p in (_PROJECT_ROOT / "python", _PROJECT_ROOT / "build", _SCRIPT_DIR):
+    _sp = str(_p)
+    if _sp not in sys.path:
+        sys.path.insert(0, _sp)
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "python"))
-from bgsage.weights import WeightConfigPair
+if sys.platform == "win32":
+    _cuda = r"C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v13.1\bin\x64"
+    if os.path.isdir(_cuda):
+        os.add_dll_directory(_cuda)
+    if (_PROJECT_ROOT / "build").is_dir():
+        os.add_dll_directory(str(_PROJECT_ROOT / "build"))
+
+from backgame_benchmark import benchmark_file  # noqa: E402
+from benchmark_money import (  # noqa: E402
+    BLUNDER_THRESHOLD, PR_MULTIPLIER, TRIVIAL_SPREAD, _is_trivial_cube,
+)
+
+DEFAULT_LEVELS = ("1ply", "2ply", "3ply")
 
 
-def load_rollout(filepath):
-    """Load positions + rollout equities from a rollout file."""
-    boards, equities = [], []
-    with open(filepath) as f:
-        for line in f:
-            parts = line.strip().split()
-            if len(parts) < 31:
+def rollout_file(category: str) -> Path:
+    return benchmark_file(category).parent / f"{category} rollout.jsonl"
+
+
+def load_reference(category: str, limit: int | None) -> list[dict]:
+    path = rollout_file(category)
+    if not path.exists():
+        raise SystemExit(
+            f"No rollout reference for {category!r}: {path} does not exist.\n"
+            f"Build it with scripts/rollout_backgame_benchmark.py (parent repo).")
+    rows = [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines()
+            if line.strip()]
+    return rows[:limit] if limit else rows
+
+
+def cube_subdecisions(entry: dict) -> tuple[bool, bool]:
+    """Which of a cube position's two sub-decisions count, per the rollout."""
+    nd, dt, dp = entry["equity_nd"], entry["equity_dt"], entry["equity_dp"]
+    has_double = not _is_trivial_cube(nd, dt, dp)
+    has_take = bool(entry.get("should_double_ref")) and (
+        abs(dt - dp) >= TRIVIAL_SPREAD or bool(entry.get("is_beaver")))
+    return has_double, has_take
+
+
+def score_level(rows: list[dict], level: str, threads: int) -> dict:
+    """Play every decision at ``level`` and total the equity errors."""
+    from bgsage import BgBotAnalyzer
+
+    analyzer = BgBotAnalyzer(eval_level=level, cubeful=True, parallel_threads=threads)
+
+    sums = {"checker": 0.0, "cube": 0.0}
+    counts = {"checker": 0, "cube": 0}
+    blunders = {"checker": 0, "cube": 0}
+    rollout_grade_picks = mismatches = 0
+    started = time.perf_counter()
+
+    for i, entry in enumerate(rows, start=1):
+        if entry["kind"] == "checker":
+            die1, die2 = entry["dice"]
+            result = analyzer.checker_play(
+                entry["board"], die1, die2,
+                cube_value=entry["cube_value"], cube_owner=entry["cube_owner"],
+                jacoby=True, beaver=True)
+            if not result.moves:
                 continue
-            board = [int(x) for x in parts[:26]]
-            probs = [float(x) for x in parts[26:31]]
-            eq = 2 * probs[0] - 1 + probs[1] - probs[3] + probs[2] - probs[4]
-            boards.append(board)
-            equities.append(eq)
-    return boards, equities
+            chosen = tuple(result.moves[0].board)
+            ref = {tuple(m["board"]): m for m in entry["moves"]}
+            picked = ref.get(chosen)
+            if picked is None:
+                # Should not happen: the reference carries every legal move.
+                mismatches += 1
+                continue
+            rollout_grade_picks += picked["eval_level"] == "Rollout"
+            error = max(0.0, entry["moves"][0]["equity"] - picked["equity"])
+            sums["checker"] += error
+            counts["checker"] += 1
+            blunders["checker"] += error > BLUNDER_THRESHOLD
+        else:
+            has_double, has_take = cube_subdecisions(entry)
+            if not (has_double or has_take):
+                continue
+            nd, dt, dp = entry["equity_nd"], entry["equity_dt"], entry["equity_dp"]
+            action = analyzer.cube_action(
+                entry["board"], cube_value=entry["cube_value"],
+                cube_owner=entry["cube_owner"], jacoby=True, beaver=True)
+            if has_double:
+                optimal = max(nd, min(dt, dp))
+                actual = min(dt, dp) if action.should_double else nd
+                error = max(0.0, optimal - actual)
+                sums["cube"] += error
+                counts["cube"] += 1
+                blunders["cube"] += error > BLUNDER_THRESHOLD
+            if has_take:
+                optimal = min(dt, dp)
+                actual = dt if action.should_take else dp
+                error = max(0.0, actual - optimal)
+                sums["cube"] += error
+                counts["cube"] += 1
+                blunders["cube"] += error > BLUNDER_THRESHOLD
+
+        if i % 100 == 0:
+            print(f"    {level}: {i}/{len(rows)} decisions "
+                  f"({time.perf_counter() - started:.0f}s)", flush=True)
+
+    n_total = counts["checker"] + counts["cube"]
+    err_total = sums["checker"] + sums["cube"]
+
+    def _pr(total: float, n: int) -> float:
+        return (total / n * PR_MULTIPLIER) if n else 0.0
+
+    return {
+        "level": level,
+        "pr": _pr(err_total, n_total),
+        "checker_pr": _pr(sums["checker"], counts["checker"]),
+        "cube_pr": _pr(sums["cube"], counts["cube"]),
+        "n": n_total,
+        "n_checker": counts["checker"],
+        "n_cube": counts["cube"],
+        "blunders": blunders["checker"] + blunders["cube"],
+        "mean_error": err_total / n_total if n_total else 0.0,
+        "rollout_grade_pct": (100 * rollout_grade_picks / counts["checker"]
+                              if counts["checker"] else 0.0),
+        "mismatches": mismatches,
+        "seconds": time.perf_counter() - started,
+    }
 
 
-def score_er(boards, target_equities, strategy):
-    """Compute ER (mean |equity error| * 1000) using BackgameAwarePairStrategy."""
-    total_err = 0.0
-    for board, target_eq in zip(boards, target_equities):
-        result = strategy.evaluate_board(board, board)
-        model_eq = result["equity"]
-        total_err += abs(model_eq - target_eq)
-    return (total_err / len(boards)) * 1000.0
-
-
-def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--side", choices=["player", "opponent", "both"], default="both")
+def main() -> None:
+    parser = argparse.ArgumentParser(
+        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser.add_argument("--category", required=True, help='e.g. "21 backgame"')
+    parser.add_argument("--level", nargs="+", default=list(DEFAULT_LEVELS),
+                        help=f"Levels to score (default: {' '.join(DEFAULT_LEVELS)})")
+    parser.add_argument("--limit", type=int, default=None,
+                        help="Score only the first N reference decisions")
+    parser.add_argument("--threads", type=int, default=0,
+                        help="Engine threads (0 = every CPU)")
     args = parser.parse_args()
 
-    data_dir = os.path.join(os.path.dirname(__file__), "..", "data")
+    rows = load_reference(args.category, args.limit)
+    n_checker = sum(1 for r in rows if r["kind"] == "checker")
+    live_cube = sum(1 for r in rows if r["kind"] == "cube" and any(cube_subdecisions(r)))
+    print(f"{args.category}: {len(rows)} reference decisions "
+          f"({n_checker} checker, {len(rows) - n_checker} cube; "
+          f"{live_cube} cube positions with a live sub-decision)")
+    print(f"Reference: {rows[0]['n_trials']} paths/position, "
+          f"blunder > {BLUNDER_THRESHOLD}, PR = mean error x {PR_MULTIPLIER}\n")
 
-    w = WeightConfigPair.from_model("stage9")
-    w.validate()
-    strategy = bgbot_cpp.BackgameAwarePairStrategy(w.paths, w.hiddens)
+    results = []
+    for level in args.level:
+        print(f"  scoring {level}...", flush=True)
+        results.append(score_level(rows, level, args.threads))
 
-    sides = ["player", "opponent"] if args.side == "both" else [args.side]
-
-    for side in sides:
-        bench_file = os.path.join(data_dir, f"{side}-backgame-benchmark-rollout")
-        boards, equities = load_rollout(bench_file)
-        er = score_er(boards, equities, strategy)
-        print(f"{side:>8s} back game ER (1-ply S9 vs S9 rollout): {er:.2f}  ({len(boards)} positions)")
+    print(f"\n{'level':>8} {'PR':>8} {'checker':>8} {'cube':>8} "
+          f"{'decisions':>10} {'blunders':>9} {'mean err':>9} "
+          f"{'RO-grade':>9} {'time':>7}")
+    print("-" * 86)
+    for r in results:
+        print(f"{r['level']:>8} {r['pr']:8.2f} {r['checker_pr']:8.2f} "
+              f"{r['cube_pr']:8.2f} {r['n']:10d} {r['blunders']:9d} "
+              f"{r['mean_error']:9.5f} {r['rollout_grade_pct']:8.1f}% "
+              f"{r['seconds']:6.0f}s")
+    if any(r["mismatches"] for r in results):
+        print("\nWARNING: some chosen plays were not in the reference move list "
+              "- the reference is supposed to carry every legal move.")
+    print("\nRO-grade = share of checker picks whose reference equity is "
+          "rollout-grade rather than a filter-level estimate.")
 
 
 if __name__ == "__main__":
