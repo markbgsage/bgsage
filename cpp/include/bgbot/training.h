@@ -84,6 +84,52 @@ struct PaskoTDTrainConfig {
 // (best benchmark ER), and .history.csv.
 TDTrainResult td_train_pasko(const PaskoTDTrainConfig& config);
 
+// Configuration for td_train_backgame_truncated(): one 244-input backgame
+// category NN (Stage 11) trained by TRUNCATED TD self-play. Games start from
+// the provided backgame reference positions (cycled) and are played with
+// 1-ply decisions by the training NN, but a game's TD chain ends the moment a
+// post-move position leaves every backgame category (backgame_category() ==
+// NONE): the final update targets a frozen reference model's ref_plies-ply
+// cubeless post-move evaluation of that position, standing in for the game
+// outcome exactly as the terminal 0/1 targets do in ordinary TD. A game that
+// genuinely ends while still in a backgame (the opponent bears off through
+// the anchors) uses the real outcome as usual.
+struct BackgameTDTrainConfig {
+    int n_games             = 5000;
+    float alpha             = 0.1f;
+    int n_hidden            = 400;
+    float weight_init_eps   = 0.1f;
+    uint32_t seed           = 42;
+    int benchmark_interval  = 10000;
+    std::string model_name  = "td_s11_bg";
+    std::string models_dir  = "models";
+    std::string resume_from = "";
+
+    // Start positions, positive player to act; game i starts from [i % size].
+    // With randomize_first_mover, a coin decides which side acts first (the
+    // board is flipped when the other side does).
+    std::vector<Board> start_boards;
+    bool randomize_first_mover = true;
+
+    // Safety valve: a path this long is force-truncated with the reference
+    // target rather than looping (a real game ends far sooner).
+    int max_half_moves = 2000;
+
+    // Frozen reference model for truncation targets (Stage 9: 19 paths).
+    std::vector<std::string> ref_weight_paths;
+    std::vector<int> ref_hidden_sizes;
+    int ref_plies    = 3;
+    bool ref_parallel = true;   // parallelize the reference eval's interior
+    int ref_threads  = 0;       // 0 = auto
+
+    // Same equity benchmark as td_train_pasko (board + target equity rows).
+    const std::vector<EquityBenchmarkEntry>* benchmark = nullptr;
+};
+
+// Truncated TD(0) self-play for one Stage 11 backgame category NN. Saves
+// {model_name}.weights, .weights.best (best benchmark ER) and .history.csv.
+TDTrainResult td_train_backgame_truncated(const BackgameTDTrainConfig& config);
+
 // Configuration for multi-network TD training
 struct MultiTDTrainConfig {
     int n_games             = 5000;

@@ -2377,24 +2377,84 @@ inline float backgame_blend_weight(int anchors, int bg_pips) {
     }
     return base * (0.5f + 0.5f * ramp);
 }
+
+// Category from the backgame side's anchor depths (depth d = an anchor on the
+// opponent's d-point, d in 1..6; bit d of `mask` set when held). Exactly two
+// anchors map by their pair — {1,2},{1,3},{2,3} deep; {3,4},{3,5},{4,5} (and
+// any pair no deeper than the 3-point) double-anchor; the rest middle. Three
+// or more anchors are DEEP when at least two sit on the 1/2/3 points and
+// MIDDLE otherwise — never DOUBLE_ANCHOR.
+inline BackgameCategory category_from_anchor_mask(int mask) {
+    int n = 0, deep = 0, min_depth = 7;
+    for (int d = 1; d <= 6; ++d) {
+        if (mask & (1 << d)) {
+            ++n;
+            if (d <= 3) ++deep;
+            if (d < min_depth) min_depth = d;
+        }
+    }
+    if (n < 2) return BackgameCategory::NONE;
+    if (deep >= 2) return BackgameCategory::DEEP;
+    if (n == 2 && min_depth >= 3) return BackgameCategory::DOUBLE_ANCHOR;
+    return BackgameCategory::MIDDLE;
+}
+
+// Stage 9's backgame detection (see select_nn_idx below — the two MUST agree),
+// returning the backgame side's anchor-depth mask, or NONE. `player_gp` /
+// `opponent_gp` are the precomputed plans, with the opponent's PURERACE
+// already coerced to RACING as select_nn_idx does.
+BackgameCategory backgame_category_given_plans(
+    const Board& board, GamePlan player_gp, GamePlan opponent_gp)
+{
+    if (player_gp == GamePlan::ANCHORING && opponent_gp == GamePlan::RACING) {
+        auto [player_pips, opp_pips] = pip_counts(board);
+        if (player_pips > opp_pips) {
+            int mask = 0;
+            for (int pt = 19; pt <= 24; ++pt)
+                if (board[pt] >= 2) mask |= 1 << (25 - pt);
+            return category_from_anchor_mask(mask);
+        }
+    }
+    if (player_gp == GamePlan::RACING && opponent_gp == GamePlan::ANCHORING) {
+        auto [player_pips, opp_pips] = pip_counts(board);
+        if (opp_pips > player_pips) {
+            int mask = 0;
+            for (int pt = 1; pt <= 6; ++pt)
+                if (board[pt] <= -2) mask |= 1 << pt;
+            return category_from_anchor_mask(mask);
+        }
+    }
+    return BackgameCategory::NONE;
+}
 }  // namespace
+
+BackgameCategory backgame_category(const Board& board) {
+    GamePlan player_gp = classify_game_plan(board);
+    if (player_gp == GamePlan::PURERACE) return BackgameCategory::NONE;
+    GamePlan opponent_gp = classify_game_plan(flip(board));
+    if (opponent_gp == GamePlan::PURERACE) opponent_gp = GamePlan::RACING;
+    return backgame_category_given_plans(board, player_gp, opponent_gp);
+}
 
 BackgameAwarePairStrategy::BackgameAwarePairStrategy(
     const std::vector<std::string>& weight_paths,
     const std::vector<int>& hidden_sizes)
 {
     const int n = static_cast<int>(weight_paths.size());
-    if ((n != NUM_BACKGAME_PAIR_NNS && n != NUM_BACKGAME_PAIR_NNS_HYBRID) ||
+    if ((n != NUM_BACKGAME_PAIR_NNS && n != NUM_BACKGAME_PAIR_NNS_HYBRID &&
+         n != NUM_BACKGAME_PAIR_NNS_CATEGORIZED) ||
         static_cast<int>(hidden_sizes.size()) != n) {
         throw std::runtime_error(
             "BackgameAwarePairStrategy requires " +
-            std::to_string(NUM_BACKGAME_PAIR_NNS) + " or " +
+            std::to_string(NUM_BACKGAME_PAIR_NNS) + ", " +
+            std::to_string(NUM_BACKGAME_PAIR_NNS_CATEGORIZED) + " or " +
             std::to_string(NUM_BACKGAME_PAIR_NNS_HYBRID) +
             " weight paths and matching hidden sizes, got " +
             std::to_string(weight_paths.size()) + "/" +
             std::to_string(hidden_sizes.size()));
     }
     blended_backgame_ = (n == NUM_BACKGAME_PAIR_NNS_HYBRID);
+    categorized_backgame_ = (n == NUM_BACKGAME_PAIR_NNS_CATEGORIZED);
     nns_.resize(n);
     for (int i = 0; i < n; ++i) {
         int n_inputs = (i == 0) ? TESAURO_INPUTS : EXTENDED_CONTACT_INPUTS;
@@ -2413,6 +2473,17 @@ int BackgameAwarePairStrategy::select_nn_idx(const Board& board) const {
     GamePlan opponent_gp = classify_game_plan(flip(board));
     if (opponent_gp == GamePlan::PURERACE) {
         opponent_gp = GamePlan::RACING;
+    }
+
+    // Stage 11 (20 NNs): the same detection as below, but the backgame NN is
+    // picked by the backgame's CATEGORY — 17 deep, 18 middle, 19 double-anchor
+    // — the same NN whichever side holds it.
+    if (categorized_backgame_) {
+        BackgameCategory cat =
+            backgame_category_given_plans(board, player_gp, opponent_gp);
+        if (cat != BackgameCategory::NONE)
+            return 17 + static_cast<int>(cat);
+        return 1 + game_plan_pair_index(player_gp, opponent_gp);
     }
 
     // Player back game: (anchoring, racing) + player behind + 2+ anchors in opp home

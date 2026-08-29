@@ -448,6 +448,31 @@ private:
 
 constexpr int NUM_BACKGAME_PAIR_NNS = 19;
 constexpr int NUM_BACKGAME_PAIR_NNS_HYBRID = 21;  // 19 base + 2 extra backgame NNs
+// Stage 11 experimental: 17 standard pair NNs + 3 backgame NNs selected by the
+// CATEGORY of the backgame (which anchors are held), not by which side holds it.
+constexpr int NUM_BACKGAME_PAIR_NNS_CATEGORIZED = 20;
+
+// Backgame category, named after the anchor pairs of the reference positions
+// ("21 backgame" = anchors on the opponent's 1- and 2-points):
+//   DEEP          21, 31, 32  — both anchors on the 1/2/3 points
+//   MIDDLE        41, 42, 51, 52 — one anchor on the 1/2 point, one higher
+//   DOUBLE_ANCHOR 43, 53, 54  — exactly two anchors, none deeper than the 3-pt
+// With more than two anchors: DEEP when at least two of them are on the
+// 1/2/3 points, MIDDLE otherwise (never DOUBLE_ANCHOR).
+enum class BackgameCategory : int {
+    NONE = -1,
+    DEEP = 0,
+    MIDDLE = 1,
+    DOUBLE_ANCHOR = 2,
+};
+
+// Category of the position's backgame, from EITHER side, or NONE. Applies the
+// same detection Stage 9's select_nn_idx uses (plan pair (anchoring, racing),
+// backgame side behind on pips, >= 2 anchors in the opponent's home board —
+// the 6-point counts as an anchor for detection AND category purposes), then
+// classifies the backgame side's anchor depths per the table above. The result
+// is the same whichever perspective the board is in.
+BackgameCategory backgame_category(const Board& board);
 constexpr int BLENDED_PLAYER_BG_IDX = 21;    // sentinel: gated player backgame
 constexpr int BLENDED_OPPONENT_BG_IDX = 22;  // sentinel: gated opponent backgame
 constexpr int BACKGAME_GATE_MIN_ANCHORS = 3; // gate arm 1: 3+ anchors
@@ -461,10 +486,13 @@ constexpr int BACKGAME_BLEND_PIP_HI = 230;
 
 class BackgameAwarePairStrategy : public Strategy {
 public:
-    // Construct from vectors of weight paths and hidden sizes (length 19 or 21).
-    // Index 0 = PureRace, indices 1-16 = contact pairs, index 17 = player
-    // backgame, index 18 = opponent backgame. When length 21, indices 19/20 are
-    // the extra pip-routed player/opponent backgame NNs.
+    // Construct from vectors of weight paths and hidden sizes (length 19, 20
+    // or 21). Index 0 = PureRace, indices 1-16 = contact pairs. With 19 NNs,
+    // index 17 = player backgame, 18 = opponent backgame (Stage 9); with 21,
+    // indices 19/20 add the extra pip-routed backgame NNs (Stage 10). With 20
+    // NNs (Stage 11 experimental), indices 17/18/19 are instead the DEEP /
+    // MIDDLE / DOUBLE_ANCHOR category NNs, selected by backgame_category() —
+    // the same NN whichever side holds the backgame.
     BackgameAwarePairStrategy(const std::vector<std::string>& weight_paths,
                               const std::vector<int>& hidden_sizes);
 
@@ -516,8 +544,9 @@ public:
     std::array<float, NN_OUTPUTS> probs_with_nn(const Board& board, int nn_idx) const;
 
 private:
-    std::vector<std::shared_ptr<NeuralNetwork>> nns_;  // 19 (base) or 21 (hybrid)
-    bool blended_backgame_ = false;  // true when 21 NNs are loaded
+    std::vector<std::shared_ptr<NeuralNetwork>> nns_;  // 19 (base), 20 (categorized) or 21 (hybrid)
+    bool blended_backgame_ = false;      // true when 21 NNs are loaded
+    bool categorized_backgame_ = false;  // true when 20 NNs are loaded (Stage 11)
 
     // Determine which NN to use. Returns 0 for purerace, 1-16 for standard
     // contact pairs, 17 for player backgame, 18 for opponent backgame; on

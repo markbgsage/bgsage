@@ -551,6 +551,83 @@ PYBIND11_MODULE(bgbot_cpp, m) {
        py::arg("bench_boards") = std::vector<std::vector<int>>(),
        py::arg("bench_targets") = std::vector<float>());
 
+    // --- Stage 11 truncated backgame TD training ---
+    m.def("td_train_backgame_truncated", [](
+            int n_games, float alpha, int n_hidden, float eps,
+            uint32_t seed, int benchmark_interval,
+            const std::string& model_name,
+            const std::string& models_dir,
+            const std::string& resume_from,
+            const std::vector<std::vector<int>>& start_boards,
+            bool randomize_first_mover,
+            int max_half_moves,
+            const std::vector<std::string>& ref_weight_paths,
+            const std::vector<int>& ref_hidden_sizes,
+            int ref_plies,
+            int ref_threads,
+            const std::vector<std::vector<int>>& bench_boards,
+            const std::vector<float>& bench_targets) {
+        BackgameTDTrainConfig config;
+        config.n_games = n_games;
+        config.alpha = alpha;
+        config.n_hidden = n_hidden;
+        config.weight_init_eps = eps;
+        config.seed = seed;
+        config.benchmark_interval = benchmark_interval;
+        config.model_name = model_name;
+        config.models_dir = models_dir;
+        config.resume_from = resume_from;
+        config.randomize_first_mover = randomize_first_mover;
+        config.max_half_moves = max_half_moves;
+        config.ref_weight_paths = ref_weight_paths;
+        config.ref_hidden_sizes = ref_hidden_sizes;
+        config.ref_plies = ref_plies;
+        config.ref_threads = ref_threads;
+
+        if (start_boards.empty())
+            throw std::runtime_error(
+                "td_train_backgame_truncated: start_boards is empty");
+        config.start_boards.reserve(start_boards.size());
+        for (const auto& b : start_boards)
+            config.start_boards.push_back(list_to_board(b));
+
+        if (bench_boards.size() != bench_targets.size()) {
+            throw std::runtime_error(
+                "td_train_backgame_truncated: bench_boards and bench_targets "
+                "size mismatch");
+        }
+        std::vector<EquityBenchmarkEntry> bench;
+        bench.reserve(bench_boards.size());
+        for (size_t i = 0; i < bench_boards.size(); ++i) {
+            bench.push_back({list_to_board(bench_boards[i]), bench_targets[i]});
+        }
+        if (!bench.empty()) config.benchmark = &bench;
+
+        py::gil_scoped_release release;
+        return td_train_backgame_truncated(config);
+    }, "Truncated TD self-play for one Stage 11 backgame category NN: games "
+       "start from the given backgame positions and end (with a reference-"
+       "model N-ply cubeless eval as the terminal target) when the position "
+       "leaves every backgame category",
+       py::arg("n_games") = 5000,
+       py::arg("alpha") = 0.1f,
+       py::arg("n_hidden") = 400,
+       py::arg("eps") = 0.1f,
+       py::arg("seed") = 42,
+       py::arg("benchmark_interval") = 10000,
+       py::arg("model_name") = "td_s11_bg",
+       py::arg("models_dir") = "models",
+       py::arg("resume_from") = "",
+       py::arg("start_boards"),
+       py::arg("randomize_first_mover") = true,
+       py::arg("max_half_moves") = 2000,
+       py::arg("ref_weight_paths"),
+       py::arg("ref_hidden_sizes"),
+       py::arg("ref_plies") = 3,
+       py::arg("ref_threads") = 0,
+       py::arg("bench_boards") = std::vector<std::vector<int>>(),
+       py::arg("bench_targets") = std::vector<float>());
+
     // --- Multi-Network TD Training ---
     m.def("td_train_multi", [](int n_games, float alpha,
                                 int n_hidden_contact, int n_hidden_crashed, int n_hidden_race,
@@ -1134,6 +1211,18 @@ PYBIND11_MODULE(bgbot_cpp, m) {
         GamePlan gp = classify_game_plan(b);
         return std::string(game_plan_name(gp));
     });
+    m.def("backgame_category", [](const std::vector<int>& board) {
+        auto b = list_to_board(board);
+        switch (backgame_category(b)) {
+            case BackgameCategory::DEEP: return std::string("deep");
+            case BackgameCategory::MIDDLE: return std::string("middle");
+            case BackgameCategory::DOUBLE_ANCHOR: return std::string("double");
+            default: return std::string("none");
+        }
+    }, "Stage 11 backgame category of the position (either side): 'deep' "
+       "(21/31/32), 'middle' (41/42/51/52), 'double' (43/53/54), or 'none'. "
+       "Applies Stage 9's backgame detection first.",
+       py::arg("board"));
     m.def("classify_game_plans_batch", [](py::array_t<int32_t> boards_np) {
         auto info = boards_np.request();
         if (info.ndim != 2 || info.shape[1] != 26) {

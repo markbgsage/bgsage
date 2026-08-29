@@ -4,6 +4,7 @@
 #include "bgbot/board.h"
 #include "bgbot/moves.h"
 #include "bgbot/encoding.h"
+#include "bgbot/multipy.h"
 #include <random>
 #include <chrono>
 #include <fstream>
@@ -1210,6 +1211,196 @@ TDTrainResult td_train_pasko(const PaskoTDTrainConfig& config)
             nn->td_update(flip_outputs(post_outputs), config.alpha);
 
             // Step E: flip for next player
+            board = flip(board);
+        }
+    }
+
+    run_benchmark_and_print(config.n_games, true);
+
+    auto t_end = std::chrono::steady_clock::now();
+    train_result.games_played = config.n_games;
+    train_result.total_seconds = std::chrono::duration<double>(t_end - t_start).count();
+    return train_result;
+}
+
+// ======================== Stage 11 truncated backgame TD ========================
+
+TDTrainResult td_train_backgame_truncated(const BackgameTDTrainConfig& config)
+{
+    auto t_start = std::chrono::steady_clock::now();
+    std::cout << std::defaultfloat;
+
+    init_escape_tables();
+
+    if (config.start_boards.empty())
+        throw std::runtime_error("td_train_backgame_truncated: no start boards");
+    if (config.ref_weight_paths.empty())
+        throw std::runtime_error("td_train_backgame_truncated: no reference weights");
+
+    std::cout << "=== Stage 11 truncated backgame TD (single 244-input NN) ===" << std::endl;
+    std::cout << "  Hidden:  " << config.n_hidden << ", " << EXTENDED_CONTACT_INPUTS << " inputs" << std::endl;
+    std::cout << "  Alpha:   " << config.alpha << std::endl;
+    std::cout << "  Games:   " << config.n_games << std::endl;
+    std::cout << "  Seeds:   " << config.start_boards.size() << " start positions" << std::endl;
+    std::cout << "  Target:  reference " << config.ref_plies << "-ply cubeless post-move eval on region exit" << std::endl;
+    std::cout << "  Seed:    " << config.seed << std::endl;
+    if (!config.resume_from.empty())
+        std::cout << "  Resume:  " << config.resume_from << std::endl;
+    std::cout << std::endl;
+
+    auto nn = std::make_shared<NeuralNetwork>(
+        config.n_hidden, EXTENDED_CONTACT_INPUTS, config.weight_init_eps, config.seed);
+
+    if (!config.resume_from.empty()) {
+        if (!nn->load_weights(config.resume_from)) {
+            throw std::runtime_error("Failed to load weights: " + config.resume_from);
+        }
+    }
+
+    NNStrategy strat(nn);
+
+    // Frozen reference for truncation targets. Its multi-ply cache entries
+    // stay valid for the whole run because the reference never trains.
+    auto ref_base = std::make_shared<BackgameAwarePairStrategy>(
+        config.ref_weight_paths, config.ref_hidden_sizes);
+    MultiPlyStrategy ref(ref_base, config.ref_plies, MoveFilters::TINY,
+                         /*full_depth_opponent=*/false,
+                         config.ref_parallel, config.ref_threads);
+
+    std::mt19937 rng(config.seed);
+    std::uniform_int_distribution<int> die(1, 6);
+    std::uniform_int_distribution<int> coin(0, 1);
+
+    std::string weights_path = config.models_dir + "/" + config.model_name + ".weights";
+    std::string best_path    = weights_path + ".best";
+    std::string history_path = config.models_dir + "/" + config.model_name + ".history.csv";
+
+    double best_bg_score = 1e9;
+    TDTrainResult train_result;
+
+    std::vector<Board> candidates;
+    candidates.reserve(32);
+    std::array<float, EXTENDED_CONTACT_INPUTS> flipped_inputs;
+    std::array<float, EXTENDED_CONTACT_INPUTS> post_inputs;
+
+    int interval_truncated = 0, interval_terminal = 0, interval_capped = 0;
+    long long interval_half_moves = 0;
+    int interval_games = 0;
+
+    auto run_benchmark_and_print = [&](int game_idx, bool is_final) {
+        auto t_now = std::chrono::steady_clock::now();
+        double elapsed = std::chrono::duration<double>(t_now - t_start).count();
+
+        double bg_score = -1.0;
+        if (config.benchmark != nullptr && !config.benchmark->empty()) {
+            bg_score = score_equity_benchmark(strat, *config.benchmark);
+        }
+
+        train_result.history.push_back({game_idx, bg_score, elapsed});
+
+        std::cout << "Game " << std::setw(7) << game_idx
+                  << std::fixed << std::setprecision(2)
+                  << "  bg=" << bg_score;
+
+        if (interval_games > 0) {
+            std::cout << std::setprecision(1)
+                      << "  trunc=" << (100.0 * interval_truncated / interval_games)
+                      << "% term=" << (100.0 * interval_terminal / interval_games)
+                      << "%";
+            if (interval_capped > 0)
+                std::cout << " capped=" << interval_capped;
+            std::cout << "  len=" << std::setprecision(1)
+                      << (static_cast<double>(interval_half_moves) / interval_games);
+        }
+
+        std::cout << "  time=" << std::setprecision(1) << elapsed << "s";
+        if (is_final) std::cout << "  (final)";
+        std::cout << std::endl;
+
+        interval_truncated = interval_terminal = interval_capped = 0;
+        interval_half_moves = 0;
+        interval_games = 0;
+
+        nn->save_weights(weights_path);
+
+        if (bg_score >= 0 && bg_score < best_bg_score && game_idx > 0) {
+            best_bg_score = bg_score;
+            nn->save_weights(best_path);
+            std::cout << "  ** New best (bg=" << std::setprecision(2) << bg_score << ")" << std::endl;
+        }
+
+        save_history_csv(train_result.history, history_path);
+    };
+
+    // ======== Main training loop ========
+    // Same TD(0) convention as td_train_pasko: each half-move caches gradients
+    // for the previous post-move state (the flipped pre-roll board), plays the
+    // move, then updates that cached state toward the new post-move value —
+    // the training NN's own 1-ply eval mid-region, the reference model's
+    // ref_plies-ply eval on region exit, the real outcome at a true terminal.
+    for (int game_idx = 0; game_idx < config.n_games; ++game_idx) {
+
+        if (game_idx % config.benchmark_interval == 0) {
+            run_benchmark_and_print(game_idx, false);
+        }
+
+        Board board = config.start_boards[game_idx % config.start_boards.size()];
+        if (config.randomize_first_mover && coin(rng)) {
+            board = flip(board);
+        }
+
+        int half_moves = 0;
+        for (;;) {
+            int d1 = die(rng);
+            int d2 = die(rng);
+
+            // Step A: previous post-move state (pre-roll board, flipped),
+            // gradients cached for the TD update below.
+            Board flipped = flip(board);
+            flipped_inputs = compute_extended_contact_inputs(flipped);
+            nn->forward_with_gradients(flipped_inputs.data());
+
+            // Step B: the training NN picks the move at 1-ply.
+            possible_boards(board, d1, d2, candidates);
+            if (candidates.size() == 1) {
+                board = candidates[0];
+            } else {
+                int idx = strat.best_move_index(candidates, board);
+                board = candidates[idx];
+            }
+            ++half_moves;
+
+            // Step C: a real terminal still ends the game the ordinary way (a
+            // backgame can lose by bear-off with the anchors still held).
+            GameResult result = check_game_over(board);
+            if (result != GameResult::NOT_OVER) {
+                nn->td_update(terminal_targets_flipped(result), config.alpha);
+                interval_games++;
+                interval_terminal++;
+                interval_half_moves += half_moves;
+                break;
+            }
+
+            // Step C': region exit — the position no longer holds any
+            // backgame. The reference model's cubeless post-move eval stands
+            // in for the game outcome, and the path ends here.
+            const bool capped = half_moves >= config.max_half_moves;
+            if (backgame_category(board) == BackgameCategory::NONE || capped) {
+                auto ref_probs = ref.evaluate_probs(board, board);
+                nn->td_update(flip_outputs(ref_probs), config.alpha);
+                interval_games++;
+                interval_truncated++;
+                if (capped) interval_capped++;
+                interval_half_moves += half_moves;
+                break;
+            }
+
+            // Step D: ordinary TD bootstrap from the training NN's own eval.
+            post_inputs = compute_extended_contact_inputs(board);
+            auto post_outputs = nn->forward(post_inputs.data());
+            nn->td_update(flip_outputs(post_outputs), config.alpha);
+
+            // Step E: flip for the next player.
             board = flip(board);
         }
     }

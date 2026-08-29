@@ -2031,6 +2031,67 @@ positions where the blend weight > 0 (`generate_pasko_data.py --gate`). On a new
 the shipped v1 nets, then one warm-restart. (Warm-starting from the TD net lands
 ~1.4 ER worse; a further restart gains <0.1 — converged.)
 
+### Stage 11 (S11) — EXPERIMENTAL: Categorized Backgame Trio
+
+Stage 11 replaces Stage 9's two backgame NNs (player/opponent) with **three,
+selected by the backgame's CATEGORY — the same NN whichever side holds it**:
+
+| Index | NN | Categories | Anchor rule |
+|-------|----|-----------|-------------|
+| 17 | `bg_deep` | 21, 31, 32 | both anchors on the 1/2/3 points |
+| 18 | `bg_middle` | 41, 42, 51, 52 | one anchor on the 1/2 point, one higher |
+| 19 | `bg_double` | 43, 53, 54 | exactly two anchors, none deeper than the 3-pt |
+
+With 3+ anchors: deep when at least two sit on the 1/2/3 points, else middle
+(never double). The 6-point counts as an anchor (Stage 9 detection convention);
+pairs with a 6-anchor map by the same min/max rules ({1,6}/{2,6} middle, the
+rest double). **Detection itself is Stage 9's, unchanged**: plan pair
+(anchoring, racing), backgame side behind on pips, 2+ anchors in the opponent's
+home board. The category is perspective-invariant.
+
+**Where it lives.** `BackgameCategory` + free `backgame_category(board)` +
+`category_from_anchor_mask` / `backgame_category_given_plans` in
+`neural_net.h/.cpp`; `BackgameAwarePairStrategy` accepts **20** NNs
+(`NUM_BACKGAME_PAIR_NNS_CATEGORIZED`) and routes detected backgames to
+17/18/19 by category — with 19 or 21 NNs behaviour is exactly S9/S10. The
+`stage11` registry entry in `weights.py` carries S9's 17 standard NNs
+unchanged plus `sl_s11_bg_{deep,middle,double}.weights.best` via
+`extra_backgame` (plans type `backgame_pair_categorized`; dispatches to the
+same C++ class). Python: `bgbot_cpp.backgame_category(board)` returns
+`"deep"/"middle"/"double"/"none"`. Tests: `tests/test_backgame_category.py`.
+
+**Training step 1 — truncated TD** (`td_train_backgame_truncated` in
+`training.h/.cpp`, driver `scripts/run_s11_backgame_td.py`): each backgame NN
+starts from random small weights and trains by TD(0) self-play with games that
+
+* start from the category's reference positions
+  (`backgame_ref_positions/benchmark/<folder> starting.txt`, cycled, a coin
+  picking the first mover);
+* are played with 1-ply decisions by the training NN;
+* END when a post-move position is no longer in ANY backgame category — the
+  terminal TD target is then **Stage 9's 3-ply cubeless post-move eval** of
+  that position, standing in for the game outcome exactly as the 0/1 outcome
+  vector does at a real terminal (which still ends the game the ordinary way —
+  a backgame can lose by bear-off with the anchors still held).
+
+Progress is scored pasko-style (mean |equity − target| × 1000) against the
+`data/*-backgame-benchmark-rollout` rows falling in the training category.
+Outputs `models/td_s11_bg_<cat>.weights(.best)`; promote by copying the three
+`.best` files to the `sl_s11_bg_*` names the registry points at.
+
+```bash
+py -3.14 scripts/run_s11_backgame_td.py --category deep --n-games 200000
+py -3.14 scripts/run_s11_backgame_td.py --category all
+```
+
+**Measured path lengths** (why truncated games are short): under S9 1-ply play
+from the deep seeds, the region exits after a median of ~9 half-moves — mostly
+because the PLAN PAIR flips (the racer starts `attacking`, or the backgame side
+reads as `priming`) while the anchors are still physically held, which is
+inherited Stage 9 detection behaviour. Under a random-init NN it is ~4
+half-moves, lengthening as the NN learns. The S9 3-ply reference eval is ~10 ms
+cold and cached across games (16 recurring seeds), so TD throughput stays high.
+
 ## Glossary
 
 - **ER**: Error Rate — mean equity loss per decision vs GNUbg best, millipips (x1000)

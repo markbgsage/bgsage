@@ -21,6 +21,26 @@ from typing import Any
 # (purerace, racing, attacking, priming, anchoring).
 
 MODELS: dict[str, dict[str, Any]] = {
+    "stage11": {
+        # EXPERIMENTAL — categorized backgame trio (20 NNs). Stage 9's 17
+        # standard pair NNs carried UNCHANGED (indices 0-16), plus THREE
+        # backgame NNs replacing Stage 9's player/opponent pair, selected by
+        # the backgame's CATEGORY rather than by which side holds it:
+        #   17 bg_deep    21/31/32  (both anchors on the 1/2/3 points)
+        #   18 bg_middle  41/42/51/52 (one anchor on the 1/2 point, one higher)
+        #   19 bg_double  43/53/54  (two anchors, none deeper than the 3-pt)
+        # 3+ anchors: deep when at least two sit on the 1/2/3 points, else
+        # middle. Detection is Stage 9's (see backgame_category in C++). The
+        # three bg files come from scripts/run_s11_backgame_td.py — promote a
+        # TD run by copying models/td_s11_bg_<cat>.weights.best to these names.
+        "hidden": (100,) + (400,) * 19,   # 17 standard + 3 backgame = 20
+        "pattern": "sl_s9_{plan}.weights.best",   # standard NNs are Stage 9's
+        "plans": "backgame_pair_categorized",
+        "canonical_map": [0,1,2,3,4,5,6,7,8,9,10,12,12,13,14,12,12],
+        "extra_backgame": ["sl_s11_bg_deep.weights.best",
+                           "sl_s11_bg_middle.weights.best",
+                           "sl_s11_bg_double.weights.best"],
+    },
     "stage10": {
         # Gated blended backgame hybrid (21 NNs): Stage 9's full 19-NN model
         # carried UNCHANGED (indices 0-18, including sl_s9_player_bg/opponent_bg
@@ -107,6 +127,9 @@ _BACKGAME_PAIR_PLANS = _PAIR_PLANS + ("player_bg", "opponent_bg")
 # backgame NNs, used only when the backgame side's pip count is high (see the
 # C++ BackgameAwarePairStrategy pip routing).
 _BACKGAME_PAIR_PLANS_HYBRID = _BACKGAME_PAIR_PLANS + ("player_bg_pasko", "opponent_bg_pasko")
+# Stage 11 categorized trio: the 17 standard pair NNs plus one backgame NN per
+# category (deep / middle / double-anchor), shared by both sides.
+_BACKGAME_PAIR_PLANS_CATEGORIZED = _PAIR_PLANS + ("bg_deep", "bg_middle", "bg_double")
 
 # Bearoff database filename (stored in data/ directory)
 BEAROFF_DB_FILENAME = "bearoff_1sided.db"
@@ -151,13 +174,16 @@ def bearoff_db_path() -> str | None:
 
 
 def is_pair_model(name: str) -> bool:
-    """Return True if the named model uses a pair strategy (17-NN or 19-NN)."""
-    return MODELS.get(name, {}).get("plans") in ("pair", "backgame_pair")
+    """Return True if the named model uses a pair strategy (17-NN or more)."""
+    return MODELS.get(name, {}).get("plans") in (
+        "pair", "backgame_pair", "backgame_pair_categorized")
 
 
 def is_backgame_pair_model(name: str) -> bool:
-    """Return True if the named model uses the 19-NN backgame-aware pair strategy."""
-    return MODELS.get(name, {}).get("plans") == "backgame_pair"
+    """Return True if the named model uses the backgame-aware pair strategy
+    (19, 20 or 21 NNs — the C++ BackgameAwarePairStrategy class)."""
+    return MODELS.get(name, {}).get("plans") in (
+        "backgame_pair", "backgame_pair_categorized")
 
 
 def default_weights() -> "WeightConfig | WeightConfigPair":
@@ -360,6 +386,8 @@ class WeightConfigPair:
         n = len(self.paths)
         if n == 21:
             return _BACKGAME_PAIR_PLANS_HYBRID
+        if n == 20:
+            return _BACKGAME_PAIR_PLANS_CATEGORIZED
         return _BACKGAME_PAIR_PLANS if n == 19 else _PAIR_PLANS
 
     @property
@@ -378,8 +406,11 @@ class WeightConfigPair:
             raise KeyError(f"Unknown model {name!r}")
         cfg = MODELS[name]
         plans_type = cfg.get("plans")
-        if plans_type not in ("pair", "backgame_pair"):
+        if plans_type not in ("pair", "backgame_pair", "backgame_pair_categorized"):
             raise ValueError(f"Model {name!r} is not a pair model")
+        # The pattern-formatted names: 19 for the backgame pair; 17 for the
+        # plain pair AND the categorized trio (whose backgame NNs come in via
+        # extra_backgame, like Stage 10's).
         plan_names = _BACKGAME_PAIR_PLANS if plans_type == "backgame_pair" else _PAIR_PLANS
         hidden = list(cfg["hidden"])
         pattern = cfg["pattern"]
@@ -396,7 +427,12 @@ class WeightConfigPair:
         # Pip-routed hybrid models append extra backgame NNs (indices 19, 20).
         for extra in cfg.get("extra_backgame", []):
             paths.append(os.path.join(models_dir, extra))
-        return cls(paths=paths, hiddens=hidden, strategy_type=plans_type)
+        # The categorized model is still the C++ BackgameAwarePairStrategy
+        # (it branches on the path count), so it dispatches as backgame_pair.
+        strategy_type = ("backgame_pair"
+                         if plans_type == "backgame_pair_categorized"
+                         else plans_type)
+        return cls(paths=paths, hiddens=hidden, strategy_type=strategy_type)
 
     def validate(self) -> None:
         """Check that all weight files exist."""
