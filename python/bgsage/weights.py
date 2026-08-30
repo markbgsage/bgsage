@@ -291,7 +291,7 @@ class WeightConfig:
                 f"Unknown model {name!r}. Available: {available}"
             )
         cfg = MODELS[name]
-        if cfg.get("plans") in ("pair", "backgame_pair"):
+        if is_pair_model(name):
             return WeightConfigPair.from_model(name)
         hidden = cfg["hidden"]
         pattern = cfg["pattern"]
