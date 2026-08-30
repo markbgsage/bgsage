@@ -2084,6 +2084,22 @@ py -3.14 scripts/run_s11_backgame_td.py --category deep --n-games 200000
 py -3.14 scripts/run_s11_backgame_td.py --category all
 ```
 
+**Training step 2 — SL on rollout targets** (the quality stage, mirroring how
+Stage 9's backgame nets were made). ``scripts/segregate_s11_backgame_data.py``
+splits every backgame-labelled rollout pile from the S9/S10 eras (the
+player/opponent S9 sets plus the three pasko families; ``.s8`` targets and the
+position-only ``*-data`` files skipped) into
+``data/s11-bg-<cat>-{train,benchmark}-rollout`` by ``backgame_category`` —
+about 245k/167k/94k train rows for deep/middle/double, benchmarks held out
+and deduplicated against train. Every row in those piles passes S11 detection
+(0 dropped), and ``pasko-gated-remainder`` is entirely duplicates of the gated
+sets. ``scripts/run_s11_backgame_sl.py`` then trains each category NN with the
+S9 backgame recipe (GPU ``cuda_supervised_train_preencoded``, 2,500-epoch
+chunks at batch 4096, 100k ep @ a=3.1 then 250k @ a=1.0, best-ER
+checkpointing), warm-started from the TD bootstrap by default, writing
+``models/sl_s11_bg_<cat>.weights.best`` — the exact filenames the ``stage11``
+registry loads. ~2 h per category on the RTX 4070S.
+
 **Measured path lengths** (why truncated games are short): under S9 1-ply play
 from the deep seeds, the region exits after a median of ~9 half-moves — mostly
 because the PLAN PAIR flips (the racer starts `attacking`, or the backgame side
