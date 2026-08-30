@@ -97,11 +97,15 @@ def cube_subdecisions(entry: dict) -> tuple[bool, bool]:
     return has_double, has_take
 
 
-def score_level(rows: list[dict], level: str, threads: int) -> dict:
+def score_level(rows: list[dict], level: str, threads: int,
+                model: str | None = None) -> dict:
     """Play every decision at ``level`` and total the equity errors."""
     from bgsage import BgBotAnalyzer
+    from bgsage.weights import WeightConfigPair
 
-    analyzer = BgBotAnalyzer(eval_level=level, cubeful=True, parallel_threads=threads)
+    weights = WeightConfigPair.from_model(model) if model else None
+    analyzer = BgBotAnalyzer(weights=weights, eval_level=level, cubeful=True,
+                             parallel_threads=threads)
 
     sums = {"checker": 0.0, "cube": 0.0}
     counts = {"checker": 0, "cube": 0}
@@ -188,10 +192,18 @@ def main() -> None:
                         help=f"Levels to score (default: {' '.join(DEFAULT_LEVELS)})")
     parser.add_argument("--limit", type=int, default=None,
                         help="Score only the first N reference decisions")
+    parser.add_argument("--model", default=None,
+                        help="Registry model to score (default: the production "
+                             "model). e.g. stage11")
     parser.add_argument("--threads", type=int, default=0,
                         help="Engine threads (0 = every CPU)")
+    parser.add_argument("--json", type=Path, default=None,
+                        help="Also write the results here, for aggregating "
+                             "many categories scored in parallel")
     args = parser.parse_args()
 
+    if args.model:
+        print(f"Scoring model: {args.model}")
     rows = load_reference(args.category, args.limit)
     n_checker = sum(1 for r in rows if r["kind"] == "checker")
     live_cube = sum(1 for r in rows if r["kind"] == "cube" and any(cube_subdecisions(r)))
@@ -204,7 +216,7 @@ def main() -> None:
     results = []
     for level in args.level:
         print(f"  scoring {level}...", flush=True)
-        results.append(score_level(rows, level, args.threads))
+        results.append(score_level(rows, level, args.threads, args.model))
 
     print(f"\n{'level':>8} {'PR':>8} {'checker':>8} {'cube':>8} "
           f"{'decisions':>10} {'blunders':>9} {'mean err':>9} "
@@ -220,6 +232,12 @@ def main() -> None:
               "- the reference is supposed to carry every legal move.")
     print("\nRO-grade = share of checker picks whose reference equity is "
           "rollout-grade rather than a filter-level estimate.")
+
+    if args.json:
+        args.json.parent.mkdir(parents=True, exist_ok=True)
+        args.json.write_text(json.dumps(
+            {"category": args.category, "n_reference": len(rows),
+             "results": results}, indent=2), encoding="utf-8")
 
 
 if __name__ == "__main__":
