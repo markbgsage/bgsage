@@ -1344,6 +1344,10 @@ TDTrainResult td_train_backgame_truncated(const BackgameTDTrainConfig& config)
             run_benchmark_and_print(game_idx, false);
         }
 
+        // Warm-up phase: the frozen reference (1-ply) picks the moves and the
+        // net only evaluates (policy evaluation of the reference's play).
+        const bool ref_moves = game_idx < config.ref_move_games;
+
         Board board = config.start_boards[game_idx % config.start_boards.size()];
         if (config.randomize_first_mover && coin(rng)) {
             board = flip(board);
@@ -1365,7 +1369,9 @@ TDTrainResult td_train_backgame_truncated(const BackgameTDTrainConfig& config)
             if (candidates.size() == 1) {
                 board = candidates[0];
             } else {
-                int idx = strat.best_move_index(candidates, board);
+                int idx = ref_moves
+                    ? ref_base->best_move_index(candidates, board)
+                    : strat.best_move_index(candidates, board);
                 board = candidates[idx];
             }
             ++half_moves;

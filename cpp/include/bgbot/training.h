@@ -115,6 +115,12 @@ struct BackgameTDTrainConfig {
     // target rather than looping (a real game ends far sooner).
     int max_half_moves = 2000;
 
+    // Move selection by the frozen 1-ply reference for the first N games:
+    // policy-evaluation warm-up (the net learns the value of the REFERENCE's
+    // play before its own greedy choices take over). 0 = the net moves from
+    // game 0.
+    int ref_move_games = 0;
+
     // Also train the EXIT position itself toward the reference eval (an extra
     // supervised update at each truncation, in the exit position's own frame).
     // Without this, exit positions are only ever READ (by the reference, to

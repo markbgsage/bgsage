@@ -2113,7 +2113,15 @@ position itself toward its S9 eval — which re-grounds the slice to expert
 scale: at 15k games, exit-choice 72% → 21%, backgame-side move cost
 0.216 → 0.046 equity, path median ~10 half-moves (S9-play territory), ER 250
 and still falling where the plain run had plateaued. Anchored TD is the
-recommended mode for any real S11 training run.
+recommended mode for any real S11 training run. A 30k-game A/B/C
+(`ref_move_games`: S9 picks the moves for the first N games) showed the
+S9-move warm-up is not it: pure S9-move training gives the best VALUE fit
+(ER 223, and in-region values within 0.04 of S9's) but 4x worse PLAY at the
+seeds (0.122 equity lost per backgame-side choice vs 0.033 for anchored
+self-play) — value accuracy on S9's trajectories does not calibrate the
+off-distribution candidates greedy selection must compare, and the exit
+ordering inverts again. A 15k warm-up then pivot lands exactly where pure
+self-play lands (0.034). The net should make its own moves from game 0.
 
 ## Glossary
 
