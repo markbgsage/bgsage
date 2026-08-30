@@ -121,6 +121,16 @@ struct BackgameTDTrainConfig {
     // game 0.
     int ref_move_games = 0;
 
+    // Keep playing this many half-moves BEYOND the first out-of-region
+    // position (TD updates continuing, the net still making the moves) before
+    // truncating with the reference eval of wherever the path then stands.
+    // Counted as consecutive out-of-region post-move positions, so a path
+    // that re-enters a backgame category resumes normal play. 0 = truncate at
+    // the first exit (the original behaviour). Pushes the terminal grade
+    // deeper into territory the reference judges well, and makes the boundary
+    // zone itself a set of TRAINED inputs.
+    int boundary_extra_plies = 0;
+
     // Also train the EXIT position itself toward the reference eval (an extra
     // supervised update at each truncation, in the exit position's own frame).
     // Without this, exit positions are only ever READ (by the reference, to

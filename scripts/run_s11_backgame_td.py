@@ -177,6 +177,7 @@ def train_category(category: str, args: argparse.Namespace) -> None:
         randomize_first_mover=not args.no_randomize_first_mover,
         max_half_moves=args.max_half_moves,
         anchor_boundary=args.anchor_boundary,
+        boundary_extra_plies=args.boundary_extra_plies,
         ref_weight_paths=ref.paths,
         ref_hidden_sizes=ref.hiddens,
         ref_plies=args.ref_plies,
@@ -214,6 +215,11 @@ def main() -> None:
                         help="Always start a game with the seed's own side to "
                              "move. By default a coin decides, so the NN sees "
                              "each seed from both perspectives.")
+    parser.add_argument("--boundary-extra-plies", type=int, default=6,
+                        help="Half-moves played (and trained) past the first "
+                             "out-of-region position before the Stage 9 grade "
+                             "is taken. 0 = grade at the first exit, which "
+                             "develops the flee equilibrium (see CLAUDE.md).")
     parser.add_argument("--anchor-boundary", action="store_true",
                         help="Also train each game's exit position itself "
                              "toward its Stage 9 eval. Without this the flee "

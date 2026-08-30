@@ -563,6 +563,7 @@ PYBIND11_MODULE(bgbot_cpp, m) {
             int max_half_moves,
             bool anchor_boundary,
             int ref_move_games,
+            int boundary_extra_plies,
             const std::vector<std::string>& ref_weight_paths,
             const std::vector<int>& ref_hidden_sizes,
             int ref_plies,
@@ -583,6 +584,7 @@ PYBIND11_MODULE(bgbot_cpp, m) {
         config.max_half_moves = max_half_moves;
         config.anchor_boundary = anchor_boundary;
         config.ref_move_games = ref_move_games;
+        config.boundary_extra_plies = boundary_extra_plies;
         config.ref_weight_paths = ref_weight_paths;
         config.ref_hidden_sizes = ref_hidden_sizes;
         config.ref_plies = ref_plies;
@@ -627,6 +629,7 @@ PYBIND11_MODULE(bgbot_cpp, m) {
        py::arg("max_half_moves") = 2000,
        py::arg("anchor_boundary") = false,
        py::arg("ref_move_games") = 0,
+       py::arg("boundary_extra_plies") = 0,
        py::arg("ref_weight_paths"),
        py::arg("ref_hidden_sizes"),
        py::arg("ref_plies") = 3,

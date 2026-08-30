@@ -1354,6 +1354,7 @@ TDTrainResult td_train_backgame_truncated(const BackgameTDTrainConfig& config)
         }
 
         int half_moves = 0;
+        int exit_run = 0;   // consecutive out-of-region post-move positions
         for (;;) {
             int d1 = die(rng);
             int d2 = die(rng);
@@ -1390,8 +1391,13 @@ TDTrainResult td_train_backgame_truncated(const BackgameTDTrainConfig& config)
             // Step C': region exit — the position no longer holds any
             // backgame. The reference model's cubeless post-move eval stands
             // in for the game outcome, and the path ends here.
+            if (backgame_category(board) == BackgameCategory::NONE) {
+                ++exit_run;
+            } else {
+                exit_run = 0;
+            }
             const bool capped = half_moves >= config.max_half_moves;
-            if (backgame_category(board) == BackgameCategory::NONE || capped) {
+            if (exit_run > config.boundary_extra_plies || capped) {
                 auto ref_probs = ref.evaluate_probs(board, board);
                 nn->td_update(flip_outputs(ref_probs), config.alpha);
                 if (config.anchor_boundary) {

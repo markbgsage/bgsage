@@ -2112,8 +2112,23 @@ exits. `anchor_boundary` adds one supervised update per game — the exit
 position itself toward its S9 eval — which re-grounds the slice to expert
 scale: at 15k games, exit-choice 72% → 21%, backgame-side move cost
 0.216 → 0.046 equity, path median ~10 half-moves (S9-play territory), ER 250
-and still falling where the plain run had plateaued. Anchored TD is the
-recommended mode for any real S11 training run. A 30k-game A/B/C
+and still falling where the plain run had plateaued. `boundary_extra_plies` (the grace period) attacks
+the same disease from the other side: the path plays N more half-moves past
+the first out-of-region position (updates continuing, the net still moving)
+before the Stage 9 grade is taken, so the boundary zone becomes trained input
+and fleeing means living with your own play N moves longer. Measured on
+30k-game deep runs (play cost = mean equity lost per backgame-side seed
+choice vs S9-3P; N=0 is the plain trainer, byte-verified):
+
+    N=0: cost 0.202, exits 71%, ER 301 (the flee equilibrium)
+    N=2/4/6/10: cost 0.045/0.043/0.042/0.041, exits ~19-26%, ER 260/252/225/222
+    anchor only: cost 0.033, ER 226
+    N=6 + anchor: cost 0.034, ER 206 (best) and still falling
+
+Even N=2 removes the equilibrium; larger N mainly lowers target noise (the
+grade lands where positions are settled and Stage 9 is reliable). The
+recommended mode for any real S11 training run is anchor_boundary +
+boundary_extra_plies ~6 — the driver's defaults. A 30k-game A/B/C
 (`ref_move_games`: S9 picks the moves for the first N games) showed the
 S9-move warm-up is not it: pure S9-move training gives the best VALUE fit
 (ER 223, and in-region values within 0.04 of S9's) but 4x worse PLAY at the
