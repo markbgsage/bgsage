@@ -1388,6 +1388,15 @@ TDTrainResult td_train_backgame_truncated(const BackgameTDTrainConfig& config)
             if (backgame_category(board) == BackgameCategory::NONE || capped) {
                 auto ref_probs = ref.evaluate_probs(board, board);
                 nn->td_update(flip_outputs(ref_probs), config.alpha);
+                if (config.anchor_boundary) {
+                    // Extra supervised step on the exit position ITSELF (its
+                    // own frame, so no flip). Must come after the update
+                    // above: forward_with_gradients replaces the cached
+                    // gradients the previous td_update consumed.
+                    post_inputs = compute_extended_contact_inputs(board);
+                    nn->forward_with_gradients(post_inputs.data());
+                    nn->td_update(ref_probs, config.alpha);
+                }
                 interval_games++;
                 interval_truncated++;
                 if (capped) interval_capped++;

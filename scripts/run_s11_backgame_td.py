@@ -174,8 +174,9 @@ def train_category(category: str, args: argparse.Namespace) -> None:
         models_dir=str(_MODELS_DIR),
         resume_from=resume_from,
         start_boards=seeds,
-        randomize_first_mover=True,
+        randomize_first_mover=not args.no_randomize_first_mover,
         max_half_moves=args.max_half_moves,
+        anchor_boundary=args.anchor_boundary,
         ref_weight_paths=ref.paths,
         ref_hidden_sizes=ref.hiddens,
         ref_plies=args.ref_plies,
@@ -209,6 +210,14 @@ def main() -> None:
     parser.add_argument("--ref-threads", type=int, default=0,
                         help="Threads for the reference eval (0 = auto)")
     parser.add_argument("--max-half-moves", type=int, default=2000)
+    parser.add_argument("--no-randomize-first-mover", action="store_true",
+                        help="Always start a game with the seed's own side to "
+                             "move. By default a coin decides, so the NN sees "
+                             "each seed from both perspectives.")
+    parser.add_argument("--anchor-boundary", action="store_true",
+                        help="Also train each game's exit position itself "
+                             "toward its Stage 9 eval. Without this the flee "
+                             "equilibrium develops (see CLAUDE.md Stage 11).")
     parser.add_argument("--resume", action="store_true",
                         help="Continue from models/td_s11_bg_<cat>.weights")
     args = parser.parse_args()

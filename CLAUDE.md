@@ -2092,6 +2092,29 @@ inherited Stage 9 detection behaviour. Under a random-init NN it is ~4
 half-moves, lengthening as the NN learns. The S9 3-ply reference eval is ~10 ms
 cold and cached across games (16 recurring seeds), so TD throughput stays high.
 
+**The flee equilibrium — why `--anchor-boundary` exists** (measured on a 200k
+deep run, 2026-08-29). Plain truncated TD converges CORRECTLY to the value of
+the truncated game under its own play — and that game's optimal policy is
+degenerate. Interior states are worth what the net's own (weak) continuation
+makes them (net −1.02 vs an independent on-policy Monte-Carlo estimate −1.01,
+corr 0.93), while crossing the boundary swaps the appraiser to Stage 9, whose
+grades assume EXPERT continuation (backgame-side exits −0.79 vs the true
+good-play interior value −0.60; measured play-quality wedge S9 − V_pi = +0.39).
+So handing the position to the expert appraiser beats keeping it, the backgame
+side (which holds exit moves on 77% of its rolls; the racer holds 0%) exits in
+median 1 half-move, paths collapse (3.8 → 2.8 over training while the
+stay-vs-exit value gap grows −0.03 → +0.24 and exit-choice rises 42% → 94%),
+and the benchmark ER plateaus (~262 by game 15k, flat thereafter, vs S9's 22).
+It is one-sided because the subsidy is proportional to each side's own
+incompetence gap — the racer's decisions here cost only ~0.03/move vs S9, so it
+has no wedge to chase and every true-equity reason to welcome the opponent's
+exits. `anchor_boundary` adds one supervised update per game — the exit
+position itself toward its S9 eval — which re-grounds the slice to expert
+scale: at 15k games, exit-choice 72% → 21%, backgame-side move cost
+0.216 → 0.046 equity, path median ~10 half-moves (S9-play territory), ER 250
+and still falling where the plain run had plateaued. Anchored TD is the
+recommended mode for any real S11 training run.
+
 ## Glossary
 
 - **ER**: Error Rate — mean equity loss per decision vs GNUbg best, millipips (x1000)

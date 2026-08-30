@@ -561,6 +561,7 @@ PYBIND11_MODULE(bgbot_cpp, m) {
             const std::vector<std::vector<int>>& start_boards,
             bool randomize_first_mover,
             int max_half_moves,
+            bool anchor_boundary,
             const std::vector<std::string>& ref_weight_paths,
             const std::vector<int>& ref_hidden_sizes,
             int ref_plies,
@@ -579,6 +580,7 @@ PYBIND11_MODULE(bgbot_cpp, m) {
         config.resume_from = resume_from;
         config.randomize_first_mover = randomize_first_mover;
         config.max_half_moves = max_half_moves;
+        config.anchor_boundary = anchor_boundary;
         config.ref_weight_paths = ref_weight_paths;
         config.ref_hidden_sizes = ref_hidden_sizes;
         config.ref_plies = ref_plies;
@@ -621,6 +623,7 @@ PYBIND11_MODULE(bgbot_cpp, m) {
        py::arg("start_boards"),
        py::arg("randomize_first_mover") = true,
        py::arg("max_half_moves") = 2000,
+       py::arg("anchor_boundary") = false,
        py::arg("ref_weight_paths"),
        py::arg("ref_hidden_sizes"),
        py::arg("ref_plies") = 3,

@@ -115,6 +115,15 @@ struct BackgameTDTrainConfig {
     // target rather than looping (a real game ends far sooner).
     int max_half_moves = 2000;
 
+    // Also train the EXIT position itself toward the reference eval (an extra
+    // supervised update at each truncation, in the exit position's own frame).
+    // Without this, exit positions are only ever READ (by the reference, to
+    // supply the predecessor's target) and never appear as training inputs —
+    // so the net's own valuation of boundary positions stays at its random
+    // initialisation, which the move selection nevertheless consults whenever
+    // an exit move is a candidate. Diagnostic/experimental; default off.
+    bool anchor_boundary = false;
+
     // Frozen reference model for truncation targets (Stage 9: 19 paths).
     std::vector<std::string> ref_weight_paths;
     std::vector<int> ref_hidden_sizes;
