@@ -180,6 +180,35 @@ class TestStage11Selection(unittest.TestCase):
             self.assertEqual(self.s11.select_nn_idx(bgbot_cpp.flip_board(board)),
                              want)
 
+    def test_exit_candidates_route_by_pre_move_board(self):
+        """Candidate evaluation is decision-level: with an in-region pre-move
+        board as context, an out-of-region candidate is valued by the CATEGORY
+        NN (select_nn_idx(pre_move_board) in every candidate path). The
+        exit-descendant training data exists because of this property — the
+        category NN is the appraiser of exit candidates, so it must be
+        trained on them."""
+        pre = backgame_board({1, 2})
+        self.assertEqual(bgbot_cpp.backgame_category(pre), "deep")
+
+        # A candidate-like exit: the deepest anchor abandoned (its checkers
+        # brought home), leaving a single anchor -> no backgame category.
+        exit_board = list(pre)
+        exit_board[24] = 0
+        exit_board[6] += 2
+        self.assertEqual(bgbot_cpp.backgame_category(exit_board), "none")
+
+        routed = self.s11.evaluate_board(exit_board, pre)["probs"]
+        deep_nn = bgbot_cpp.NNStrategy(self.paths[17], 400, 244)
+        direct = deep_nn.evaluate_board(exit_board, exit_board)["probs"]
+        for r, d in zip(routed, direct):
+            self.assertAlmostEqual(r, d, places=5)
+
+        # By its own classification the same candidate routes to a standard
+        # pair NN, whose value differs from the random-init deep NN's.
+        self_routed = self.s11.evaluate_board(exit_board, exit_board)["probs"]
+        self.assertGreater(
+            max(abs(a - b) for a, b in zip(self_routed, direct)), 1e-4)
+
     def test_non_backgame_matches_stage9(self):
         from bgsage.board import STARTING_BOARD
 

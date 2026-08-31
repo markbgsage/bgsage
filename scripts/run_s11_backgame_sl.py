@@ -20,6 +20,15 @@ Output lands at ``models/sl_s11_bg_<cat>.weights(.best)`` — exactly the
 filenames the ``stage11`` registry entry points at, so a finished run is
 immediately loadable via ``WeightConfigPair.from_model("stage11")``.
 
+--exit-rollout mixes in the exit-descendant targets
+(``data/s11-bg-<cat>-exit-rollout``, built by generate_s11_exit_positions.py
++ the parent repo's rollout runner): 90% of its rows join the training set
+and a deterministic 10% (by board hash) is held out as a separate exit
+benchmark. The candidate router values exit candidates with the category NN
+(select_nn_idx(pre_move_board)), so the net must be accurate there too —
+best-checkpoint selection then uses the row-weighted COMBINED ER so late
+training can't quietly trade exit accuracy away.
+
 Usage (long-running — launch detached per the CLAUDE.md pattern)::
 
     py -3.14 scripts/run_s11_backgame_sl.py --category deep
@@ -85,6 +94,17 @@ def benchmark_er(bench_boards: list[list[int]], bench_eq: np.ndarray,
     return total / len(bench_boards) * 1000.0
 
 
+def _probs_to_eq(probs: np.ndarray) -> np.ndarray:
+    return (2 * probs[:, 0] - 1 + probs[:, 1] - probs[:, 3]
+            + probs[:, 2] - probs[:, 4])
+
+
+def _is_exit_holdout(board: list[int]) -> bool:
+    import hashlib
+    key = " ".join(str(x) for x in board).encode()
+    return hashlib.md5(key).digest()[0] % 10 == 0
+
+
 def train_category(category: str, args: argparse.Namespace) -> None:
     print(f"=== S11 backgame SL: {category} ===", flush=True)
     train_path = _DATA / f"s11-bg-{category}-train-rollout"
@@ -95,10 +115,35 @@ def train_category(category: str, args: argparse.Namespace) -> None:
 
     train_boards, train_probs = load_rollout(train_path)
     bench_boards, bench_probs = load_rollout(bench_path)
-    bench_eq = (2 * bench_probs[:, 0] - 1 + bench_probs[:, 1] - bench_probs[:, 3]
-                + bench_probs[:, 2] - bench_probs[:, 4])
+    bench_eq = _probs_to_eq(bench_probs)
     print(f"  {len(train_boards)} train rows, {len(bench_boards)} benchmark rows",
           flush=True)
+
+    exit_bench_boards: list[list[int]] = []
+    exit_bench_eq = np.zeros(0, dtype=np.float32)
+    if args.exit_rollout:
+        ex_boards, ex_probs = load_rollout(Path(args.exit_rollout))
+        hold = [_is_exit_holdout(b) for b in ex_boards]
+        exit_bench_boards = [b for b, h in zip(ex_boards, hold) if h]
+        exit_bench_eq = _probs_to_eq(
+            np.array([p for p, h in zip(ex_probs, hold) if h], dtype=np.float32))
+        ex_train = [b for b, h in zip(ex_boards, hold) if not h]
+        train_boards += ex_train
+        train_probs = np.concatenate(
+            [train_probs,
+             np.array([p for p, h in zip(ex_probs, hold) if not h],
+                      dtype=np.float32)])
+        print(f"  + exit rollouts: {len(ex_train)} train rows, "
+              f"{len(exit_bench_boards)} held-out benchmark rows", flush=True)
+
+    def combined_er(weights_path: str) -> tuple[float, float, float]:
+        """(selection ER, region ER, exit ER) — selection is row-weighted."""
+        region = benchmark_er(bench_boards, bench_eq, weights_path)
+        if not exit_bench_boards:
+            return region, region, 0.0
+        exit_er = benchmark_er(exit_bench_boards, exit_bench_eq, weights_path)
+        n_r, n_e = len(bench_boards), len(exit_bench_boards)
+        return (region * n_r + exit_er * n_e) / (n_r + n_e), region, exit_er
 
     wpath = str(_MODELS / f"sl_s11_bg_{category}.weights")
     best_path = wpath + ".best"
@@ -122,10 +167,12 @@ def train_category(category: str, args: argparse.Namespace) -> None:
         np.array(train_boards, dtype=np.int32), N_INPUTS)
     print(f"  encoded in {time.time() - t0:.1f}s", flush=True)
 
-    best_er = benchmark_er(bench_boards, bench_eq, best_path
-                           if os.path.exists(best_path) else wpath)
+    best_er, er_region, er_exit = combined_er(
+        best_path if os.path.exists(best_path) else wpath)
     gc.collect()
-    print(f"  initial ER: {best_er:.2f}\n", flush=True)
+    split = (f" (region {er_region:.2f}, exit {er_exit:.2f})"
+             if exit_bench_boards else "")
+    print(f"  initial ER: {best_er:.2f}{split}\n", flush=True)
 
     phases = [(0, 2 * CHUNK, 3.1)] if args.smoke else PHASES
     t_start = time.time()
@@ -146,14 +193,16 @@ def train_category(category: str, args: argparse.Namespace) -> None:
                 n_hidden=N_HIDDEN, n_inputs=N_INPUTS, alpha=alpha, epochs=chunk,
                 batch_size=BATCH, seed=42 + total_epochs,
                 print_interval=chunk + 1, save_path=wpath)
-            er = benchmark_er(bench_boards, bench_eq, wpath)
+            er, er_region, er_exit = combined_er(wpath)
             gc.collect()
             tag = ""
             if er < best_er:
                 best_er = er
                 shutil.copy2(wpath, best_path)
                 tag = "  *BEST*"
-            print(f"  P{phase} {done:6d}/{n_epochs}  ER={er:.2f}  "
+            split = (f"  (rgn {er_region:.2f} exit {er_exit:.2f})"
+                     if exit_bench_boards else "")
+            print(f"  P{phase} {done:6d}/{n_epochs}  ER={er:.2f}{split}  "
                   f"best={best_er:.2f}  {time.time() - t_start:.0f}s{tag}",
                   flush=True)
         print(flush=True)
@@ -171,6 +220,11 @@ def main() -> None:
     parser.add_argument("--init-from", default=None,
                         help="Initial weights (default: the category's TD "
                              "bootstrap, models/td_s11_bg_<cat>.weights.best)")
+    parser.add_argument("--exit-rollout", default=None,
+                        help="Exit-descendant rollout file (e.g. "
+                             "data/s11-bg-deep-exit-rollout): 90%% joins the "
+                             "training set, a deterministic 10%% is held out "
+                             "as a separate exit ER benchmark")
     parser.add_argument("--smoke", action="store_true",
                         help="Two chunks only - validates the pipeline")
     args = parser.parse_args()
