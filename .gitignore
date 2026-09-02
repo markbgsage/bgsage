@@ -71,3 +71,7 @@ backgame_ref_positions/benchmark/status_samples.json
 # regenerable by re-running the rollout. The pooled rollout.jsonl beside
 # them IS the benchmark reference and is committed.
 backgame_ref_positions/benchmark/*rollout.batches.jsonl
+
+# Candidate-completion inputs and pre-merge backups (regenerable)
+backgame_ref_positions/benchmark/*candidates rollout.jsonl
+backgame_ref_positions/benchmark/*.pre-merge
