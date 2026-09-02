@@ -1,0 +1,226 @@
+# snake - starting positions, imported from the XG reference files.
+# One position per line: cube_value cube_owner board(26 ints).
+# cube_owner is "centered" | "player" | "opponent", relative to player 1
+# (the positive checkers). Cube values above 2 are clamped to 2.
+#
+# Snake fail.xgp
+1 centered 0 0 0 -1 0 0 0 0 0 0 0 0 0 1 0 1 0 2 3 3 2 2 1 -7 -7 0
+#
+# snake manual.txt #1
+1 centered 0 0 0 0 0 0 -1 0 0 0 0 0 0 1 0 0 0 3 3 2 2 2 2 -5 -9 0
+#
+# snake manual.txt #2
+1 centered 0 -1 0 0 0 0 0 0 0 0 0 0 0 1 1 0 0 3 3 3 2 2 -5 -5 -4 0
+#
+# snake manual.txt #3
+1 centered 0 0 0 0 0 0 -1 0 0 0 0 0 0 1 0 0 0 3 3 2 2 2 2 -7 -7 0
+#
+# snake manual.txt #4
+1 centered 0 -1 0 0 0 0 0 0 0 0 0 0 0 1 0 3 3 2 2 2 2 0 -5 -5 -4 0
+#
+# snake manual.txt #5
+1 centered 0 0 0 0 0 -1 0 0 0 0 0 0 0 1 1 1 0 3 3 3 3 0 0 -5 -9 0
+#
+# snake manual.txt #6
+1 centered 1 0 0 0 0 0 0 0 0 0 0 0 0 1 1 0 3 3 3 2 2 0 -5 -5 -4 0
+#
+# snake manual.txt #7
+1 centered 0 0 -1 0 0 0 0 0 0 0 0 0 0 1 1 0 0 3 3 3 2 2 0 -5 -9 0
+#
+# snake manual.txt #8
+1 centered 0 0 0 0 0 0 -1 0 0 0 0 0 0 1 1 3 3 3 2 2 0 0 -6 -5 -3 0
+#
+# snake manual.txt #9
+1 centered 0 0 0 0 0 -1 0 0 0 0 0 0 0 1 1 3 3 3 2 2 0 0 0 -5 -9 0
+#
+# snake manual.txt #10
+1 centered 0 0 0 0 0 -1 0 0 0 0 0 0 0 1 1 0 0 0 3 3 3 2 2 -7 -7 0
+#
+# snake manual.txt #11
+1 centered 0 0 0 0 0 -1 0 0 0 0 0 0 0 1 1 3 3 3 3 0 0 0 1 -9 -5 0
+#
+# snake manual.txt #12
+1 centered 0 0 0 0 -1 0 0 0 0 0 0 0 0 1 0 0 3 3 2 2 2 2 0 -5 -9 0
+#
+# snake manual.txt #13
+1 centered 0 -1 0 0 0 0 0 0 0 0 0 0 0 1 0 0 3 3 2 2 2 2 -6 -5 -3 0
+#
+# snake manual.txt #14
+1 centered 0 0 0 0 -1 0 0 0 0 0 0 0 0 1 1 0 0 3 3 3 2 2 -6 -5 -3 0
+#
+# snake manual.txt #15
+1 centered 1 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 3 3 2 2 2 2 0 -9 -5 0
+#
+# snake manual.txt #16
+1 centered 0 0 0 0 -1 0 0 0 0 0 0 0 0 1 1 1 0 3 3 3 3 0 -6 -5 -3 0
+#
+# snake manual.txt #17
+1 centered 0 0 -1 0 0 0 0 0 0 0 0 0 0 1 1 0 0 3 3 3 2 2 0 -7 -7 0
+#
+# snake manual.txt #18
+1 centered 0 0 -1 0 0 0 0 0 0 0 0 0 0 1 1 1 0 0 3 3 3 3 0 -7 -7 0
+#
+# snake manual.txt #19
+1 centered 0 0 0 -1 0 0 0 0 0 0 0 0 0 1 1 3 3 3 3 0 0 0 1 -9 -5 0
+#
+# snake manual.txt #20
+1 centered 0 0 0 0 0 -1 0 0 0 0 0 0 0 1 1 0 0 3 3 3 2 2 0 -7 -7 0
+#
+# snake manual.txt #21
+1 centered 1 0 0 0 0 0 0 0 0 0 0 0 0 1 1 1 3 3 3 3 0 0 -6 -5 -3 0
+#
+# snake manual.txt #22
+1 centered 0 -1 0 0 0 0 0 0 0 0 0 0 0 1 1 1 0 0 3 3 3 3 -5 -5 -4 0
+#
+# snake manual.txt #23
+1 centered 0 0 0 0 0 -1 0 0 0 0 0 0 0 1 1 3 3 3 3 0 0 0 1 -5 -9 0
+#
+# snake manual.txt #24
+1 centered 0 0 -1 0 0 0 0 0 0 0 0 0 0 1 1 0 3 3 3 2 2 0 0 -5 -9 0
+#
+# snake manual.txt #25
+1 centered 0 0 0 0 0 -1 0 0 0 0 0 0 0 1 1 3 3 3 2 2 0 0 0 -7 -7 0
+#
+# snake manual.txt #26
+1 centered 0 0 0 -1 0 0 0 0 0 0 0 0 0 1 1 3 3 3 3 0 0 0 1 -7 -7 0
+#
+# snake manual.txt #27
+1 centered 1 0 0 0 0 0 0 0 0 0 0 0 0 1 1 1 0 3 3 3 3 0 -6 -5 -3 0
+#
+# snake manual.txt #28
+1 centered 0 0 -1 0 0 0 0 0 0 0 0 0 0 1 1 1 3 3 3 3 0 0 -6 -5 -3 0
+#
+# snake manual.txt #29
+1 centered 0 0 0 0 -1 0 0 0 0 0 0 0 0 1 0 0 3 3 2 2 2 2 -5 -5 -4 0
+#
+# snake manual.txt #30
+1 centered 0 0 -1 0 0 0 0 0 0 0 0 0 0 1 0 0 3 3 2 2 2 2 -5 -5 -4 0
+#
+# snake manual.txt #31
+1 centered 0 0 -1 0 0 0 0 0 0 0 0 0 0 1 1 1 0 0 3 3 3 3 -6 -5 -3 0
+#
+# snake manual.txt #32
+1 centered 1 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 3 3 2 2 2 2 0 -5 -9 0
+#
+# snake manual.txt #33
+1 centered 0 0 -1 0 0 0 0 0 0 0 0 0 0 1 1 3 3 3 2 2 0 0 0 -7 -7 0
+#
+# snake manual.txt #34
+1 centered 0 0 0 0 0 0 -1 0 0 0 0 0 0 1 1 1 0 3 3 3 3 0 0 -9 -5 0
+#
+# snake manual.txt #35
+1 centered 0 0 0 -1 0 0 0 0 0 0 0 0 0 1 1 1 0 0 3 3 3 3 -6 -5 -3 0
+#
+# snake manual.txt #36
+1 centered 0 0 0 0 -1 0 0 0 0 0 0 0 0 1 1 1 0 0 3 3 3 3 -6 -5 -3 0
+#
+# snake manual.txt #37
+1 centered 0 -1 0 0 0 0 0 0 0 0 0 0 0 1 1 0 3 3 3 2 2 0 0 -7 -7 0
+#
+# snake manual.txt #38
+1 centered 0 0 0 0 -1 0 0 0 0 0 0 0 0 1 0 0 3 3 2 2 2 2 -6 -5 -3 0
+#
+# snake manual.txt #39
+1 centered 0 0 0 -1 0 0 0 0 0 0 0 0 0 1 1 1 0 3 3 3 3 0 -6 -5 -3 0
+#
+# snake manual.txt #40
+1 centered 0 -1 0 0 0 0 0 0 0 0 0 0 0 1 0 3 3 2 2 2 2 0 0 -5 -9 0
+#
+# snake manual.txt #41
+1 centered 0 0 0 0 0 0 -1 0 0 0 0 0 3 1 0 1 1 1 0 2 2 2 2 0 -12 0
+#
+# snake manual.txt #42
+1 centered 0 0 0 0 0 0 -1 0 0 0 0 0 3 0 0 1 1 0 1 3 2 2 2 0 -12 0
+#
+# snake manual.txt #43
+1 centered 0 -2 -2 -2 -2 4 6 1 0 -4 1 1 0 0 1 0 -1 -1 0 1 0 -1 0 0 0 0
+#
+# snake manual.txt #44
+1 centered 2 0 2 2 0 1 0 0 0 0 0 0 0 1 0 1 0 0 -2 -8 2 2 2 2 -3 0
+#
+# snake manual.txt #45
+1 centered 0 1 1 0 -1 2 1 0 1 0 0 0 0 0 0 0 0 1 -3 -5 -6 2 2 2 2 0
+#
+# snake manual.txt #46
+1 centered 0 0 2 2 0 -1 0 0 0 0 -1 0 0 0 0 2 0 -1 -2 -7 2 3 2 2 -3 0
+#
+# snake manual.txt #47
+1 centered 0 1 1 0 -1 2 1 0 0 0 1 0 1 0 0 0 0 0 -3 -5 -6 2 2 2 2 0
+#
+# snake manual.txt #48
+1 centered 0 0 -1 0 0 0 3 0 1 0 0 0 0 2 0 0 0 0 2 2 3 2 -3 -7 0 0
+#
+# snake manual.txt #49
+1 centered 0 12 0 -2 -2 -2 -2 0 -1 -1 -1 0 -1 -3 0 0 0 0 0 1 0 0 0 0 0 0
+#
+# snake manual.txt #50
+1 centered 0 0 0 0 -1 2 2 0 0 0 0 0 1 1 0 0 1 -1 0 -11 2 2 2 2 -2 0
+#
+# snake manual.txt #51
+1 centered 0 -2 -2 -2 -2 6 5 3 -1 -1 0 0 0 0 0 0 0 0 0 -1 -2 1 0 -1 -1 0
+#
+# snake manual.txt #52
+1 centered 1 0 0 1 2 2 1 0 0 0 0 0 0 0 0 0 -2 1 -1 -7 2 2 2 2 -4 0
+#
+# snake manual.txt #53
+1 centered 0 12 0 -2 -2 -2 -3 -1 0 -1 -1 0 0 -3 0 0 0 0 0 1 0 0 0 0 0 0
+#
+# snake manual.txt #54
+1 centered 0 0 0 0 1 0 -1 0 0 0 1 -1 1 0 -1 -1 4 0 -1 -6 -4 2 2 2 2 0
+#
+# snake manual.txt #55
+1 centered 1 0 0 0 0 0 0 0 0 0 0 0 3 0 0 1 1 0 1 3 2 2 2 0 -12 0
+#
+# snake manual.txt #56
+1 centered 1 1 1 0 1 1 1 0 0 0 0 1 0 0 0 0 1 0 -3 -5 -6 2 2 2 2 0
+#
+# snake manual.txt #57
+1 centered 0 1 1 0 -1 2 1 0 0 0 0 0 0 0 0 0 1 1 -3 -5 -6 2 2 2 2 0
+#
+# snake manual.txt #58
+1 centered 1 0 2 2 0 -1 0 0 0 0 0 0 0 1 0 1 0 0 -2 -8 2 2 2 2 -3 1
+#
+# snake manual.txt #59
+1 centered 0 0 0 0 1 0 -1 0 1 1 0 -1 0 0 -1 -1 4 0 -1 -6 -4 2 2 2 2 0
+#
+# snake manual.txt #60
+1 centered 0 0 2 2 0 -1 0 0 0 1 0 0 0 1 0 -1 0 0 -2 -8 2 3 2 2 -3 0
+#
+# snake manual.txt #61
+1 centered 1 1 1 0 1 2 1 0 0 0 0 0 0 0 0 0 1 0 -4 -4 -6 2 2 2 2 0
+#
+# snake manual.txt #62
+1 centered 0 3 -2 -2 -3 -2 7 2 1 0 0 0 -1 0 0 1 -1 0 0 0 1 0 -2 -2 0 0
+#
+# snake manual.txt #63
+1 centered 0 0 7 3 -2 -3 -2 -2 0 0 0 0 -2 0 0 0 0 -1 0 -3 0 0 0 1 0 0
+#
+# snake manual.txt #64
+1 centered 0 -2 -2 -2 -2 4 6 1 0 -4 1 1 0 -1 1 -1 0 0 0 1 0 -1 0 0 0 0
+#
+# snake manual.txt #65
+1 centered 0 1 1 0 -1 2 1 0 0 0 0 0 0 0 0 0 1 0 -3 -5 -6 2 2 2 2 1
+#
+# snake manual.txt #66
+1 centered 0 2 -2 -2 -2 -2 11 0 1 -1 0 0 -1 -1 0 0 0 0 0 -2 -2 1 0 0 0 0
+#
+# snake manual.txt #67
+1 centered 1 1 1 0 1 1 1 0 0 0 1 0 0 0 0 0 0 1 -3 -5 -6 2 2 2 2 0
+#
+# snake manual.txt #68
+1 centered 2 4 -2 -2 -2 -2 7 1 1 1 0 0 0 0 0 0 0 0 0 1 -2 -2 -1 0 0 0
+#
+# snake manual.txt #69
+1 centered 1 -2 -2 -2 -2 6 5 3 0 -1 0 0 0 0 0 0 0 0 0 -1 -2 1 0 -1 -1 0
+#
+# snake manual.txt #70
+1 centered 1 0 0 0 0 1 2 0 0 0 0 0 0 0 0 -1 -2 1 -1 -8 3 2 3 3 -2 0
+#
+# snake manual.txt #71
+1 centered 0 3 -2 -2 -3 -2 7 2 1 0 -2 0 0 0 0 1 0 0 0 0 1 0 -2 -2 0 0
+#
+# snake manual.txt #72
+1 centered 0 0 2 2 0 -1 0 0 0 1 -1 0 0 1 0 0 0 -1 -2 -7 2 3 2 2 -3 0
+#
+# snake manual.txt #73
+1 centered 1 0 0 0 0 0 0 0 0 0 0 0 3 1 0 1 1 1 0 2 2 2 2 0 -12 0

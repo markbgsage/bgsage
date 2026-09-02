@@ -250,11 +250,125 @@ def _any_backgame(board) -> bool:
                    if _anchored_p2(board, n)) >= ANY_BACKGAME_MIN_ANCHORS)
 
 
+# --- Back-game FAMILY filters (2026-09-02) ---------------------------------
+#
+# Three more folders, each a region the anchor-pair folders never reach. Every
+# predicate is written for the player-1 frame with player 1 as the side of
+# interest and evaluated for both orientations. Bar convention: index 25 holds
+# player 1's bar checkers and index 0 player 2's, BOTH as positive counts.
+
+
+def _flip(board) -> tuple[int, ...]:
+    return tuple(-board[25 - i] for i in range(26))
+
+
+def _p1_side(board, i: int) -> int:
+    """Player 1's checkers at index i (bar = 25)."""
+    return board[i] if 1 <= i <= 25 and board[i] > 0 else 0
+
+
+def _p2_side(board, i: int) -> int:
+    """Player 2's checkers at index i (bar = 0, stored positive)."""
+    if i == 0:
+        return board[0]
+    return -board[i] if 1 <= i <= 24 and board[i] < 0 else 0
+
+
+def _containment_p1_escaper(board) -> bool:
+    """Player 1 is the escaper of a late containment game (K6-strict).
+
+    Escaper has >= 6 checkers off, contact remains, and 1-3 of its checkers
+    are trapped: outside its home board (bar included) with a container
+    checker in front of them that is ALSO outside the escaper's home — a
+    racer bearing in past a back-game anchor is not trapped. The container
+    needs >= 4 checkers in the blocking region (two points' worth).
+    """
+    p1 = [_p1_side(board, i) for i in range(26)]
+    p2 = [_p2_side(board, i) for i in range(26)]
+    on_board = sum(p1)
+    if 15 - on_board < 6 or on_board == 0:
+        return False
+    max_p1 = max(i for i in range(26) if p1[i])
+    p2_any = [i for i in range(26) if p2[i]]
+    if not p2_any or max_p1 <= min(p2_any):
+        return False                                    # no contact
+    outside = [i for i in range(7, 25) if p2[i]]
+    if not outside:
+        return False
+    min_p2_out = min(outside)
+    trapped = sum(p1[i] for i in range(7, 26) if i > min_p2_out)
+    blockers = sum(p2[i] for i in range(7, 25) if i < max_p1)
+    return 1 <= trapped <= 3 and blockers >= 4
+
+
+def _containment(board) -> bool:
+    return _containment_p1_escaper(board) or _containment_p1_escaper(_flip(board))
+
+
+def _massive_p1_holder(board) -> bool:
+    """Player 1 plays a massive back game: behind in pips with >= 3 anchors in
+    the opponent's home, or >= 2 anchors and >= 7 checkers back (opponent's
+    home board + bar)."""
+    anchors = sum(1 for i in range(19, 25) if board[i] >= 2)
+    if anchors < 2:
+        return False
+    back = sum(board[i] for i in range(19, 26) if board[i] > 0)
+    if not (anchors >= 3 or back >= 7):
+        return False
+    pips_p1 = sum(board[i] * i for i in range(1, 26) if board[i] > 0)
+    pips_p2 = sum(-board[i] * (25 - i) for i in range(1, 25) if board[i] < 0) + board[0] * 25
+    return pips_p1 > pips_p2
+
+
+def _massive(board) -> bool:
+    # Disjoint from the two more specific families: a late containment game
+    # (Lamford 01 holds three anchors) and a far-side prime (Snake) both read
+    # as "many checkers back" but belong to their own folders.
+    if _containment(board) or _snake(board):
+        return False
+    return _massive_p1_holder(board) or _massive_p1_holder(_flip(board))
+
+
+def _snake_p1_prime(board) -> bool:
+    """Player 1 contains a straggler behind a far-side prime ("snake").
+
+    A run of >= 4 consecutive points, each held with >= 2 checkers, entirely
+    on the opponent's half of the board (indices 13-24); the opponent has a
+    straggler (on the bar or in player 1's home board) and >= 10 checkers
+    already in its own home board — the crunched side of the Snake and
+    Lamford ch. 41 shapes.
+    """
+    run = best = 0
+    for i in range(13, 25):
+        run = run + 1 if board[i] >= 2 else 0
+        best = max(best, run)
+    if best < 4:
+        return False
+    straggler = board[0] + sum(-board[i] for i in range(1, 7) if board[i] < 0)
+    if straggler < 1:
+        return False
+    home = sum(-board[i] for i in range(19, 25) if board[i] < 0)
+    return home >= 10
+
+
+def _snake(board) -> bool:
+    return _snake_p1_prime(board) or _snake_p1_prime(_flip(board))
+
+
+FAMILY_FILTERS: dict[str, Callable[[tuple[int, ...]], bool]] = {
+    "containment": _containment,
+    "massive backgame": _massive,
+    "snake": _snake,
+}
+
+
 def backgame_filter(folder_name: str) -> Callable[[tuple[int, ...]], bool]:
     """The "is this still a back game of this subfolder's type?" test."""
     m = re.match(r"^([1-6])([1-6])\s+backgame$", folder_name)
     if m:
         return _make_named_filter((int(m.group(1)), int(m.group(2))))
+    if folder_name in FAMILY_FILTERS:
+        return FAMILY_FILTERS[folder_name]
     return _any_backgame
 
 

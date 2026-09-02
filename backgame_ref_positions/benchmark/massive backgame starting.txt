@@ -1,0 +1,604 @@
+# massive backgame - starting positions, imported from the XG reference files.
+# One position per line: cube_value cube_owner board(26 ints).
+# cube_owner is "centered" | "player" | "opponent", relative to player 1
+# (the positive checkers). Cube values above 2 are clamped to 2.
+#
+# massive backgame manual.txt #1
+2 opponent 0 1 -2 -3 -5 2 2 2 3 2 0 1 1 0 0 0 0 1 0 0 0 -1 -1 -1 -2 0
+#
+# massive backgame manual.txt #2
+1 centered 0 0 0 0 1 2 2 1 1 -1 1 -1 -2 0 -2 0 0 -2 -2 -3 2 -2 2 2 0 1
+#
+# massive backgame manual.txt #3
+1 centered 0 0 0 0 1 0 2 3 2 0 0 -1 -1 0 0 -3 -1 -2 -2 -3 2 2 0 2 -2 1
+#
+# massive backgame manual.txt #4
+1 centered 0 -2 -2 0 0 -2 5 3 4 0 0 -1 -2 1 0 0 0 -2 2 -2 -2 0 0 0 0 0
+#
+# massive backgame manual.txt #5
+2 opponent 0 2 0 -4 -2 -1 3 2 2 2 2 0 0 0 0 0 0 0 0 -2 -2 -1 -2 -1 1 1
+#
+# massive backgame manual.txt #6
+2 player 0 -1 0 0 0 -2 3 1 2 0 0 0 -4 2 0 0 -1 -2 1 -3 -2 2 2 2 0 0
+#
+# massive backgame manual.txt #7
+2 player 0 -1 0 -1 0 -1 3 1 2 0 0 0 -4 2 0 0 0 -3 0 -3 -2 0 1 3 3 0
+#
+# massive backgame manual.txt #8
+2 opponent 0 1 -2 -3 -3 0 3 2 2 2 2 0 0 0 0 0 0 1 0 0 0 -2 1 -2 -3 1
+#
+# massive backgame manual.txt #9
+2 player 0 0 0 -1 0 0 3 1 1 0 0 0 -1 2 0 -1 -1 -2 -2 -2 -2 -3 2 2 3 1
+#
+# massive backgame manual.txt #10
+2 player 0 -2 0 0 0 -1 3 0 2 0 -1 0 -2 2 0 0 0 -2 -2 -3 2 2 -2 2 2 0
+#
+# massive backgame manual.txt #11
+2 opponent 1 -3 2 2 2 -4 2 2 0 0 1 0 0 0 0 1 0 -2 -2 -3 2 0 1 0 0 0
+#
+# massive backgame manual.txt #12
+2 opponent 0 0 -2 -2 -2 2 5 -1 2 0 1 0 -2 3 0 1 0 -2 -1 -3 0 0 0 0 1 0
+#
+# massive backgame manual.txt #13
+1 centered 0 2 -2 0 -2 -2 3 3 2 1 3 0 1 0 0 0 -1 -2 -2 -3 0 -1 0 0 0 0
+#
+# massive backgame manual.txt #14
+2 player 0 -1 0 -1 0 0 3 1 2 -1 0 0 -3 2 0 0 0 -1 -2 -4 -2 3 0 3 1 0
+#
+# massive backgame manual.txt #15
+1 centered 1 0 0 0 1 -1 2 2 2 0 -1 -1 -3 0 0 1 0 -3 1 -5 2 2 0 2 0 0
+#
+# massive backgame manual.txt #16
+2 opponent 1 -3 2 2 2 -4 2 1 0 0 0 0 0 1 0 1 0 -2 -2 -3 2 0 0 1 1 0
+#
+# massive backgame manual.txt #17
+2 player 0 0 0 0 -1 0 2 1 2 0 0 0 -1 -1 0 -1 -2 -2 3 -4 -3 2 3 2 0 0
+#
+# massive backgame manual.txt #18
+1 centered 0 1 -2 -2 3 -3 4 2 2 0 1 2 0 0 0 0 0 0 0 -1 -2 -2 -2 -1 0 0
+#
+# massive backgame manual.txt #19
+2 opponent 0 -4 2 2 2 -5 3 2 0 0 0 0 2 0 1 0 1 0 -1 -2 -1 -2 0 0 0 0
+#
+# massive backgame manual.txt #20
+2 opponent 0 -3 -4 2 2 3 3 2 3 0 0 0 0 0 0 0 0 0 0 0 0 0 0 -3 -5 0
+#
+# massive backgame manual.txt #21
+1 centered 0 -1 -2 2 -1 -3 3 2 0 0 0 0 0 5 0 0 0 1 -2 -2 -2 -2 2 0 0 0
+#
+# massive backgame manual.txt #22
+2 player 0 3 2 0 1 0 0 0 0 0 0 0 0 1 0 0 0 0 0 -3 -5 -7 3 2 3 0
+#
+# massive backgame manual.txt #23
+1 centered 0 0 0 2 2 2 2 -1 0 0 0 0 0 0 0 0 1 -5 -2 -3 2 2 -2 2 -2 0
+#
+# massive backgame manual.txt #24
+2 opponent 0 0 -2 -3 -2 3 4 -2 2 -1 2 0 1 0 0 1 0 -2 -1 -2 1 0 0 0 0 1
+#
+# massive backgame manual.txt #25
+2 player 0 0 -1 0 1 1 1 -1 2 0 0 -1 0 2 0 -2 0 -2 -2 -4 -2 3 3 2 0 0
+#
+# massive backgame manual.txt #26
+2 opponent 0 -2 -2 2 -2 6 2 2 2 0 -1 0 0 -1 0 0 0 0 0 -3 -2 -2 1 0 0 0
+#
+# massive backgame manual.txt #27
+2 opponent 0 0 -2 -2 -3 3 4 1 2 0 1 0 -2 3 0 0 0 -2 -1 -2 0 -1 0 0 1 0
+#
+# massive backgame manual.txt #28
+1 centered 0 -2 1 -2 -2 2 2 -2 2 0 5 0 2 0 0 -1 0 0 1 -2 -2 -2 0 0 0 0
+#
+# massive backgame manual.txt #29
+2 player 0 -2 0 0 0 -1 3 1 2 0 0 0 -4 2 0 0 0 -2 0 -3 -1 1 -2 2 3 1
+#
+# massive backgame manual.txt #30
+2 opponent 0 0 -2 -2 -2 2 5 -1 2 0 2 1 -2 2 0 0 0 -2 0 -2 -1 -1 0 1 0 0
+#
+# massive backgame manual.txt #31
+2 player 0 1 -1 2 0 2 2 1 -1 -1 0 0 0 0 0 0 0 -2 -2 -2 -2 -2 -2 3 3 1
+#
+# massive backgame manual.txt #32
+1 centered 0 -1 0 0 -2 1 3 -1 2 0 0 1 -1 0 0 0 -2 -3 -2 -3 3 2 0 3 0 0
+#
+# massive backgame manual.txt #33
+2 player 1 0 1 0 -2 2 2 0 2 0 -2 0 0 0 0 1 -2 -3 -2 -3 2 2 0 3 0 0
+#
+# massive backgame manual.txt #34
+2 player 0 0 -1 0 2 0 2 0 2 0 -1 1 0 2 0 0 0 -2 -3 -4 2 -2 2 -2 2 0
+#
+# massive backgame manual.txt #35
+2 opponent 0 -4 2 2 4 -3 3 3 -1 0 0 0 0 0 -1 0 0 0 -2 -2 0 -2 0 0 0 1
+#
+# massive backgame manual.txt #36
+1 centered 0 2 0 -2 -2 -3 2 0 4 0 0 2 -1 3 0 0 1 1 -2 -3 -2 0 0 0 0 0
+#
+# massive backgame manual.txt #37
+1 centered 0 -2 -2 0 0 -2 5 -1 4 0 0 0 -2 4 0 0 0 -2 1 -2 -2 0 0 0 1 0
+#
+# massive backgame manual.txt #38
+1 centered 0 0 0 0 2 2 2 0 0 0 1 0 0 -2 -1 -5 0 -2 2 -2 -2 2 2 -1 2 0
+#
+# massive backgame manual.txt #39
+2 opponent 0 0 -2 -2 -3 2 5 -1 2 0 2 1 -1 2 0 0 0 -2 -1 -2 -1 1 0 0 0 0
+#
+# massive backgame manual.txt #40
+1 centered 0 0 -1 -2 -2 -2 4 0 2 -2 0 1 -2 4 0 1 0 1 0 -3 2 -1 0 0 0 0
+#
+# massive backgame manual.txt #41
+2 player 0 -1 -1 0 0 1 3 -1 2 0 0 0 -5 2 0 0 0 -2 0 -3 -2 0 0 3 3 1
+#
+# massive backgame manual.txt #42
+1 centered 0 0 0 -2 -2 -2 5 2 3 -1 1 0 0 3 0 0 -2 0 0 -2 -2 -2 0 1 0 0
+#
+# massive backgame manual.txt #43
+2 player 0 -2 0 0 -2 2 3 0 0 0 0 0 1 1 0 0 0 -2 -2 -2 -2 2 -2 -1 5 1
+#
+# massive backgame manual.txt #44
+2 player 0 0 0 0 1 1 2 -1 2 0 0 0 -1 2 -1 -2 0 -2 -1 -5 -2 2 2 2 0 1
+#
+# massive backgame manual.txt #45
+2 player 0 1 0 2 2 0 0 0 -1 0 0 0 0 -1 -1 0 -2 -3 -2 -2 -2 5 3 2 -1 0
+#
+# massive backgame manual.txt #46
+2 player 0 0 1 0 2 2 0 0 0 -3 0 0 3 0 0 1 0 -2 -2 -3 -3 2 -2 2 2 0
+#
+# massive backgame manual.txt #47
+1 centered 0 0 -1 0 1 1 2 -1 2 0 0 0 -2 2 -2 0 1 -3 -1 -3 2 -2 2 2 0 0
+#
+# massive backgame manual.txt #48
+2 opponent 0 -4 2 2 2 -5 3 2 0 0 0 0 1 0 1 1 0 1 -2 -3 0 -1 0 0 0 0
+#
+# massive backgame manual.txt #49
+2 player 0 0 0 0 2 0 -1 1 3 0 0 0 0 2 0 -3 0 0 -2 -4 -3 2 2 3 -2 0
+#
+# massive backgame manual.txt #50
+2 player 0 -1 0 0 -2 0 3 -2 2 0 0 0 -1 2 0 0 0 -1 -2 -4 2 -2 3 1 2 0
+#
+# massive backgame manual.txt #51
+2 player 0 3 1 2 2 -1 0 0 0 0 0 0 0 -1 0 0 0 -2 -2 -3 -2 -2 -2 4 3 0
+#
+# massive backgame manual.txt #52
+1 centered 0 -2 0 0 0 -1 3 1 2 0 0 0 -3 2 0 0 0 -3 -2 -4 1 0 0 3 2 1
+#
+# massive backgame manual.txt #53
+2 player 0 -1 0 0 0 0 3 1 2 0 -1 0 -3 2 0 -1 0 -2 0 -5 -2 0 2 2 3 0
+#
+# massive backgame manual.txt #54
+2 opponent 0 0 -2 -2 -2 3 4 -2 2 2 2 0 0 -1 0 0 0 -2 -2 -2 0 1 0 0 1 0
+#
+# massive backgame manual.txt #55
+1 centered 0 -1 0 -2 -2 -2 5 2 3 0 0 0 -2 3 1 0 0 0 0 -2 -2 -2 0 0 1 0
+#
+# massive backgame manual.txt #56
+2 opponent 0 2 0 -3 -7 3 2 2 3 2 1 0 0 0 0 0 0 0 0 0 0 0 0 -3 -2 0
+#
+# massive backgame manual.txt #57
+2 player 0 -1 -1 0 0 -1 3 2 2 0 -1 0 -2 0 0 0 0 0 -1 -2 3 -2 -2 -2 4 1
+#
+# massive backgame manual.txt #58
+2 opponent 0 0 1 -3 -2 -2 3 2 2 2 2 0 0 0 0 0 -1 0 0 0 1 -2 1 -2 -3 1
+#
+# massive backgame manual.txt #59
+2 opponent 0 1 -3 -2 -2 2 3 2 2 -1 2 1 -2 0 0 0 0 -2 1 -1 -1 -1 0 1 0 0
+#
+# massive backgame manual.txt #60
+2 opponent 1 0 -2 -4 -2 2 3 2 2 -1 0 0 0 0 1 1 -2 -1 0 0 -1 1 1 2 -1 0
+#
+# massive backgame manual.txt #61
+1 centered 0 1 -2 1 -2 -2 2 2 2 -2 2 -1 3 2 0 0 0 -1 -1 -2 -1 -1 0 0 0 0
+#
+# massive backgame manual.txt #62
+1 centered 1 0 -2 -2 -2 2 5 3 1 0 0 0 -2 2 0 0 0 -2 2 -3 -1 0 0 0 0 0
+#
+# massive backgame manual.txt #63
+1 centered 0 0 -3 -5 3 2 3 2 3 1 0 1 0 0 0 0 0 0 0 0 0 0 -2 -3 -2 0
+#
+# massive backgame manual.txt #64
+1 centered 0 0 -1 0 -3 0 3 0 2 0 0 0 -2 2 0 -1 -1 -3 0 -4 1 2 1 1 2 1
+#
+# massive backgame manual.txt #65
+1 centered 0 1 1 3 2 1 0 0 0 0 0 0 0 0 0 -1 -2 -2 -2 -3 -3 3 2 -2 2 0
+#
+# massive backgame manual.txt #66
+1 centered 0 -2 -4 -2 4 3 3 2 2 0 0 0 0 1 -1 0 0 0 0 -2 -2 0 0 -2 0 0
+#
+# massive backgame manual.txt #67
+1 centered 0 1 -4 -3 2 2 2 2 2 0 0 0 1 0 0 0 0 -1 1 0 -2 -2 -2 -1 1 1
+#
+# massive backgame manual.txt #68
+1 centered 0 0 0 0 0 -2 3 -1 2 0 0 0 -4 2 0 0 -1 -2 1 -5 2 0 0 2 3 0
+#
+# massive backgame manual.txt #69
+1 centered 0 5 -2 -2 -2 -2 -1 2 3 2 3 0 0 0 0 0 0 -1 0 -1 -1 0 -2 -1 0 0
+#
+# massive backgame manual.txt #70
+1 centered 0 -2 0 2 -3 -3 5 0 4 0 0 0 0 2 0 0 0 -2 0 -2 -3 2 0 0 0 0
+#
+# massive backgame manual.txt #71
+1 centered 0 3 -2 -2 -2 4 3 0 2 2 1 0 0 0 0 0 0 -2 0 -1 -1 -2 -1 -2 0 0
+#
+# massive backgame manual.txt #72
+1 centered 1 0 0 1 2 1 3 0 0 0 0 -1 0 0 0 -1 -3 -2 -2 -3 2 3 1 -2 2 0
+#
+# massive backgame manual.txt #73
+1 centered 0 0 0 2 2 0 3 0 0 0 0 0 0 0 0 0 0 -1 -2 -2 -2 -5 -3 3 5 0
+#
+# massive backgame manual.txt #74
+1 centered 0 0 0 0 2 2 2 0 0 -1 0 -1 0 2 0 -2 0 -1 -2 -2 -2 3 -2 -2 2 2
+#
+# massive backgame manual.txt #75
+1 centered 1 -2 1 -3 2 -3 6 0 2 0 1 0 -2 2 0 1 0 0 0 -3 0 -1 0 0 0 0
+#
+# massive backgame manual.txt #76
+1 centered 0 -2 0 0 0 0 3 0 2 0 -1 0 -2 2 0 -1 0 1 -2 -3 -2 -2 2 1 3 1
+#
+# massive backgame manual.txt #77
+1 centered 0 0 0 0 2 0 4 0 -1 1 0 0 0 0 0 0 0 0 1 -3 0 3 -4 3 -7 1
+#
+# massive backgame manual.txt #78
+1 centered 0 1 0 -1 2 0 1 2 0 0 0 0 1 0 0 0 0 0 0 1 3 -2 -5 4 -4 0
+#
+# massive backgame manual.txt #79
+1 centered 0 0 0 0 -1 -1 3 -1 2 0 0 0 -2 2 0 0 0 -2 -3 -4 -1 1 1 2 4 0
+#
+# massive backgame manual.txt #80
+1 centered 0 0 0 0 2 1 2 0 2 0 0 1 0 0 0 0 0 0 0 -10 3 2 -2 2 -2 0
+#
+# massive backgame manual.txt #81
+1 centered 0 0 0 0 0 0 3 0 2 0 0 0 0 2 0 0 0 -2 -3 -2 -3 -3 -2 3 4 1
+#
+# massive backgame manual.txt #82
+1 centered 0 -4 -3 3 3 3 3 0 0 0 0 0 0 0 0 0 -1 -1 -1 -2 -2 -1 0 0 0 0
+#
+# massive backgame manual.txt #83
+1 centered 1 2 -5 2 2 -3 2 3 2 1 0 0 0 0 0 1 0 -2 -2 -2 0 0 0 0 0 0
+#
+# massive backgame manual.txt #84
+1 centered 0 -2 -2 3 2 -4 2 2 2 -1 2 0 0 0 0 0 -2 -2 0 -2 0 1 0 0 0 1
+#
+# massive backgame manual.txt #85
+1 centered 0 0 -2 -2 2 -5 2 3 2 2 2 2 0 0 0 0 -1 -1 0 0 -2 -1 -1 0 0 0
+#
+# massive backgame manual.txt #86
+1 centered 0 -1 0 0 0 0 3 -1 2 0 0 0 -5 2 0 0 0 -1 1 -5 -2 0 0 3 2 2
+#
+# massive backgame manual.txt #87
+1 centered 1 -4 -4 2 2 2 2 2 1 0 1 0 -2 1 0 0 0 0 0 -2 1 -2 0 1 0 0
+#
+# massive backgame manual.txt #88
+1 centered 0 0 0 0 2 3 2 1 0 0 0 1 -2 0 -3 0 0 0 -2 -4 2 -2 2 -2 2 0
+#
+# massive backgame manual.txt #89
+1 centered 0 -3 -1 0 -1 -2 3 2 2 1 0 0 -3 3 0 0 0 -2 0 -2 3 -1 0 0 1 0
+#
+# massive backgame manual.txt #90
+1 centered 0 0 0 -1 2 -2 2 -1 2 0 0 0 0 0 0 0 -1 -2 -2 -2 5 -2 -2 2 0 2
+#
+# massive backgame manual.txt #91
+1 centered 0 2 0 2 2 2 0 0 0 0 0 0 0 0 0 1 0 0 -3 -2 -4 2 2 -6 2 0
+#
+# massive backgame manual.txt #92
+1 centered 1 -1 0 1 0 0 2 1 2 0 -1 0 1 1 -2 0 -2 -2 0 -2 3 -2 -2 2 2 0
+#
+# massive backgame manual.txt #93
+1 centered 0 0 0 0 1 2 2 3 1 0 0 0 0 0 0 0 0 0 0 -5 -5 2 2 -5 2 0
+#
+# massive backgame manual.txt #94
+1 centered 0 -1 0 0 2 -1 2 0 0 0 0 -1 -1 2 0 0 0 -2 1 -3 -2 -2 -2 5 3 0
+#
+# massive backgame manual.txt #95
+1 centered 0 -5 -2 0 3 2 4 2 1 0 0 0 -2 1 0 0 0 -1 1 -3 1 0 0 -1 -1 0
+#
+# massive backgame manual.txt #96
+1 centered 0 0 1 1 -1 2 2 0 0 0 2 0 0 0 0 0 -2 -1 -3 -5 2 -2 2 2 -1 1
+#
+# massive backgame manual.txt #97
+1 centered 1 1 0 3 1 1 1 0 1 0 1 0 0 0 0 0 -2 -2 -3 -4 2 -2 2 -1 2 0
+#
+# massive backgame manual.txt #98
+1 centered 0 0 -2 -2 1 -2 5 4 2 0 2 -1 0 0 0 0 0 -1 -2 -3 0 -2 0 0 0 1
+#
+# massive backgame manual.txt #99
+1 centered 0 0 -2 -2 -2 3 4 2 2 -2 1 1 0 2 0 0 0 0 0 -2 -3 0 -2 0 0 0
+#
+# massive backgame manual.txt #100
+1 centered 0 0 0 2 1 2 2 0 0 0 0 0 0 0 0 0 -2 -2 -2 -2 -3 4 -2 4 -2 0
+#
+# massive backgame manual.txt #101
+1 centered 0 0 0 0 0 0 3 -1 2 1 0 -1 -4 2 0 0 0 -2 -2 -4 3 -1 1 2 1 0
+#
+# massive backgame manual.txt #102
+1 centered 0 2 2 2 0 0 0 0 0 0 0 0 1 0 -1 0 0 0 1 -3 -5 -6 2 2 2 1
+#
+# massive backgame manual.txt #103
+1 centered 0 0 -2 -2 3 -3 4 2 2 2 0 0 0 0 1 0 -1 1 0 -1 -3 -2 -1 0 0 0
+#
+# massive backgame manual.txt #104
+1 centered 0 0 0 0 2 0 2 1 1 1 0 0 -2 1 0 0 -3 -2 0 -2 4 2 -2 -2 -2 1
+#
+# massive backgame manual.txt #105
+1 centered 0 -2 2 -2 -2 4 3 1 0 0 0 -2 0 0 2 0 -3 -2 -1 1 0 2 0 -1 0 0
+#
+# massive backgame manual.txt #106
+1 centered 0 0 2 2 2 0 1 0 0 0 0 0 0 0 0 1 0 -2 -2 -6 0 3 2 2 -5 0
+#
+# massive backgame manual.txt #107
+1 centered 1 0 -2 -2 -3 3 2 3 3 1 0 0 -2 2 1 0 0 0 0 -2 -1 -1 -1 0 0 0
+#
+# massive backgame manual.txt #108
+1 centered 0 0 0 0 -2 0 3 -1 2 0 0 0 -2 2 0 -1 -1 -2 -2 -2 4 -2 2 1 1 0
+#
+# massive backgame manual.txt #109
+1 centered 1 -1 0 1 -1 0 3 0 0 0 0 0 -5 2 0 0 0 -2 2 -5 2 0 3 1 1 0
+#
+# massive backgame manual.txt #110
+1 centered 0 0 -2 -2 2 -2 3 2 2 -2 1 1 -1 2 0 -1 2 0 0 -4 -1 0 0 0 0 0
+#
+# massive backgame manual.txt #111
+1 centered 0 0 0 2 1 2 2 0 0 0 0 1 0 0 0 0 0 0 -3 -6 -3 -3 3 2 2 0
+#
+# massive backgame manual.txt #112
+1 centered 0 -2 2 -2 1 -2 5 0 6 0 0 0 1 0 0 -2 -1 -2 0 -2 -2 0 0 0 0 0
+#
+# massive backgame manual.txt #113
+1 centered 0 0 -1 0 0 0 3 -2 2 0 1 0 0 2 0 0 0 -1 -3 -3 3 3 -1 -2 -2 1
+#
+# massive backgame manual.txt #114
+1 centered 0 -2 -2 4 -2 2 4 0 0 0 0 0 0 0 0 0 -1 0 -2 -2 -2 -2 0 0 0 0
+#
+# massive backgame manual.txt #115
+1 centered 0 3 2 0 -1 0 0 0 0 -1 0 0 0 -1 0 -2 0 -2 -2 -3 -3 6 2 2 0 0
+#
+# massive backgame manual.txt #116
+1 centered 0 -4 -4 3 4 3 2 2 0 0 1 0 0 0 0 0 0 0 0 -3 -2 0 -1 0 -1 0
+#
+# massive backgame manual.txt #117
+1 centered 0 -1 0 -1 1 2 3 0 -1 0 0 0 -1 2 0 0 0 -2 -2 -5 -2 3 2 0 1 1
+#
+# massive backgame manual.txt #118
+1 centered 0 -1 2 -2 -2 -2 4 -1 2 2 2 2 0 0 0 0 0 -2 1 -3 0 -2 0 0 0 0
+#
+# massive backgame manual.txt #119
+1 centered 0 1 0 0 2 2 2 0 0 0 0 0 0 1 1 -1 0 0 0 -4 2 -6 2 2 -4 0
+#
+# massive backgame manual.txt #120
+1 centered 0 0 2 0 0 2 1 0 0 0 0 0 0 0 0 0 0 1 1 2 -2 -4 -4 2 4 0
+#
+# massive backgame manual.txt #121
+1 centered 0 0 0 0 0 2 3 2 0 0 0 0 0 0 -2 0 1 -2 -3 -5 3 -1 -2 2 2 0
+#
+# massive backgame manual.txt #122
+1 centered 0 0 0 0 0 2 3 -1 0 0 0 0 -2 2 -1 0 0 -2 0 -3 -3 2 -2 5 -1 1
+#
+# massive backgame manual.txt #123
+1 centered 0 7 7 -2 -2 -2 0 0 0 0 0 -1 0 0 0 0 0 -1 0 -3 0 1 0 -2 -2 0
+#
+# massive backgame manual.txt #124
+1 centered 0 4 -2 -2 -4 2 4 -2 3 1 1 0 0 0 0 0 0 -1 0 0 0 -2 -1 -1 0 0
+#
+# massive backgame manual.txt #125
+1 centered 0 2 0 -2 -2 -2 5 5 0 0 0 0 -1 0 -1 0 -1 -3 3 -3 0 0 0 0 0 0
+#
+# massive backgame manual.txt #126
+1 centered 0 -1 -4 2 2 -2 2 0 2 0 0 0 -3 3 1 0 0 1 -2 -3 0 0 0 0 2 0
+#
+# massive backgame manual.txt #127
+1 centered 0 4 -2 -3 3 -2 5 2 0 0 -2 1 0 0 0 0 0 0 -1 -3 -2 0 0 0 0 0
+#
+# massive backgame manual.txt #128
+1 centered 0 0 2 -2 -2 -2 4 2 0 0 2 0 -2 3 0 -1 2 0 0 -2 -2 -2 0 0 0 0
+#
+# massive backgame manual.txt #129
+1 centered 0 0 -2 -2 0 -2 5 2 3 -1 0 0 -2 3 0 0 1 0 -1 -3 -2 0 1 0 0 0
+#
+# massive backgame manual.txt #130
+1 centered 0 0 0 1 2 1 2 0 0 1 1 0 0 1 0 -2 0 0 -2 -5 2 -4 2 -2 2 0
+#
+# massive backgame manual.txt #131
+1 centered 0 -1 0 0 0 -1 3 -1 2 0 0 0 -4 2 0 0 0 -3 0 -3 3 -2 2 2 1 0
+#
+# massive backgame manual.txt #132
+1 centered 0 -1 0 0 2 0 -2 0 -1 0 0 0 0 0 0 1 -2 0 4 -3 -4 2 3 2 -2 1
+#
+# massive backgame manual.txt #133
+1 centered 0 0 0 0 0 1 2 2 2 -1 0 -1 0 0 0 1 -3 -3 -2 -2 2 -2 2 2 -1 1
+#
+# massive backgame manual.txt #134
+1 centered 0 0 2 2 0 0 3 0 0 1 0 0 0 0 0 0 0 0 0 -4 -3 -4 3 3 -4 1
+#
+# massive backgame manual.txt #135
+1 centered 0 0 0 0 1 -2 2 0 2 -1 0 2 -2 0 0 0 -2 -2 -1 -3 -2 3 2 2 1 0
+#
+# massive backgame manual.txt #136
+1 centered 0 0 -2 0 0 -1 3 -1 2 0 0 0 -3 1 0 0 0 -2 -2 -2 2 -2 1 4 2 0
+#
+# massive backgame manual.txt #137
+1 centered 0 0 0 0 2 0 2 0 0 3 0 0 0 -1 0 0 0 -2 -3 -2 -3 -2 -2 4 4 0
+#
+# massive backgame manual.txt #138
+1 centered 0 0 0 0 2 0 3 1 0 0 0 0 0 0 0 0 0 0 0 -4 -3 5 -5 -2 4 0
+#
+# massive backgame manual.txt #139
+1 centered 0 0 0 2 -2 2 2 0 0 0 0 -1 -2 0 0 0 -2 0 -2 -3 -3 0 2 2 5 0
+#
+# massive backgame manual.txt #140
+1 centered 0 4 0 3 0 0 0 0 0 0 0 0 0 0 0 0 0 -2 -2 -2 -2 -5 -2 5 3 0
+#
+# massive backgame manual.txt #141
+1 centered 0 0 -2 3 3 -5 3 2 0 2 2 0 0 0 0 0 0 0 0 0 0 0 -3 -2 -3 0
+#
+# massive backgame manual.txt #142
+1 centered 0 0 0 0 1 -3 2 -1 2 0 0 0 -4 2 0 0 0 -2 0 -3 -2 3 1 3 1 0
+#
+# massive backgame manual.txt #143
+1 centered 0 0 0 0 1 2 2 1 2 0 0 0 0 0 0 -3 0 -2 -2 -3 -2 3 -3 2 2 0
+#
+# massive backgame manual.txt #144
+1 centered 1 0 2 2 1 2 0 0 0 0 0 0 0 0 -1 -2 -2 -2 1 -2 3 -3 2 2 -2 0
+#
+# massive backgame manual.txt #145
+1 centered 0 0 -2 -2 0 -2 6 2 2 0 1 0 -2 3 0 0 0 -2 1 -2 -1 -2 0 0 0 0
+#
+# massive backgame manual.txt #146
+1 centered 0 0 0 -2 -2 -2 5 -2 3 0 0 1 3 2 0 0 0 -1 0 -3 0 -1 -2 0 1 0
+#
+# massive backgame manual.txt #147
+1 centered 1 -1 -2 -1 2 -3 4 0 0 2 0 0 -2 2 0 0 1 0 1 -3 3 -2 0 0 0 0
+#
+# massive backgame manual.txt #148
+1 centered 0 -2 1 5 -2 -2 2 4 3 0 0 0 0 0 0 0 0 0 0 -2 -1 -2 -2 -2 0 0
+#
+# massive backgame manual.txt #149
+1 centered 0 -2 0 1 0 0 3 2 0 -1 0 0 0 0 0 0 0 -1 -2 -2 -3 3 -4 3 2 1
+#
+# massive backgame manual.txt #150
+1 centered 0 1 2 2 0 0 0 0 0 0 1 0 1 0 0 0 0 1 -2 -3 -8 2 2 3 -2 0
+#
+# massive backgame manual.txt #151
+1 centered 0 0 2 2 0 2 2 0 0 -1 0 0 0 0 0 0 0 0 -1 -6 3 2 -2 -3 -2 2
+#
+# massive backgame manual.txt #152
+1 centered 0 0 -2 2 -2 -2 4 -2 2 0 0 1 -1 3 -1 0 2 0 -2 -3 1 0 0 0 0 0
+#
+# massive backgame manual.txt #153
+1 centered 0 0 2 2 0 0 -1 0 0 -1 0 0 0 0 0 1 0 0 -2 -3 5 -5 -3 2 3 0
+#
+# massive backgame manual.txt #154
+1 centered 0 -3 -3 -2 2 2 3 2 2 0 0 0 0 2 0 0 1 0 0 -1 0 -1 -2 -3 1 0
+#
+# massive backgame manual.txt #155
+1 centered 1 0 0 0 2 2 2 0 0 0 -2 1 0 0 0 1 -2 -3 -2 -2 3 2 2 -1 -2 0
+#
+# massive backgame manual.txt #156
+1 centered 0 0 0 0 1 0 3 0 0 1 0 0 -2 2 -1 -1 0 -2 -3 -4 3 2 -2 3 0 0
+#
+# massive backgame manual.txt #157
+1 centered 1 -2 -2 3 -2 4 3 -3 2 0 0 0 0 1 -1 0 -1 1 0 -3 1 0 0 0 0 0
+#
+# massive backgame manual.txt #158
+1 centered 0 -3 -2 3 2 -2 2 2 2 0 0 3 0 0 0 -1 0 0 -2 -3 -2 0 0 0 0 1
+#
+# massive backgame manual.txt #159
+1 centered 0 -1 0 -1 0 -1 3 1 2 0 0 0 -3 2 0 0 0 -3 0 -4 -2 2 0 3 1 1
+#
+# massive backgame manual.txt #160
+1 centered 0 -1 -1 -1 -2 -3 5 0 2 0 0 0 -1 2 0 1 0 -2 -1 -3 4 0 0 0 0 1
+#
+# massive backgame manual.txt #161
+1 centered 0 0 1 -2 -2 -2 3 3 2 1 -2 3 0 0 -2 -1 1 1 -1 -1 0 0 -1 -1 0 0
+#
+# massive backgame manual.txt #162
+1 centered 0 -2 -2 -1 -2 2 2 2 2 0 0 0 -3 2 1 0 0 -2 1 -3 2 0 1 0 0 0
+#
+# massive backgame manual.txt #163
+1 centered 1 -2 -2 0 0 -2 5 -1 2 0 0 0 -2 5 0 0 0 -2 0 -3 1 0 0 0 2 0
+#
+# massive backgame manual.txt #164
+1 centered 0 0 0 0 0 0 3 1 2 0 0 0 0 1 0 0 0 -2 -2 -2 -2 -4 -3 6 2 0
+#
+# massive backgame manual.txt #165
+1 centered 0 0 0 1 -1 0 3 -1 2 0 0 0 0 -1 0 -2 -2 -2 -2 -2 -2 2 2 1 4 0
+#
+# massive backgame manual.txt #166
+1 centered 0 0 0 0 0 -1 3 -2 2 0 0 0 -3 3 0 -1 0 -2 -1 -5 2 0 0 2 1 2
+#
+# massive backgame manual.txt #167
+1 centered 0 4 5 -2 -2 -2 5 0 -1 0 -1 0 0 0 0 -2 0 0 0 -3 0 1 -2 0 0 0
+#
+# massive backgame manual.txt #168
+1 centered 0 0 -5 -2 2 2 3 2 2 0 0 1 -2 1 0 1 0 0 0 -4 -1 1 -1 0 0 0
+#
+# massive backgame manual.txt #169
+1 centered 0 -2 0 -4 2 2 -3 2 2 3 0 0 0 1 0 -2 0 0 0 -1 1 -1 -1 -1 1 1
+#
+# massive backgame manual.txt #170
+1 centered 0 0 1 2 2 -2 2 0 0 0 -1 0 -2 2 0 0 0 -2 -2 -3 -2 2 -1 2 2 0
+#
+# massive backgame manual.txt #171
+1 centered 0 5 -2 3 -2 -2 6 0 0 0 0 0 0 0 0 0 0 0 0 -2 -2 -2 -1 -2 0 0
+#
+# massive backgame manual.txt #172
+1 centered 0 -1 -2 -1 2 -3 4 0 4 0 0 -1 0 0 1 0 0 -2 -2 -3 1 1 1 1 0 0
+#
+# massive backgame manual.txt #173
+1 centered 0 -1 0 0 2 1 2 0 1 0 -1 0 -2 2 0 0 0 -2 -2 -3 -2 2 -2 2 2 1
+#
+# massive backgame manual.txt #174
+1 centered 0 0 -2 7 -2 -2 5 0 3 0 0 -1 0 0 0 0 0 -1 0 -2 -2 -2 -1 0 0 0
+#
+# massive backgame manual.txt #175
+1 centered 0 0 0 0 1 1 2 2 1 1 0 0 0 1 0 0 -2 -3 -1 -7 2 2 -2 2 0 0
+#
+# massive backgame manual.txt #176
+1 centered 1 -1 -4 2 -2 2 2 2 2 1 0 0 2 0 0 0 0 -2 -2 -3 2 0 0 0 0 0
+#
+# massive backgame manual.txt #177
+1 centered 0 -2 2 2 -5 2 3 3 0 2 0 0 -2 0 0 0 1 0 0 0 -2 0 -2 -2 0 0
+#
+# massive backgame manual.txt #178
+1 centered 1 -1 -2 2 0 1 2 1 2 0 0 1 0 0 -1 0 0 -2 0 -4 -2 2 -2 2 2 0
+#
+# massive backgame manual.txt #179
+1 centered 0 -2 -5 4 4 4 2 0 0 0 0 0 0 0 0 0 -1 0 0 0 1 0 -1 -3 -3 0
+#
+# massive backgame manual.txt #180
+1 centered 0 2 0 2 -3 -4 2 2 0 -2 2 2 -2 0 2 0 1 -1 -1 -2 0 0 0 0 0 0
+#
+# massive backgame manual.txt #181
+1 centered 0 -2 -1 -1 -2 -3 2 2 2 2 2 0 1 0 1 0 0 -2 0 -2 0 -2 1 0 0 2
+#
+# massive backgame manual.txt #182
+1 centered 0 0 0 0 0 2 2 2 1 -1 0 0 0 0 0 -3 0 -3 0 -4 3 2 -3 2 -1 1
+#
+# massive backgame manual.txt #183
+1 centered 0 0 0 0 1 -1 4 0 3 0 0 0 -1 0 0 0 0 0 -5 -2 -2 -2 -2 4 3 0
+#
+# massive backgame manual.txt #184
+1 centered 0 0 0 2 0 -1 2 -1 2 0 -2 0 0 -2 -2 1 2 -3 0 -2 -2 2 2 2 0 0
+#
+# massive backgame manual.txt #185
+1 centered 0 -1 0 0 1 -3 3 -1 1 1 0 0 -1 0 0 0 0 0 -2 -3 -2 -2 2 3 4 0
+#
+# massive backgame manual.txt #186
+1 centered 0 1 2 2 0 0 0 0 0 0 -1 0 0 1 0 2 -2 0 0 -3 -3 2 2 2 -6 1
+#
+# massive backgame manual.txt #187
+1 centered 0 0 0 0 0 -1 2 0 -1 0 0 0 -2 2 0 -1 -1 -2 -2 -4 4 1 3 -1 3 0
+#
+# massive backgame manual.txt #188
+1 centered 0 2 1 0 2 1 1 0 -2 0 0 0 0 0 0 0 0 -2 -3 -2 -2 -2 -2 4 4 0
+#
+# massive backgame manual.txt #189
+1 centered 0 5 -3 7 -2 -2 2 1 0 -1 0 0 0 0 0 0 0 0 0 -2 -2 -3 0 0 0 0
+#
+# massive backgame manual.txt #190
+1 centered 0 -5 2 2 -3 2 2 2 1 1 0 1 -2 1 0 0 0 -2 0 -3 0 1 0 0 0 0
+#
+# massive backgame manual.txt #191
+1 centered 0 0 0 0 0 -2 3 1 2 0 0 0 -5 2 0 0 1 -3 0 -3 -2 2 2 0 2 0
+#
+# massive backgame manual.txt #192
+1 centered 1 0 -2 -2 3 -2 3 -1 4 0 1 1 -1 2 0 1 0 0 0 -3 -2 0 -1 0 0 0
+#
+# massive backgame manual.txt #193
+1 centered 0 -2 0 2 -5 2 4 2 2 2 0 0 0 0 1 0 0 0 0 -2 0 -2 -2 -2 0 0
+#
+# massive backgame manual.txt #194
+1 centered 0 -2 -1 0 -2 -2 5 1 3 0 0 0 -2 4 0 0 0 -2 2 -3 -1 0 0 0 0 0
+#
+# massive backgame manual.txt #195
+1 centered 0 -2 0 0 0 -1 0 -1 0 3 1 0 0 0 0 0 0 0 -2 -4 3 -3 3 -2 4 1
+#
+# massive backgame manual.txt #196
+1 centered 1 -2 3 6 -5 3 2 0 0 0 -1 0 0 0 1 0 0 0 0 0 0 -2 -2 -2 0 0
+#
+# massive backgame manual.txt #197
+1 centered 0 3 2 1 2 0 0 0 0 0 0 0 0 0 0 -1 -1 -2 -2 -2 -3 -2 4 3 -2 0
+#
+# massive backgame manual.txt #198
+1 centered 0 0 0 0 1 1 2 0 2 0 0 -1 0 1 -2 0 -2 -2 -2 -5 3 3 -1 2 0 0
+#
+# massive backgame manual.txt #199
+1 centered 0 -5 -2 -2 2 2 2 2 2 0 2 0 0 0 0 1 1 0 0 0 0 -3 -1 -1 -1 1
+#
+# massive backgame manual.txt #200
+1 centered 0 0 0 0 0 1 3 -2 2 0 0 0 -2 2 0 0 -1 -2 -2 -3 -1 -2 1 2 3 1
