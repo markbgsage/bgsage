@@ -26,6 +26,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import shutil
 import sys
 from pathlib import Path
@@ -51,11 +52,16 @@ def merge(category: str) -> None:
         print(f"{category}: no candidate rollouts ({cand_path.name} missing)")
         return
 
+    # A decision may have several candidate records (a make-up run appends
+    # "|cand2", ...); pool every rolled board across them.
     rolled: dict[str, dict] = {}
     for line in cand_path.open(encoding="utf-8"):
         if line.strip():
             r = json.loads(line)
-            rolled[r["key"].removesuffix("|cand")] = r
+            base = re.sub(r"\|cand\d*$", "", r["key"])
+            acc = rolled.setdefault(base, {"moves": [], "force_boards": []})
+            acc["moves"].extend(r["moves"])
+            acc["force_boards"].extend(r.get("force_boards", []))
     if not rolled:
         print(f"{category}: candidate file is empty")
         return

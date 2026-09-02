@@ -577,6 +577,26 @@ class _RolloutAnalyzer(_CubelessBase):
         # dropped them. Pulls from the same pool survivors are drawn from so the
         # forced entry is rolled out (not left at its 2-ply / 1-ply fallback).
         self._force_include(fallback_pool, survivors, survivor_set, force_boards)
+        # A forced board the stage-1 prefilter culled is not in that pool at
+        # all (scored_2ply holds only stage-1 survivors), so it was silently
+        # skipped — measured 2026-09-02 on the candidate-completion run: 134 of
+        # 912 forced boards never rolled. Score those at the pool's ply and add
+        # them, so "forced" means rolled out, whatever the filter thought.
+        if force_boards:
+            legal = {tuple(b) for b in candidates}
+            missing = [list(b) for b in {tuple(fb) for fb in force_boards}
+                       if b in legal and b not in survivor_set]
+            if missing:
+                scored_missing = self._score_candidates(
+                    missing, board, cube_owner,
+                    cube_value=cube_value, away1=away1, away2=away2,
+                    is_crawford=is_crawford, jacoby=jacoby,
+                    **({"strategy": self._strategy_2ply}
+                       if scored_2ply is not None else {}),
+                )
+                for item in scored_missing:
+                    survivors.append(item)
+                    survivor_set.add(tuple(item[2]))
         self._check_cancel()
 
         n_trials = self._rollout_config["n_trials"]
