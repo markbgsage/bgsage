@@ -216,8 +216,10 @@ static std::shared_ptr<Strategy> make_strategy_from_type(
         return std::make_shared<GamePlanPairStrategy>(weight_paths, hidden_sizes);
     if (strategy_type == "backgame_pair")
         return std::make_shared<BackgameAwarePairStrategy>(weight_paths, hidden_sizes);
+    if (strategy_type == "backgame_pair_phased")
+        return std::make_shared<BackgameAwarePairStrategy>(weight_paths, hidden_sizes, true);
     throw std::invalid_argument("Unknown strategy type: " + strategy_type +
-        ". Valid types: 5nn, pair, backgame_pair");
+        ". Valid types: 5nn, pair, backgame_pair, backgame_pair_phased");
 }
 
 PYBIND11_MODULE(bgbot_cpp, m) {
@@ -1231,6 +1233,19 @@ PYBIND11_MODULE(bgbot_cpp, m) {
     }, "Stage 11 backgame category of the position (either side): 'deep' "
        "(21/31/32), 'middle' (41/42/51/52), 'double' (43/53/54), or 'none'. "
        "Applies Stage 9's backgame detection first.",
+       py::arg("board"));
+    m.def("backgame_phase", [](const std::vector<int>& board) {
+        auto b = list_to_board(board);
+        switch (backgame_phase(b)) {
+            case BackgamePhase::WAITING: return std::string("waiting");
+            case BackgamePhase::BEAR_IN: return std::string("bear_in");
+            case BackgamePhase::EARLY_CONTAINMENT: return std::string("early_containment");
+            case BackgamePhase::LATE_CONTAINMENT: return std::string("late_containment");
+            default: return std::string("none");
+        }
+    }, "Stage 11 back-game phase of the position (either side), independent of "
+       "the plan-pair gate: 'waiting', 'bear_in', 'early_containment', "
+       "'late_containment', or 'none' when no side qualifies as the holder.",
        py::arg("board"));
     m.def("classify_game_plans_batch", [](py::array_t<int32_t> boards_np) {
         auto info = boards_np.request();
@@ -5287,10 +5302,14 @@ PYBIND11_MODULE(bgbot_cpp, m) {
     // =====================================================================
 
     py::class_<BackgameAwarePairStrategy, Strategy, std::shared_ptr<BackgameAwarePairStrategy>>(m, "BackgameAwarePairStrategy")
-        .def(py::init<const std::vector<std::string>&, const std::vector<int>&>(),
+        .def(py::init<const std::vector<std::string>&, const std::vector<int>&, bool>(),
              py::arg("weight_paths"), py::arg("hidden_sizes"),
+             py::arg("phase_containment") = false,
              "Create 19-NN strategy: [0]=purerace, [1-16]=contact pairs, "
-             "[17]=player backgame, [18]=opponent backgame")
+             "[17]=player backgame, [18]=opponent backgame. 20 NNs = the Stage 11 "
+             "category trio; 21 NNs = the Stage 10 hybrid, or with "
+             "phase_containment=True the Stage 11 phased layout (trio + early-"
+             "containment NN at 20)")
         .def("evaluate_board", [](BackgameAwarePairStrategy& self,
                                    const std::vector<int>& board,
                                    const std::vector<int>& pre_move_board) {

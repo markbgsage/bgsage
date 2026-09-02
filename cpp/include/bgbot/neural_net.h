@@ -473,6 +473,33 @@ enum class BackgameCategory : int {
 // classifies the backgame side's anchor depths per the table above. The result
 // is the same whichever perspective the board is in.
 BackgameCategory backgame_category(const Board& board);
+
+// Stage 11 phased routing: 17 standard pair NNs + the deep/middle/double trio
+// + one EARLY-CONTAINMENT NN (index 20). Same count as the Stage 10 hybrid, so
+// this mode is chosen by the constructor flag, never by the count.
+constexpr int NUM_BACKGAME_PAIR_NNS_PHASED = 21;
+
+// Phase of a back-game-family position, independent of the plan-pair gate.
+// The holder B is the side with >= 2 anchors in the opponent's home board and
+// behind on pips (no single-anchor fallback — see the .cpp); R is the other side, and
+//   stragglers = R checkers on the bar + R checkers in B's home board.
+//   EARLY_CONTAINMENT  stragglers >= 1 and R has <= 2 checkers off
+//   LATE_CONTAINMENT   stragglers >= 1 and R has >= 3 off
+//   BEAR_IN            no stragglers and R has >= 10 checkers home or >= 1 off
+//   WAITING            everything else; NONE when no side qualifies as holder.
+// Measured 2026-09-02: on the folder benchmarks' out-of-region early
+// containment decisions (plan pair flipped, so Stage 9's gate sends them to
+// the standard nets) an early-containment NN cut 1-ply PR 4.90 -> 3.69 and
+// halved the blunders, while inside the region the category trio stayed
+// better than any phase specialist — hence the narrow routing below.
+enum class BackgamePhase : int {
+    NONE = -1,
+    WAITING = 0,
+    BEAR_IN = 1,
+    EARLY_CONTAINMENT = 2,
+    LATE_CONTAINMENT = 3,
+};
+BackgamePhase backgame_phase(const Board& board);
 constexpr int BLENDED_PLAYER_BG_IDX = 21;    // sentinel: gated player backgame
 constexpr int BLENDED_OPPONENT_BG_IDX = 22;  // sentinel: gated opponent backgame
 constexpr int BACKGAME_GATE_MIN_ANCHORS = 3; // gate arm 1: 3+ anchors
@@ -493,8 +520,12 @@ public:
     // NNs (Stage 11 experimental), indices 17/18/19 are instead the DEEP /
     // MIDDLE / DOUBLE_ANCHOR category NNs, selected by backgame_category() —
     // the same NN whichever side holds the backgame.
+    // phase_containment: the 21-NN Stage 11 PHASED layout (trio at 17/18/19,
+    // early-containment NN at 20) — the flag disambiguates it from the 21-NN
+    // Stage 10 hybrid.
     BackgameAwarePairStrategy(const std::vector<std::string>& weight_paths,
-                              const std::vector<int>& hidden_sizes);
+                              const std::vector<int>& hidden_sizes,
+                              bool phase_containment = false);
 
     double evaluate(const Board& board, bool pre_move_is_race) const override;
 
@@ -547,6 +578,8 @@ private:
     std::vector<std::shared_ptr<NeuralNetwork>> nns_;  // 19 (base), 20 (categorized) or 21 (hybrid)
     bool blended_backgame_ = false;      // true when 21 NNs are loaded
     bool categorized_backgame_ = false;  // true when 20 NNs are loaded (Stage 11)
+    bool phase_containment_ = false;     // Stage 11 phased: out-of-region early
+                                         // containment -> NN 20
 
     // Determine which NN to use. Returns 0 for purerace, 1-16 for standard
     // contact pairs, 17 for player backgame, 18 for opponent backgame; on

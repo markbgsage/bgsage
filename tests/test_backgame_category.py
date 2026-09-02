@@ -209,6 +209,67 @@ class TestStage11Selection(unittest.TestCase):
         self.assertGreater(
             max(abs(a - b) for a, b in zip(self_routed, direct)), 1e-4)
 
+    def test_phased_layout_routes_out_of_region_containment(self):
+        """The 21-NN phased layout keeps the trio's routing everywhere the
+        plan-pair gate detects a backgame, and sends ONLY out-of-region
+        early-containment positions to NN 20."""
+        seed_board = backgame_board({1, 2})
+        extra = os.path.join(self.tmp.name, "td_test_bg_p3.weights")
+        bgbot_cpp.td_train_backgame_truncated(
+            n_games=0, model_name="td_test_bg_p3", models_dir=self.tmp.name,
+            start_boards=[seed_board], ref_weight_paths=self.s9.paths,
+            ref_hidden_sizes=self.s9.hiddens)
+        phased = bgbot_cpp.BackgameAwarePairStrategy(
+            self.paths + [extra], self.hiddens + [400], True)
+        # Same count as the Stage 10 hybrid, so the flag is what selects it.
+        with self.assertRaises(RuntimeError):
+            bgbot_cpp.BackgameAwarePairStrategy(self.paths, self.hiddens, True)
+
+        # Snake: a far-side prime holding one straggler, opponent crunched,
+        # nobody off -> early containment. Lamford 01: 12 off -> late.
+        snake = [0,0,0,-1,0,0,0,0,0,0,0,0,0,1,0,1,0,2,3,3,2,2,1,-7,-7,0]
+        lamford = [0,-1,2,2,0,-1,2,1,0,0,0,-1,0,0,0,0,0,0,0,2,0,2,1,0,2,1]
+        self.assertEqual(bgbot_cpp.backgame_phase(snake), "early_containment")
+        self.assertEqual(bgbot_cpp.backgame_phase(lamford), "late_containment")
+        # backgame_board() parks the racer's 14 checkers at home: bear-in.
+        self.assertEqual(bgbot_cpp.backgame_phase(seed_board), "bear_in")
+        from bgsage.board import STARTING_BOARD
+        self.assertEqual(bgbot_cpp.backgame_phase(STARTING_BOARD), "none")
+        self.assertEqual(bgbot_cpp.backgame_phase(
+            bgbot_cpp.flip_board(snake)), "early_containment")
+
+        # Every detected backgame routes exactly as the 20-NN trio does.
+        for depths, _ in TestBackgameCategory.CASES:
+            board = backgame_board(depths)
+            self.assertEqual(phased.select_nn_idx(board), self.s11.select_nn_idx(board))
+
+        # Out-of-region early containment -> 20, from either perspective,
+        # while the trio (no phase NN) still uses a standard pair net there.
+        # Real cases come from the committed folder reference: the plan pair
+        # has flipped (the racer's block reads as priming) with a straggler
+        # still being contained. Snake itself is detected (middle), so it
+        # keeps its trio routing under both layouts.
+        self.assertEqual(phased.select_nn_idx(snake), self.s11.select_nn_idx(snake))
+        import json
+        ref = os.path.join(repo_dir, "backgame_ref_positions", "benchmark",
+                           "21 backgame rollout.jsonl")
+        if not os.path.exists(ref):
+            raise unittest.SkipTest("folder reference not present")
+        found = 0
+        with open(ref, encoding="utf-8") as f:
+            for line in f:
+                b = json.loads(line)["board"]
+                if (bgbot_cpp.backgame_category(b) != "none"
+                        or bgbot_cpp.backgame_phase(b) != "early_containment"):
+                    continue
+                self.assertEqual(phased.select_nn_idx(b), 20)
+                self.assertEqual(phased.select_nn_idx(bgbot_cpp.flip_board(b)), 20)
+                self.assertLess(self.s11.select_nn_idx(b), 17)
+                found += 1
+                if found >= 25:
+                    break
+        self.assertGreater(found, 0)
+
     def test_non_backgame_matches_stage9(self):
         from bgsage.board import STARTING_BOARD
 

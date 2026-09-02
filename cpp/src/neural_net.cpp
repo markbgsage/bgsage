@@ -2436,14 +2436,72 @@ BackgameCategory backgame_category(const Board& board) {
     return backgame_category_given_plans(board, player_gp, opponent_gp);
 }
 
+BackgamePhase backgame_phase(const Board& board) {
+    int a1 = 0, a2 = 0;
+    for (int pt = 19; pt <= 24; ++pt) if (board[pt] >= 2) ++a1;
+    for (int pt = 1; pt <= 6; ++pt) if (board[pt] <= -2) ++a2;
+    auto [p1_pips, p2_pips] = pip_counts(board);
+
+    // Which side is the holder B: two or more anchors and behind on pips.
+    // A single-anchor fallback was tried and rejected (2026-09-02): it routed
+    // 3,927 ordinary money decisions — hit a blot while holding one anchor —
+    // to the containment NN and cost +0.75 PR on the money benchmark, while
+    // the two-anchor subset carried the whole folder gain at no money cost.
+    bool holder_p1;
+    if (a1 >= 2 && p1_pips > p2_pips) holder_p1 = true;
+    else if (a2 >= 2 && p2_pips > p1_pips) holder_p1 = false;
+    else return BackgamePhase::NONE;
+
+    int r_bar, r_in_b_home, r_on_board, r_home;
+    if (holder_p1) {
+        r_bar = board[0];
+        r_in_b_home = r_on_board = r_home = 0;
+        for (int pt = 1; pt <= 24; ++pt) {
+            if (board[pt] >= 0) continue;
+            r_on_board -= board[pt];
+            if (pt <= 6) r_in_b_home -= board[pt];
+            if (pt >= 19) r_home -= board[pt];
+        }
+        r_on_board += board[0];
+    } else {
+        r_bar = board[25];
+        r_in_b_home = r_on_board = r_home = 0;
+        for (int pt = 1; pt <= 24; ++pt) {
+            if (board[pt] <= 0) continue;
+            r_on_board += board[pt];
+            if (pt >= 19) r_in_b_home += board[pt];
+            if (pt <= 6) r_home += board[pt];
+        }
+        r_on_board += board[25];
+    }
+    const int r_off = 15 - r_on_board;
+    const int stragglers = r_bar + r_in_b_home;
+    if (stragglers >= 1)
+        return r_off <= 2 ? BackgamePhase::EARLY_CONTAINMENT
+                          : BackgamePhase::LATE_CONTAINMENT;
+    if (r_home >= 10 || r_off >= 1) return BackgamePhase::BEAR_IN;
+    return BackgamePhase::WAITING;
+}
+
 BackgameAwarePairStrategy::BackgameAwarePairStrategy(
     const std::vector<std::string>& weight_paths,
-    const std::vector<int>& hidden_sizes)
+    const std::vector<int>& hidden_sizes,
+    bool phase_containment)
 {
     const int n = static_cast<int>(weight_paths.size());
-    if ((n != NUM_BACKGAME_PAIR_NNS && n != NUM_BACKGAME_PAIR_NNS_HYBRID &&
-         n != NUM_BACKGAME_PAIR_NNS_CATEGORIZED) ||
-        static_cast<int>(hidden_sizes.size()) != n) {
+    if (phase_containment) {
+        if (n != NUM_BACKGAME_PAIR_NNS_PHASED ||
+            static_cast<int>(hidden_sizes.size()) != n) {
+            throw std::runtime_error(
+                "Phased BackgameAwarePairStrategy requires " +
+                std::to_string(NUM_BACKGAME_PAIR_NNS_PHASED) +
+                " weight paths and matching hidden sizes, got " +
+                std::to_string(weight_paths.size()) + "/" +
+                std::to_string(hidden_sizes.size()));
+        }
+    } else if ((n != NUM_BACKGAME_PAIR_NNS && n != NUM_BACKGAME_PAIR_NNS_HYBRID &&
+                n != NUM_BACKGAME_PAIR_NNS_CATEGORIZED) ||
+               static_cast<int>(hidden_sizes.size()) != n) {
         throw std::runtime_error(
             "BackgameAwarePairStrategy requires " +
             std::to_string(NUM_BACKGAME_PAIR_NNS) + ", " +
@@ -2453,8 +2511,9 @@ BackgameAwarePairStrategy::BackgameAwarePairStrategy(
             std::to_string(weight_paths.size()) + "/" +
             std::to_string(hidden_sizes.size()));
     }
-    blended_backgame_ = (n == NUM_BACKGAME_PAIR_NNS_HYBRID);
-    categorized_backgame_ = (n == NUM_BACKGAME_PAIR_NNS_CATEGORIZED);
+    phase_containment_ = phase_containment;
+    blended_backgame_ = !phase_containment && (n == NUM_BACKGAME_PAIR_NNS_HYBRID);
+    categorized_backgame_ = phase_containment || (n == NUM_BACKGAME_PAIR_NNS_CATEGORIZED);
     nns_.resize(n);
     for (int i = 0; i < n; ++i) {
         int n_inputs = (i == 0) ? TESAURO_INPUTS : EXTENDED_CONTACT_INPUTS;
@@ -2483,6 +2542,12 @@ int BackgameAwarePairStrategy::select_nn_idx(const Board& board) const {
             backgame_category_given_plans(board, player_gp, opponent_gp);
         if (cat != BackgameCategory::NONE)
             return 17 + static_cast<int>(cat);
+        // Phased layout: a containment position the plan-pair gate rejected
+        // (the racer's block reads as priming, or the holder's) goes to the
+        // early-containment NN instead of the standard pair net.
+        if (phase_containment_ &&
+            backgame_phase(board) == BackgamePhase::EARLY_CONTAINMENT)
+            return 20;
         return 1 + game_plan_pair_index(player_gp, opponent_gp);
     }
 

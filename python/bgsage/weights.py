@@ -41,6 +41,22 @@ MODELS: dict[str, dict[str, Any]] = {
                            "sl_s11_bg_middle.weights.best",
                            "sl_s11_bg_double.weights.best"],
     },
+    "stage11p": {
+        # EXPERIMENTAL — Stage 11 PHASED: the categorized trio plus an
+        # early-containment NN (index 20) that takes the containment
+        # positions Stage 9's plan-pair gate rejects (a straggler being
+        # contained, racer <= 2 off, but the racer's block reads as
+        # priming). Inside the detected region nothing changes; outside the
+        # containment phase nothing changes either. See backgame_phase().
+        "hidden": (100,) + (400,) * 20,   # 17 standard + 3 trio + 1 phase = 21
+        "pattern": "sl_s9_{plan}.weights.best",
+        "plans": "backgame_pair_phased",
+        "canonical_map": [0,1,2,3,4,5,6,7,8,9,10,12,12,13,14,12,12],
+        "extra_backgame": ["sl_s11_bg_deep.weights.best",
+                           "sl_s11_bg_middle.weights.best",
+                           "sl_s11_bg_double.weights.best",
+                           "sl_s11_bg_p3.weights.best"],
+    },
     "stage10": {
         # Gated blended backgame hybrid (21 NNs): Stage 9's full 19-NN model
         # carried UNCHANGED (indices 0-18, including sl_s9_player_bg/opponent_bg
@@ -130,6 +146,11 @@ _BACKGAME_PAIR_PLANS_HYBRID = _BACKGAME_PAIR_PLANS + ("player_bg_pasko", "oppone
 # Stage 11 categorized trio: the 17 standard pair NNs plus one backgame NN per
 # category (deep / middle / double-anchor), shared by both sides.
 _BACKGAME_PAIR_PLANS_CATEGORIZED = _PAIR_PLANS + ("bg_deep", "bg_middle", "bg_double")
+# Stage 11 phased: the trio plus an early-containment NN that takes the
+# containment positions Stage 9's plan-pair gate would hand to the standard
+# nets. Same length as the Stage 10 hybrid — the strategy type, not the count,
+# tells the C++ which layout it is.
+_BACKGAME_PAIR_PLANS_PHASED = _BACKGAME_PAIR_PLANS_CATEGORIZED + ("bg_p3",)
 
 # Bearoff database filename (stored in data/ directory)
 BEAROFF_DB_FILENAME = "bearoff_1sided.db"
@@ -176,14 +197,14 @@ def bearoff_db_path() -> str | None:
 def is_pair_model(name: str) -> bool:
     """Return True if the named model uses a pair strategy (17-NN or more)."""
     return MODELS.get(name, {}).get("plans") in (
-        "pair", "backgame_pair", "backgame_pair_categorized")
+        "pair", "backgame_pair", "backgame_pair_categorized", "backgame_pair_phased")
 
 
 def is_backgame_pair_model(name: str) -> bool:
     """Return True if the named model uses the backgame-aware pair strategy
     (19, 20 or 21 NNs — the C++ BackgameAwarePairStrategy class)."""
     return MODELS.get(name, {}).get("plans") in (
-        "backgame_pair", "backgame_pair_categorized")
+        "backgame_pair", "backgame_pair_categorized", "backgame_pair_phased")
 
 
 def default_weights() -> "WeightConfig | WeightConfigPair":
@@ -384,6 +405,8 @@ class WeightConfigPair:
     def plan_names(self) -> tuple[str, ...]:
         """Tuple of plan names matching this config's length."""
         n = len(self.paths)
+        if self.strategy_type == "backgame_pair_phased":
+            return _BACKGAME_PAIR_PLANS_PHASED
         if n == 21:
             return _BACKGAME_PAIR_PLANS_HYBRID
         if n == 20:
@@ -406,7 +429,8 @@ class WeightConfigPair:
             raise KeyError(f"Unknown model {name!r}")
         cfg = MODELS[name]
         plans_type = cfg.get("plans")
-        if plans_type not in ("pair", "backgame_pair", "backgame_pair_categorized"):
+        if plans_type not in ("pair", "backgame_pair", "backgame_pair_categorized",
+                              "backgame_pair_phased"):
             raise ValueError(f"Model {name!r} is not a pair model")
         # The pattern-formatted names: 19 for the backgame pair; 17 for the
         # plain pair AND the categorized trio (whose backgame NNs come in via
@@ -428,7 +452,9 @@ class WeightConfigPair:
         for extra in cfg.get("extra_backgame", []):
             paths.append(os.path.join(models_dir, extra))
         # The categorized model is still the C++ BackgameAwarePairStrategy
-        # (it branches on the path count), so it dispatches as backgame_pair.
+        # (it branches on the path count), so it dispatches as backgame_pair;
+        # the phased layout shares the hybrid's count, so it keeps its own
+        # strategy type and the C++ constructor takes a flag.
         strategy_type = ("backgame_pair"
                          if plans_type == "backgame_pair_categorized"
                          else plans_type)
