@@ -26,6 +26,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import re
 import shutil
 import sys
@@ -98,7 +99,11 @@ def merge(category: str) -> None:
                 n_moves += changed
         out_lines.append(json.dumps(rec, separators=(",", ":")) + "\n")
 
-    ref_path.write_text("".join(out_lines), encoding="utf-8")
+    # Atomic swap: a scorer that opens the reference mid-rewrite must see the
+    # old file or the new one, never a truncated one.
+    tmp = ref_path.with_name(ref_path.name + ".tmp")
+    tmp.write_text("".join(out_lines), encoding="utf-8")
+    os.replace(tmp, ref_path)
     print(f"{category}: {n_moves} candidates upgraded to rollout grade across "
           f"{n_dec} decisions (backup: {backup.name})")
 
