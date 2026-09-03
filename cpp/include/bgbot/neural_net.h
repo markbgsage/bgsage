@@ -443,7 +443,7 @@ private:
 // ramp: w = base_w * (0.5 + 0.5*clip((pips-PIP_LO)/(PIP_HI-PIP_LO), 0, 1)).
 // The committee exploits the two nets' weakly correlated errors; the tight
 // gate keeps standard-game play byte-equal to S9 outside rare deep backgames.
-// select_nn_idx reports gated positions via sentinels 21/22 (>= the NN count).
+// select_nn_idx reports gated positions via the BLENDED_* sentinels (>= BLENDED_SENTINEL_BASE).
 // With 19 NNs everything is disabled and behaviour is identical to before.
 
 constexpr int NUM_BACKGAME_PAIR_NNS = 19;
@@ -515,8 +515,14 @@ enum class BackgamePhase : int {
     LATE_CONTAINMENT = 3,
 };
 BackgamePhase backgame_phase(const Board& board);
-constexpr int BLENDED_PLAYER_BG_IDX = 21;    // sentinel: gated player backgame
-constexpr int BLENDED_OPPONENT_BG_IDX = 22;  // sentinel: gated opponent backgame
+// Sentinels are far above any real NN index. They used to be 21/22 ("the NN
+// count and above" for the 21-NN hybrid), which silently collided with slot
+// 21 of the 22-NN phased layout: select_nn_idx picked the containment NN and
+// every evaluator then treated the index as "blend NNs 17 and 19" instead —
+// found 2026-09-03 when two different containment nets scored identically.
+constexpr int BLENDED_SENTINEL_BASE = 1000;
+constexpr int BLENDED_PLAYER_BG_IDX = 1000;    // sentinel: gated player backgame
+constexpr int BLENDED_OPPONENT_BG_IDX = 1001;  // sentinel: gated opponent backgame
 constexpr int BACKGAME_GATE_MIN_ANCHORS = 3; // gate arm 1: 3+ anchors
 constexpr int BACKGAME_GATE_ARM2_BC = 7;     // gate arm 2: 2 anchors + big back mass
 constexpr int BACKGAME_GATE_ARM2_PIPS = 200;
@@ -579,7 +585,7 @@ public:
 
     // Public accessor for the per-board NN selection (used by the cubeful
     // evaluation engine's batched candidate kernel to group candidates by NN).
-    // May return the blend sentinels 21/22 on hybrid models.
+    // May return the BLENDED_* sentinels (>= BLENDED_SENTINEL_BASE) on hybrid models.
     int nn_index_for(const Board& board) const { return select_nn_idx(board); }
 
     // Raw-NN probs for a board given an NN index; handles the blend sentinels
@@ -597,7 +603,7 @@ private:
 
     // Determine which NN to use. Returns 0 for purerace, 1-16 for standard
     // contact pairs, 17 for player backgame, 18 for opponent backgame; on
-    // hybrid models, the blend sentinels 21/22 for detected backgames.
+    // hybrid models, the BLENDED_* sentinels for detected backgames.
     int select_nn_idx(const Board& board) const;
 
     double evaluate_with_nn(const Board& board, int nn_idx) const;

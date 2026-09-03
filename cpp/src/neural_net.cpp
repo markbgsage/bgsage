@@ -2638,7 +2638,7 @@ std::array<float, NN_OUTPUTS> BackgameAwarePairStrategy::blended_backgame_probs(
 }
 
 double BackgameAwarePairStrategy::evaluate_with_nn(const Board& board, int nn_idx) const {
-    if (nn_idx >= NUM_BACKGAME_PAIR_NNS_HYBRID)
+    if (nn_idx >= BLENDED_SENTINEL_BASE)
         return NeuralNetwork::compute_equity(
             blended_backgame_probs(board, nn_idx == BLENDED_PLAYER_BG_IDX));
     const auto& nn = *nns_[nn_idx];
@@ -2656,7 +2656,7 @@ double BackgameAwarePairStrategy::evaluate_with_nn(const Board& board, int nn_id
 std::array<float, NN_OUTPUTS> BackgameAwarePairStrategy::probs_with_nn(
     const Board& board, int nn_idx) const
 {
-    if (nn_idx >= NUM_BACKGAME_PAIR_NNS_HYBRID)
+    if (nn_idx >= BLENDED_SENTINEL_BASE)
         return blended_backgame_probs(board, nn_idx == BLENDED_PLAYER_BG_IDX);
     const auto& nn = *nns_[nn_idx];
     if (nn_idx == 0) {
@@ -2761,7 +2761,7 @@ int BackgameAwarePairStrategy::batch_evaluate_candidates_equity(
     }
 
     int nn_idx = select_nn_idx(pre_move_board);
-    if (nn_idx >= NUM_BACKGAME_PAIR_NNS_HYBRID) {
+    if (nn_idx >= BLENDED_SENTINEL_BASE) {
         // Blended backgame: candidates cannot share a delta-eval base (each
         // gets its own pip-ramped mix), so use the plain per-candidate loop.
         return evaluate_candidates_equity(candidates, pre_move_board, equities);
@@ -2844,7 +2844,7 @@ int BackgameAwarePairStrategy::batch_evaluate_candidates_equity_probs(
     }
 
     int nn_idx = select_nn_idx(pre_move_board);
-    if (nn_idx >= NUM_BACKGAME_PAIR_NNS_HYBRID) {
+    if (nn_idx >= BLENDED_SENTINEL_BASE) {
         // Blended backgame: no shared delta-eval base; plain per-candidate loop.
         double bv = -1e30;
         int bi = 0;
@@ -2945,7 +2945,7 @@ int BackgameAwarePairStrategy::batch_evaluate_candidates_best_prob(
     }
 
     int nn_idx = select_nn_idx(pre_move_board);
-    if (nn_idx >= NUM_BACKGAME_PAIR_NNS_HYBRID) {
+    if (nn_idx >= BLENDED_SENTINEL_BASE) {
         // Blended backgame: no shared delta-eval base; plain per-candidate loop.
         double bv = -1e30;
         int bi = 0;

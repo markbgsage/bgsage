@@ -272,6 +272,14 @@ class TestStage11Selection(unittest.TestCase):
                 if bgbot_cpp.backgame_category(b) != "none":
                     n_anchored += 1
                     self.assertGreaterEqual(self.s11.select_nn_idx(b), 17)
+                # Routing is not enough: the EVALUATION must read slot 21.
+                # (Slot 21 once collided with the Stage 10 blend sentinel, so
+                # the evaluator blended NNs 17/19 and never touched it.)
+                if n_cont <= 20:
+                    want = bgbot_cpp.NNStrategy(extras[1], 400, 244).evaluate_board(b, b)["probs"]
+                    got = phased.evaluate_board(b, b)["probs"]
+                    for g, w in zip(got, want):
+                        self.assertAlmostEqual(g, w, places=5)
         self.assertGreater(n_cont, 2500)
         self.assertGreater(n_anchored, 100)
 
