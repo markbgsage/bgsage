@@ -75,34 +75,58 @@ def equity(p: np.ndarray) -> np.ndarray:
     return 2 * p[:, 0] - 1 + p[:, 1] - p[:, 3] + p[:, 2] - p[:, 4]
 
 
-def er(boards, eq, weights_path: str) -> float:
+def er(boards, eq, weights_path: str, row_weights=None) -> float:
+    """Mean |1-ply equity - target| x 1000, optionally row-weighted."""
     nn = bgbot_cpp.NNStrategy(weights_path, N_HIDDEN, N_INPUTS)
-    tot = 0.0
-    for b, e in zip(boards, eq):
-        tot += abs(nn.evaluate_board(b, b)["equity"] - float(e))
-    return tot / len(boards) * 1000.0
+    errs = np.array([abs(nn.evaluate_board(b, b)["equity"] - float(e))
+                     for b, e in zip(boards, eq)])
+    if row_weights is None:
+        return float(errs.mean() * 1000.0)
+    return float((errs * row_weights).sum() / row_weights.sum() * 1000.0)
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--init-from", required=True)
     parser.add_argument("--tag", required=True)
+    parser.add_argument("--extra-data", action="append", default=[],
+                        help="Additional rollout-format data file under data/ (repeatable), "
+                             "e.g. s11-bg-containment-general-rollout: the rule's rows from "
+                             "the main GNUbg corpus, which cover ordinary-game containment")
+    parser.add_argument("--family-weight", type=int, default=1,
+                        help="Oversample the family rows (the two containment-* files) this "
+                             "many times against --extra-data, in training and in the "
+                             "checkpointing ER; the general corpus is ~6x larger")
     args = parser.parse_args()
 
-    tb, tp, hb, hp = [], [], [], []
-    for name in ("s11-bg-containment-pile-rollout", "s11-bg-containment-rollout"):
+    # Family rows (the containment seeds' fights) and general rows (the rule's
+    # slice of the main corpus) are held out separately so each can be weighted.
+    groups = {"family": ([], [], [], []), "general": ([], [], [], [])}
+    sources = [(n, "family") for n in ("s11-bg-containment-pile-rollout",
+                                        "s11-bg-containment-rollout")]
+    sources += [(n, "general") for n in args.extra_data]
+    for name, group in sources:
         path = _DATA / name
         if not path.exists():
             print(f"  (missing: {name})", flush=True)
             continue
         boards, probs = load_rollout(path)
+        tb_, tp_, hb_, hp_ = groups[group]
         for b, p in zip(boards, probs):
-            (hb if holdout(b) else tb).append(b)
-            (hp if holdout(b) else tp).append(p)
-        print(f"  {name}: {len(boards)} rows", flush=True)
-    tp, hp = np.array(tp, dtype=np.float32), np.array(hp, dtype=np.float32)
+            (hb_ if holdout(b) else tb_).append(b)
+            (hp_ if holdout(b) else tp_).append(p)
+        print(f"  {name}: {len(boards)} rows ({group})", flush=True)
+    w = max(1, args.family_weight)
+    fam, gen = groups["family"], groups["general"]
+    tb = fam[0] * w + gen[0]
+    tp = np.array(fam[1] * w + gen[1], dtype=np.float32)
+    hb = fam[2] + gen[2]
+    hp = np.array(fam[3] + gen[3], dtype=np.float32)
+    hw = np.array([float(w)] * len(fam[2]) + [1.0] * len(gen[2]), dtype=np.float64)
     heq = equity(hp)
-    print(f"=== containment SL [{args.tag}]: {len(tb)} train / {len(hb)} holdout rows, "
+    print(f"=== containment SL [{args.tag}]: {len(tb)} train rows "
+          f"({len(fam[0])} family x{w} + {len(gen[0])} general) / "
+          f"{len(hb)} holdout ({len(fam[2])} family, {len(gen[2])} general), "
           f"init {os.path.basename(args.init_from)} ===", flush=True)
 
     _DIAG.mkdir(exist_ok=True)
@@ -111,8 +135,11 @@ def main() -> None:
     shutil.copy2(args.init_from, wpath)
     shutil.copy2(args.init_from, best)
     inputs = bgbot_cpp.encode_boards_batch(np.array(tb, dtype=np.int32), N_INPUTS)
-    best_er = er(hb, heq, best)
-    print(f"  initial ER {best_er:.2f}", flush=True)
+    best_er = er(hb, heq, best, hw)
+    n_fam = len(fam[2])
+    print(f"  initial ER {best_er:.2f} (family {er(hb[:n_fam], heq[:n_fam], best):.2f}"
+          + (f", general {er(hb[n_fam:], heq[n_fam:], best):.2f})" if len(hb) > n_fam else ")"),
+          flush=True)
     t0, total = time.time(), 0
     for phase, n_epochs, alpha in PHASES:
         shutil.copy2(best, wpath)
@@ -127,16 +154,20 @@ def main() -> None:
                 inputs=inputs, targets=tp, weights_path=wpath, n_hidden=N_HIDDEN,
                 n_inputs=N_INPUTS, alpha=alpha, epochs=chunk, batch_size=BATCH,
                 seed=4242 + total, print_interval=chunk + 1, save_path=wpath)
-            e = er(hb, heq, wpath)
+            e = er(hb, heq, wpath, hw)
             gc.collect()
             tag = ""
             if e < best_er:
                 best_er = e
                 shutil.copy2(wpath, best)
                 tag = "  *BEST*"
-            print(f"  P{phase} {done:6d}/{n_epochs}  ER={e:.2f}  best={best_er:.2f}  "
+            detail = f"  fam={er(hb[:n_fam], heq[:n_fam], wpath):.2f}"
+            if len(hb) > n_fam:
+                detail += f" gen={er(hb[n_fam:], heq[n_fam:], wpath):.2f}"
+            print(f"  P{phase} {done:6d}/{n_epochs}  ER={e:.2f}  best={best_er:.2f}{detail}  "
                   f"{time.time() - t0:.0f}s{tag}", flush=True)
-    print(f"=== [{args.tag}] done: best ER {best_er:.2f} -> {os.path.basename(best)} ===",
+    print(f"=== [{args.tag}] done: best ER {best_er:.2f} (family "
+          f"{er(hb[:n_fam], heq[:n_fam], best):.2f}) -> {os.path.basename(best)} ===",
           flush=True)
 
 
