@@ -478,6 +478,22 @@ BackgameCategory backgame_category(const Board& board);
 // + an EARLY-CONTAINMENT NN (index 20) + a CONTAINMENT-GAME NN (index 21).
 // Chosen by the constructor flag (strategy type backgame_pair_phased).
 constexpr int NUM_BACKGAME_PAIR_NNS_PHASED = 22;
+// With a 23rd NN the phased layout adds a SNAKE NN (index 22): a far-side
+// prime containing one straggler while the opponent's other checkers are
+// crunched home (the Lamford ch. 41 / "Snake" shapes). Routed ahead of
+// everything else.
+constexpr int NUM_BACKGAME_PAIR_NNS_PHASED_SNAKE = 23;
+
+// A snake: the holder has a run of >= SNAKE_PRIME_MIN_POINTS consecutive
+// points, each held with >= 2 checkers, entirely on the opponent's half of
+// the board (indices 13-24 in the holder's frame); the opponent has >= 1
+// straggler (on the bar or in the holder's home board) and >= SNAKE_MIN_HOME
+// checkers already in its own home board. Either side may be the holder.
+// Reference implementation: scripts/snake_rule.py (the benchmark family
+// filter in scripts/backgame_benchmark.py is the same rule).
+constexpr int SNAKE_PRIME_MIN_POINTS = 4;
+constexpr int SNAKE_MIN_HOME = 10;
+bool snake_category(const Board& board);
 
 // A containment game: the escaper E has borne off a bunch of checkers and
 // has one to three checkers that got hit and must run the whole board home;
@@ -542,7 +558,8 @@ public:
     // MIDDLE / DOUBLE_ANCHOR category NNs, selected by backgame_category() —
     // the same NN whichever side holds the backgame.
     // phase_containment: the 22-NN Stage 11 PHASED layout (trio at 17/18/19,
-    // early-containment NN at 20, containment-game NN at 21).
+    // early-containment NN at 20, containment-game NN at 21), or 23 NNs with
+    // the snake NN at 22.
     BackgameAwarePairStrategy(const std::vector<std::string>& weight_paths,
                               const std::vector<int>& hidden_sizes,
                               bool phase_containment = false);
@@ -600,6 +617,7 @@ private:
     bool categorized_backgame_ = false;  // true when 20 NNs are loaded (Stage 11)
     bool phase_containment_ = false;     // Stage 11 phased: out-of-region early
                                          // containment -> NN 20
+    bool snake_ = false;                 // phased with 23 NNs: snake -> NN 22
 
     // Determine which NN to use. Returns 0 for purerace, 1-16 for standard
     // contact pairs, 17 for player backgame, 18 for opponent backgame; on

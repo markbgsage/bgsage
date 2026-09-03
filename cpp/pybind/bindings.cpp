@@ -1240,6 +1240,13 @@ PYBIND11_MODULE(bgbot_cpp, m) {
        "escaper): the escaper has >= 3 checkers off and 1-3 stragglers that a "
        "container checker can still hit. See scripts/containment_rule.py.",
        py::arg("board"));
+    m.def("snake_category", [](const std::vector<int>& board) {
+        return snake_category(list_to_board(board));
+    }, "True when the position is a snake (either side the holder): a run of "
+       ">= 4 consecutive made points on the opponent's half of the board "
+       "trapping >= 1 straggler while the opponent has >= 10 checkers home. "
+       "See scripts/snake_rule.py.",
+       py::arg("board"));
     m.def("backgame_phase", [](const std::vector<int>& board) {
         auto b = list_to_board(board);
         switch (backgame_phase(b)) {
@@ -5315,7 +5322,8 @@ PYBIND11_MODULE(bgbot_cpp, m) {
              "[17]=player backgame, [18]=opponent backgame. 20 NNs = the Stage 11 "
              "category trio; 21 NNs = the Stage 10 hybrid, or with "
              "phase_containment=True the Stage 11 phased layout (trio + early-"
-             "containment NN at 20)")
+             "containment NN at 20 + containment NN at 21; 23 NNs add the snake "
+             "NN at 22)")
         .def("evaluate_board", [](BackgameAwarePairStrategy& self,
                                    const std::vector<int>& board,
                                    const std::vector<int>& pre_move_board) {

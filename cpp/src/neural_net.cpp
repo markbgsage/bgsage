@@ -2449,10 +2449,31 @@ bool p2_is_escaper(const Board& b) {
         if (b[i] < 0 && p1_max > i) stragglers -= b[i];
     return stragglers >= 1 && stragglers <= CONTAINMENT_STRAGGLERS_MAX;
 }
+
+// Player 1 (positive) holds a snake: a far-side prime with a P2 straggler
+// behind it while P2's other checkers are crunched home.
+bool p1_holds_snake(const Board& b) {
+    int run = 0, best = 0;
+    for (int i = 13; i <= 24; ++i) {
+        run = (b[i] >= 2) ? run + 1 : 0;
+        if (run > best) best = run;
+    }
+    if (best < SNAKE_PRIME_MIN_POINTS) return false;
+    int straggler = b[0];                  // P2 bar, or P2 checkers in P1's home
+    for (int i = 1; i <= 6; ++i) if (b[i] < 0) straggler -= b[i];
+    if (straggler < 1) return false;
+    int home = 0;
+    for (int i = 19; i <= 24; ++i) if (b[i] < 0) home -= b[i];
+    return home >= SNAKE_MIN_HOME;
+}
 }  // namespace
 
 bool containment_category(const Board& board) {
     return p2_is_escaper(board) || p2_is_escaper(flip(board));
+}
+
+bool snake_category(const Board& board) {
+    return p1_holds_snake(board) || p1_holds_snake(flip(board));
 }
 
 BackgamePhase backgame_phase(const Board& board) {
@@ -2509,11 +2530,13 @@ BackgameAwarePairStrategy::BackgameAwarePairStrategy(
 {
     const int n = static_cast<int>(weight_paths.size());
     if (phase_containment) {
-        if (n != NUM_BACKGAME_PAIR_NNS_PHASED ||
+        if ((n != NUM_BACKGAME_PAIR_NNS_PHASED &&
+             n != NUM_BACKGAME_PAIR_NNS_PHASED_SNAKE) ||
             static_cast<int>(hidden_sizes.size()) != n) {
             throw std::runtime_error(
                 "Phased BackgameAwarePairStrategy requires " +
-                std::to_string(NUM_BACKGAME_PAIR_NNS_PHASED) +
+                std::to_string(NUM_BACKGAME_PAIR_NNS_PHASED) + " or " +
+                std::to_string(NUM_BACKGAME_PAIR_NNS_PHASED_SNAKE) +
                 " weight paths and matching hidden sizes, got " +
                 std::to_string(weight_paths.size()) + "/" +
                 std::to_string(hidden_sizes.size()));
@@ -2531,6 +2554,7 @@ BackgameAwarePairStrategy::BackgameAwarePairStrategy(
             std::to_string(hidden_sizes.size()));
     }
     phase_containment_ = phase_containment;
+    snake_ = phase_containment && (n == NUM_BACKGAME_PAIR_NNS_PHASED_SNAKE);
     blended_backgame_ = !phase_containment && (n == NUM_BACKGAME_PAIR_NNS_HYBRID);
     categorized_backgame_ = phase_containment || (n == NUM_BACKGAME_PAIR_NNS_CATEGORIZED);
     nns_.resize(n);
@@ -2557,6 +2581,12 @@ int BackgameAwarePairStrategy::select_nn_idx(const Board& board) const {
     // picked by the backgame's CATEGORY — 17 deep, 18 middle, 19 double-anchor
     // — the same NN whichever side holds it.
     if (categorized_backgame_) {
+        // Phased layout with the snake NN: a far-side prime holding a
+        // straggler against a crunched board is its own game before anything
+        // else (the holder's points sit in the opponent's home board, so the
+        // plan-pair gate would otherwise read it as a back game).
+        if (snake_ && snake_category(board))
+            return 22;
         // Phased layout, first: a containment game is its own game whatever
         // the container's structure — anchors that would otherwise read as a
         // back game included — so it takes precedence over the trio.

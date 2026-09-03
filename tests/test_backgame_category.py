@@ -310,6 +310,73 @@ class TestStage11Selection(unittest.TestCase):
                     break
         self.assertGreater(found, 0)
 
+    def test_snake_layout_routes_snakes_first(self):
+        """With a 23rd NN the phased layout sends every snake — a far-side
+        prime trapping a straggler against a crunched board — to NN 22,
+        ahead of the trio and the containment rule, and leaves everything
+        else exactly as the 22-NN layout routes it."""
+        seed_board = backgame_board({1, 2})
+        extras = []
+        for name in ("td_test_bg_p3s", "td_test_bg_containments", "td_test_bg_snake"):
+            bgbot_cpp.td_train_backgame_truncated(
+                n_games=0, model_name=name, models_dir=self.tmp.name,
+                start_boards=[seed_board], ref_weight_paths=self.s9.paths,
+                ref_hidden_sizes=self.s9.hiddens)
+            extras.append(os.path.join(self.tmp.name, f"{name}.weights"))
+        phased = bgbot_cpp.BackgameAwarePairStrategy(
+            self.paths + extras[:2], self.hiddens + [400, 400], True)
+        snaked = bgbot_cpp.BackgameAwarePairStrategy(
+            self.paths + extras, self.hiddens + [400, 400, 400], True)
+        with self.assertRaises(RuntimeError):
+            bgbot_cpp.BackgameAwarePairStrategy(
+                self.paths + extras + extras[:1], self.hiddens + [400] * 4, True)
+
+        from bgsage.board import STARTING_BOARD
+        snake = [0,0,0,-1,0,0,0,0,0,0,0,0,0,1,0,1,0,2,3,3,2,2,1,-7,-7,0]
+        self.assertTrue(bgbot_cpp.snake_category(snake))
+        self.assertTrue(bgbot_cpp.snake_category(bgbot_cpp.flip_board(snake)))
+        self.assertEqual(snaked.select_nn_idx(snake), 22)
+        self.assertEqual(snaked.select_nn_idx(bgbot_cpp.flip_board(snake)), 22)
+        # Not snakes: no crunched opponent (the synthetic backgames), and the
+        # starting position; the 22-NN layout is untouched there.
+        for board in [backgame_board({1, 2}), backgame_board({4, 5}), STARTING_BOARD]:
+            self.assertFalse(bgbot_cpp.snake_category(board))
+            self.assertEqual(snaked.select_nn_idx(board), phased.select_nn_idx(board))
+        self.assertNotEqual(phased.select_nn_idx(snake), 22)
+
+        # The C++ rule agrees with the Python reference and the benchmark
+        # family filter on every snake-folder decision, from both sides, and
+        # the EVALUATION reads slot 22.
+        ref = os.path.join(repo_dir, "backgame_ref_positions", "benchmark",
+                           "snake rollout.jsonl")
+        if not os.path.exists(ref):
+            raise unittest.SkipTest("snake reference not present")
+        sys.path.insert(0, os.path.join(repo_dir, "scripts"))
+        import snake_rule as sr
+        from backgame_benchmark import _snake as family_snake
+        import json
+        n_snake = n_total = 0
+        with open(ref, encoding="utf-8") as f:
+            for line in f:
+                b = json.loads(line)["board"]
+                n_total += 1
+                is_s = bgbot_cpp.snake_category(b)
+                self.assertEqual(is_s, sr.snake(b))
+                self.assertEqual(is_s, family_snake(tuple(b)))
+                self.assertEqual(bgbot_cpp.snake_category(bgbot_cpp.flip_board(b)), is_s)
+                if not is_s:
+                    self.assertEqual(snaked.select_nn_idx(b), phased.select_nn_idx(b))
+                    continue
+                n_snake += 1
+                self.assertEqual(snaked.select_nn_idx(b), 22)
+                self.assertEqual(snaked.select_nn_idx(bgbot_cpp.flip_board(b)), 22)
+                if n_snake <= 20:
+                    want = bgbot_cpp.NNStrategy(extras[2], 400, 244).evaluate_board(b, b)["probs"]
+                    got = snaked.evaluate_board(b, b)["probs"]
+                    for g, w in zip(got, want):
+                        self.assertAlmostEqual(g, w, places=5)
+        self.assertGreater(n_snake, 0.9 * n_total)
+
     def test_non_backgame_matches_stage9(self):
         from bgsage.board import STARTING_BOARD
 

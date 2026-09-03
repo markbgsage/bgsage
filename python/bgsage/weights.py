@@ -60,6 +60,22 @@ MODELS: dict[str, dict[str, Any]] = {
                            "sl_s11_bg_p3.weights.best",
                            "sl_s11_bg_containment.weights.best"],
     },
+    "stage11s": {
+        # EXPERIMENTAL — stage11p plus a SNAKE NN (index 22): a far-side prime
+        # (>= 4 consecutive made points on the opponent's half) trapping a
+        # straggler while the opponent's other >= 10 checkers are crunched
+        # home. Routed ahead of everything else; see snake_category().
+        "hidden": (100,) + (400,) * 22,   # 17 standard + 3 trio + 2 phase + snake = 23
+        "pattern": "sl_s9_{plan}.weights.best",
+        "plans": "backgame_pair_phased",
+        "canonical_map": [0,1,2,3,4,5,6,7,8,9,10,12,12,13,14,12,12],
+        "extra_backgame": ["sl_s11_bg_deep.weights.best",
+                           "sl_s11_bg_middle.weights.best",
+                           "sl_s11_bg_double.weights.best",
+                           "sl_s11_bg_p3.weights.best",
+                           "sl_s11_bg_containment.weights.best",
+                           "sl_s11_bg_snake.weights.best"],
+    },
     "stage10": {
         # Gated blended backgame hybrid (21 NNs): Stage 9's full 19-NN model
         # carried UNCHANGED (indices 0-18, including sl_s9_player_bg/opponent_bg
@@ -154,6 +170,8 @@ _BACKGAME_PAIR_PLANS_CATEGORIZED = _PAIR_PLANS + ("bg_deep", "bg_middle", "bg_do
 # nets. Same length as the Stage 10 hybrid — the strategy type, not the count,
 # tells the C++ which layout it is.
 _BACKGAME_PAIR_PLANS_PHASED = _BACKGAME_PAIR_PLANS_CATEGORIZED + ("bg_p3", "bg_containment")
+# ... and with the snake NN at index 22 (23 NNs; the count tells them apart).
+_BACKGAME_PAIR_PLANS_PHASED_SNAKE = _BACKGAME_PAIR_PLANS_PHASED + ("bg_snake",)
 
 # Bearoff database filename (stored in data/ directory)
 BEAROFF_DB_FILENAME = "bearoff_1sided.db"
@@ -409,7 +427,8 @@ class WeightConfigPair:
         """Tuple of plan names matching this config's length."""
         n = len(self.paths)
         if self.strategy_type == "backgame_pair_phased":
-            return _BACKGAME_PAIR_PLANS_PHASED
+            return (_BACKGAME_PAIR_PLANS_PHASED_SNAKE if n == 23
+                    else _BACKGAME_PAIR_PLANS_PHASED)
         if n == 21:
             return _BACKGAME_PAIR_PLANS_HYBRID
         if n == 20:
