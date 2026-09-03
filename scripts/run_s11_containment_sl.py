@@ -97,13 +97,20 @@ def main() -> None:
                         help="Oversample the family rows (the two containment-* files) this "
                              "many times against --extra-data, in training and in the "
                              "checkpointing ER; the general corpus is ~6x larger")
+    parser.add_argument("--family-data", action="append", default=None,
+                        help="Family rollout file(s) under data/ (repeatable); default the two "
+                             "containment files. The snake NN trains from "
+                             "s11-bg-snake-rollout with --out-prefix sl_snake")
+    parser.add_argument("--out-prefix", default="sl_containment",
+                        help="Output name under models/s11_diag/: <prefix>_<tag>.weights[.best]")
     args = parser.parse_args()
 
     # Family rows (the containment seeds' fights) and general rows (the rule's
     # slice of the main corpus) are held out separately so each can be weighted.
     groups = {"family": ([], [], [], []), "general": ([], [], [], [])}
-    sources = [(n, "family") for n in ("s11-bg-containment-pile-rollout",
-                                        "s11-bg-containment-rollout")]
+    family_files = args.family_data or ["s11-bg-containment-pile-rollout",
+                                        "s11-bg-containment-rollout"]
+    sources = [(n, "family") for n in family_files]
     sources += [(n, "general") for n in args.extra_data]
     for name, group in sources:
         path = _DATA / name
@@ -130,7 +137,7 @@ def main() -> None:
           f"init {os.path.basename(args.init_from)} ===", flush=True)
 
     _DIAG.mkdir(exist_ok=True)
-    wpath = str(_DIAG / f"sl_containment_{args.tag}.weights")
+    wpath = str(_DIAG / f"{args.out_prefix}_{args.tag}.weights")
     best = wpath + ".best"
     shutil.copy2(args.init_from, wpath)
     shutil.copy2(args.init_from, best)
