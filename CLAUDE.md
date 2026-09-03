@@ -2154,6 +2154,111 @@ off-distribution candidates greedy selection must compare, and the exit
 ordering inverts again. A 15k warm-up then pivot lands exactly where pure
 self-play lands (0.034). The net should make its own moves from game 0.
 
+### Stage 11p — EXPERIMENTAL: phased layout (P3 + containment NNs)
+
+`stage11p` is the trio model plus two more NNs, **22 in all**
+(`NUM_BACKGAME_PAIR_NNS_PHASED`, strategy type `backgame_pair_phased`, the
+`BackgameAwarePairStrategy` constructor flag `phase_containment`):
+
+| Index | NN | Selected when |
+|-------|----|---------------|
+| 17-19 | `bg_deep` / `bg_middle` / `bg_double` | a detected backgame, by category (the trio above) |
+| 20 | `bg_p3` | **early containment** phase: the backgame side still holds >= 2 anchors and is behind, has hit (>= 1 straggler), and the racer has <= 2 off (`backgame_phase()` == `EARLY_CONTAINMENT`) |
+| 21 | `bg_containment` | the **containment rule** below |
+
+`select_nn_idx` tests them in the order containment rule -> category trio ->
+P3 phase -> standard pair NN, so the containment NN wins whenever its rule
+fires. Everything else is Stage 9. Python: `bgbot_cpp.backgame_phase(board)`
+(`"waiting"/"bear_in"/"early_containment"/"late_containment"/"none"`) and
+`bgbot_cpp.containment_category(board)`.
+
+**The containment rule is escaper-centric** (`containment_category` in
+`neural_net.cpp`, mirrored by `scripts/containment_rule.py`, which the tests
+hold the C++ to): the position is a containment game when one side, the
+ESCAPER, has borne off >= 3 checkers (`CONTAINMENT_E_OFF_MIN`) and has 1-3
+stragglers (`CONTAINMENT_STRAGGLERS_MAX`) — checkers on the bar or outside its
+home board with a container checker still ahead of them — and there is
+contact. Nothing is required of the container: no anchors, no particular
+structure, blots allowed. The rule is flip-invariant. Measured footprint:
+99% of the `containment` family folder, 39% of `Positions XG gets wrong`,
+1.3% of the money benchmark, 2.6% of pasko, <= 1.2% of the ten backgame
+folders (their windows sit in the waiting phase; a hit shot there routes to
+P3, 8-21% of their positions, because the racer has <= 2 off). The P3
+phase's single-anchor fallback was tried and rejected (money PR +0.75).
+
+**Blend sentinels.** `BLENDED_PLAYER_BG_IDX` / `BLENDED_OPPONENT_BG_IDX`
+were 21/22, compared with `>= NUM_BACKGAME_PAIR_NNS_HYBRID`; the phased
+layout's slot 21 collided with them, so every batch evaluator treated a
+containment decision as a gated S10 blend and slot 21 was never read (two
+different containment nets scored byte-identically). They are now 1000/1001
+(`BLENDED_SENTINEL_BASE`) and `tests/test_backgame_category.py` asserts a
+containment board evaluated through the phased strategy equals the
+containment NN evaluated directly.
+
+**Data.** `scripts/harvest_containment_positions.py` plays 3,000 two-ply
+stage11 self-play games from the containment seeds (every benchmark decision
+and candidate board, both orientations, excluded) and keeps the rule's
+positions; `scripts/split_containment_targets.py` moves the ones the S9-era
+piles had already rolled into `data/s11-bg-containment-pile-rollout` (9,734)
+and leaves `data/s11-bg-containment-data` (35,266 fresh boards), rolled out
+under S9 play at 1,296 paths / 3-ply into `data/s11-bg-containment-rollout`
+(Fargate Spot, $176 realized). `scripts/extract_general_containment_rows.py`
+adds the rule's rows from the main corpus — 16k of `contact-train-data`
+(1.3%) and 275k of `crashed-train-data` (46%: closeouts and late-hit
+bear-offs), GNUbg targets — as `data/s11-bg-containment-general-rollout`.
+
+**Training** is `scripts/run_s11_containment_sl.py` (GPU SL, 20k epochs @
+alpha 3.1 then 60k @ 1.0, best-holdout-ER checkpointing). The installed net
+is the S9 `prim_race` warm start trained on family rows x4 plus the general
+rows (`--extra-data s11-bg-containment-general-rollout --family-weight 4`).
+The family-only version was the narrow-subset failure this file warns about
+elsewhere: on the money benchmark's 237 containment-routed decisions it
+scored PR 4.62 with 6 blunders against 2.91 / 2 for Stage 9's ordinary nets,
+while ordinary-game containment simply never appeared in its data. The
+widened set restores that slice to 3.03 and improves the family folder too
+(on the then-uncompleted reference, 1P PR 11.05 -> 10.12 against S9's 11.82;
+the completed-reference numbers are in the table below). Warm-starting from
+the S9-initialised deep net (14.59) or fine-tuning the family-only net on the
+widened set (tied on the folder, worse on the money slice and on `Positions
+XG gets wrong`) both lost. The general rows carry GNUbg's targets, so on ordinary-game
+containment the net can at best match `prim_race`; re-rolling a subsample of
+them under S9 is the open lever there.
+
+**Candidate completion.** A folder reference rolled out only the candidates
+the reference player's 2-ply filter kept; the phased model's picks fall
+outside that set far more often than Stage 9's (56% of its containment-folder
+error mass sat on filter-graded picks at 1P, 63% at 3P), which over-charges
+it. The parent repo's `scripts/build_rollout_jobs_containment.py` (both
+references of a family folder, `--category`, `--models`, `--key-suffix`) and
+`scripts/build_rollout_jobs_folders_stage11p.py` force those picks into
+rollout jobs; `scripts/merge_candidate_rollouts.py` splices the results in.
+Read the `PR(RO)` and `filt mass` columns of `score_backgame_pr.py` before
+trusting a headline PR on any of these folders.
+
+**Results (2026-09-03).** Every pick of every model rollout-graded (one 3-3
+decision in `Positions XG gets wrong` excepted — its 3-ply trials run into
+hours-long containment endgames and the batch was abandoned). PR, with
+blunder counts where they matter:
+
+| Benchmark (1P unless noted) | Stage 9 | trio (`stage11`) | `stage11p` |
+|---|---|---|---|
+| containment folder, 3,000 decisions, 1P / 2P / 3P | 10.23 / 10.79 / 6.21 | 9.40 / 10.20 / 5.10 | **6.83 / 4.94 / 2.82** |
+| ... blunders at 3P | 140 | 99 | **40** |
+| containment, S11-play sample (300), 1P / 2P / 3P | 8.76 / 8.58 / 4.21 | 8.50 / 8.72 / 3.04 | **6.16 / 5.47 / 2.13** |
+| Positions XG gets wrong (421), S9-play / S11-play ref | 16.22 / 16.63 | 14.20 / 16.32 | **10.01 / 12.26** |
+| ten backgame folders pooled (10,021), blunders | 4.75 (278) | 3.28 (127) | **2.98 (89)** |
+| money benchmark (17,535) | 2.59 | 2.56 | 2.56 |
+| ... its 237 containment-routed decisions | 2.91 | 2.91 | 3.03 |
+| Paskogammon benchmark (2,556) | 7.70 | 6.85 | **6.52** |
+
+Two things to keep in mind when reading it. Completing the candidates moved
+Stage 9's own containment number from 11.82 to 10.23 — its filter-graded
+picks had been over-charged too — so never compare a completed reference
+with an uncompleted one. And on this folder both Stage 9 and the trio score
+WORSE at 2-ply than at 1-ply, on checker and cube errors alike (cube
+2.77 -> 7.23 -> 2.77 for Stage 9 across 3P/2P/1P is not a typo); `stage11p`
+improves monotonically. Nothing about that has been investigated.
+
 ## Glossary
 
 - **ER**: Error Rate — mean equity loss per decision vs GNUbg best, millipips (x1000)
