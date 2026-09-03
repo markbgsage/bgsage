@@ -2259,6 +2259,56 @@ WORSE at 2-ply than at 1-ply, on checker and cube errors alike (cube
 2.77 -> 7.23 -> 2.77 for Stage 9 across 3P/2P/1P is not a typo); `stage11p`
 improves monotonically. Nothing about that has been investigated.
 
+### Stage 11s — EXPERIMENTAL: the snake NN (index 22)
+
+`stage11s` is `stage11p` plus a 23rd NN for the **snake**: a far-side prime
+trapping a straggler against a crunched board. `snake_category(board)` —
+mirrored by `scripts/snake_rule.py`, and the same rule as the benchmark's
+`snake` family filter in `scripts/backgame_benchmark.py`, which the tests
+hold all three to — fires when either side holds a run of >=
+`SNAKE_PRIME_MIN_POINTS` (4) consecutive points, each with >= 2 checkers,
+entirely on the opponent's half of the board, the opponent has >= 1
+straggler on the bar or in the holder's home board, and >= `SNAKE_MIN_HOME`
+(10) checkers already in its own home board. It is a priming / containment
+structure, not a back game; it reads as one to Stage 9's plan-pair gate only
+because the holder's points sit in the opponent's home board and the holder
+trails in the race, which is why the trio's double and middle nets serve it
+today at 1-ply PR 200 and 109. The phased strategy accepts 22 or 23 NNs;
+with 23 a snake routes to NN 22 ahead of everything else.
+
+**The region has no data and never occurs in play.** ~100 rule rows in the
+1.8M-row GNUbg corpus, ~36 in the Stage 11 piles, none in the pasko or S9
+backgame piles, and 0 positions in the money and pasko benchmarks and in
+every other folder — so a snake NN carries no regression risk anywhere, and
+everything it learns from has to be generated. Self-play from the benchmark
+seeds cannot generate it: measured 2026-09-03, stage11p (snake PR ~54)
+breaks the prime or runs within a move or two, so 900 games yielded ~2.4
+snake decisions each. `scripts/harvest_snake_positions.py` therefore
+samples the region directly — 5,000 random synthetic snakes (prime length
+and location, spares spread from the far side to home, a crunched opponent
+with 0-5 off and 1-3 stragglers) seed short 2-ply games in which the holder
+prefers structure-keeping moves — and keeps, per decision, the trajectory
+position plus its top-5 candidates and up to 3 region-leaving candidates
+(routing is by the pre-move board, so the snake NN is the one asked to value
+the release moves): 18,557 decisions -> 98,515 distinct boards,
+`data/s11-bg-snake-data` holds 44,000 of them. Note the rule's own edge: a
+straggler that reaches the holder's OUTER board is still trapped behind the
+prime but no longer counts, so trajectories leave the region after ~3-4
+decisions; the benchmark is defined the same way, so the routing matches it.
+
+**Snake rollouts cost ~6x containment ones.** Measured on ten random
+harvested boards at the reference convention (1,296 paths, 3-ply in-trial
+play): 78.6 s each on the 32-thread dev box against ~12 s for containment
+positions, because the holder must bring 15 checkers round before the
+trapped side bears off. 648 paths / 3-ply takes 35.8 s, 1,296 / 2-ply
+22.3 s. The first rollout (run `0d6c74fc8753`) therefore used 648 paths at
+3-ply on the Batch backend — 3-ply in-trial play was kept because Stage 9's
+2-ply play in these regions is markedly worse than its 3-ply (containment
+folder 10.79 vs 6.21), which biases every target, whereas halving the paths
+only widens the target SE from ~0.009 to ~0.013 — for the first 22,000
+boards of the file. `rollout_backgame_positions.py --n-trials / --checker-ply`
+(parent repo) bakes the configuration into the cloud-pickled task function.
+
 ## Glossary
 
 - **ER**: Error Rate — mean equity loss per decision vs GNUbg best, millipips (x1000)
