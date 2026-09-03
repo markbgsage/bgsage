@@ -1234,6 +1234,12 @@ PYBIND11_MODULE(bgbot_cpp, m) {
        "(21/31/32), 'middle' (41/42/51/52), 'double' (43/53/54), or 'none'. "
        "Applies Stage 9's backgame detection first.",
        py::arg("board"));
+    m.def("containment_category", [](const std::vector<int>& board) {
+        return containment_category(list_to_board(board));
+    }, "True when the position is a containment game (either side the "
+       "escaper): the escaper has >= 3 checkers off and 1-3 stragglers that a "
+       "container checker can still hit. See scripts/containment_rule.py.",
+       py::arg("board"));
     m.def("backgame_phase", [](const std::vector<int>& board) {
         auto b = list_to_board(board);
         switch (backgame_phase(b)) {

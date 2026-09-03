@@ -259,7 +259,11 @@ def _any_backgame(board) -> bool:
 
 
 def _flip(board) -> tuple[int, ...]:
-    return tuple(-board[25 - i] for i in range(26))
+    # Points reverse and change sign; the two bars swap but stay positive
+    # (index 0 = player 2's bar, 25 = player 1's, both stored as counts).
+    # Until 2026-09-03 this negated the bars too, so a position was judged
+    # in its flipped orientation with a bar checker on the wrong side.
+    return (board[25],) + tuple(-board[25 - i] for i in range(1, 25)) + (board[0],)
 
 
 def _p1_side(board, i: int) -> int:

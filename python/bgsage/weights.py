@@ -46,16 +46,19 @@ MODELS: dict[str, dict[str, Any]] = {
         # early-containment NN (index 20) that takes the containment
         # positions Stage 9's plan-pair gate rejects (a straggler being
         # contained, racer <= 2 off, but the racer's block reads as
-        # priming). Inside the detected region nothing changes; outside the
-        # containment phase nothing changes either. See backgame_phase().
-        "hidden": (100,) + (400,) * 20,   # 17 standard + 3 trio + 1 phase = 21
+        # priming), and a containment-game NN (index 21) for positions where
+        # the escaper has >= 3 off and 1-3 stragglers a container checker can
+        # still hit — routed ahead of the trio, whatever the container holds.
+        # See backgame_phase() / containment_category().
+        "hidden": (100,) + (400,) * 21,   # 17 standard + 3 trio + 2 phase = 22
         "pattern": "sl_s9_{plan}.weights.best",
         "plans": "backgame_pair_phased",
         "canonical_map": [0,1,2,3,4,5,6,7,8,9,10,12,12,13,14,12,12],
         "extra_backgame": ["sl_s11_bg_deep.weights.best",
                            "sl_s11_bg_middle.weights.best",
                            "sl_s11_bg_double.weights.best",
-                           "sl_s11_bg_p3.weights.best"],
+                           "sl_s11_bg_p3.weights.best",
+                           "sl_s11_bg_containment.weights.best"],
     },
     "stage10": {
         # Gated blended backgame hybrid (21 NNs): Stage 9's full 19-NN model
@@ -150,7 +153,7 @@ _BACKGAME_PAIR_PLANS_CATEGORIZED = _PAIR_PLANS + ("bg_deep", "bg_middle", "bg_do
 # containment positions Stage 9's plan-pair gate would hand to the standard
 # nets. Same length as the Stage 10 hybrid — the strategy type, not the count,
 # tells the C++ which layout it is.
-_BACKGAME_PAIR_PLANS_PHASED = _BACKGAME_PAIR_PLANS_CATEGORIZED + ("bg_p3",)
+_BACKGAME_PAIR_PLANS_PHASED = _BACKGAME_PAIR_PLANS_CATEGORIZED + ("bg_p3", "bg_containment")
 
 # Bearoff database filename (stored in data/ directory)
 BEAROFF_DB_FILENAME = "bearoff_1sided.db"

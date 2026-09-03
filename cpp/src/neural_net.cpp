@@ -2436,6 +2436,25 @@ BackgameCategory backgame_category(const Board& board) {
     return backgame_category_given_plans(board, player_gp, opponent_gp);
 }
 
+namespace {
+// Player 2 (negative, moving upward) is the escaper of a containment game.
+bool p2_is_escaper(const Board& b) {
+    int on_board = b[0];
+    for (int i = 1; i <= 24; ++i) if (b[i] < 0) on_board -= b[i];
+    if (15 - on_board < CONTAINMENT_E_OFF_MIN) return false;
+    int p1_max = -1;                       // highest P1 index; the bar (25) counts
+    for (int i = 1; i <= 25; ++i) if (b[i] > 0) p1_max = i;
+    int stragglers = (p1_max > 0) ? b[0] : 0;
+    for (int i = 1; i <= 18; ++i)
+        if (b[i] < 0 && p1_max > i) stragglers -= b[i];
+    return stragglers >= 1 && stragglers <= CONTAINMENT_STRAGGLERS_MAX;
+}
+}  // namespace
+
+bool containment_category(const Board& board) {
+    return p2_is_escaper(board) || p2_is_escaper(flip(board));
+}
+
 BackgamePhase backgame_phase(const Board& board) {
     int a1 = 0, a2 = 0;
     for (int pt = 19; pt <= 24; ++pt) if (board[pt] >= 2) ++a1;
@@ -2538,6 +2557,11 @@ int BackgameAwarePairStrategy::select_nn_idx(const Board& board) const {
     // picked by the backgame's CATEGORY — 17 deep, 18 middle, 19 double-anchor
     // — the same NN whichever side holds it.
     if (categorized_backgame_) {
+        // Phased layout, first: a containment game is its own game whatever
+        // the container's structure — anchors that would otherwise read as a
+        // back game included — so it takes precedence over the trio.
+        if (phase_containment_ && containment_category(board))
+            return 21;
         BackgameCategory cat =
             backgame_category_given_plans(board, player_gp, opponent_gp);
         if (cat != BackgameCategory::NONE)

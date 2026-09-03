@@ -475,9 +475,24 @@ enum class BackgameCategory : int {
 BackgameCategory backgame_category(const Board& board);
 
 // Stage 11 phased routing: 17 standard pair NNs + the deep/middle/double trio
-// + one EARLY-CONTAINMENT NN (index 20). Same count as the Stage 10 hybrid, so
-// this mode is chosen by the constructor flag, never by the count.
-constexpr int NUM_BACKGAME_PAIR_NNS_PHASED = 21;
+// + an EARLY-CONTAINMENT NN (index 20) + a CONTAINMENT-GAME NN (index 21).
+// Chosen by the constructor flag (strategy type backgame_pair_phased).
+constexpr int NUM_BACKGAME_PAIR_NNS_PHASED = 22;
+
+// A containment game: the escaper E has borne off a bunch of checkers and
+// has one to three checkers that got hit and must run the whole board home;
+// the container keeps hitting them with whatever it has left back — anchors,
+// blots, a prime — playing to save the gammon or occasionally to win.
+// Nothing about the container's structure is required; the position is a
+// containment game because of E's state. Evaluated for either side:
+//   E_off >= CONTAINMENT_E_OFF_MIN, and 1..CONTAINMENT_STRAGGLERS_MAX
+//   stragglers, where a straggler is an E checker on the bar or outside E's
+//   home board that still has a C checker ahead of it (one that is already
+//   past every C checker is running free and does not count).
+// Reference implementation and the same constants: scripts/containment_rule.py.
+constexpr int CONTAINMENT_E_OFF_MIN = 3;
+constexpr int CONTAINMENT_STRAGGLERS_MAX = 3;
+bool containment_category(const Board& board);
 
 // Phase of a back-game-family position, independent of the plan-pair gate.
 // The holder B is the side with >= 2 anchors in the opponent's home board and
@@ -520,9 +535,8 @@ public:
     // NNs (Stage 11 experimental), indices 17/18/19 are instead the DEEP /
     // MIDDLE / DOUBLE_ANCHOR category NNs, selected by backgame_category() —
     // the same NN whichever side holds the backgame.
-    // phase_containment: the 21-NN Stage 11 PHASED layout (trio at 17/18/19,
-    // early-containment NN at 20) — the flag disambiguates it from the 21-NN
-    // Stage 10 hybrid.
+    // phase_containment: the 22-NN Stage 11 PHASED layout (trio at 17/18/19,
+    // early-containment NN at 20, containment-game NN at 21).
     BackgameAwarePairStrategy(const std::vector<std::string>& weight_paths,
                               const std::vector<int>& hidden_sizes,
                               bool phase_containment = false);

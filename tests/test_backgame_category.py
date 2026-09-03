@@ -214,14 +214,16 @@ class TestStage11Selection(unittest.TestCase):
         plan-pair gate detects a backgame, and sends ONLY out-of-region
         early-containment positions to NN 20."""
         seed_board = backgame_board({1, 2})
-        extra = os.path.join(self.tmp.name, "td_test_bg_p3.weights")
-        bgbot_cpp.td_train_backgame_truncated(
-            n_games=0, model_name="td_test_bg_p3", models_dir=self.tmp.name,
-            start_boards=[seed_board], ref_weight_paths=self.s9.paths,
-            ref_hidden_sizes=self.s9.hiddens)
+        extras = []
+        for name in ("td_test_bg_p3", "td_test_bg_containment"):
+            bgbot_cpp.td_train_backgame_truncated(
+                n_games=0, model_name=name, models_dir=self.tmp.name,
+                start_boards=[seed_board], ref_weight_paths=self.s9.paths,
+                ref_hidden_sizes=self.s9.hiddens)
+            extras.append(os.path.join(self.tmp.name, f"{name}.weights"))
         phased = bgbot_cpp.BackgameAwarePairStrategy(
-            self.paths + [extra], self.hiddens + [400], True)
-        # Same count as the Stage 10 hybrid, so the flag is what selects it.
+            self.paths + extras, self.hiddens + [400, 400], True)
+        # The flag demands exactly the phased count.
         with self.assertRaises(RuntimeError):
             bgbot_cpp.BackgameAwarePairStrategy(self.paths, self.hiddens, True)
 
@@ -238,10 +240,40 @@ class TestStage11Selection(unittest.TestCase):
         self.assertEqual(bgbot_cpp.backgame_phase(
             bgbot_cpp.flip_board(snake)), "early_containment")
 
-        # Every detected backgame routes exactly as the 20-NN trio does.
+        # Every detected backgame routes exactly as the 20-NN trio does
+        # (none of the synthetic boards is a containment game: the racer
+        # has nothing off).
         for depths, _ in TestBackgameCategory.CASES:
             board = backgame_board(depths)
+            self.assertFalse(bgbot_cpp.containment_category(board))
             self.assertEqual(phased.select_nn_idx(board), self.s11.select_nn_idx(board))
+
+        # Containment games route to NN 21 whatever the container holds —
+        # ahead of the trio for the anchored ones — and the C++ rule agrees
+        # with the Python reference on every containment-folder decision.
+        cont = os.path.join(repo_dir, "backgame_ref_positions", "benchmark",
+                            "containment rollout.jsonl")
+        if not os.path.exists(cont):
+            raise unittest.SkipTest("containment reference not present")
+        sys.path.insert(0, os.path.join(repo_dir, "scripts"))
+        import containment_rule as cr
+        import json
+        n_cont = n_anchored = 0
+        with open(cont, encoding="utf-8") as f:
+            for line in f:
+                b = json.loads(line)["board"]
+                is_c = bgbot_cpp.containment_category(b)
+                self.assertEqual(is_c, cr.containment(b))
+                self.assertEqual(bgbot_cpp.containment_category(bgbot_cpp.flip_board(b)), is_c)
+                if not is_c:
+                    continue
+                n_cont += 1
+                self.assertEqual(phased.select_nn_idx(b), 21)
+                if bgbot_cpp.backgame_category(b) != "none":
+                    n_anchored += 1
+                    self.assertGreaterEqual(self.s11.select_nn_idx(b), 17)
+        self.assertGreater(n_cont, 2500)
+        self.assertGreater(n_anchored, 100)
 
         # Out-of-region early containment -> 20, from either perspective,
         # while the trio (no phase NN) still uses a standard pair net there.
