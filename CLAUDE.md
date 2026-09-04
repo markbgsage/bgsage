@@ -2308,6 +2308,27 @@ folder 10.79 vs 6.21), which biases every target, whereas halving the paths
 only widens the target SE from ~0.009 to ~0.013 — for the first 22,000
 boards of the file. `rollout_backgame_positions.py --n-trials / --checker-ply`
 (parent repo) bakes the configuration into the cloud-pickled task function.
+The run realized ~$159 on Batch (64 workers, 9.4 h); the folder's
+candidate-completion pass (2,062 boards at the reference convention) a
+further ~$75 on Fargate.
+
+**Training and results (2026-09-04).** `run_s11_containment_sl.py
+--family-data s11-bg-snake-rollout --out-prefix sl_snake` from the S9
+`prim_race` net: holdout ER 299.6 -> 53.95 in 2.5 minutes (a schedule is
+passes over the data; a 4x schedule plateaus at 53.6 and scores slightly
+worse on the folder, and the trio's deep net as warm start is worse again).
+Installed as `models/sl_s11_bg_snake.weights.best`. Snake folder, every pick
+rollout-graded, PR at 1P / 2P / 3P: Stage 9 63.56 / 48.06 / 32.18 (364 /
+286 / 205 blunders); trio 52.45 / 34.72 / 28.49; `stage11s` **15.71 / 35.65 /
+24.35** (141 / 251 / 165). The 1-ply figure is the first real competence any
+Open Sage net has shown in the region; the 2-ply figure being WORSE than the
+1-ply one is the price of routing by the pre-move board: at 1-ply the snake
+net values every candidate of a snake decision, while at 2-ply the leaves
+below a release move are no longer snakes and are valued by other nets with
+a different calibration, so hold-versus-release comparisons mix scales
+(the containment folder shows the same shape for Stage 9 and the trio).
+Routing a whole search tree by the ROOT position's net is the obvious
+experiment and has not been run.
 
 ## Glossary
 
