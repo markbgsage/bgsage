@@ -103,7 +103,11 @@ def main() -> None:
                              "s11-bg-snake-rollout with --out-prefix sl_snake")
     parser.add_argument("--out-prefix", default="sl_containment",
                         help="Output name under models/s11_diag/: <prefix>_<tag>.weights[.best]")
+    parser.add_argument("--epoch-scale", type=int, default=1,
+                        help="Multiply both phases' epoch counts (a schedule is passes over the "
+                             "data, so a small set trains in minutes and can afford more)")
     args = parser.parse_args()
+    phases = [(ph, n * args.epoch_scale, a) for ph, n, a in PHASES]
 
     # Family rows (the containment seeds' fights) and general rows (the rule's
     # slice of the main corpus) are held out separately so each can be weighted.
@@ -148,7 +152,7 @@ def main() -> None:
           + (f", general {er(hb[n_fam:], heq[n_fam:], best):.2f})" if len(hb) > n_fam else ")"),
           flush=True)
     t0, total = time.time(), 0
-    for phase, n_epochs, alpha in PHASES:
+    for phase, n_epochs, alpha in phases:
         shutil.copy2(best, wpath)
         print(f"--- phase {phase}: {n_epochs}ep @ alpha={alpha} (from best {best_er:.2f}) ---",
               flush=True)
