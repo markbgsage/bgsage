@@ -1,5 +1,5 @@
 # 42 backgame - cubeful benchmark decisions (money play, Jacoby + beaver on).
-# 3960 decisions (3944 checker, 16 cube), from simulated 3ply cubeful self-play
+# 3964 decisions (3944 checker, 20 cube), from simulated 3ply cubeful self-play
 # out of "42 backgame starting.txt"; model=stage9, seed=1.
 # One decision per line: kind cube_value cube_owner die1 die2 board(26 ints).
 #   kind        "checker" or "cube"
@@ -3966,3 +3966,7 @@ checker 2 opponent 3 2 0 1 -2 2 -2 3 3 2 2 2 0 0 0 0 0 0 0 0 0 0 0 -2 -2 -3 -4 0
 checker 2 player 6 3 0 4 3 2 2 0 0 0 0 0 0 0 0 0 0 0 -2 -2 -2 -2 -3 2 -2 2 -2 0
 checker 2 opponent 6 1 0 -1 -2 0 -2 2 3 2 2 2 0 0 0 2 0 1 -2 -2 -1 -2 -1 -2 0 1 0 0
 checker 2 player 6 5 0 0 0 -1 2 1 2 1 2 2 0 0 -2 0 0 0 -3 -2 -2 -3 -2 2 0 2 1 0
+cube 2 player - - 0 0 -1 0 2 0 3 0 2 2 -1 0 -2 1 0 0 -2 -2 -2 -3 -2 2 0 2 1 0
+cube 2 player - - 0 0 -1 0 0 0 3 0 3 0 0 0 -2 4 0 0 -2 -2 -2 -3 -2 3 -1 2 0 0
+cube 2 player - - 0 0 0 1 3 2 3 -1 2 0 0 0 -2 0 0 0 -2 -2 -2 -2 -2 2 -2 2 0 0
+cube 2 player - - 0 0 0 0 0 2 3 -1 2 0 0 0 -2 4 0 0 -2 -2 -2 -2 -2 2 -2 2 0 0
