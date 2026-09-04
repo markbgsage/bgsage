@@ -1023,6 +1023,11 @@ The hybrid mode affects:
 
 **Move filter**: After 1-ply scoring, keep top `max_moves` within `threshold` equity.
 Default TINY: 5 moves, 0.08 threshold.
+**The ranked list never carries a 1-ply value in its top two**: pruned
+candidates keep their 1-ply equity, which is not on the survivors' N-ply
+scale, so whichever of #1/#2 is stale is promoted (evaluated at N-ply) and
+the list re-sorted until both are full-depth. See Stage 11s for the bug
+this replaced.
 
 ### Iterative Deepening Filter Chain
 
@@ -2257,7 +2262,7 @@ picks had been over-charged too — so never compare a completed reference
 with an uncompleted one. And on this folder both Stage 9 and the trio score
 WORSE at 2-ply than at 1-ply, on checker and cube errors alike (cube
 2.77 -> 7.23 -> 2.77 for Stage 9 across 3P/2P/1P is not a typo); `stage11p`
-improves monotonically. Nothing about that has been investigated.
+improves monotonically. The Stage 11s section below has the diagnosis.
 
 ### Stage 11s — EXPERIMENTAL: the snake NN (index 22)
 
@@ -2321,14 +2326,46 @@ Installed as `models/sl_s11_bg_snake.weights.best`. Snake folder, every pick
 rollout-graded, PR at 1P / 2P / 3P: Stage 9 63.56 / 48.06 / 32.18 (364 /
 286 / 205 blunders); trio 52.45 / 34.72 / 28.49; `stage11s` **15.71 / 35.65 /
 24.35** (141 / 251 / 165). The 1-ply figure is the first real competence any
-Open Sage net has shown in the region; the 2-ply figure being WORSE than the
-1-ply one is the price of routing by the pre-move board: at 1-ply the snake
-net values every candidate of a snake decision, while at 2-ply the leaves
-below a release move are no longer snakes and are valued by other nets with
-a different calibration, so hold-versus-release comparisons mix scales
-(the containment folder shows the same shape for Stage 9 and the trio).
-Routing a whole search tree by the ROOT position's net is the obvious
-experiment and has not been run.
+Open Sage net has shown in the region. **Why 2-ply scores worse than 1-ply
+— measured 2026-09-04** on the 795 checker decisions (cubeless 1-ply PR
+16.0): two separate effects, one a bug and one not.
+
+1. *A ranking bug in the multi-ply candidate list.* The filter keeps the top
+   five 1-ply candidates within 0.08 and re-scores them at N-ply, and the
+   list was then sorted with the PRUNED candidates still on their 1-ply
+   values. Whenever the deeper search values every survivor below a pruned
+   move's 1-ply number — exactly what happens where N-ply matters most —
+   that move topped the list without ever being evaluated: 312 of the 795
+   cubeless 2-ply picks were such moves, carrying 55 of that level's 68 PR
+   points, against 31 for a faithful 2-ply of the survivors alone. The
+   cubeful wrapper was immune (it re-scores every candidate through the
+   cube-aware N-ply tree), so the benchmark tables never saw it, but the C++
+   `batch_checker_play` overloads — the app's analytics path — promoted only
+   the runner-up in the same way. Both now promote whichever of the top two
+   still carries a 1-ply value until both are full-depth
+   (`_first_stale_top_two` in `analyzer.py`, `stale_top` in `bindings.cpp`).
+   The rollout path always had the right rule (promote #1 until it is
+   rollout-grade); it is now the rule everywhere.
+
+2. *The search walks out of the training distribution.* Against the rollout
+   references the snake net's 2-ply values are BETTER than its 1-ply ones on
+   candidates that keep the snake (RMSE 0.106 vs 0.136, holder on roll) and
+   much WORSE on candidates that release it (0.204 vs 0.151): the leaves
+   below a release are one half-move beyond every position the harvest
+   rolled out, and there no net is any good — the router hands them to the
+   standard nets, whose error on the harvest's own exit rows is RMSE 0.32
+   (bias −0.10), while the snake net fits those same rows at 0.047. A
+   hold-versus-release comparison therefore pits a good estimate against a
+   bad one and the max picks the noise: pick-PR among rollout-graded
+   candidates 16.3 at 1-ply, 27.7 at 2-ply. Routing the whole tree by the
+   ROOT position's net helps only a little (27.8 vs 31.2 at 2-ply) because
+   the snake net has never seen an exit+1 position either. The fix is data,
+   not routing: roll out the opponent's replies to the exit boards (and
+   their replies, for 3-ply) and train the snake net on them, under root
+   routing. It is the containment net's lesson extended to depth — a
+   specialist must cover the neighbourhood the search visits, not only its
+   own region — and the containment folder's 2P-worse-than-1P shape for
+   Stage 9 and the trio is the same effect.
 
 ## Glossary
 

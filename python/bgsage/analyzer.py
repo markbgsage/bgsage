@@ -191,10 +191,29 @@ class _CubelessBase:
                 survivor_set.add(tb)
 
     @staticmethod
+    def _first_stale_top_two(results: list) -> dict | None:
+        """The highest-ranked of the top two entries still carrying a 1-ply value.
+
+        A candidate the filter pruned keeps its 1-ply equity while the survivors
+        are re-scored at N-ply. The two scales are not comparable: whenever the
+        deeper search values every survivor below a pruned move's 1-ply number,
+        that move tops the list on a value the search never checked — and it is
+        exactly in the positions where N-ply matters most (the leaves discover
+        what 1-ply missed) that the survivors' values fall the furthest. Measured
+        on the snake benchmark, 2026-09-04: 312 of 795 cubeless 2-ply picks were
+        such unevaluated moves, and they carried 55 of the level's 68 PR points.
+        So nothing may sit in the top two on a 1-ply value: the best move must be
+        a full-depth value, and the runner-up too, since callers read both.
+        """
+        for r in results[:2]:
+            if r.get("is_1ply_only"):
+                return r
+        return None
+
+    @staticmethod
     def _promote_second_best(results: list, board: list[int], evaluate_fn) -> None:
         results.sort(key=_move_order_key)
-        while len(results) >= 2 and results[1].get("is_1ply_only"):
-            r = results[1]
+        while (r := _CubelessBase._first_stale_top_two(results)) is not None:
             equity, probs, eval_level, extra = evaluate_fn(r["board"], board)
             r["equity"] = equity
             r["probs"] = probs
@@ -964,6 +983,10 @@ class _CubefulAnalyzer:
                 m["probs"] = probs
                 m["cubeless_equity"] = cl_eq
                 m["equity"] = cf_eq
+                # Every candidate — pruned ones included — now carries a
+                # cube-aware N-ply value, so none is 1-ply-only any more.
+                m["eval_level"] = f"{inner._n_plies}-ply"
+                m.pop("is_1ply_only", None)
         else:
             def _convert_move_legacy(m: dict) -> tuple[float, float]:
                 cubeless_eq = m["equity"]
@@ -999,8 +1022,10 @@ class _CubefulAnalyzer:
             extra["cubeless_equity"] = r["equity"]
             return cf_eq, probs, eval_level, extra
 
-        while len(results) >= 2 and results[1].get("is_1ply_only"):
-            r = results[1]
+        # Same rule as _promote_second_best: no 1-ply value may sit in the top
+        # two. (With cube-aware probs every entry was already re-scored at
+        # N-ply above, so nothing is stale here and the loop is a no-op.)
+        while (r := _CubelessBase._first_stale_top_two(results)) is not None:
             ret = _nply_eval(r["board"], board)
             if ret is None:
                 break

@@ -1680,6 +1680,11 @@ PYBIND11_MODULE(bgbot_cpp, m) {
         .def("cache_size", &MultiPlyStrategy::cache_size)
         .def("cache_hits", &MultiPlyStrategy::cache_hits)
         .def("cache_misses", &MultiPlyStrategy::cache_misses)
+        .def("set_prefilter_params", &MultiPlyStrategy::set_prefilter_params,
+             py::arg("threshold"), py::arg("keep"),
+             "PubEval pre-filter of the opponent's replies inside N-ply: when a reply "
+             "list is longer than `threshold`, PubEval keeps the best `keep` before the "
+             "NN sees them. A huge threshold disables the pre-filter.")
         .def("set_cache_enabled", &MultiPlyStrategy::set_cache_enabled,
              py::arg("enabled") = true)
         .def("cache_enabled", &MultiPlyStrategy::cache_enabled)
@@ -4662,10 +4667,20 @@ PYBIND11_MODULE(bgbot_cpp, m) {
                         return a.board < b.board;   // total order: never arbitrary
                     });
 
-                // Promote-second-best: if #2 is 1-ply-only, promote to N-ply
-                // and re-sort. Repeat until #2 is a survivor.
-                while (out.moves.size() >= 2 && !out.moves[1].is_survivor) {
-                    auto& m = out.moves[1];
+                // No 1-ply value may sit in the top two. A pruned candidate
+                // keeps its 1-ply equity while the survivors are re-scored at
+                // N-ply, and the two scales are not comparable: when the
+                // deeper search lowers every survivor, the pruned move would
+                // otherwise win on a number the search never checked (snake
+                // benchmark, 2026-09-04: 312 of 795 cubeless 2-ply picks).
+                // Promote whichever of #1/#2 is stale, re-sort, repeat.
+                auto stale_top = [&]() -> MoveResult* {
+                    for (size_t k = 0; k < out.moves.size() && k < 2; ++k)
+                        if (!out.moves[k].is_survivor) return &out.moves[k];
+                    return nullptr;
+                };
+                while (MoveResult* stale = stale_top()) {
+                    auto& m = *stale;
                     auto nply_probs = strategy_nply->evaluate_probs(
                         m.board, inp.board);
                     m.probs = nply_probs;
@@ -4905,8 +4920,20 @@ PYBIND11_MODULE(bgbot_cpp, m) {
                         return a.board < b.board;   // total order: never arbitrary
                     });
 
-                while (out.moves.size() >= 2 && !out.moves[1].is_survivor) {
-                    auto& m = out.moves[1];
+                // No 1-ply value may sit in the top two. A pruned candidate
+                // keeps its 1-ply equity while the survivors are re-scored at
+                // N-ply, and the two scales are not comparable: when the
+                // deeper search lowers every survivor, the pruned move would
+                // otherwise win on a number the search never checked (snake
+                // benchmark, 2026-09-04: 312 of 795 cubeless 2-ply picks).
+                // Promote whichever of #1/#2 is stale, re-sort, repeat.
+                auto stale_top = [&]() -> MoveResult* {
+                    for (size_t k = 0; k < out.moves.size() && k < 2; ++k)
+                        if (!out.moves[k].is_survivor) return &out.moves[k];
+                    return nullptr;
+                };
+                while (MoveResult* stale = stale_top()) {
+                    auto& m = *stale;
                     auto nply_probs = strategy_nply->evaluate_probs(
                         m.board, inp.board);
                     m.probs = nply_probs;
