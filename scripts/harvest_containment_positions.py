@@ -124,6 +124,17 @@ def main() -> None:
             pile.append(b)
     print(f"pile rows matching the rule: {len(pile)}", flush=True)
 
+    # The folder's seed positions are known-good members of the family, so
+    # they always go in (flipped to the post-move convention), ahead of the
+    # self-play harvest.
+    from backgame_benchmark import read_start_positions
+    for st in read_start_positions("containment"):
+        for b in (tuple(_flip(list(st.board))), tuple(st.board)):
+            if b not in seen and b not in ex and cr.containment(list(b)):
+                seen.add(b)
+                pile.append(b)
+    print(f"pile + seeds: {len(pile)} rows", flush=True)
+
     # 2. self-play harvest
     per = args.games // args.workers
     jobs = [(i * per, per) for i in range(args.workers)]

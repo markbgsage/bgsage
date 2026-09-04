@@ -229,8 +229,17 @@ def main() -> None:
         for boards, dec in pool.map(play_worker, jobs):
             fresh.extend(boards)
             n_dec += dec
+    # The folder's own seed positions are known-good snakes: they always go in,
+    # both orientations, ahead of the harvest.
+    from backgame_benchmark import read_start_positions
+    import snake_rule as sr
+    seeds_in = []
+    for st in read_start_positions("snake"):
+        for b in (tuple(_flip(list(st.board))), tuple(st.board)):
+            if sr.snake(list(b)):
+                seeds_in.append(b)
     n_raw = len(fresh)
-    fresh = [b for b in dict.fromkeys(fresh) if b not in ex]
+    fresh = [b for b in dict.fromkeys(seeds_in + fresh) if b not in ex]
     print(f"self-play from {args.seeds} synthetic seeds: {n_dec} snake decisions, {n_raw} boards "
           f"-> {len(fresh)} distinct boards outside the benchmark", flush=True)
 

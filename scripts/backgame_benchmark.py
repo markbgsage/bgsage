@@ -850,6 +850,13 @@ def generate_folder(
     if not restart:
         for d in read_decisions(folder_name):
             found[d] = None
+    # The seeds themselves are known-good positions of the family, so each is
+    # a benchmark decision too — its cube decision, from the player-1 frame the
+    # seed file uses. (2026-09-04: earlier benchmarks recorded only the
+    # decisions that arose in play from a seed.)
+    for st in starts:
+        found.setdefault(Decision("cube", st.cube_value, st.cube_owner, None,
+                                  tuple(st.board)), None)
     game_index = int(state.get("games", 0))
 
     def record(decision: Decision) -> bool:
