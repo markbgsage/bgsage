@@ -327,9 +327,10 @@ class TestStage11Selection(unittest.TestCase):
             self.paths + extras[:2], self.hiddens + [400, 400], True)
         snaked = bgbot_cpp.BackgameAwarePairStrategy(
             self.paths + extras, self.hiddens + [400, 400, 400], True)
+        # 24 is the massive layout (tested below); 25 is nothing.
         with self.assertRaises(RuntimeError):
             bgbot_cpp.BackgameAwarePairStrategy(
-                self.paths + extras + extras[:1], self.hiddens + [400] * 4, True)
+                self.paths + extras + extras[:2], self.hiddens + [400] * 5, True)
 
         from bgsage.board import STARTING_BOARD
         snake = [0,0,0,-1,0,0,0,0,0,0,0,0,0,1,0,1,0,2,3,3,2,2,1,-7,-7,0]
@@ -376,6 +377,72 @@ class TestStage11Selection(unittest.TestCase):
                     for g, w in zip(got, want):
                         self.assertAlmostEqual(g, w, places=5)
         self.assertGreater(n_snake, 0.9 * n_total)
+
+    def test_massive_layout_routes_the_benchmark_family(self):
+        """With a 24th NN the phased layout sends the benchmark's massive
+        family — >= 3 anchors, or >= 2 anchors and >= 7 checkers back, behind
+        in the race, never a containment game or a snake — to NN 23, after the
+        snake and containment rules and ahead of the category trio; the 23-NN
+        layout is untouched, and only the snake net pins its roots (the
+        massive net routes per node: pinning it valued the non-massive nodes
+        below a massive root worse than per-node routing)."""
+        seed_board = backgame_board({1, 2})
+        extras = []
+        for name in ("td_test_bg_p3m", "td_test_bg_containmentm", "td_test_bg_snakem", "td_test_bg_massivem"):
+            bgbot_cpp.td_train_backgame_truncated(
+                n_games=0, model_name=name, models_dir=self.tmp.name,
+                start_boards=[seed_board], ref_weight_paths=self.s9.paths,
+                ref_hidden_sizes=self.s9.hiddens)
+            extras.append(os.path.join(self.tmp.name, f"{name}.weights"))
+        snaked = bgbot_cpp.BackgameAwarePairStrategy(
+            self.paths + extras[:3], self.hiddens + [400] * 3, True)
+        massive = bgbot_cpp.BackgameAwarePairStrategy(
+            self.paths + extras, self.hiddens + [400] * 4, True)
+        self.assertEqual(list(snaked.root_pinned()), [22])
+        self.assertEqual(list(massive.root_pinned()), [22])
+        with self.assertRaises(RuntimeError):
+            bgbot_cpp.BackgameAwarePairStrategy(
+                self.paths + extras + extras[:1], self.hiddens + [400] * 5, True)
+
+        # The C++ rule agrees with the benchmark's family filter on every
+        # decision of the massive folder and its twin — except where the
+        # engine's containment rule and the benchmark's older containment
+        # filter disagree about a board (the engine's wins for routing) — is
+        # flip-invariant, and never claims a containment game or a snake.
+        sys.path.insert(0, os.path.join(repo_dir, "scripts"))
+        import backgame_benchmark as bb
+        import json
+        snake = [0,0,0,-1,0,0,0,0,0,0,0,0,0,1,0,1,0,2,3,3,2,2,1,-7,-7,0]
+        self.assertFalse(bgbot_cpp.massive_category(snake))
+        self.assertEqual(massive.select_nn_idx(snake), 22)
+        from bgsage.board import STARTING_BOARD
+        self.assertFalse(bgbot_cpp.massive_category(STARTING_BOARD))
+        n_total = n_massive = 0
+        for cat in ("massive backgame", "massive backgame s11play", "containment"):
+            ref = os.path.join(repo_dir, "backgame_ref_positions", "benchmark", f"{cat} rollout.jsonl")
+            if not os.path.exists(ref):
+                raise unittest.SkipTest(f"{cat} reference not present")
+            with open(ref, encoding="utf-8") as f:
+                for line in f:
+                    b = json.loads(line)["board"]
+                    n_total += 1
+                    is_m = bgbot_cpp.massive_category(b)
+                    self.assertEqual(is_m, bgbot_cpp.massive_category(bgbot_cpp.flip_board(b)))
+                    if bgbot_cpp.containment_category(b) != bb._containment(tuple(b)):
+                        self.assertFalse(is_m)
+                    else:
+                        self.assertEqual(is_m, bb._massive(tuple(b)))
+                    idx = massive.select_nn_idx(b)
+                    if is_m:
+                        n_massive += 1
+                        self.assertEqual(idx, 23)
+                        self.assertEqual(massive.root_pin_for(b), -1)
+                        self.assertIn(snaked.select_nn_idx(b), (17, 18, 19, 20))
+                    else:
+                        self.assertEqual(idx, snaked.select_nn_idx(b))
+                        self.assertNotIn(idx, (23,))
+        self.assertGreater(n_massive, 4000)
+        self.assertGreater(n_total, 7000)
 
     def test_root_routing_pins_leaves_and_cache_through_nested_wrappers(self):
         """Root routing (the 23-NN layout pins every contact node of a snake

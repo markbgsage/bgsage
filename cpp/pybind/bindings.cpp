@@ -1247,6 +1247,13 @@ PYBIND11_MODULE(bgbot_cpp, m) {
        "trapping >= 1 straggler while the opponent has >= 10 checkers home. "
        "See scripts/snake_rule.py.",
        py::arg("board"));
+    m.def("massive_category", [](const std::vector<int>& board) {
+        return massive_category(list_to_board(board));
+    }, "True when the position is a massive back game (either side the "
+       "holder): >= 3 anchors in the opponent's home board, or >= 2 anchors "
+       "and >= 7 checkers back, behind on pips; never a containment game or a "
+       "snake. The benchmark's 'massive backgame' family filter.",
+       py::arg("board"));
     m.def("backgame_phase", [](const std::vector<int>& board) {
         auto b = list_to_board(board);
         switch (backgame_phase(b)) {

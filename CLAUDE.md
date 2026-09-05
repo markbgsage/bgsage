@@ -2500,6 +2500,73 @@ claims (a broken snake's later decisions, which no folder measures) — so the
 arm is worth re-adding once a containment net exists that keeps the old
 money slice at 3.03.
 
+### Stage 11m — EXPERIMENTAL: the massive-backgame NN (index 23)
+
+`stage11m` is `stage11s` plus a 24th NN for the benchmark's **massive
+backgame** family: a holder behind in the race with >= `MASSIVE_ALT_ANCHORS`
+(3) anchors in the opponent's home board, or >= `MASSIVE_MIN_ANCHORS` (2)
+anchors and >= `MASSIVE_BACK_MIN` (7) checkers back (opponent's home board
+plus the bar), that is neither a containment game nor a snake.
+`massive_category(board)` in `neural_net.cpp` mirrors the family filter in
+`scripts/backgame_benchmark.py` (`_massive`), which `tests/test_backgame_category.py`
+holds it to on the folder references; the phased strategy accepts 22, 23 or
+24 NNs and routes snake (22) -> containment (21) -> massive (23) -> trio ->
+P3 -> standard. One known difference: the benchmark's own `_containment`
+filter is older than the engine's containment rule and disagrees with it on
+21 of 7,400 folder boards, which the engine therefore routes to the
+containment net while the folder lists them as massive; the test tolerates
+that, the benchmark filter is what needs aligning.
+
+**The region was never short of data** — unlike the snake, massive backgames
+are 62% of the deep category's rollout pile, 38% of the middle's and 17% of
+the double's — so the question was whether a net trained on "massiveness"
+across the categories beats the category trio, which serves those decisions
+today (a massive-folder root goes to the deep net 51% of the time, the
+middle net 22%, P3 20%, the double net 7%). `data/s11-bg-massive-rollout`
+(240,173 region rows from the three train piles) and
+`data/s11-bg-massive-nbhd-rollout` (their 385,501 non-massive rows plus the
+three exit piles) — both built by `scripts/build_massive_data.py` and, like
+the category piles they come from, not tracked — feed the containment recipe (`run_s11_containment_sl.py`,
+family x4); warm starts from the deep net and from the P3 net converge to
+the same net (1-ply ER on the benchmark piles' massive rows 26.59 / 26.55
+against the routed trio's 27.38 — deep-category rows 25.6 vs 26.1, middle
+27.6 vs 28.7, double 31.6 vs 35.0 — and 30.0 vs 25.9 on the non-massive
+neighbourhood), so the data decides and the warm start does not. The
+deep-warm net is installed as `models/sl_s11_bg_massive.weights.best`.
+
+**Root routing is OFF for this net** (`root_pinned_` stays `{22}` on the 24-NN
+layout): it values the non-massive positions below a massive root worse than
+per-node routing does, and pinning it bought nothing on the folder (2-ply
+pinned 6.25 / 4.94 vs per-node 6.14 / 4.84; 3-ply 4.34 / 2.94 vs 4.48 / 3.07,
+S9-play reference / S11-play twin). The lesson is the snake's in reverse: a
+specialist whose neighbourhood is already well served by the nets it would
+displace should route per node.
+
+**Results (2026-09-05).** The massive folder's references were completed
+twice: first for Stage 9's and the previous layout's picks (run
+f364980e6a9b, 508 of 512 positions pooled), then for the massive net's own
+(run 2b0459a83c9e, 106 of 110; both tails abandoned once they were retrying
+three-hour task timeouts on a handful of positions). That moved the previous
+layout from the 7.28 the page still quotes to 6.30 at 1-ply and Stage 9 from
+9.43 to 9.78. PR at 1P / 2P / 3P on the final references, S9-play reference
+| S11-play twin, every pick rollout-graded, blunders in the second row:
+
+| Model | massive folder |
+|---|---|
+| Stage 9 | 9.78 / 9.38 / 6.18 \| 9.94 / 8.11 / 4.89 |
+| previous layout (23 NNs, `stage11s`) | 6.30 / 5.89 / 4.06 \| 6.66 / 4.78 / 2.83 |
+| ... blunders | 85 / 76 / 33 \| 86 / 63 / 29 |
+| with the massive net (24 NNs), per-node | 5.39 / 5.77 / 4.14 \| 5.96 / 4.71 / 2.95 |
+| ... blunders | 63 / 75 / 41 \| 83 / 64 / 29 |
+
+So: clearly better at 1-ply, slightly better at 2-ply, level at 3-ply, and
+on the ordinary-game slice a gain rather than a regression — the money
+benchmark's 52 massive-rule decisions score 3.73 with no blunders against
+the previous layout's 5.89 and Stage 9's 5.47 — while the ten backgame
+folders, where the rule claims up to 18% of a folder, pool to 2.98 at 1-ply
+with it, the same as without. A small, clean win at the leaves that the
+search does not amplify.
+
 ## Glossary
 
 - **ER**: Error Rate — mean equity loss per decision vs GNUbg best, millipips (x1000)

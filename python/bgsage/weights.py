@@ -76,6 +76,23 @@ MODELS: dict[str, dict[str, Any]] = {
                            "sl_s11_bg_containment.weights.best",
                            "sl_s11_bg_snake.weights.best"],
     },
+    "stage11m": {
+        # EXPERIMENTAL — stage11s plus a MASSIVE-BACKGAME NN (index 23): the
+        # benchmark's massive family (>= 3 anchors, or >= 2 anchors and >= 7
+        # checkers back, behind in the race; never a containment game or a
+        # snake), routed ahead of the category trio; see massive_category().
+        "hidden": (100,) + (400,) * 23,   # 17 standard + 3 trio + 2 phase + snake + massive = 24
+        "pattern": "sl_s9_{plan}.weights.best",
+        "plans": "backgame_pair_phased",
+        "canonical_map": [0,1,2,3,4,5,6,7,8,9,10,12,12,13,14,12,12],
+        "extra_backgame": ["sl_s11_bg_deep.weights.best",
+                           "sl_s11_bg_middle.weights.best",
+                           "sl_s11_bg_double.weights.best",
+                           "sl_s11_bg_p3.weights.best",
+                           "sl_s11_bg_containment.weights.best",
+                           "sl_s11_bg_snake.weights.best",
+                           "sl_s11_bg_massive.weights.best"],
+    },
     "stage10": {
         # Gated blended backgame hybrid (21 NNs): Stage 9's full 19-NN model
         # carried UNCHANGED (indices 0-18, including sl_s9_player_bg/opponent_bg
@@ -172,6 +189,7 @@ _BACKGAME_PAIR_PLANS_CATEGORIZED = _PAIR_PLANS + ("bg_deep", "bg_middle", "bg_do
 _BACKGAME_PAIR_PLANS_PHASED = _BACKGAME_PAIR_PLANS_CATEGORIZED + ("bg_p3", "bg_containment")
 # ... and with the snake NN at index 22 (23 NNs; the count tells them apart).
 _BACKGAME_PAIR_PLANS_PHASED_SNAKE = _BACKGAME_PAIR_PLANS_PHASED + ("bg_snake",)
+_BACKGAME_PAIR_PLANS_PHASED_MASSIVE = _BACKGAME_PAIR_PLANS_PHASED_SNAKE + ("bg_massive",)
 
 # Bearoff database filename (stored in data/ directory)
 BEAROFF_DB_FILENAME = "bearoff_1sided.db"
@@ -427,6 +445,8 @@ class WeightConfigPair:
         """Tuple of plan names matching this config's length."""
         n = len(self.paths)
         if self.strategy_type == "backgame_pair_phased":
+            if n == 24:
+                return _BACKGAME_PAIR_PLANS_PHASED_MASSIVE
             return (_BACKGAME_PAIR_PLANS_PHASED_SNAKE if n == 23
                     else _BACKGAME_PAIR_PLANS_PHASED)
         if n == 21:

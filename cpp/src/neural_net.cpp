@@ -2477,6 +2477,31 @@ bool snake_category(const Board& board) {
     return p1_holds_snake(board) || p1_holds_snake(flip(board));
 }
 
+namespace {
+// Player 1 plays a massive back game (scripts/backgame_benchmark.py
+// _massive_p1_holder): behind in pips with >= MASSIVE_ALT_ANCHORS anchors in
+// the opponent's home board, or >= MASSIVE_MIN_ANCHORS anchors and
+// >= MASSIVE_BACK_MIN checkers back (opponent's home board + bar).
+bool p1_massive_holder(const Board& b) {
+    int anchors = 0, back = b[25];
+    for (int i = 19; i <= 24; ++i) {
+        if (b[i] >= 2) ++anchors;
+        if (b[i] > 0) back += b[i];
+    }
+    if (anchors < MASSIVE_MIN_ANCHORS) return false;
+    if (anchors < MASSIVE_ALT_ANCHORS && back < MASSIVE_BACK_MIN) return false;
+    auto [p1_pips, p2_pips] = pip_counts(b);
+    return p1_pips > p2_pips;
+}
+}  // namespace
+
+bool massive_category(const Board& board) {
+    // Disjoint from the two more specific regions: a late containment game
+    // and a snake both read as "many checkers back" but are their own games.
+    if (containment_category(board) || snake_category(board)) return false;
+    return p1_massive_holder(board) || p1_massive_holder(flip(board));
+}
+
 BackgamePhase backgame_phase(const Board& board) {
     int a1 = 0, a2 = 0;
     for (int pt = 19; pt <= 24; ++pt) if (board[pt] >= 2) ++a1;
@@ -2532,12 +2557,14 @@ BackgameAwarePairStrategy::BackgameAwarePairStrategy(
     const int n = static_cast<int>(weight_paths.size());
     if (phase_containment) {
         if ((n != NUM_BACKGAME_PAIR_NNS_PHASED &&
-             n != NUM_BACKGAME_PAIR_NNS_PHASED_SNAKE) ||
+             n != NUM_BACKGAME_PAIR_NNS_PHASED_SNAKE &&
+             n != NUM_BACKGAME_PAIR_NNS_PHASED_MASSIVE) ||
             static_cast<int>(hidden_sizes.size()) != n) {
             throw std::runtime_error(
                 "Phased BackgameAwarePairStrategy requires " +
-                std::to_string(NUM_BACKGAME_PAIR_NNS_PHASED) + " or " +
-                std::to_string(NUM_BACKGAME_PAIR_NNS_PHASED_SNAKE) +
+                std::to_string(NUM_BACKGAME_PAIR_NNS_PHASED) + ", " +
+                std::to_string(NUM_BACKGAME_PAIR_NNS_PHASED_SNAKE) + " or " +
+                std::to_string(NUM_BACKGAME_PAIR_NNS_PHASED_MASSIVE) +
                 " weight paths and matching hidden sizes, got " +
                 std::to_string(weight_paths.size()) + "/" +
                 std::to_string(hidden_sizes.size()));
@@ -2555,11 +2582,17 @@ BackgameAwarePairStrategy::BackgameAwarePairStrategy(
             std::to_string(hidden_sizes.size()));
     }
     phase_containment_ = phase_containment;
-    snake_ = phase_containment && (n == NUM_BACKGAME_PAIR_NNS_PHASED_SNAKE);
-    // Root routing defaults to the snake net on the 23-NN layout; the
-    // BGSAGE_NO_ROOT_ROUTING environment variable disables it process-wide
-    // (A/B scoring: the cube path builds its strategy inside C++, out of
-    // reach of the Python set_root_pinned control).
+    snake_ = phase_containment && (n == NUM_BACKGAME_PAIR_NNS_PHASED_SNAKE ||
+                                   n == NUM_BACKGAME_PAIR_NNS_PHASED_MASSIVE);
+    massive_ = phase_containment && (n == NUM_BACKGAME_PAIR_NNS_PHASED_MASSIVE);
+    // Root routing defaults to the snake net alone (on both the 23- and the
+    // 24-NN layouts): the massive net is NOT pinned, because it values the
+    // non-massive positions below a massive root worse than per-node routing
+    // does (measured 2026-09-05: neighbourhood ER 30.0 vs 25.9, and the
+    // massive folder no better at 2/3-ply pinned than per-node). The
+    // BGSAGE_NO_ROOT_ROUTING environment variable disables root routing
+    // process-wide (A/B scoring: the cube path builds its strategy inside
+    // C++, out of reach of the Python set_root_pinned control).
     if (snake_ && !std::getenv("BGSAGE_NO_ROOT_ROUTING")) root_pinned_ = {22};
     blended_backgame_ = !phase_containment && (n == NUM_BACKGAME_PAIR_NNS_HYBRID);
     categorized_backgame_ = phase_containment || (n == NUM_BACKGAME_PAIR_NNS_CATEGORIZED);
@@ -2605,6 +2638,11 @@ int BackgameAwarePairStrategy::select_nn_idx(const Board& board) const {
         // back game included — so it takes precedence over the trio.
         if (phase_containment_ && containment_category(board))
             return 21;
+        // Phased layout with the massive NN: the benchmark's massive family
+        // (many checkers back, behind in the race) ahead of the category
+        // trio, which would otherwise split it by anchor depth.
+        if (massive_ && massive_category(board))
+            return 23;
         BackgameCategory cat =
             backgame_category_given_plans(board, player_gp, opponent_gp);
         if (cat != BackgameCategory::NONE)

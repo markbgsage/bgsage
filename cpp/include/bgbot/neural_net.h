@@ -483,6 +483,12 @@ constexpr int NUM_BACKGAME_PAIR_NNS_PHASED = 22;
 // crunched home (the Lamford ch. 41 / "Snake" shapes). Routed ahead of
 // everything else.
 constexpr int NUM_BACKGAME_PAIR_NNS_PHASED_SNAKE = 23;
+// With a 24th NN the phased layout adds a MASSIVE-BACKGAME NN (index 23):
+// the benchmark's massive family — a holder behind in the race with >= 3
+// anchors in the opponent's home board, or >= 2 anchors and >= 7 checkers
+// back (opponent's home board + bar) — that is neither a containment game
+// nor a snake. Routed after those two and ahead of the category trio.
+constexpr int NUM_BACKGAME_PAIR_NNS_PHASED_MASSIVE = 24;
 
 // A snake: the holder has a run of >= SNAKE_PRIME_MIN_POINTS consecutive
 // points, each held with >= 2 checkers, entirely on the opponent's half of
@@ -509,6 +515,17 @@ bool snake_category(const Board& board);
 constexpr int CONTAINMENT_E_OFF_MIN = 3;
 constexpr int CONTAINMENT_STRAGGLERS_MAX = 3;
 bool containment_category(const Board& board);
+
+// A massive back game (either side the holder): >= MASSIVE_MIN_ANCHORS
+// anchors in the opponent's home board, and either >= MASSIVE_ALT_ANCHORS
+// anchors or >= MASSIVE_BACK_MIN checkers back (opponent's home board plus
+// the bar), with the holder behind on pips; excludes containment games and
+// snakes, which are their own regions. Reference implementation: the
+// "massive backgame" family filter in scripts/backgame_benchmark.py.
+constexpr int MASSIVE_MIN_ANCHORS = 2;
+constexpr int MASSIVE_ALT_ANCHORS = 3;
+constexpr int MASSIVE_BACK_MIN = 7;
+bool massive_category(const Board& board);
 
 // Phase of a back-game-family position, independent of the plan-pair gate.
 // The holder B is the side with >= 2 anchors in the opponent's home board and
@@ -630,7 +647,8 @@ private:
     bool categorized_backgame_ = false;  // true when 20 NNs are loaded (Stage 11)
     bool phase_containment_ = false;     // Stage 11 phased: out-of-region early
                                          // containment -> NN 20
-    bool snake_ = false;                 // phased with 23 NNs: snake -> NN 22
+    bool snake_ = false;                 // phased with 23+ NNs: snake -> NN 22
+    bool massive_ = false;               // phased with 24 NNs: massive back game -> NN 23
     std::vector<int> root_pinned_;       // nets that pin a search tree rooted in their region
 
     // Determine which NN to use. Returns 0 for purerace, 1-16 for standard
