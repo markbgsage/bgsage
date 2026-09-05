@@ -40,7 +40,7 @@ To try the trained NN inside the full Stage 11 model, promote all three:
     copy models\\td_s11_bg_middle.weights.best models\\sl_s11_bg_middle.weights.best
     copy models\\td_s11_bg_double.weights.best models\\sl_s11_bg_double.weights.best
 
-then ``WeightConfigPair.from_model("stage11")`` loads the 20-NN model (Stage
+then ``WeightConfigPair.from_model("stage11")`` loads the full Stage 11 model (the 20-NN trio
 9's 17 standard NNs + the trio).
 
 Usage (long-running — launch detached per the CLAUDE.md pattern)::

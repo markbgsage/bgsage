@@ -215,7 +215,11 @@ def score(specialists: dict[str, Path]) -> None:
     from benchmark_money import BLUNDER_THRESHOLD
 
     def trio(name: str, deep_file: str) -> WeightConfigPair:
+        # The 20-NN categorized trio (the registry's stage11 is now the full
+        # 24-NN phased layout, so the trio is built here explicitly).
         e = dict(W.MODELS["stage11"])
+        e["hidden"] = (100,) + (400,) * 19
+        e["plans"] = "backgame_pair_categorized"
         e["extra_backgame"] = [deep_file] * 3
         W.MODELS[name] = e
         return WeightConfigPair.from_model(name)

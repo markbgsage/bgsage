@@ -2036,7 +2036,17 @@ positions where the blend weight > 0 (`generate_pasko_data.py --gate`). On a new
 the shipped v1 nets, then one warm-restart. (Warm-starting from the TD net lands
 ~1.4 ER worse; a further restart gains <0.1 — converged.)
 
-### Stage 11 (S11) — EXPERIMENTAL: Categorized Backgame Trio
+### Stage 11 (S11) — EXPERIMENTAL: the back-game-aware phased model
+
+**The registry has ONE Stage 11 entry, `stage11`: the 24-NN phased layout**
+(Stage 9's 17 standard nets + the category trio + P3 + containment + snake +
+massive), i.e. what the sections below arrived at. The intermediate names
+those sections use — the 20-NN trio, `stage11p` (22), `stage11s` (23),
+`stage11m` (24) — are the history of how it was built and no longer
+resolve; the C++ strategy still accepts 22 or 23 paths for A/B work.
+`PRODUCTION_MODEL` is still `stage9`.
+
+#### The categorized backgame trio (the first step)
 
 Stage 11 replaces Stage 9's two backgame NNs (player/opponent) with **three,
 selected by the backgame's CATEGORY — the same NN whichever side holds it**:

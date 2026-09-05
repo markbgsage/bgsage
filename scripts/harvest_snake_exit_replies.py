@@ -35,7 +35,7 @@ Output: data/s11-bg-snake-exit1-data (26 ints per line) and a
 data/s11-bg-snake-exit1-rollout.
 
 Usage:
-    py -3.14 scripts/harvest_snake_exit_replies.py [--model stage11s] [--engine-cap 4000]
+    py -3.14 scripts/harvest_snake_exit_replies.py [--model stage11] [--engine-cap 4000]
 """
 
 from __future__ import annotations
@@ -101,7 +101,7 @@ def benchmark_boards() -> set[tuple[int, ...]]:
 
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--model", default="stage11s")
+    ap.add_argument("--model", default="stage11")
     ap.add_argument("--engine-cap", type=int, default=4000,
                     help="At most this many parents also contribute the engine-routed best reply when it differs")
     args = ap.parse_args()

@@ -22,67 +22,22 @@ from typing import Any
 
 MODELS: dict[str, dict[str, Any]] = {
     "stage11": {
-        # EXPERIMENTAL — categorized backgame trio (20 NNs). Stage 9's 17
-        # standard pair NNs carried UNCHANGED (indices 0-16), plus THREE
-        # backgame NNs replacing Stage 9's player/opponent pair, selected by
-        # the backgame's CATEGORY rather than by which side holds it:
+        # EXPERIMENTAL — Stage 11, the back-game-aware phased layout (24 NNs):
+        # Stage 9's 17 standard pair NNs carried UNCHANGED (indices 0-16) plus
         #   17 bg_deep    21/31/32  (both anchors on the 1/2/3 points)
         #   18 bg_middle  41/42/51/52 (one anchor on the 1/2 point, one higher)
         #   19 bg_double  43/53/54  (two anchors, none deeper than the 3-pt)
-        # 3+ anchors: deep when at least two sit on the 1/2/3 points, else
-        # middle. Detection is Stage 9's (see backgame_category in C++). The
-        # three bg files come from scripts/run_s11_backgame_td.py — promote a
-        # TD run by copying models/td_s11_bg_<cat>.weights.best to these names.
-        "hidden": (100,) + (400,) * 19,   # 17 standard + 3 backgame = 20
-        "pattern": "sl_s9_{plan}.weights.best",   # standard NNs are Stage 9's
-        "plans": "backgame_pair_categorized",
-        "canonical_map": [0,1,2,3,4,5,6,7,8,9,10,12,12,13,14,12,12],
-        "extra_backgame": ["sl_s11_bg_deep.weights.best",
-                           "sl_s11_bg_middle.weights.best",
-                           "sl_s11_bg_double.weights.best"],
-    },
-    "stage11p": {
-        # EXPERIMENTAL — Stage 11 PHASED: the categorized trio plus an
-        # early-containment NN (index 20) that takes the containment
-        # positions Stage 9's plan-pair gate rejects (a straggler being
-        # contained, racer <= 2 off, but the racer's block reads as
-        # priming), and a containment-game NN (index 21) for positions where
-        # the escaper has >= 3 off and 1-3 stragglers a container checker can
-        # still hit — routed ahead of the trio, whatever the container holds.
-        # See backgame_phase() / containment_category().
-        "hidden": (100,) + (400,) * 21,   # 17 standard + 3 trio + 2 phase = 22
-        "pattern": "sl_s9_{plan}.weights.best",
-        "plans": "backgame_pair_phased",
-        "canonical_map": [0,1,2,3,4,5,6,7,8,9,10,12,12,13,14,12,12],
-        "extra_backgame": ["sl_s11_bg_deep.weights.best",
-                           "sl_s11_bg_middle.weights.best",
-                           "sl_s11_bg_double.weights.best",
-                           "sl_s11_bg_p3.weights.best",
-                           "sl_s11_bg_containment.weights.best"],
-    },
-    "stage11s": {
-        # EXPERIMENTAL — stage11p plus a SNAKE NN (index 22): a far-side prime
-        # (>= 4 consecutive made points on the opponent's half) trapping a
-        # straggler while the opponent's other >= 10 checkers are crunched
-        # home. Routed ahead of everything else; see snake_category().
-        "hidden": (100,) + (400,) * 22,   # 17 standard + 3 trio + 2 phase + snake = 23
-        "pattern": "sl_s9_{plan}.weights.best",
-        "plans": "backgame_pair_phased",
-        "canonical_map": [0,1,2,3,4,5,6,7,8,9,10,12,12,13,14,12,12],
-        "extra_backgame": ["sl_s11_bg_deep.weights.best",
-                           "sl_s11_bg_middle.weights.best",
-                           "sl_s11_bg_double.weights.best",
-                           "sl_s11_bg_p3.weights.best",
-                           "sl_s11_bg_containment.weights.best",
-                           "sl_s11_bg_snake.weights.best"],
-    },
-    "stage11m": {
-        # EXPERIMENTAL — stage11s plus a MASSIVE-BACKGAME NN (index 23): the
-        # benchmark's massive family (>= 3 anchors, or >= 2 anchors and >= 7
-        # checkers back, behind in the race; never a containment game or a
-        # snake), routed ahead of the category trio; see massive_category().
+        #   20 bg_p3      early-containment positions the plan-pair gate rejects
+        #   21 bg_containment  the escaper-centric containment rule
+        #   22 bg_snake   a far-side prime trapping a straggler (root-routed)
+        #   23 bg_massive the benchmark's massive family (per-node routed)
+        # Routing: snake -> containment -> massive -> trio (by category) ->
+        # P3 -> standard pair NN; see select_nn_idx() in neural_net.cpp. The
+        # intermediate layouts this grew through (the 20-NN trio, 22-NN
+        # "stage11p", 23-NN "stage11s", 24-NN "stage11m") are history in
+        # CLAUDE.md; the strategy still accepts 22 or 23 paths for A/B work.
         "hidden": (100,) + (400,) * 23,   # 17 standard + 3 trio + 2 phase + snake + massive = 24
-        "pattern": "sl_s9_{plan}.weights.best",
+        "pattern": "sl_s9_{plan}.weights.best",   # standard NNs are Stage 9's
         "plans": "backgame_pair_phased",
         "canonical_map": [0,1,2,3,4,5,6,7,8,9,10,12,12,13,14,12,12],
         "extra_backgame": ["sl_s11_bg_deep.weights.best",

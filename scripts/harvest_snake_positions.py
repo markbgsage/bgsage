@@ -65,7 +65,7 @@ _DATA = _PROJECT_ROOT / "data"
 _BENCH = _PROJECT_ROOT / "backgame_ref_positions" / "benchmark"
 MASTER_SEED = 11         # the benchmark folder used seed 1; containment used 7
 LEVEL = "2ply"
-MODEL = "stage11p"
+MODEL = "stage11"   # (was the 22-NN "stage11p" layout when the harvest was made)
 MAX_HALF_MOVES = 24      # per seed game; the region usually ends sooner
 
 
