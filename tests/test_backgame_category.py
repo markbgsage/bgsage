@@ -377,6 +377,76 @@ class TestStage11Selection(unittest.TestCase):
                         self.assertAlmostEqual(g, w, places=5)
         self.assertGreater(n_snake, 0.9 * n_total)
 
+    def test_root_routing_pins_leaves_and_cache_through_nested_wrappers(self):
+        """Root routing (the 23-NN layout pins every contact node of a snake
+        decision's tree to NN 22) must reach the LEAVES through any depth of
+        BearoffStrategy wrapping — the analyzer wraps its strategy once and
+        the bindings wrap that again — and a pinned node must never be served
+        from the cubeful eval cache by an unpinned evaluation of the same
+        board, or the other way round."""
+        from concurrent.futures import ThreadPoolExecutor
+        from bgsage.board import flip_board, possible_moves
+        db_path = os.path.join(repo_dir, "data", "bearoff_1sided.db")
+        if not os.path.exists(db_path):
+            raise unittest.SkipTest("bearoff DB not present")
+        db = bgbot_cpp.BearoffDB()
+        db.load(db_path)
+        seed_board = backgame_board({1, 2})
+        extras = []
+        for name in ("td_test_bg_p3r", "td_test_bg_containmentr", "td_test_bg_snaker"):
+            bgbot_cpp.td_train_backgame_truncated(
+                n_games=0, model_name=name, models_dir=self.tmp.name,
+                start_boards=[seed_board], ref_weight_paths=self.s9.paths,
+                ref_hidden_sizes=self.s9.hiddens)
+            extras.append(os.path.join(self.tmp.name, f"{name}.weights"))
+        snaked = bgbot_cpp.BackgameAwarePairStrategy(
+            self.paths + extras, self.hiddens + [400, 400, 400], True)
+        wrapped = bgbot_cpp.BearoffStrategy(snaked, db)   # what the analyzer holds
+        snake = [0,0,0,-1,0,0,0,0,0,0,0,0,0,1,0,1,0,2,3,3,2,2,1,-7,-7,0]
+        self.assertEqual(snaked.root_pin_for(snake), 22)
+        self.assertEqual(wrapped.root_pin_for(snake), 22)
+        cands = possible_moves(snake, 6, 5) + possible_moves(snake, 2, 1)
+        self.assertGreater(len(cands), 3)
+
+        def value(strategy, cand, root):
+            # The opponent's 2-ply cube-aware value of the player's candidate,
+            # exactly as the analyzer asks for it (n_threads=1, DB passed in).
+            r = bgbot_cpp.cubeful_probs_and_equity_nply(
+                flip_board(cand), bgbot_cpp.CubeOwner.CENTERED, strategy, 2,
+                n_threads=1, bearoff_db=db, root_board=root)
+            return (round(r["equity"], 6), tuple(round(x, 6) for x in r["probs"]))
+
+        def on_fresh_thread(fn):
+            # A new thread starts with an EMPTY thread-local eval cache.
+            with ThreadPoolExecutor(max_workers=1) as pool:
+                return pool.submit(fn).result()
+
+        pinned = on_fresh_thread(lambda: [value(snaked, c, snake) for c in cands])
+        unpinned = on_fresh_thread(lambda: [value(snaked, c, []) for c in cands])
+        # The pin has to change SOMETHING below these roots, or nothing
+        # below is a test.
+        self.assertNotEqual(pinned, unpinned)
+
+        # 1. Leaves: the binding wrapping the raw strategy (once) and the
+        #    binding wrapping the analyzer's wrapper (twice) evaluate
+        #    byte-identically under the pin.
+        double = on_fresh_thread(lambda: [value(wrapped, c, snake) for c in cands])
+        self.assertEqual(double, pinned)
+
+        # 2. Cache: an unpinned pass warming the cache must not feed the
+        #    pinned pass that follows it on the same thread.
+        def unpinned_then_pinned():
+            for c in cands:
+                value(snaked, c, [])
+            return [value(snaked, c, snake) for c in cands]
+        self.assertEqual(on_fresh_thread(unpinned_then_pinned), pinned)
+
+        def pinned_then_unpinned():
+            for c in cands:
+                value(snaked, c, snake)
+            return [value(snaked, c, []) for c in cands]
+        self.assertEqual(on_fresh_thread(pinned_then_unpinned), unpinned)
+
     def test_non_backgame_matches_stage9(self):
         from bgsage.board import STARTING_BOARD
 

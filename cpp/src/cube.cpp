@@ -1687,12 +1687,14 @@ CubefulProbsAndEquity cubeful_probs_and_equity_nply(
     int n_plies,
     const MoveFilter& filter,
     int n_threads,
-    const Strategy* move_filter)
+    const Strategy* move_filter,
+    const Board* root_board)
 {
     float out = 0.0f;
     std::array<float, NUM_OUTPUTS> probs{};
     cubeful_equity_nply_multi(board, &cube, 1, strategy, n_plies, &out,
-                              filter, n_threads, move_filter, false, &probs);
+                              filter, n_threads, move_filter, false, &probs,
+                              /*deep_prefilter=*/false, root_board);
     return {probs, out};
 }
 

@@ -468,7 +468,7 @@ std::array<float, NUM_OUTPUTS> MultiPlyStrategy::cubeless_tree_probs(
         flip(board), &dead, 1, *base_, plies, &cf_unused,
         MoveFilters::TINY, n_threads,
         move_prefilter_ ? move_prefilter_.get() : nullptr,
-        /*fTop=*/false, &tree_probs, deep_prefilter);
+        /*fTop=*/false, &tree_probs, deep_prefilter, &pre_move_board);
     auto probs = invert_probs(tree_probs);
     clamp_probs_to_board(probs, board);
     return probs;
@@ -1118,7 +1118,7 @@ void MultiPlyStrategy::best_move_index_cubeful_multi(
             cf_equities[i].data(),
             MoveFilters::TINY, 1,
             move_prefilter_ ? move_prefilter_.get() : nullptr,
-            /*fTop=*/false, nullptr, /*deep_prefilter=*/true);
+            /*fTop=*/false, nullptr, /*deep_prefilter=*/true, &pre_move_board);
     };
 
     bool use_parallel = parallel_evaluate_ && n_plies_ > 2;

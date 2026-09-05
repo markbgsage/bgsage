@@ -160,6 +160,7 @@ public:
     // Bearoff interception doesn't change which evaluator the cache entries
     // belong to — share them with the wrapped strategy.
     uint64_t eval_identity() const override { return base_->eval_identity(); }
+    int root_pin_for(const Board& root) const override { return base_->root_pin_for(root); }
 
     double evaluate(const Board& board, bool pre_move_is_race) const override;
 

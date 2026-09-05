@@ -365,7 +365,8 @@ CubefulProbsAndEquity cubeful_probs_and_equity_nply(
     int n_plies,
     const MoveFilter& filter = MoveFilters::TINY,
     int n_threads = 1,
-    const Strategy* move_filter = nullptr);
+    const Strategy* move_filter = nullptr,
+    const Board* root_board = nullptr);   // root routing: the decision's pre-move board
 
 // Batched version: evaluate cubeful equity for the SAME board at N-ply depth
 // against MULTIPLE cube states simultaneously. Returns one equity per cube
@@ -406,7 +407,8 @@ void cubeful_equity_nply_multi(
     const Strategy* move_filter = nullptr,
     bool fTop = false,                       // true: caller already built ND+DT pairs
     std::array<float, NUM_OUTPUTS>* probs_out = nullptr,
-    bool deep_prefilter = false);
+    bool deep_prefilter = false,
+    const Board* root_board = nullptr);   // root routing: the decision's pre-move board
 
 // Batched cube decision: evaluate cube decisions for multiple branches that
 // share the same board.  For each input cube in `cubes`, this is exactly

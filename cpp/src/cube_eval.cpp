@@ -244,7 +244,7 @@ const PubEval& static_pubeval() {
 template <class S>
 void eval_groups_pair(const S& s, const std::vector<Board>& cands,
                       const int* idxs, int n,
-                      std::array<float, NUM_OUTPUTS>* out)
+                      std::array<float, NUM_OUTPUTS>* out, int pinned = -1)
 {
     thread_local std::vector<int> nn_idx_of;
     thread_local std::vector<char> done;
@@ -253,7 +253,8 @@ void eval_groups_pair(const S& s, const std::vector<Board>& cands,
     nn_idx_of.resize(n);
     done.assign(n, 0);
     for (int j = 0; j < n; ++j) {
-        nn_idx_of[j] = s.nn_index_for(cands[idxs[j]]);
+        nn_idx_of[j] = (pinned >= 0 && !is_race(cands[idxs[j]]))
+            ? pinned : s.nn_index_for(cands[idxs[j]]);
         if (nn_idx_of[j] >= BLENDED_SENTINEL_BASE) {
             // Blended backgame sentinel (21-NN hybrid): no shared delta-eval
             // base, evaluate directly via the strategy's blend-aware probs.
@@ -301,7 +302,7 @@ void eval_groups_pair(const S& s, const std::vector<Board>& cands,
 
 void eval_each_impl(const Strategy& strat, const std::vector<Board>& cands,
                     const int* idxs, int n,
-                    std::array<float, NUM_OUTPUTS>* out)
+                    std::array<float, NUM_OUTPUTS>* out, int pinned = -1)
 {
     if (n <= 0) return;
 
@@ -323,17 +324,17 @@ void eval_each_impl(const Strategy& strat, const std::vector<Board>& cands,
             // re-enter this BearoffStrategy branch (no double wrapping), so the
             // buffer is not clobbered.
             eval_each_impl(bs->base(), cands, rest.data(),
-                           static_cast<int>(rest.size()), out);
+                           static_cast<int>(rest.size()), out, pinned);
         }
         return;
     }
 
     if (const auto* bg = dynamic_cast<const BackgameAwarePairStrategy*>(&strat)) {
-        eval_groups_pair(*bg, cands, idxs, n, out);
+        eval_groups_pair(*bg, cands, idxs, n, out, pinned);
         return;
     }
     if (const auto* gp = dynamic_cast<const GamePlanPairStrategy*>(&strat)) {
-        eval_groups_pair(*gp, cands, idxs, n, out);
+        eval_groups_pair(*gp, cands, idxs, n, out, pinned);
         return;
     }
 
@@ -355,7 +356,30 @@ struct EvalCtx {
                          // trial-internal calls are always serial)
     bool deep_prefilter = false;  // aggressive PubEval prune at deep nodes
                                   // (rollout-internal evaluations only)
+    int pinned_nn = -1;   // root routing: the net every node uses (-1 = per node)
 };
+
+// Post-move probs of `board` under root routing: the pinned net when one is
+// set and the board still has contact, else the strategy's own routing.
+// Exact bearoff positions keep their DB values.
+std::array<float, NUM_OUTPUTS> pinned_post_probs(
+    const Strategy& strategy, const Board& board, bool race, int pinned)
+{
+    if (pinned >= 0 && !race) {
+        // Unwrap EVERY bearoff layer: the analyzer wraps its strategy in a
+        // BearoffStrategy and the bindings wrap that again, and a single
+        // unwrap left the pair strategy unreachable — every dance / forced-
+        // move leaf then fell back to the board's own routing.
+        const Strategy* s = &strategy;
+        while (const auto* bs = dynamic_cast<const BearoffStrategy*>(s)) {
+            if (bs->db().is_bearoff(board)) return strategy.evaluate_probs(board, race);
+            s = &bs->base();
+        }
+        if (const auto* bg = dynamic_cast<const BackgameAwarePairStrategy*>(s))
+            return bg->probs_with_nn(board, pinned);
+    }
+    return strategy.evaluate_probs(board, race);
+}
 
 // Compute leaf values from precomputed post-move probs of the previous
 // mover's chosen board. `board` is the leaf pre-roll position (leaf mover's
@@ -479,7 +503,13 @@ void cubeful_eval_recursive(
         // other's entries.
         fp = 0xcbf29ce484222325ULL
              ^ (ctx.strategy->eval_identity() * 0x9e3779b97f4a7c15ULL)
-             ^ (ctx.deep_prefilter ? 0x6a09e667f3bcc909ULL : 0);
+             ^ (ctx.deep_prefilter ? 0x6a09e667f3bcc909ULL : 0)
+             // Root routing changes every value below the root, so a node
+             // pinned to one net must never serve an unpinned (or
+             // differently pinned) evaluation of the same board.
+             ^ (ctx.pinned_nn >= 0
+                    ? (static_cast<uint64_t>(ctx.pinned_nn) + 1) * 0xbb67ae8584caa73bULL
+                    : 0);
         for (int i = 0; i < cci; ++i) fp = cube_fp_one(fp, aciCubePos[i]);
         key = make_cache_key(board, fp, plies, cci, fTop);
         if (g_cubeful_eval_cache.get(key, fp, board, plies, cci, fTop,
@@ -524,7 +554,7 @@ void cubeful_eval_recursive(
     if (plies <= 1) {
         Board flipped = flip(board);
         bool race = is_race(board);
-        auto post_probs = ctx.strategy->evaluate_probs(flipped, race);
+        auto post_probs = pinned_post_probs(*ctx.strategy, flipped, race, ctx.pinned_nn);
         std::array<float, NUM_OUTPUTS> pre_out{};
         leaf_from_post_probs(board, aciCubePos, cci, fTop, post_probs,
                              arCubeful, &pre_out);
@@ -648,7 +678,7 @@ void cubeful_eval_recursive(
                 // Leaf on opp_board. Terminal impossible (board not terminal,
                 // no move played). NN eval of flip(opp_board) == board.
                 bool lrace = is_race(opp_board);
-                auto post = ctx.strategy->evaluate_probs(flip(opp_board), lrace);
+                auto post = pinned_post_probs(*ctx.strategy, flip(opp_board), lrace, ctx.pinned_nn);
                 leaf_from_post_probs(opp_board, aci, expanded_cci, false, post,
                                      arCfLocal, &probsTmp);
             } else {
@@ -712,7 +742,7 @@ void cubeful_eval_recursive(
             }
             eval_each_impl(*ctx.strategy, *eval_candidates,
                            live_idx.data(), static_cast<int>(live_idx.size()),
-                           cand_probs.data());
+                           cand_probs.data(), ctx.pinned_nn);
 
             // Cubeful pick vs the primary cube state: every interior pick
             // is match/cube-aware without forking the recursion per cube.
@@ -752,7 +782,7 @@ void cubeful_eval_recursive(
                 // Forced move: no pick batch ran — evaluate the leaf NN now.
                 bool lrace = is_race(opp_pre_roll);
                 chosen_post_probs =
-                    ctx.strategy->evaluate_probs(chosen, lrace);
+                    pinned_post_probs(*ctx.strategy, chosen, lrace, ctx.pinned_nn);
             }
             leaf_from_post_probs(opp_pre_roll, aci, expanded_cci, false,
                                  chosen_post_probs, arCfLocal, &probsTmp);
@@ -839,7 +869,8 @@ void eval_pre_roll_1ply_multi(
     int n_cubes,
     const Strategy& strategy,
     float* out_raw,                  // money equity / match MWC per cube
-    std::array<float, NUM_OUTPUTS>* probs_out)
+    std::array<float, NUM_OUTPUTS>* probs_out,
+    int pinned = -1)
 {
     Board flipped = flip(board);
     bool race = is_race(board);
@@ -850,7 +881,7 @@ void eval_pre_roll_1ply_multi(
     if (terminal) {
         pre_roll_probs = invert_probs(terminal_probs(result));
     } else {
-        auto post_probs = strategy.evaluate_probs(flipped, race);
+        auto post_probs = pinned_post_probs(strategy, flipped, race, pinned);
         pre_roll_probs = invert_probs(post_probs);
         clamp_probs_to_board(pre_roll_probs, board);
     }
@@ -906,15 +937,17 @@ void cubeful_equity_nply_multi(
     const Strategy* move_filter,
     bool fTop,
     std::array<float, NUM_OUTPUTS>* probs_out,
-    bool deep_prefilter)
+    bool deep_prefilter,
+    const Board* root_board)
 {
     (void)filter;  // candidate selection inside the tree is single-pick
     if (n_cubes <= 0) return;
     if (n_cubes > EVAL_MAX_CCI) n_cubes = EVAL_MAX_CCI;
+    const int pinned = root_board ? strategy.root_pin_for(*root_board) : -1;
 
     if (n_plies <= 1) {
         float raw[EVAL_MAX_CCI];
-        eval_pre_roll_1ply_multi(board, cubes, n_cubes, strategy, raw, probs_out);
+        eval_pre_roll_1ply_multi(board, cubes, n_cubes, strategy, raw, probs_out, pinned);
         for (int i = 0; i < n_cubes; ++i) {
             if (cubes[i].is_money()) {
                 out[i] = raw[i];
@@ -930,6 +963,7 @@ void cubeful_equity_nply_multi(
     for (int i = 0; i < n_cubes; ++i) aciCubePos[i] = cubes[i];
 
     EvalCtx ctx{&strategy, move_filter, n_plies, n_threads, deep_prefilter};
+    ctx.pinned_nn = pinned;
     const bool allow_parallel = (n_threads > 1 && n_plies > 2);
     float arCubeful[EVAL_MAX_CCI];
     cubeful_eval_recursive(board, aciCubePos, n_cubes, ctx, n_plies, fTop,
@@ -960,12 +994,13 @@ void cube_decision_nply_multi(
     (void)filter;  // candidate selection inside the tree is single-pick
     if (n_cubes <= 0) return;
     if (n_cubes > EVAL_MAX_CCI / 2) n_cubes = EVAL_MAX_CCI / 2;
+    const int pinned = strategy.root_pin_for(board);  // a cube decision's root is the position itself
 
     if (n_plies <= 1) {
         // 1-ply path: pre-roll probs ONCE (shared), then Janowski per cube.
         Board flipped = flip(board);
         bool race = is_race(board);
-        auto post_probs = strategy.evaluate_probs(flipped, race);
+        auto post_probs = pinned_post_probs(strategy, flipped, race, pinned);
         auto pre_roll_probs = invert_probs(post_probs);
         clamp_probs_to_board(pre_roll_probs, board);
         for (int i = 0; i < n_cubes; ++i) {
@@ -985,6 +1020,7 @@ void cube_decision_nply_multi(
     }
 
     EvalCtx ctx{&strategy, move_filter, n_plies, n_threads, deep_prefilter};
+    ctx.pinned_nn = pinned;
     const bool allow_parallel = (n_threads > 1 && n_plies > 2);
     float arCubeful[EVAL_MAX_CCI];
     cubeful_eval_recursive(board, aciCubePos, n_states, ctx, n_plies, /*fTop=*/true,

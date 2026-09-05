@@ -962,6 +962,7 @@ class _CubefulAnalyzer:
                     away1=away2, away2=away1, is_crawford=is_crawford,
                     jacoby=jacoby, beaver=beaver,
                     bearoff_db=db,
+                    root_board=board,   # root routing: the decision's pre-move board
                 )
                 opp_probs = r["probs"]
                 # invert opp's POV probs → player's POV

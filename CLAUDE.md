@@ -2322,7 +2322,8 @@ further ~$75 on Fargate.
 `prim_race` net: holdout ER 299.6 -> 53.95 in 2.5 minutes (a schedule is
 passes over the data; a 4x schedule plateaus at 53.6 and scores slightly
 worse on the folder, and the trio's deep net as warm start is worse again).
-Installed as `models/sl_s11_bg_snake.weights.best`. Snake folder, every pick
+Installed as `models/sl_s11_bg_snake.weights.best` (replaced on 2026-09-05 by
+the round-2 `sl_snake2_warm` net, below). Snake folder, every pick
 rollout-graded, PR at 1P / 2P / 3P: Stage 9 63.56 / 48.06 / 32.18 (364 /
 286 / 205 blunders); trio 52.45 / 34.72 / 28.49; `stage11s` **15.71 / 35.65 /
 24.35** (141 / 251 / 165). The 1-ply figure is the first real competence any
@@ -2366,6 +2367,138 @@ Open Sage net has shown in the region. **Why 2-ply scores worse than 1-ply
    specialist must cover the neighbourhood the search visits, not only its
    own region — and the containment folder's 2P-worse-than-1P shape for
    Stage 9 and the trio is the same effect.
+
+**Round 2 (2026-09-04): root routing, the exit-reply data, and the widened
+containment rule.** Both remedies for effect 2 are implemented; choosing
+between them waits on the candidate-completion rollout of their picks (see
+the table at the end of this section).
+
+*Root routing.* A decision's whole tree is evaluated with the net chosen for
+its ROOT position. `Strategy::root_pin_for(root)` (virtual, -1 = route per
+node) is answered by `BackgameAwarePairStrategy` with `select_nn_idx(root)`
+whenever that index is in `root_pinned_`, which defaults to `{22}` on the
+23-NN layout and to nothing on every other layout, so Stage 9 through
+`stage11p` are untouched; `BearoffStrategy` forwards it. The cubeful engine
+carries the pin in `EvalCtx.pinned_nn`: `eval_groups_pair` (the batched
+interior picks) and `pinned_post_probs` (leaves, dances, forced moves and the
+1-ply entries) evaluate every contact position with the pinned net, while
+races and exact bearoff positions keep their own values. It enters through
+`root_board` on `cubeful_equity_nply_multi` / `cubeful_probs_and_equity_nply`
+(bound as `root_board=`; the analyzer passes the decision's pre-move board)
+and through `cubeless_tree_probs`, which passes its pre-move board;
+`cube_decision_nply_multi` pins from the position itself. The cubeful eval
+cache folds the pin into its fingerprint. Switch it off with
+`set_root_pinned([])` on the strategy (bound on both classes — the analyzer's
+`_strategy_1ply` is the bearoff wrapper) or process-wide with
+`BGSAGE_NO_ROOT_ROUTING=1` in the environment at construction.
+
+Two leaks made the first measurements wrong, and are why
+`tests/test_backgame_category.py::test_root_routing_pins_leaves_and_cache_through_nested_wrappers`
+exists: `pinned_post_probs` unwrapped ONE bearoff layer, but the analyzer
+wraps its strategy in `BearoffStrategy` and the binding wraps that again, so
+every dance and forced-move leaf silently fell back to the board's own
+routing (the pinned 2-ply snake number moved 29.73 -> 37.27 when the widened
+rule below changed where those leaves routed, with the pin verified on every
+root); and the cache fingerprint ignored the pin, so a pinned node could be
+served by an unpinned evaluation of the same board from an earlier call on
+the same thread.
+
+*Exit-reply data.* `scripts/harvest_snake_exit_replies.py` builds
+`data/s11-bg-snake-exit1-data`: for every exit board in the snake harvest the
+opponent's best reply under root routing, plus 4,000 replies picked with
+per-node routing — 25,892 boards, rolled out at 648 paths / 3-ply in-trial
+play (Fargate, 1,000 workers, 62 min, ~$218) into
+`data/s11-bg-snake-exit1-rollout`. `models/s11_diag/sl_snake2_{primrace,warm}.weights.best`
+are the snake recipe on the snake rows plus these (warm = from the installed
+snake net, primrace = from S9 `prim_race`).
+
+*The widened containment rule* — the proposal that a broken snake is a kind
+of containment game, so the containment net should cover the hand-off.
+`containment_category` gains a "crunched" arm: an escaper with fewer than
+`CONTAINMENT_E_OFF_MIN` off still qualifies when it has >=
+`CONTAINMENT_CRUNCHED_HOME_MIN` (10) checkers in its home board and the
+container has >= `CONTAINMENT_CONTAINER_FAR_MIN` (8) checkers with >=
+`CONTAINMENT_CONTAINER_FAR_POINTS_MIN` (3) made points on the escaper's half;
+the straggler and contact conditions are unchanged, and
+`scripts/containment_rule.py` mirrors it. Measured footprint: 92% of the
+snake harvest's exit boards and 92% of the exit replies; 98.2% of the
+containment folder's decisions; money 1.3% -> 1.3%; pasko 2.6% -> 2.9%; the
+ten backgame folders 0.7%; massive 4.6%. (A first draft with the home
+threshold alone claimed 23.5% of the money benchmark; the container clauses
+are what confine it.) Its data: `data/s11-bg-containment-snakeexit-rollout`
+(the 10,078 harvest exit rows and 21,522 exit replies the arm claims, with
+their rollout targets) and `data/s11-bg-containment-general-wide-rollout`
+(301,976 GNUbg rows under the widened rule;
+`extract_general_containment_rows.py <output name>`).
+`models/s11_diag/sl_cont2_{warm,primrace}.weights.best` train the containment
+recipe (family x4) on those plus the original family rows.
+
+*Results on completed references (2026-09-04 evening).* Two completion
+passes rolled out every pick of every configuration below — the three snake
+nets' root-routed picks (709 boards) and the two containment candidates'
+per-node picks on the containment and snake folders (569 boards); ~$30 and
+~$50 realized on Fargate against $169 estimates each, because single-board
+completion tasks finish in minutes rather than the estimator's twenty — so
+every number here is rollout-graded. PR at 1P / 2P / 3P, S9-play reference
+first, S11-play twin second:
+
+| Configuration (`stage11s`) | snake, S9-play | snake, S11-play twin |
+|---|---|---|
+| root routing, round-1 snake net | 16.75 / 17.34 / 25.22 | 18.79 / 18.66 / 15.15 |
+| root routing, `sl_snake2_primrace` | 16.37 / 17.67 / 25.11 | 19.60 / 19.87 / 15.35 |
+| root routing, `sl_snake2_warm` (**installed 2026-09-05**) | 15.13 / 16.80 / 24.20 | 17.58 / 19.61 / 15.05 |
+| per-node, widened rule, old containment net | 16.75 / 46.35 / 39.18 | 18.79 / 45.00 / 29.69 |
+| per-node, widened rule, `sl_cont2_warm` | 16.75 / 15.68 / 23.99 | 18.79 / 18.64 / 14.17 |
+| per-node, widened rule, `sl_cont2_primrace` | 16.75 / 15.10 / 23.57 | 18.79 / 18.18 / 14.23 |
+| per-node, widened rule, `sl_cont2_primrace` + `sl_snake2_warm` | 15.13 / 15.95 / 23.71 | 17.58 / 18.32 / 15.77 |
+
+What the table says. (1) The 2-ply anomaly is gone under either remedy:
+1-ply and 2-ply are level, and per-node routing collapses to ~45 only while
+the exits reach a containment net that has never seen one. (2) The two
+references disagree about 3-ply in opposite directions — the worst level
+under S9-play rollouts, the best under S11-play ones — and the split sits
+in the values a weak trial player distorts most, the release-versus-hold
+checker picks and the cube (cube PR 13-15 against 6-9 at 3-ply). Stage 9
+plays these positions at PR 63, so its rollouts are the shakier reference,
+but neither is authoritative; a reference rolled out under `stage11s` play,
+or an XG pass, would arbitrate. (3) `sl_snake2_warm` is the best snake net
+at 1-ply on both references. (4) The widened rule's retrained containment
+nets are the stronger snake mechanism at 2-ply and 3-ply, by about 1 PR.
+
+Where the widened rule costs something. A control run (the arm disabled,
+same completed references) reproduces the widened-rule containment-folder
+numbers to the decimal — 6.72 / 5.67 / 3.62 on the S9-play reference and
+6.16 / 5.47 / 2.13 on the twin for the installed net — so the rule itself
+changes nothing there. (Those differ from the Stage 11p table above because
+this folder's reference was completed further today: every model's headline
+moves whenever a reference is completed, so the earlier table is stale on
+the reference now on disk and needs rescoring before it is quoted again.)
+The cost is on the money benchmark's containment slice, split at 1-ply by
+whether the OLD rule already claimed the decision: on the 237 old-rule
+decisions the installed net scores 3.03 (4 blunders) but `sl_cont2_warm`
+4.27 (7) and `sl_cont2_primrace` 3.94 (7) — retraining on family x4 + the
+snake exits + the wide general rows diluted ordinary-game containment —
+while on the 8 decisions the arm adds, the old net scores 22.77 (3
+blunders) and the retrained ones 8.5-9.4 (1). Both candidates therefore
+regress a slice of ordinary games by about 1 PR. The widened rule is the
+better snake mechanism only once a containment net exists that also keeps
+the old slice at 3.03, which is a training question (weight the
+crunched-arm rows as their own family, or give them their own slot) rather
+than a routing one.
+
+*Shipped (2026-09-05).* Root routing, with `sl_snake2_warm` installed as
+`models/sl_s11_bg_snake.weights.best` (the round-1 net it replaced is the
+first row of the table). The widened containment rule is NOT in the code:
+its crunched arm was removed again, because with the old containment net it
+costs the money slice 3.03 -> 3.67 and with either retrained net 3.03 -> ~4.
+The definition, footprint and numbers above are the record of that
+experiment; its data (`data/s11-bg-containment-general-wide-rollout`,
+`data/s11-bg-containment-snakeexit-rollout`) and the `sl_cont2_*` candidates
+stay on disk, untracked. The two mechanisms are compatible — root routing
+acts only on decisions whose ROOT is a snake, the arm on everything else it
+claims (a broken snake's later decisions, which no folder measures) — so the
+arm is worth re-adding once a containment net exists that keeps the old
+money slice at 3.03.
 
 ## Glossary
 

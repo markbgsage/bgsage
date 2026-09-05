@@ -133,6 +133,12 @@ public:
     // collide even across construct/destroy cycles.
     virtual uint64_t eval_identity() const { return eval_id_; }
 
+    // Root routing. The NN a whole search tree rooted at `root` should be
+    // evaluated with — every candidate, reply and leaf, races excepted — or
+    // -1 to let each node pick its own net. Only region-specialist nets pin
+    // a tree; see BackgameAwarePairStrategy::set_root_pinned for why.
+    virtual int root_pin_for(const Board& /*root*/) const { return -1; }
+
     // Evaluate a post-move board position. Higher = better for player 1.
     // The board is from player 1's perspective.
     // `pre_move_is_race` is the race classification of the board BEFORE

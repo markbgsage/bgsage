@@ -41,7 +41,7 @@ import bgbot_cpp  # noqa: E402
 from bgsage.data import load_gnubg_training_data  # noqa: E402
 
 _DATA = _PROJECT_ROOT / "data"
-OUT = _DATA / "s11-bg-containment-general-rollout"
+OUT = _DATA / (sys.argv[1] if len(sys.argv) > 1 else "s11-bg-containment-general-rollout")
 
 
 def main() -> None:

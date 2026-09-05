@@ -523,6 +523,25 @@ batched kernel rather than one full NN forward pass per candidate:
 Probabilities are not clamped before the pick; the leaf conversion clamps
 (see section 2).
 
+### Root Routing (pinned NN selection)
+
+Step 3's per-candidate classification is the default. A strategy may
+instead answer `root_pin_for(root)` with an NN index for the tree's ROOT
+position (the pre-move board of a checker decision, the position itself for
+a cube decision); the callers pass that root through `root_board` /
+`pre_move_board`, the engine stores the answer in `EvalCtx.pinned_nn`, and
+every contact position in the tree - the batched interior picks in
+`eval_groups_pair` and the leaves, dances, forced moves and 1-ply entries
+in `pinned_post_probs` - is then evaluated with that one net. Race
+positions and exact bearoff positions keep their own values. Unwrapping
+must go through EVERY `BearoffStrategy` layer (the analyzer wraps once and
+the bindings wrap again), and the pin is part of the eval-cache fingerprint,
+since pinned and unpinned evaluations of one board are different values.
+Today only `BackgameAwarePairStrategy` pins, and only for the snake net on
+the 23-NN layout (`root_pinned_`, default `{22}`); every other strategy
+returns -1 and routes per node exactly as above. Rationale and results:
+CLAUDE.md, "Stage 11s", round 2.
+
 ### Leaf Reuse at 2-Ply Nodes
 
 At a `plies == 2` internal node, the leaf evaluation of the picked move would

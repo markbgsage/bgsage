@@ -5062,7 +5062,22 @@ PYBIND11_MODULE(bgbot_cpp, m) {
     py::class_<BearoffStrategy, Strategy, std::shared_ptr<BearoffStrategy>>(m, "BearoffStrategy")
         .def(py::init<std::shared_ptr<Strategy>, const BearoffDB*>(),
              py::arg("base"), py::arg("db"),
-             py::keep_alive<1, 3>());  // BearoffStrategy keeps db alive
+             py::keep_alive<1, 3>())  // BearoffStrategy keeps db alive
+        // Root-routing controls, forwarded to the wrapped pair strategy (the
+        // analyzer hands out its 1-ply strategy wrapped in this class).
+        .def("set_root_pinned", [](BearoffStrategy& self, std::vector<int> nn_indices) {
+            auto* bg = dynamic_cast<BackgameAwarePairStrategy*>(
+                const_cast<Strategy*>(&self.base()));
+            if (!bg) throw std::runtime_error("wrapped strategy has no root routing");
+            bg->set_root_pinned(std::move(nn_indices));
+        }, py::arg("nn_indices"))
+        .def("root_pinned", [](const BearoffStrategy& self) {
+            auto* bg = dynamic_cast<const BackgameAwarePairStrategy*>(&self.base());
+            return bg ? bg->root_pinned() : std::vector<int>{};
+        })
+        .def("root_pin_for", [](const BearoffStrategy& self, const std::vector<int>& root) {
+            return self.root_pin_for(list_to_board(root));
+        }, py::arg("root"));
 
     // Setter for MultiPlyStrategy bearoff DB
     m.def("multipy_set_bearoff_db", [](MultiPlyStrategy& strat, const BearoffDB* db) {
@@ -5364,6 +5379,13 @@ PYBIND11_MODULE(bgbot_cpp, m) {
             return result;
         }, "Evaluate board at 1-ply (raw NN), returns probs and equity",
            py::arg("board"), py::arg("pre_move_board"))
+        .def("set_root_pinned", &BackgameAwarePairStrategy::set_root_pinned, py::arg("nn_indices"),
+             "Root routing: NN indices that pin a whole search tree rooted in their region "
+             "(default [22], the snake net, on the 23-NN layout); [] disables it")
+        .def("root_pinned", [](const BackgameAwarePairStrategy& self) { return self.root_pinned(); })
+        .def("root_pin_for", [](const BackgameAwarePairStrategy& self, const std::vector<int>& root) {
+            return self.root_pin_for(list_to_board(root));
+        }, py::arg("root"), "The NN index a search tree rooted at `root` is pinned to, or -1")
         .def("select_nn_idx", [](BackgameAwarePairStrategy& self,
                                   const std::vector<int>& board) {
             // Delegate to the real routing (public accessor) so this never
@@ -5668,9 +5690,16 @@ PYBIND11_MODULE(bgbot_cpp, m) {
              int cube_value,
              int away1, int away2, bool is_crawford,
              bool jacoby, bool beaver,
-             const BearoffDB* bearoff_db) {
+             const BearoffDB* bearoff_db,
+             const std::vector<int>& root_board) {
         Board board = list_to_board(board_vec);
         MoveFilter filter{filter_max_moves, filter_threshold};
+        Board root{};
+        const Board* root_ptr = nullptr;
+        if (!root_board.empty()) {
+            root = list_to_board(root_board);
+            root_ptr = &root;
+        }
 
         std::shared_ptr<Strategy> eval_strat = strategy;
         if (bearoff_db && bearoff_db->is_loaded()) {
@@ -5685,7 +5714,7 @@ PYBIND11_MODULE(bgbot_cpp, m) {
                          is_crawford},
                         -1.0f, jacoby, beaver};
             result = cubeful_probs_and_equity_nply(
-                board, ci, *eval_strat, n_plies, filter, n_threads);
+                board, ci, *eval_strat, n_plies, filter, n_threads, nullptr, root_ptr);
         }
         py::dict d;
         d["probs"] = result.probs;
@@ -5701,7 +5730,8 @@ PYBIND11_MODULE(bgbot_cpp, m) {
        py::arg("cube_value") = 1,
        py::arg("away1") = 0, py::arg("away2") = 0, py::arg("is_crawford") = false,
        py::arg("jacoby") = true, py::arg("beaver") = true,
-       py::arg("bearoff_db") = nullptr);
+       py::arg("bearoff_db") = nullptr,
+       py::arg("root_board") = std::vector<int>{});
 
     // --- Unified 1-ply cube decision ---
     m.def("evaluate_cube_decision_unified", [](const std::vector<int>& checkers,

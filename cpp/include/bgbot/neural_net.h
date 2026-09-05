@@ -611,6 +611,19 @@ public:
     // candidates (which cannot share a delta-eval base).
     std::array<float, NN_OUTPUTS> probs_with_nn(const Board& board, int nn_idx) const;
 
+    // Root routing. A search tree rooted at a position one of these nets
+    // owns is evaluated by that net throughout — every candidate, reply and
+    // leaf, races excepted — instead of each node picking its own net.
+    // Measured on the snake folder (2026-09-04): the leaves below a release
+    // move are one half-move outside the region, where the standard nets
+    // are hopeless (RMSE 0.32 on the harvest's exit rows the snake net fits
+    // at 0.047), so per-node routing valued release candidates by the wrong
+    // net and 2-ply scored worse than 1-ply. Default: the snake net on the
+    // 23-NN layout. An empty list disables root routing.
+    int root_pin_for(const Board& root) const override;
+    void set_root_pinned(std::vector<int> nn_indices) { root_pinned_ = std::move(nn_indices); }
+    const std::vector<int>& root_pinned() const { return root_pinned_; }
+
 private:
     std::vector<std::shared_ptr<NeuralNetwork>> nns_;  // 19 (base), 20 (categorized) or 21 (hybrid)
     bool blended_backgame_ = false;      // true when 21 NNs are loaded
@@ -618,6 +631,7 @@ private:
     bool phase_containment_ = false;     // Stage 11 phased: out-of-region early
                                          // containment -> NN 20
     bool snake_ = false;                 // phased with 23 NNs: snake -> NN 22
+    std::vector<int> root_pinned_;       // nets that pin a search tree rooted in their region
 
     // Determine which NN to use. Returns 0 for purerace, 1-16 for standard
     // contact pairs, 17 for player backgame, 18 for opponent backgame; on

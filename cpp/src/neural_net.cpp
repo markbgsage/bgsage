@@ -3,6 +3,7 @@
 #include "bgbot/neural_net.h"
 #include "bgbot/board.h"
 #include "bgbot/encoding.h"
+#include <cstdlib>
 #include <cmath>
 #include <cstring>
 #include <random>
@@ -2555,6 +2556,11 @@ BackgameAwarePairStrategy::BackgameAwarePairStrategy(
     }
     phase_containment_ = phase_containment;
     snake_ = phase_containment && (n == NUM_BACKGAME_PAIR_NNS_PHASED_SNAKE);
+    // Root routing defaults to the snake net on the 23-NN layout; the
+    // BGSAGE_NO_ROOT_ROUTING environment variable disables it process-wide
+    // (A/B scoring: the cube path builds its strategy inside C++, out of
+    // reach of the Python set_root_pinned control).
+    if (snake_ && !std::getenv("BGSAGE_NO_ROOT_ROUTING")) root_pinned_ = {22};
     blended_backgame_ = !phase_containment && (n == NUM_BACKGAME_PAIR_NNS_HYBRID);
     categorized_backgame_ = phase_containment || (n == NUM_BACKGAME_PAIR_NNS_CATEGORIZED);
     nns_.resize(n);
@@ -2567,6 +2573,13 @@ BackgameAwarePairStrategy::BackgameAwarePairStrategy(
                 ": " + weight_paths[i]);
         nns_[i]->ensure_transposed_weights();
     }
+}
+
+int BackgameAwarePairStrategy::root_pin_for(const Board& root) const {
+    if (root_pinned_.empty()) return -1;
+    const int idx = select_nn_idx(root);
+    for (int p : root_pinned_) if (p == idx) return idx;
+    return -1;
 }
 
 int BackgameAwarePairStrategy::select_nn_idx(const Board& board) const {
