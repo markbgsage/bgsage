@@ -854,7 +854,11 @@ def generate_folder(
     # a benchmark decision too — its cube decision, from the player-1 frame the
     # seed file uses. (2026-09-04: earlier benchmarks recorded only the
     # decisions that arose in play from a seed.)
+    # ... with the in-play ownership filter (record() below): a seed where
+    # the opponent owns the cube is no cube decision for the player.
     for st in starts:
+        if st.cube_owner not in ("centered", "player"):
+            continue
         found.setdefault(Decision("cube", st.cube_value, st.cube_owner, None,
                                   tuple(st.board)), None)
     game_index = int(state.get("games", 0))

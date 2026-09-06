@@ -95,7 +95,16 @@ def load_reference(category: str, limit: int | None) -> list[dict]:
 
 
 def cube_subdecisions(entry: dict) -> tuple[bool, bool]:
-    """Which of a cube position's two sub-decisions count, per the rollout."""
+    """Which of a cube position's two sub-decisions count, per the rollout.
+
+    A record where the OPPONENT owns the cube is no decision at all: the
+    player cannot double, so nothing is graded. (Seeds recorded as cube
+    decisions carried such records into the massive and containment folders
+    and, graded as doubles, charged every gated engine level the full ND —
+    the 2026-09-06 "2-ply cube anomaly".)
+    """
+    if entry.get("cube_owner") == "opponent":
+        return False, False
     nd, dt, dp = entry["equity_nd"], entry["equity_dt"], entry["equity_dp"]
     has_double = not _is_trivial_cube(nd, dt, dp)
     has_take = bool(entry.get("should_double_ref")) and (
@@ -117,6 +126,7 @@ def score_level(rows: list[dict], level: str, threads: int,
     counts = {"checker": 0, "cube": 0}
     blunders = {"checker": 0, "cube": 0}
     rollout_grade_picks = mismatches = 0
+    skipped_opponent_cube = 0
     # Checker error carried by rollout-graded picks vs filter-graded picks:
     # the second is scored against a 1-/2-ply value and over-charges any bot
     # whose picks fall outside the reference player's filter set.
@@ -152,6 +162,8 @@ def score_level(rows: list[dict], level: str, threads: int,
             else:
                 filt_sum += error
         else:
+            if entry.get("cube_owner") == "opponent":
+                skipped_opponent_cube += 1
             has_double, has_take = cube_subdecisions(entry)
             if not (has_double or has_take):
                 continue
@@ -200,6 +212,7 @@ def score_level(rows: list[dict], level: str, threads: int,
                               if counts["checker"] else 0.0),
         "filter_graded_mass_pct": 100 * filt_sum / err_total if err_total else 0.0,
         "mismatches": mismatches,
+        "skipped_opponent_cube": skipped_opponent_cube,
         "seconds": time.perf_counter() - started,
     }
 

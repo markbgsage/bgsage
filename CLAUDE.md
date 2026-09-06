@@ -2269,10 +2269,11 @@ blunder counts where they matter:
 Two things to keep in mind when reading it. Completing the candidates moved
 Stage 9's own containment number from 11.82 to 10.23 — its filter-graded
 picks had been over-charged too — so never compare a completed reference
-with an uncompleted one. And on this folder both Stage 9 and the trio score
-WORSE at 2-ply than at 1-ply, on checker and cube errors alike (cube
-2.77 -> 7.23 -> 2.77 for Stage 9 across 3P/2P/1P is not a typo); `stage11p`
-improves monotonically. The Stage 11s section below has the diagnosis.
+with an uncompleted one. And the 2-ply CUBE numbers in it (Stage 9's cube
+2.77 -> 7.23 -> 2.77 across 3P/2P/1P) carried the opponent-owned-cube
+scoring artifact described under "Cube scoring: the opponent-owned-cube
+artifact" below; the checker-play 2P-worse-than-1P shape for Stage 9 and
+the trio is the data-coverage effect the Stage 11s section diagnoses.
 
 ### Stage 11s — EXPERIMENTAL: the snake NN (index 22)
 
@@ -2569,13 +2570,86 @@ layout from the 7.28 the page still quotes to 6.30 at 1-ply and Stage 9 from
 | with the massive net (24 NNs), per-node | 5.39 / 5.77 / 4.14 \| 5.96 / 4.71 / 2.95 |
 | ... blunders | 63 / 75 / 41 \| 83 / 64 / 29 |
 
-So: clearly better at 1-ply, slightly better at 2-ply, level at 3-ply, and
-on the ordinary-game slice a gain rather than a regression — the money
+(The cube part of every 2-ply and 3-ply figure here was inflated by the
+opponent-owned-cube artifact below until 2026-09-06; the rescored table is
+in that section.) So: clearly better at 1-ply, slightly better at 2-ply,
+level at 3-ply, and on the ordinary-game slice a gain rather than a regression — the money
 benchmark's 52 massive-rule decisions score 3.73 with no blunders against
 the previous layout's 5.89 and Stage 9's 5.47 — while the ten backgame
 folders, where the rule claims up to 18% of a folder, pool to 2.98 at 1-ply
 with it, the same as without. A small, clean win at the leaves that the
 search does not amplify.
+
+### Cube scoring: the opponent-owned-cube artifact (found and fixed 2026-09-06)
+
+On the massive and containment folders the CUBE part of the PR was two to
+three times higher at 2-ply than at 1-ply or 3-ply, for Stage 9 and Stage
+11 alike. A nine-agent investigation (four independent angles, three
+adversarial verifications) found no 2-ply defect; it was a scoring artifact
+with three links:
+
+* `backgame_benchmark.py` started recording every SEED as a cube decision on
+  2026-09-04 without the ownership filter it applies to in-play decisions,
+  so 20 massive and 14 containment records (none in the S11-play twins,
+  rolled out two days earlier, and none on the snake folder) had the
+  OPPONENT owning the cube — no decision for the player at all.
+* the parent repo's rollout aggregator re-derived `should_double` from the
+  pooled ND/DT with no ownership test, and for an opponent-owned cube the
+  "DT branch" is the same game at doubled stakes, so DT = 2 x ND and the
+  record graded as a Double whenever ND > 0;
+* `score_backgame_pr.py` then charged any engine answering No Double the
+  full ND. The 1-ply money cube path (`cube_decision_1ply_money`) had no
+  `can_double` gate, "doubled", and was charged nothing; every N-ply path
+  gates, answered No Double, and was charged exactly ND per record — 6.05
+  equity on massive (8.45 cube-PR points, ~1.4 points of folder PR) and
+  5.40 on containment (3.15 and ~0.8), identically at 2-ply and 3-ply. So
+  the 1-ply cube numbers were flattered and the 3-ply ones as distorted as
+  the 2-ply ones.
+
+Fixed in four places: the scorer skips opponent-owned cube records (and
+reports the count), the aggregator writes No Double flags for them (the
+existing references' flags were rewritten in place — 31 records, ND/DT/DP
+untouched), the generator applies the in-play ownership filter to seeds,
+and `cube_decision_1ply_money` gates on `can_double` like the match path
+(every rollout call to it already sat behind a `can_double` guard, so no
+rollout changes; `cube_points.py` only consults a side's `should_double`
+when that side can double).
+
+**What remains after the fix is real, general and not a tree defect**: 2-ply
+is no better than 1-ply on cube decisions and 3-ply is about three times
+better — on the money benchmark cube PR runs 3.24 / 2.91 / 0.61 / 0.50 at
+1 to 4 ply. The 1-ply Janowski leaf, with cube life fixed at
+`cube_efficiency`'s 0.68 for contact, under-values the centred-cube No
+Double for the side holding the initiative, so 1-ply and 2-ply both
+over-double; a 2-ply cube tree adds only the opponent's cube node, and the
+player's own next cube node first appears at 3-ply, which is the repair. A
+Python replica reproduces the 2-ply tree bit-exactly, Jacoby is not the
+cause, and a uniform cube life of 0.85 fixes 2-ply (massive 6.50 -> 1.68,
+money 2.91 -> 1.87) while regressing 1-ply and 3-ply on the money
+benchmark — so the real fix is a family- and ply-dependent cube life, the
+ML implied-cube-life index `cube_efficiency` already reserves a slot for.
+Until then, treat 2-ply cube decisions as 1-ply quality wherever a level
+is chosen for cube hints or PR grading. Side findings, not fixed: the
+reference pipeline double-applies the beaver on opponent-owned records
+(harmless to PR); the S9-play snake reference's cube values are
+trial-player distorted (its 3-ply cube PR is worst, the twin's best); and
+checker play routes a candidate's net from the pre-move board while the
+cube tree routes from the candidate board.
+
+**Rescored with the artifact removed (2026-09-06)** — the completed
+references as they stand, opponent-owned cube records skipped (20 on massive, 14 on containment). PR at 1P / 2P / 3P,
+with the cube part alone in the second column:
+
+| Model, folder | PR | cube PR | blunders |
+|---|---|---|---|
+| Stage 9, massive backgame | 9.93 / 8.08 / 4.86 | 8.84 / 7.15 / 2.54 | 158 / 133 / 57 |
+| previous layout (23 NNs), massive backgame | 6.32 / 4.51 / 2.66 | 6.74 / 6.67 / 1.74 | 84 / 60 / 17 |
+| Stage 11 (24 NNs), massive backgame | 5.44 / 4.38 / 2.74 | 6.74 / 6.50 / 2.04 | 63 / 59 / 25 |
+| Stage 9, containment | 10.10 / 10.53 / 6.16 | 5.93 / 6.50 / 2.85 | 257 / 266 / 144 |
+| Stage 11 (24 NNs), containment | 6.77 / 4.88 / 2.82 | 5.95 / 6.39 / 2.02 | 150 / 83 / 40 |
+
+Cube PR is now monotone in ply on both folders, as it always was on the
+S11-play twins.
 
 ## Glossary
 

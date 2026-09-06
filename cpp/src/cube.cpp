@@ -696,6 +696,17 @@ static CubeDecision cube_decision_1ply_money(
         result.is_beaver = false;
     }
 
+    // A player who cannot double (the opponent owns the cube) has no
+    // decision: report the equities and No Double, exactly as the match path
+    // and every N-ply path do. (Until 2026-09-06 this path had no gate and
+    // "doubled" whenever DT beat ND.)
+    if (!can_double(cube)) {
+        result.should_double = false;
+        result.should_take = true;
+        result.optimal_equity = result.equity_nd;
+        return result;
+    }
+
     // Decision logic
     // If we double, the opponent picks the response that gives us LESS equity.
     // With beaver: opponent already chose min(DT, DB, DP) — result.equity_dt
