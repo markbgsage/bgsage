@@ -1197,7 +1197,9 @@ def _score_checker(bot: BenchmarkBot, entry: dict) -> Optional[dict]:
     if chosen_eq is None:
         return None  # bot's move not among the reference's legal moves (contract issue)
     best_eq = entry["moves"][0]["equity"]
-    return _scored("checker", "checker", entry.get("game_plan"), max(0.0, best_eq - chosen_eq))
+    s = _scored("checker", "checker", entry.get("game_plan"), max(0.0, best_eq - chosen_eq))
+    s["pick"] = list(chosen)
+    return s
 
 
 def _score_cube(bot: BenchmarkBot, entry: dict) -> list[dict]:
@@ -1221,6 +1223,8 @@ def _score_cube(bot: BenchmarkBot, entry: dict) -> list[dict]:
         optimal = min(dt, dp)
         actual = dt if a.should_take else dp
         out.append(_scored("cube", "take", plan, max(0.0, actual - optimal)))
+    for o in out:
+        o["pick"] = {"should_double": bool(a.should_double), "should_take": bool(a.should_take)}
     return out
 
 
@@ -1237,7 +1241,10 @@ def _score_entry(bot: BenchmarkBot, entry: dict) -> Optional[dict]:
         scored = [s]
     else:
         scored = _score_cube(bot, entry)
-    return {"key": entry["key"], "scored": scored}
+    pick = None
+    for s in scored:
+        pick = s.pop("pick", pick)
+    return {"key": entry["key"], "scored": scored, "kind": entry["kind"], "pick": pick}
 
 
 def _aggregate(entry_results: Iterable[dict]) -> dict:
@@ -1394,6 +1401,10 @@ def benchmark_pr(
     lock = threading.Lock()
     mismatches = 0
     f = cache_path.open("a", encoding="utf-8")
+    # The bot's choice per decision, in the layout every pick-based comparison
+    # reads (the XG-reference rescoring, the disputed-position study).
+    picks_path = cache_path.with_name(cache_path.stem + ".picks.jsonl")
+    pf = picks_path.open("a", encoding="utf-8")
     try:
         done = 0
         total = len(todo)
@@ -1407,6 +1418,10 @@ def benchmark_pr(
                 if result is None:
                     mismatches += 1
                 else:
+                    pf.write(json.dumps({"key": result["key"], "kind": result["kind"], "pick": result["pick"]},
+                                        separators=(",", ":")) + "\n")
+                    pf.flush()
+                    result = {"key": result["key"], "scored": result["scored"]}
                     cached[result["key"]] = result
                     f.write(json.dumps(result, separators=(",", ":")) + "\n")
                     f.flush()
@@ -1427,6 +1442,7 @@ def benchmark_pr(
                     list(ex.map(_work, todo))
     finally:
         f.close()
+        pf.close()
 
     if mismatches:
         _log(f"WARNING: {mismatches} decisions skipped - the bot's chosen checker play "

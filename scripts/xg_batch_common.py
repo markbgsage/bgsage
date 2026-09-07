@@ -70,16 +70,19 @@ class BenchmarkPaths:
         return self.xg_base_dir / self.base_pattern.format(seed=seed)
 
     def xg_level_file(self, level: str, seed: int) -> Path:
-        """Batch-analyze .xg file for an XG level ('roller'/'rollerplus'/'rollerpp').
+        """Batch-analyze .xg file for an XG level ('ply3'/'ply4'/'roller'/'rollerplus'/'rollerpp').
 
         Money: xg/seed_<N>_{roller,p,pp}.xg. Match: xg_snapshots/{roller,roller_p,
         roller_pp}/match_seed_<N>.xg. 'rollerpp' is the mark base file.
         """
         if self.is_match:
-            sub = {"roller": "roller", "rollerplus": "roller_p",
-                   "rollerpp": "roller_pp"}[level]
+            sub = {"ply3": "ply3", "ply4": "ply4", "roller": "roller",
+                   "rollerplus": "roller_p", "rollerpp": "roller_pp"}[level]
             return self.xg_base_dir.parent / sub / f"match_seed_{seed}.xg"
-        suf = {"roller": "_roller", "rollerplus": "_p", "rollerpp": "_pp"}[level]
+        # Money: the plain seed_<N>.xg is the 4-ply batch (XG re-analyses a file
+        # in place, so the 3-ply batch was kept as a _3p copy).
+        suf = {"ply3": "_3p", "ply4": "", "roller": "_roller",
+               "rollerplus": "_p", "rollerpp": "_pp"}[level]
         return self.xg_base_dir / f"seed_{seed}{suf}.xg"
 
     def staged_file(self, batch_set: str, seed: int) -> Path:

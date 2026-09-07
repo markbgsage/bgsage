@@ -73,15 +73,21 @@ def main(argv=None):
                         help="Pasko benchmark dataset JSON")
     parser.add_argument("--max-seed", type=int, default=None,
                         help="Only score the first N games (.xg files with seed <= MAX_SEED)")
+    parser.add_argument("--json", type=Path, default=None, help="also write the PR breakdown here")
+    parser.add_argument("--picks", type=Path, default=None,
+                        help="also write XG's chosen decision per position ({key, kind, pick})")
     args = parser.parse_args(argv)
 
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s",
                         datefmt="%H:%M:%S")
 
     result = xgm.benchmark_pr(xg_dir=args.xg_dir, dataset_path=args.dataset,
-                              max_seed=args.max_seed)
+                              max_seed=args.max_seed, picks_path=args.picks)
     print(f"\nScored: XG (eXtreme Gammon) over {result['n_games']} games  [{args.xg_dir.name}]")
     xgm.bm._print_report(result)
+    if args.json:
+        import json
+        args.json.write_text(json.dumps(result, indent=1, default=str), encoding="utf-8")
     if result.get("unmatched"):
         print(f"Outside benchmark: {result['unmatched']} XG decisions are positions the "
               f"dataset does not capture (forced moves, trivial spreads/cubes) -- not scored")

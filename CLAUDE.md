@@ -129,7 +129,7 @@ all scripts and the analyzer use by default. It is defined in one place:
 
 ```python
 # python/bgsage/weights.py
-PRODUCTION_MODEL: str = "stage5"   # ← change this line to promote a new model
+PRODUCTION_MODEL: str = "stage11"   # ← change this line to promote a new model
 ```
 
 The `MODELS` registry maps model names to their hidden sizes and weight file patterns:
@@ -708,10 +708,32 @@ The goal is to benchmark Sage's evaluations against XG (eXtreme Gammon),
 historically considered the strongest backgammon engine. There are two
 natural approaches:
 
-1. **Head-to-head play** — Sage and XG play thousands of games against
-   each other; tally points. XG has no API, so feeding moves between the
-   two engines is a manual click-through ritual. Even at one game a minute,
-   reaching a meaningful sample size takes far too long to be practical.
+1. **Head-to-head play** — Sage and XG play games against each other;
+   tally points. XG has no API, so `scripts/play_sage_vs_xg.py` gets XG's
+   moves out of its own analysis: Sage plays both sides of a money game,
+   the transcript is batch-analysed in XG, the first opponent decision that
+   differs from XG's #1 is replaced by XG's move and the game replayed from
+   there with fresh dice, until every opponent move is XG's (XG's "too good
+   to double", `flag_double == -1`, counts as no double).
+   `scripts/run_sage_vs_xg_games.py <n_games> [--level 3P]` plays a series
+   (seeds continue from `logs/sage_vs_xg.txt`, one `seed, level: ±score`
+   line per converged game) and prints the mean points per game with its
+   standard error. XG must be running on the Windows desktop: each
+   iteration drives its Batch Analyze dialog through
+   `scripts/xg_batch_analyze.py` — an Anthropic Computer Use agent
+   (`ANTHROPIC_API_KEY` in the environment or `bgsage/.env`; `pyautogui`
+   takes the mouse and keyboard for about a minute per iteration). Its
+   `run_computer_use(prompt)` is the reusable driver. For a FIXED dialog flow
+   prefer `scripts/xg_batch_win.py` — pywinauto (Win32 backend) driving the
+   Batch Analyze form's real controls (`TBatchDlg`: Choose / Start buttons,
+   the check boxes, the per-player "Analyze Level" combo, which lists XG's
+   analysis PROFILES such as `Sage2P` / `Sage3P` / `Custom Setting 4Ply` /
+   `Custom Setting ++`, and the Open dialog's list view for a select-all;
+   the menu bar is a Delphi action bar, opened by clicking "Analyze" ~353 px
+   from the window's left edge). No vision model, no API cost, deterministic
+   — measured 2026-09-06: the Computer Use agent could not finish the same
+   flow on the 7,680-px-wide desktop. `xg_folder_batch.py` uses it to
+   Batch-Analyze the folder-benchmark shards a level at a time.
 
 2. **Sage plays itself; XG scores it** — Sage plays both sides of many
    games, each game is exported as text, and XG's *Batch Analyze* feature
@@ -1538,18 +1560,22 @@ double; trailer should double immediately.
 **Equities are always normalized:** DP = +1.0 in equity space for both money and match
 (by definition of the `mwc2eq` linear normalization). ND and DT vary by score.
 
-## Current Best Scores (Production Model: stage5)
+## Stage 5 Scores (historical baseline — NOT the production model)
 
-| Metric | 1-ply | Target |
+These are Stage 5's numbers, kept as the baseline the later stages are measured
+against. **The production model is `stage11`** (`PRODUCTION_MODEL` in
+`python/bgsage/weights.py`); its results live in the Stage 11 sections below and
+in `MODEL_BENCHMARKS.md`. The 1-ply contact/race ER and PubEval figures here have
+not been re-run for Stage 11 — re-run `scripts/run_full_benchmark.py --model
+stage11` before quoting a headline 1-ply ER for the current engine.
+
+| Metric (Stage 5) | 1-ply | Target |
 |--------|-------|--------|
 | Contact ER | 9.87 | < 10.5 |
 | Race ER | 0.95 | < 0.643 |
 | vs PubEval | +0.633 | > +0.63 |
 
-Benchmark PR (103k decisions): 1-ply=2.47, 2-ply=1.85, 3-ply=1.53.
-
-The production model is defined in `python/bgsage/weights.py` — see "Production Model"
-section above. See `MODEL_BENCHMARKS.md` for full comparison of all trained models.
+Benchmark PR (103k decisions), Stage 5: 1-ply=2.47, 2-ply=1.85, 3-ply=1.53.
 
 ## Stage 6 (S6) — Mid-Size Model
 
@@ -2044,7 +2070,7 @@ massive), i.e. what the sections below arrived at. The intermediate names
 those sections use — the 20-NN trio, `stage11p` (22), `stage11s` (23),
 `stage11m` (24) — are the history of how it was built and no longer
 resolve; the C++ strategy still accepts 22 or 23 paths for A/B work.
-`PRODUCTION_MODEL` is still `stage9`.
+**`stage11` is the production model** (`PRODUCTION_MODEL` in `weights.py`).
 
 #### The categorized backgame trio (the first step)
 

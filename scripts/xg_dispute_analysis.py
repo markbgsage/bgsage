@@ -34,6 +34,7 @@ Usage:
 import argparse
 import json
 import sys
+from pathlib import Path
 from collections import defaultdict
 
 import xg_batch_common as xbc
@@ -94,12 +95,29 @@ class Tally:
               f"(PR: {self.sage_err/n*500:.2f} vs {self.xg_err/n*500:.2f})")
 
 
-def score(benchmark: str, match_length: int = 5) -> dict:
+def score(benchmark: str, match_length: int = 5, sage_picks: str | None = None) -> dict:
+    """``sage_picks``: a ``scores/<label>.picks.jsonl`` ({key, kind, pick}) giving
+    Sage 3T's choices directly (a recorded checker board / double-take pair);
+    without it the picks come from the build's stage2_3t.jsonl."""
     paths = xbc.paths_for(benchmark, match_length)
     dataset = json.loads(paths.dataset.read_text(encoding="utf-8"))
     by_key = {d["key"]: d for d in dataset["decisions"]}
     xro = _load_jsonl(paths.cache_file("rollout"))
     stage2 = _load_jsonl(paths.dataset.parent / "build" / "stage2_3t.jsonl")
+    if sage_picks:
+        # Shape the recorded picks like stage2 records: a one-move list for
+        # checker picks, and nd/dt/dp that encode the recorded cube action.
+        stage2 = {}
+        for r in _load_jsonl(Path(sage_picks)).values():
+            if r.get("pick") is None:
+                continue
+            if r["kind"] == "checker":
+                stage2[r["key"]] = {"moves": [{"board": r["pick"], "equity": 0.0}]}
+            else:
+                sd, st = r["pick"]["should_double"], r["pick"]["should_take"]
+                # _cube_action(nd, dt, dp) = (min(dt,dp) > nd, dt <= dp)
+                stage2[r["key"]] = {"equity_nd": 0.0 if sd else 1.0,
+                                    "equity_dt": 0.5 if st else 1.5, "equity_dp": 1.0}
 
     decs = [by_key[k] for k in xro if by_key.get(k) and by_key[k]["tier"] == "rollout"]
     by_seed = defaultdict(list)
@@ -194,8 +212,9 @@ def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     ap.add_argument("--benchmark", choices=["money", "match"], default="money")
     ap.add_argument("--match-length", type=int, default=5)
+    ap.add_argument("--sage-picks", default=None, help="scores/<label>.picks.jsonl with Sage 3T's recorded picks")
     args = ap.parse_args(argv)
-    print_report(score(args.benchmark, args.match_length), args.benchmark)
+    print_report(score(args.benchmark, args.match_length, args.sage_picks), args.benchmark)
 
 
 if __name__ == "__main__":

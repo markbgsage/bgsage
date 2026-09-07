@@ -160,7 +160,8 @@ def _score_xg_cube(refined: dict, should_double: bool, should_take: bool) -> lis
 
 def benchmark_pr(xg_dir: Path | str = _XG_DIR,
                  dataset_path: Path | str = DEFAULT_DATASET,
-                 progress: bool = True, max_seed: int | None = None) -> dict:
+                 progress: bool = True, max_seed: int | None = None,
+                 picks_path: Path | str | None = None) -> dict:
     """Score XG against the benchmark for every game that has a ``.xg`` file.
 
     Returns the same result dict as ``benchmark_money.benchmark_pr`` (total/checker/cube
@@ -180,6 +181,7 @@ def benchmark_pr(xg_dir: Path | str = _XG_DIR,
 
     seen: set = set()
     records: list = []
+    picks: list = []          # XG's chosen decision per position, when picks_path is set
     skipped = {"rollout": 0, "3t": 0}
     unmatched = 0
     mismatches = 0
@@ -212,14 +214,23 @@ def benchmark_pr(xg_dir: Path | str = _XG_DIR,
                 skipped[miss] += 1
                 continue
             if kind == "checker":
+                picks.append({"key": key, "kind": "checker", "pick": list(choice["best_board"])})
                 s = _score_xg_checker(refined, choice["best_board"])
                 if s is None:
                     mismatches += 1
                     continue
                 records.append({"key": key, "scored": [s]})
             else:
+                picks.append({"key": key, "kind": "cube",
+                              "pick": {"should_double": bool(choice["should_double"]),
+                                       "should_take": bool(choice["should_take"])}})
                 records.append({"key": key, "scored": _score_xg_cube(
                     refined, choice["should_double"], choice["should_take"])})
+
+    if picks_path is not None:
+        Path(picks_path).parent.mkdir(parents=True, exist_ok=True)
+        Path(picks_path).write_text(
+            "".join(json.dumps(r, separators=(",", ":")) + "\n" for r in picks), encoding="utf-8")
 
     result = bm._aggregate(records)
     n_skipped = skipped["rollout"] + skipped["3t"]

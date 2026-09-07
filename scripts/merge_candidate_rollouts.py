@@ -53,13 +53,21 @@ def merge(category: str) -> None:
         print(f"{category}: no candidate rollouts ({cand_path.name} missing)")
         return
 
-    # A decision may have several candidate records (a make-up run appends
-    # "|cand2", ...); pool every rolled board across them.
+    # A decision may have several candidate records (a make-up run appends its
+    # own suffix); pool every rolled board across them. Strip EVERY trailing
+    # "|<tag>" segment, not just "|cand<n>": runs have used "|comp",
+    # "|cands11" and doubled tags like "|s11|cand", and a suffix the pattern
+    # missed did not fail loudly -- the record simply never matched a decision
+    # and its rollout was discarded in silence. 3,031 of 6,941 candidate
+    # records on disk were being dropped that way. Reference keys are hex
+    # hashes and never contain "|", so stripping all of them is safe.
     rolled: dict[str, dict] = {}
+    seen_bases: set[str] = set()
     for line in cand_path.open(encoding="utf-8"):
         if line.strip():
             r = json.loads(line)
-            base = re.sub(r"\|cand\d*$", "", r["key"])
+            base = re.sub(r"(?:\|[A-Za-z0-9_]+)+$", "", r["key"])
+            seen_bases.add(base)
             acc = rolled.setdefault(base, {"moves": [], "force_boards": []})
             acc["moves"].extend(r["moves"])
             acc["force_boards"].extend(r.get("force_boards", []))
@@ -72,11 +80,14 @@ def merge(category: str) -> None:
         shutil.copy2(ref_path, backup)
 
     out_lines, n_dec, n_moves = [], 0, 0
+    matched: set[str] = set()
     for line in ref_path.open(encoding="utf-8"):
         if not line.strip():
             continue
         rec = json.loads(line)
         cand = rolled.get(rec["key"])
+        if cand is not None:
+            matched.add(rec["key"])
         if cand and rec["kind"] == "checker":
             by_board = {tuple(m["board"]): m for m in cand["moves"]
                         if m["eval_level"] == "Rollout"}
@@ -106,6 +117,13 @@ def merge(category: str) -> None:
     os.replace(tmp, ref_path)
     print(f"{category}: {n_moves} candidates upgraded to rollout grade across "
           f"{n_dec} decisions (backup: {backup.name})")
+    # A candidate record whose key matches no decision is rolled-out compute
+    # that has been thrown away. Say so: this failed silently for months.
+    orphans = seen_bases - matched
+    if orphans:
+        print(f"  WARNING: {len(orphans)} candidate key(s) matched no decision in "
+              f"this reference -- their rollouts were NOT merged "
+              f"(e.g. {sorted(orphans)[0]})")
 
 
 def main() -> None:
