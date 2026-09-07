@@ -35,7 +35,7 @@ trained, append its results to the tables below.
 per-plan ERs are not directly comparable to single-plan models. See pair-filtered
 benchmarks below. Stage 8 uses S5 fallback: any pair NN worse than S5 is replaced
 with the corresponding S5 plan weights. Stage 9 inherits all S8 standard pair
-weights verbatim and adds 2 specialized back game NNs; the Anchoring and Crashed
+weights verbatim and adds 2 specialized backgame NNs; the Anchoring and Crashed
 regressions vs S8 reflect the new `player_bg` NN underperforming on
 GNUbg-benchmark anch_race positions (see Stage 9 section).
 
@@ -517,24 +517,24 @@ the top-100 worst positions differ between models (selected by each model's own
 ## Stage 9 (19-NN Backgame-Aware Pair Strategy, 100h purerace / 400h contact, 2 backgame NNs)
 
 19 NNs: the 17 standard pair NNs from Stage 8 (selected by player × opponent
-game plan), plus 2 specialized back game NNs (`player_bg`, `opponent_bg`) that
+game plan), plus 2 specialized backgame NNs (`player_bg`, `opponent_bg`) that
 activate when an `(anchoring, racing)` or `(racing, anchoring)` pair also
-satisfies the back game criteria — the player/opponent is behind in pip count
+satisfies the backgame criteria — the player/opponent is behind in pip count
 AND holds ≥2 anchors in the opponent's home board. The 17 standard pair weights
 (including S8's S5-fallback replacements) are inherited verbatim from Stage 8.
-Only the 2 back game NNs are newly trained.
+Only the 2 backgame NNs are newly trained.
 
-Back game NN training: SL against rolled-out cubeless equities for 93,770
-player/opponent back game positions each. Two iterative rounds — Round 1 uses
+Backgame NN training: SL against rolled-out cubeless equities for 93,770
+player/opponent backgame positions each. Two iterative rounds — Round 1 uses
 Stage 8 rollouts as targets (1296 trials, 3-ply cubeless decisions, PubEval
 20/15 prefilter, VR), trains 100k steps @ α=3.1 + 250k steps @ α=1.0 from S8
 anchoring-pair fallback weights. Round 2 re-rolls out the training+benchmark
 positions with the Round-1 model and re-trains with the same schedule. The
 re-rollout step reduces the ~22 ER noise in the S8 targets that becomes the
-limiting factor once the back game NN's own ER drops below ~20.
+limiting factor once the backgame NN's own ER drops below ~20.
 
 Training scripts: `scripts/run_bg_train.py`, `scripts/run_bg_train2.py`,
-`scripts/run_bg_train_round2.py`. Back game benchmark scorer:
+`scripts/run_bg_train_round2.py`. Backgame benchmark scorer:
 `scripts/score_backgame_benchmark.py`.
 
 ### S9 Standard Benchmarks (1-ply)
@@ -554,7 +554,7 @@ Benchmark run: 2026-05-18, 32 threads, RTX 4070S / Windows.
 | vs PubEval | +0.642 | +0.633 | +0.633 |
 
 The 17 standard pair weights are identical to S8, so per-plan ERs reflect
-exclusively the impact of routing back game positions to the new `player_bg` /
+exclusively the impact of routing backgame positions to the new `player_bg` /
 `opponent_bg` NNs. The Anchoring regression (+0.70 vs S8) and Crashed
 regression (+0.27 vs S8) are dragged down by the `player_bg` NN underperforming
 the inherited Anchoring fallback weights on GNUbg-benchmark `anch_race`
@@ -567,7 +567,7 @@ self-play S/G/B% column is omitted).
 ### S9 Pair-Filtered Benchmarks vs S5 / S8 (1-ply)
 
 Each pair NN is scored only on benchmark positions matching its (player,
-opponent) game plan pair — including back game routing where applicable. S5
+opponent) game plan pair — including backgame routing where applicable. S5
 uses the player's plan NN on the same subset. S8 uses its 17-NN pair strategy
 on the same subset.
 
@@ -590,9 +590,9 @@ on the same subset.
 
 11 of 13 standard pair NNs match S8 exactly because S9 inherits S8's weights
 for those pairs. Only `race_anch` and `anch_race` diverge from S8 because
-positions in those pairs can be routed to a back game NN: `opponent_bg`
+positions in those pairs can be routed to a backgame NN: `opponent_bg`
 improves `race_anch` slightly (-0.09 vs S8), but `player_bg` regresses
-`anch_race` materially (+1.20 vs S8) on GNUbg-benchmark player back game
+`anch_race` materially (+1.20 vs S8) on GNUbg-benchmark player backgame
 positions. The weighted average is slightly worse than S8 (+0.16) because the
 large `anch_race` subset (29,037 positions) dominates.
 
@@ -610,8 +610,8 @@ Full 107,484-scenario contact.bm at 1/2/3-ply; 4-ply on step=21 subsample
 
 At 1-ply S9 is slightly worse than S8 (+0.08 ER), but at every higher ply S9
 pulls ahead — **−0.45 at 2-ply, −0.84 at 3-ply, −1.25 at 4-ply**. The deeper
-search compensates for the `player_bg` 1-ply weakness, while the back game NN's
-better representation of back game outcomes is amplified by multi-ply
+search compensates for the `player_bg` 1-ply weakness, while the backgame NN's
+better representation of backgame outcomes is amplified by multi-ply
 recursion. The 4-ply subsample (step=21) tracks the 3-ply full-dataset ER
 within sampling variance.
 
