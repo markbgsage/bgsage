@@ -4,7 +4,7 @@ build-backend = "scikit_build_core.build"
 
 [project]
 name = "bgsage"
-version = "1.7.20260829"
+version = "2.0.20260907"
 description = "Open Sage bot engine — a neural-network backgammon engine"
 readme = "README.md"
 license = "MPL-2.0"
@@ -48,39 +48,29 @@ cmake.build-type = "Release"
 # The Python package tree lives under python/, not at the repo root.
 wheel.packages = ["python/bgsage"]
 
-# sdist contents: by default scikit-build-core ships git-tracked files.
-# We strip everything that isn't needed to rebuild the wheel — non-production
-# model weights, training intermediates, benchmark data, rollout dumps.
-# The wheel itself only bundles stage9 weights + the bearoff DB (via CMake).
+# sdist contents: by default scikit-build-core ships every git-tracked file.
+#
+# This repo tracks ~1 GB of training/benchmark/reference data, and PyPI caps a
+# single file at 100 MB. So the policy here is an ALLOWLIST, not a denylist:
+# exclude whole trees, then re-add only the handful of files a source build
+# actually needs. A denylist was tried first and did not hold — each new
+# dataset (money_benchmark, backgame_ref_positions, match_benchmark, …) slipped
+# through unnoticed and the sdist grew from 9 MB to 535 MB before this caught it.
 sdist.exclude = [
-    # Non-production trained weights (only S9 ships with the wheel)
-    "models/sl_s3_*",
-    "models/sl_s4_*",
-    "models/sl_s5_*",
-    "models/sl_s5s_*",
-    "models/sl_s6_*",
-    "models/sl_s7_*",
-    "models/sl_s8_*",
-    "models/sl_anchoring*",
-    "models/sl_attacking*",
-    "models/sl_priming*",
-    "models/sl_purerace*",
-    "models/sl_racing*",
-    "models/exp_*",
-    # TD (temporal-difference) training snapshots
-    "models/td_*",
-    # Training intermediates (GPW scan checkpoints)
-    "models/s*_gpw_scan/",
-    # Benchmark + rollout data (used for training, not runtime)
-    "data/benchmark_pr/",
-    "data/benchmark_cubeful_pr/",
-    "data/*-rollout*",
-    "data/*-train-data",
-    "data/*-benchmark-data",
-    "data/*.bm",
-    # Dev tooling — not needed to rebuild the wheel
+    "data/",
+    "models/",
+    "backgame_ref_positions/",
+    "assets/",
     "scripts/",
     "tests/",
+    "logs/",
+]
+# Re-added after the excludes above. These patterns contain a "/", so they are
+# anchored to the repo root and cannot match copies under .claude/worktrees/.
+sdist.include = [
+    "data/bearoff_1sided.db",
+    "models/sl_s9_*.weights.best",
+    "models/sl_s11_*.weights.best",
 ]
 
 # ---------------------------------------------------------------------------

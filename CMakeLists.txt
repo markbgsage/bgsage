@@ -24,19 +24,44 @@ if(TARGET bgbot_cpp)
         RUNTIME DESTINATION .)
 endif()
 
-# Bundle the production model weights (stage9) and the bearoff database into
-# the wheel, inside the `bgsage` package under `_assets/`.  `weights.py`
-# discovers them there when running from an installed wheel.
-file(GLOB BGSAGE_STAGE9_WEIGHTS
-    "${CMAKE_CURRENT_SOURCE_DIR}/models/sl_s9_*.weights.best")
+# Bundle the production model's weights and the bearoff database into the
+# wheel, inside the `bgsage` package under `_assets/`.  `weights.py` discovers
+# them there when running from an installed wheel.
+#
+# The production model is `stage11` (PRODUCTION_MODEL in python/bgsage/weights.py),
+# a 24-NN layout: Stage 9's 17 standard pair NNs (sl_s9_*) carried unchanged,
+# plus 7 backgame/containment specialists (sl_s11_bg_*).  Both families are
+# required — omitting either makes BgBotAnalyzer() fail with FileNotFoundError
+# at runtime, which the build itself would not catch.
+#
+# WHEN PROMOTING A NEW PRODUCTION MODEL: add its weight-file pattern here, and
+# keep the BGSAGE_MIN_WEIGHTS floor below in step with the new file count.
+file(GLOB BGSAGE_MODEL_WEIGHTS
+    "${CMAKE_CURRENT_SOURCE_DIR}/models/sl_s9_*.weights.best"
+    "${CMAKE_CURRENT_SOURCE_DIR}/models/sl_s11_*.weights.best")
 
-if(NOT BGSAGE_STAGE9_WEIGHTS)
+# Drop training artifacts the registry never loads (e.g. the TD-init variant
+# sl_s11_bg_deep_tdinit) — they'd be dead weight in every wheel.
+list(FILTER BGSAGE_MODEL_WEIGHTS EXCLUDE REGEX "_tdinit\\.weights\\.best$")
+
+# stage11 resolves to 21 distinct files (14 sl_s9_* after NN sharing + 7
+# sl_s11_bg_*).  The glob picks up all 19 sl_s9_* files, so 26 is the expected
+# count; require at least 21 so a partial checkout fails the build loudly
+# rather than shipping a wheel that cannot construct an analyzer.
+set(BGSAGE_MIN_WEIGHTS 21)
+list(LENGTH BGSAGE_MODEL_WEIGHTS BGSAGE_N_WEIGHTS)
+
+if(BGSAGE_N_WEIGHTS LESS BGSAGE_MIN_WEIGHTS)
     message(FATAL_ERROR
-        "No stage9 weights found under ${CMAKE_CURRENT_SOURCE_DIR}/models/. "
-        "Expected sl_s9_*.weights.best files to be present for the wheel build.")
+        "Only ${BGSAGE_N_WEIGHTS} model weight files found under "
+        "${CMAKE_CURRENT_SOURCE_DIR}/models/ (need at least ${BGSAGE_MIN_WEIGHTS}). "
+        "The production model needs both sl_s9_*.weights.best and "
+        "sl_s11_*.weights.best to be present for the wheel build.")
 endif()
 
-install(FILES ${BGSAGE_STAGE9_WEIGHTS}
+message(STATUS "bgsage: bundling ${BGSAGE_N_WEIGHTS} model weight files")
+
+install(FILES ${BGSAGE_MODEL_WEIGHTS}
     DESTINATION bgsage/_assets/models)
 
 install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/data/bearoff_1sided.db"
