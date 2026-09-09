@@ -5611,7 +5611,7 @@ PYBIND11_MODULE(bgbot_cpp, m) {
                                      int cube_value,
                                      int away1, int away2, bool is_crawford,
                                      bool jacoby, bool beaver,
-                                     const BearoffDB* bearoff_db) {
+                                     const BearoffDB* bearoff_db, int max_cube_value) {
         Board board = list_to_board(board_vec);
         MoveFilter filter{filter_max_moves, filter_threshold};
 
@@ -5623,10 +5623,10 @@ PYBIND11_MODULE(bgbot_cpp, m) {
 
         py::gil_scoped_release release;
         if (away1 > 0 && away2 > 0) {
-            CubeInfo ci{cube_value, owner, {away1, away2, is_crawford}, -1.0f, jacoby, beaver};
+            CubeInfo ci{cube_value, owner, {away1, away2, is_crawford}, -1.0f, jacoby, beaver, max_cube_value};
             return cubeful_equity_nply(board, ci, *eval_strat, n_plies, filter, n_threads);
         }
-        CubeInfo ci{cube_value, owner, {0, 0, false}, -1.0f, jacoby, beaver};
+        CubeInfo ci{cube_value, owner, {0, 0, false}, -1.0f, jacoby, beaver, max_cube_value};
         return cubeful_equity_nply(board, ci, *eval_strat, n_plies, filter, n_threads);
     }, "Compute cubeful equity for a pre-roll position at N-ply depth (unified, any Strategy).",
        py::arg("board"), py::arg("owner"),
@@ -5638,7 +5638,7 @@ PYBIND11_MODULE(bgbot_cpp, m) {
        py::arg("cube_value") = 1,
        py::arg("away1") = 0, py::arg("away2") = 0, py::arg("is_crawford") = false,
        py::arg("jacoby") = true, py::arg("beaver") = true,
-       py::arg("bearoff_db") = nullptr);
+       py::arg("bearoff_db") = nullptr, py::arg("max_cube_value") = 0);
 
     // --- Unified cubeful_probs_nply (accepts any Strategy via shared_ptr) ---
     m.def("cubeful_probs_nply", [](const std::vector<int>& board_vec,
@@ -5651,7 +5651,7 @@ PYBIND11_MODULE(bgbot_cpp, m) {
                                     int cube_value,
                                     int away1, int away2, bool is_crawford,
                                     bool jacoby, bool beaver,
-                                    const BearoffDB* bearoff_db) {
+                                    const BearoffDB* bearoff_db, int max_cube_value) {
         Board board = list_to_board(board_vec);
         MoveFilter filter{filter_max_moves, filter_threshold};
 
@@ -5666,7 +5666,7 @@ PYBIND11_MODULE(bgbot_cpp, m) {
             CubeInfo ci{cube_value, owner,
                         {(away1 > 0 ? away1 : 0), (away2 > 0 ? away2 : 0),
                          is_crawford},
-                        -1.0f, jacoby, beaver};
+                        -1.0f, jacoby, beaver, max_cube_value};
             probs = cubeful_probs_nply(board, ci, *eval_strat, n_plies, filter, n_threads);
         }
         return probs;
@@ -5680,7 +5680,7 @@ PYBIND11_MODULE(bgbot_cpp, m) {
        py::arg("cube_value") = 1,
        py::arg("away1") = 0, py::arg("away2") = 0, py::arg("is_crawford") = false,
        py::arg("jacoby") = true, py::arg("beaver") = true,
-       py::arg("bearoff_db") = nullptr);
+       py::arg("bearoff_db") = nullptr, py::arg("max_cube_value") = 0);
 
     // --- Unified cubeful_probs_and_equity_nply ---
     // Returns BOTH cube-aware probs and cubeful equity from a single tree
@@ -5698,7 +5698,7 @@ PYBIND11_MODULE(bgbot_cpp, m) {
              int away1, int away2, bool is_crawford,
              bool jacoby, bool beaver,
              const BearoffDB* bearoff_db,
-             const std::vector<int>& root_board) {
+             const std::vector<int>& root_board, int max_cube_value) {
         Board board = list_to_board(board_vec);
         MoveFilter filter{filter_max_moves, filter_threshold};
         Board root{};
@@ -5719,7 +5719,7 @@ PYBIND11_MODULE(bgbot_cpp, m) {
             CubeInfo ci{cube_value, owner,
                         {(away1 > 0 ? away1 : 0), (away2 > 0 ? away2 : 0),
                          is_crawford},
-                        -1.0f, jacoby, beaver};
+                        -1.0f, jacoby, beaver, max_cube_value};
             result = cubeful_probs_and_equity_nply(
                 board, ci, *eval_strat, n_plies, filter, n_threads, nullptr, root_ptr);
         }
@@ -5738,7 +5738,7 @@ PYBIND11_MODULE(bgbot_cpp, m) {
        py::arg("away1") = 0, py::arg("away2") = 0, py::arg("is_crawford") = false,
        py::arg("jacoby") = true, py::arg("beaver") = true,
        py::arg("bearoff_db") = nullptr,
-       py::arg("root_board") = std::vector<int>{});
+       py::arg("root_board") = std::vector<int>{}, py::arg("max_cube_value") = 0);
 
     // --- Unified 1-ply cube decision ---
     m.def("evaluate_cube_decision_unified", [](const std::vector<int>& checkers,

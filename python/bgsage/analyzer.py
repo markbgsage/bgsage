@@ -60,6 +60,26 @@ def resolve_owner(cube_owner: str | Any) -> Any:
     return cube_owner
 
 
+def _validate_cube_limit(cube_value: int, max_cube_value: int) -> None:
+    if (not isinstance(max_cube_value, int) or isinstance(max_cube_value, bool)
+            or max_cube_value < 0 or max_cube_value == 1
+            or (max_cube_value and max_cube_value & (max_cube_value - 1))):
+        raise ValueError("max_cube_value must be 0 or a power of two >= 2")
+    if max_cube_value and cube_value > max_cube_value:
+        raise ValueError("cube_value exceeds max_cube_value")
+
+
+def _cube_limit_kwargs(max_cube_value: int) -> dict:
+    return {"max_cube_value": max_cube_value} if max_cube_value else {}
+
+
+def _dead_cube_equity(probs, cube_value, away1, away2, is_crawford):
+    if away1 > 0 or away2 > 0:
+        mwc = bgbot_cpp.cubeless_mwc(probs, away1, away2, cube_value, is_crawford)
+        return bgbot_cpp.mwc2eq(mwc, away1, away2, cube_value, is_crawford)
+    return 2 * probs[0] - 1 + probs[1] - probs[3] + probs[2] - probs[4]
+
+
 class RolloutCancelled(Exception):
     """Raised when a rollout is cancelled via cancel()."""
     pass
@@ -113,6 +133,7 @@ class _CubelessBase:
         away2: int = 0,
         is_crawford: bool = False,
         jacoby: bool = True,
+        max_cube_value: int = 0,
         strategy=None,
     ) -> list[tuple[float, float, list[int], list[float]]]:
         if strategy is None:
@@ -129,7 +150,9 @@ class _CubelessBase:
                 race = bgbot_cpp.is_race(bl)
                 pp, op = bgbot_cpp.pip_counts(bl)
                 x = bgbot_cpp.cube_efficiency(probs, race, pp, op)
-                if is_match:
+                if max_cube_value and cube_value >= max_cube_value:
+                    cf_eq = _dead_cube_equity(probs, cube_value, away1, away2, is_crawford)
+                elif is_match:
                     cf_eq = bgbot_cpp.cl2cf(probs, cube_value, owner, x,
                                             away1, away2, is_crawford,
                                             jacoby=jacoby)
@@ -255,7 +278,7 @@ class _OnePlyAnalyzer(_CubelessBase):
     def checker_play_analytics(
         self, board, die1, die2, cube_value=1, cube_owner="centered",
         progress_callback=None,
-        away1=0, away2=0, is_crawford=False, jacoby=True, beaver=True,
+        away1=0, away2=0, is_crawford=False, jacoby=True, beaver=True, max_cube_value=0,
         force_boards=None, finalize_progress=None,
     ) -> list[dict]:
         # ``force_boards`` is a no-op at 1-ply: every candidate is already
@@ -282,7 +305,7 @@ class _OnePlyAnalyzer(_CubelessBase):
     def cube_action_analytics(
         self, board, cube_value=1, cube_owner="centered",
         progress_callback=None,
-        away1=0, away2=0, is_crawford=False, jacoby=True, beaver=True,
+        away1=0, away2=0, is_crawford=False, jacoby=True, beaver=True, max_cube_value=0,
         incl_2ply_details=False,
     ) -> dict:
         if incl_2ply_details:
@@ -294,7 +317,7 @@ class _OnePlyAnalyzer(_CubelessBase):
             self._weights.weight_paths_list,
             self._weights.hidden_sizes_list,
             away1=away1, away2=away2, is_crawford=is_crawford,
-            jacoby=jacoby, beaver=beaver,
+            jacoby=jacoby, beaver=beaver, **_cube_limit_kwargs(max_cube_value),
             bearoff_db=self._bearoff_db,
         )
         return self._format_cube_result(r, eval_level="1-ply")
@@ -325,7 +348,7 @@ class _MultiPlyAnalyzer(_CubelessBase):
     def checker_play_analytics(
         self, board, die1, die2, cube_value=1, cube_owner="centered",
         progress_callback=None,
-        away1=0, away2=0, is_crawford=False, jacoby=True, beaver=True,
+        away1=0, away2=0, is_crawford=False, jacoby=True, beaver=True, max_cube_value=0,
         force_boards=None, finalize_progress=None,
     ) -> list[dict]:
         # Only the cubeful wrapper runs the finalizing (promotion) phase, so
@@ -338,7 +361,7 @@ class _MultiPlyAnalyzer(_CubelessBase):
         scored_1ply = self._score_candidates(
             candidates, board, cube_owner,
             cube_value=cube_value, away1=away1, away2=away2,
-            is_crawford=is_crawford, jacoby=jacoby,
+            is_crawford=is_crawford, jacoby=jacoby, max_cube_value=max_cube_value,
         )
         survivors, survivor_set = self._filter_candidates(
             scored_1ply, self.FILTER_THRESHOLD, self.FILTER_MAX_MOVES
@@ -382,7 +405,7 @@ class _MultiPlyAnalyzer(_CubelessBase):
     def cube_action_analytics(
         self, board, cube_value=1, cube_owner="centered",
         progress_callback=None,
-        away1=0, away2=0, is_crawford=False, jacoby=True, beaver=True,
+        away1=0, away2=0, is_crawford=False, jacoby=True, beaver=True, max_cube_value=0,
         incl_2ply_details=False,
     ) -> dict:
         owner = resolve_owner(cube_owner)
@@ -393,7 +416,7 @@ class _MultiPlyAnalyzer(_CubelessBase):
             self._weights.hidden_sizes_list,
             n_threads=self._parallel_threads,
             away1=away1, away2=away2, is_crawford=is_crawford,
-            jacoby=jacoby, beaver=beaver,
+            jacoby=jacoby, beaver=beaver, **_cube_limit_kwargs(max_cube_value),
             bearoff_db=self._bearoff_db,
             incl_2ply_details=incl_2ply_details,
         )
@@ -532,7 +555,7 @@ class _RolloutAnalyzer(_CubelessBase):
     def checker_play_analytics(
         self, board, die1, die2, cube_value=1, cube_owner="centered",
         progress_callback=None,
-        away1=0, away2=0, is_crawford=False, jacoby=True, beaver=True,
+        away1=0, away2=0, is_crawford=False, jacoby=True, beaver=True, max_cube_value=0,
         force_boards=None, finalize_progress=None,
     ) -> list[dict]:
         # Only the cubeful wrapper runs the finalizing (promotion) phase, so
@@ -545,7 +568,7 @@ class _RolloutAnalyzer(_CubelessBase):
         scored_1ply = self._score_candidates(
             candidates, board, cube_owner,
             cube_value=cube_value, away1=away1, away2=away2,
-            is_crawford=is_crawford, jacoby=jacoby,
+            is_crawford=is_crawford, jacoby=jacoby, max_cube_value=max_cube_value,
         )
 
         # Stage 1: 1-ply filter. If prefilter_threshold > 0, this is a loose
@@ -568,7 +591,7 @@ class _RolloutAnalyzer(_CubelessBase):
             scored_2ply = self._score_candidates(
                 stage1_boards, board, cube_owner,
                 cube_value=cube_value, away1=away1, away2=away2,
-                is_crawford=is_crawford, jacoby=jacoby,
+                is_crawford=is_crawford, jacoby=jacoby, max_cube_value=max_cube_value,
                 strategy=self._strategy_2ply,
             )
             scored_2ply_set = {tuple(item[2]) for item in scored_2ply}
@@ -609,7 +632,7 @@ class _RolloutAnalyzer(_CubelessBase):
                 scored_missing = self._score_candidates(
                     missing, board, cube_owner,
                     cube_value=cube_value, away1=away1, away2=away2,
-                    is_crawford=is_crawford, jacoby=jacoby,
+                    is_crawford=is_crawford, jacoby=jacoby, max_cube_value=max_cube_value,
                     **({"strategy": self._strategy_2ply}
                        if scored_2ply is not None else {}),
                 )
@@ -648,7 +671,7 @@ class _RolloutAnalyzer(_CubelessBase):
                         b, board,
                         cube_value=cube_value, owner=owner,
                         away1=away1, away2=away2, is_crawford=is_crawford,
-                        jacoby=jacoby, beaver=beaver,
+                        jacoby=jacoby, beaver=beaver, **_cube_limit_kwargs(max_cube_value),
                         progress=_trial_progress,
                     )
                 else:
@@ -707,7 +730,7 @@ class _RolloutAnalyzer(_CubelessBase):
     def cube_action_analytics(
         self, board, cube_value=1, cube_owner="centered",
         progress_callback=None,
-        away1=0, away2=0, is_crawford=False, jacoby=True, beaver=True,
+        away1=0, away2=0, is_crawford=False, jacoby=True, beaver=True, max_cube_value=0,
         incl_2ply_details=False,
     ) -> dict:
         self._check_cancel()
@@ -722,7 +745,7 @@ class _RolloutAnalyzer(_CubelessBase):
             r = self._rollout_strategy.cube_decision(
                 board, cube_value, owner,
                 away1=away1, away2=away2, is_crawford=is_crawford,
-                jacoby=jacoby, beaver=beaver,
+                jacoby=jacoby, beaver=beaver, **_cube_limit_kwargs(max_cube_value),
                 progress=_cube_trial_progress if progress_callback else None,
             )
         except bgbot_cpp.RolloutCancelled:
@@ -769,9 +792,11 @@ class _CubefulAnalyzer:
     def _cubeful_equity(
         self, post_move_board, probs, owner,
         cube_value=1, away1=0, away2=0, is_crawford=False, jacoby=True,
-        beaver=True,
+        beaver=True, max_cube_value=0,
     ) -> float:
         is_match = away1 > 0 or away2 > 0
+        if max_cube_value and cube_value >= max_cube_value and self._cubeful_ply == 1:
+            return _dead_cube_equity(probs, cube_value, away1, away2, is_crawford)
         if self._cubeful_ply == 1:
             race = bgbot_cpp.is_race(post_move_board)
             pp, op = bgbot_cpp.pip_counts(post_move_board)
@@ -798,7 +823,7 @@ class _CubefulAnalyzer:
                     n_threads=n_threads,
                     cube_value=cube_value,
                     away1=away2, away2=away1, is_crawford=is_crawford,
-                    jacoby=jacoby, beaver=beaver,
+                    jacoby=jacoby, beaver=beaver, **_cube_limit_kwargs(max_cube_value),
                     bearoff_db=db,
                 )
             else:
@@ -806,7 +831,8 @@ class _CubefulAnalyzer:
                     opp_pre_roll, opp_owner,
                     self._inner._strategy_1ply, self._cubeful_ply,
                     n_threads=n_threads,
-                    jacoby=jacoby, beaver=beaver,
+                    cube_value=cube_value,
+                    jacoby=jacoby, beaver=beaver, **_cube_limit_kwargs(max_cube_value),
                     bearoff_db=db,
                 )
             return -opp_eq
@@ -814,7 +840,7 @@ class _CubefulAnalyzer:
     def checker_play_analytics(
         self, board, die1, die2, cube_value=1, cube_owner="centered",
         progress_callback=None,
-        away1=0, away2=0, is_crawford=False, jacoby=True, beaver=True,
+        away1=0, away2=0, is_crawford=False, jacoby=True, beaver=True, max_cube_value=0,
         force_boards=None, finalize_progress=None,
     ) -> list[dict]:
         owner = resolve_owner(cube_owner)
@@ -823,7 +849,7 @@ class _CubefulAnalyzer:
 
         results = inner.checker_play_analytics(
             board, die1, die2, cube_value, cube_owner, progress_callback,
-            away1=away1, away2=away2, is_crawford=is_crawford, jacoby=jacoby,
+            away1=away1, away2=away2, is_crawford=is_crawford, jacoby=jacoby, beaver=beaver, max_cube_value=max_cube_value,
             force_boards=force_boards,
         )
         if not results:
@@ -845,7 +871,7 @@ class _CubefulAnalyzer:
                     cf_eq = self._cubeful_equity(
                         m["board"], m["probs"], owner,
                         cube_value=cube_value, away1=away1, away2=away2,
-                        is_crawford=is_crawford, jacoby=jacoby, beaver=beaver,
+                        is_crawford=is_crawford, jacoby=jacoby, beaver=beaver, **_cube_limit_kwargs(max_cube_value),
                     )
                 m["cubeless_equity"] = cubeless_eq
                 m["equity"] = cf_eq
@@ -896,7 +922,7 @@ class _CubefulAnalyzer:
                         m["board"], m["board"],
                         cube_value=cube_value, owner=owner,
                         away1=away1, away2=away2, is_crawford=is_crawford,
-                        jacoby=jacoby, beaver=beaver,
+                        jacoby=jacoby, beaver=beaver, **_cube_limit_kwargs(max_cube_value),
                         progress=finalize_progress,
                     )
                 except bgbot_cpp.RolloutCancelled:
@@ -960,7 +986,7 @@ class _CubefulAnalyzer:
                     n_threads=1,
                     cube_value=cube_value,
                     away1=away2, away2=away1, is_crawford=is_crawford,
-                    jacoby=jacoby, beaver=beaver,
+                    jacoby=jacoby, beaver=beaver, **_cube_limit_kwargs(max_cube_value),
                     bearoff_db=db,
                     root_board=board,   # root routing: the decision's pre-move board
                 )
@@ -994,7 +1020,7 @@ class _CubefulAnalyzer:
                 cf_eq = self._cubeful_equity(
                     m["board"], m["probs"], owner,
                     cube_value=cube_value, away1=away1, away2=away2,
-                    is_crawford=is_crawford, jacoby=jacoby, beaver=beaver,
+                    is_crawford=is_crawford, jacoby=jacoby, beaver=beaver, **_cube_limit_kwargs(max_cube_value),
                 )
                 return cubeless_eq, cf_eq
 
@@ -1018,7 +1044,7 @@ class _CubefulAnalyzer:
             cf_eq = self._cubeful_equity(
                 b, probs, owner,
                 cube_value=cube_value, away1=away1, away2=away2,
-                is_crawford=is_crawford, jacoby=jacoby, beaver=beaver,
+                is_crawford=is_crawford, jacoby=jacoby, beaver=beaver, **_cube_limit_kwargs(max_cube_value),
             )
             extra["cubeless_equity"] = r["equity"]
             return cf_eq, probs, eval_level, extra
@@ -1048,14 +1074,14 @@ class _CubefulAnalyzer:
     def cube_action_analytics(
         self, board, cube_value=1, cube_owner="centered",
         progress_callback=None,
-        away1=0, away2=0, is_crawford=False, jacoby=True, beaver=True,
+        away1=0, away2=0, is_crawford=False, jacoby=True, beaver=True, max_cube_value=0,
         incl_2ply_details=False,
     ) -> dict:
         return self._inner.cube_action_analytics(
             board, cube_value, cube_owner,
             progress_callback=progress_callback,
             away1=away1, away2=away2, is_crawford=is_crawford,
-            jacoby=jacoby, beaver=beaver,
+            jacoby=jacoby, beaver=beaver, **_cube_limit_kwargs(max_cube_value),
             incl_2ply_details=incl_2ply_details,
         )
 
@@ -1399,6 +1425,7 @@ class BgBotAnalyzer:
         is_crawford: bool = False,
         jacoby: bool = True,
         beaver: bool = True,
+        max_cube_value: int = 0,
         force_boards: list[list[int]] | None = None,
         finalize_progress: Any | None = None,
     ) -> CheckerPlayResult:
@@ -1428,6 +1455,7 @@ class BgBotAnalyzer:
             is_crawford: True if this is the Crawford game.
             jacoby: If True, gammons/backgammons don't count when cube is
                 centered (money games only). Auto-disabled for match play.
+            max_cube_value: Maximum cube (0 = unlimited), or a power of two >= 2.
             beaver: If True, opponent can beaver after being doubled
                 (money games only). Auto-disabled for match play.
             force_boards: Optional list of post-move boards (mover's
@@ -1436,13 +1464,14 @@ class BgBotAnalyzer:
                 ignored. Used by the app's expert re-evaluation so the move a
                 player actually made is always scored at the expert level.
         """
+        _validate_cube_limit(cube_value, max_cube_value)
         if away1 > 0 or away2 > 0:
             jacoby = False
             beaver = False
         raw = self._analyzer.checker_play_analytics(
             board, die1, die2, cube_value, cube_owner, progress_callback,
             away1=away1, away2=away2, is_crawford=is_crawford, jacoby=jacoby,
-            beaver=beaver, force_boards=force_boards,
+            beaver=beaver, **_cube_limit_kwargs(max_cube_value), force_boards=force_boards,
             finalize_progress=finalize_progress,
         )
         moves = [_dict_to_move_analysis(d, include_game_plans) for d in raw]
@@ -1608,6 +1637,7 @@ class BgBotAnalyzer:
         is_crawford: bool = False,
         jacoby: bool = True,
         beaver: bool = True,
+        max_cube_value: int = 0,
         incl_2ply_details: bool = False,
         progress_callback=None,
     ) -> CubeActionResult:
@@ -1625,6 +1655,7 @@ class BgBotAnalyzer:
             is_crawford: True if this is the Crawford game.
             jacoby: If True, gammons/backgammons don't count when cube is
                 centered (money games only). Auto-disabled for match play.
+            max_cube_value: Maximum cube (0 = unlimited), or a power of two >= 2.
             beaver: If True, opponent can beaver (redouble while retaining
                 ownership) after being doubled. Money games only.
                 Auto-disabled for match play.
@@ -1635,6 +1666,7 @@ class BgBotAnalyzer:
                 opponent_rolls); the headline equities match the plain
                 2-ply call.
         """
+        _validate_cube_limit(cube_value, max_cube_value)
         if away1 > 0 or away2 > 0:
             jacoby = False
             beaver = False
@@ -1642,7 +1674,7 @@ class BgBotAnalyzer:
             board, cube_value, cube_owner,
             progress_callback=progress_callback,
             away1=away1, away2=away2, is_crawford=is_crawford,
-            jacoby=jacoby, beaver=beaver,
+            jacoby=jacoby, beaver=beaver, **_cube_limit_kwargs(max_cube_value),
             incl_2ply_details=incl_2ply_details,
         )
         probs = Probabilities.from_list(raw["probs"])
