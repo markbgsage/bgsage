@@ -27,13 +27,144 @@ from typing import Any
 # ---------------------------------------------------------------------------
 
 
-def compute_move_notation(
-    before: list[int], after: list[int], die1: int, die2: int
-) -> str:
-    """Compute backgammon move notation from before/after board arrays.
+def _is_die(value: int) -> bool:
+    return isinstance(value, int) and 1 <= value <= 6
 
-    Board is from the mover's perspective (positive checkers are the mover's).
-    Returns notation like ``"13/7 8/7"`` or ``"bar/20*"`` or ``"6/off(2)"``.
+
+def _legal_single_die_moves(
+    board: list[int], die: int
+) -> list[tuple[int, int, list[int]]]:
+    """Legal single-die moves for the mover: ``(from, to, board_after)``.
+
+    Mirrors the engine's ``possible_single_die_moves`` — a bar checker must
+    enter first, bearing off needs every checker home, and an oversize die
+    bears off only from the highest occupied point — in pure Python, so the
+    notation stays importable without the native module.
+    """
+    moves: list[tuple[int, int, list[int]]] = []
+    if board[25] > 0:
+        target = 25 - die
+        if board[target] >= -1:
+            after = list(board)
+            after[25] -= 1
+            if after[target] == -1:
+                after[target] = 1
+                after[0] += 1
+            else:
+                after[target] += 1
+            moves.append((25, target, after))
+        return moves
+
+    bearoff = all(board[p] <= 0 for p in range(7, 25))
+    highest = 0
+    if bearoff:
+        for p in range(6, 0, -1):
+            if board[p] > 0:
+                highest = p
+                break
+
+    for p in range(1, 25):
+        if board[p] <= 0:
+            continue
+        target = p - die
+        if target >= 1:
+            if board[target] >= -1:
+                after = list(board)
+                after[p] -= 1
+                if after[target] == -1:
+                    after[target] = 1
+                    after[0] += 1
+                else:
+                    after[target] += 1
+                moves.append((p, target, after))
+        elif bearoff and (target == 0 or p == highest):
+            after = list(board)
+            after[p] -= 1
+            moves.append((p, 0, after))
+    return moves
+
+
+def _resolve_legal_steps(
+    before: list[int], after: list[int], die1: int, die2: int
+) -> list[tuple[int, int, bool]] | None:
+    """The checker plays that take ``before`` to ``after`` with this roll, one
+    ``(from, to, hit)`` per checker journey.
+
+    Found by searching sequences of legal single-die moves, so every step is a
+    play that can actually be made. The board diff alone cannot say which die
+    moved which checker, and pairing origins with destinations by die value
+    can pick a pairing no legal play produces: with a 6-3 and checkers on the
+    5- and 4-points, the play that empties the 5-point, takes one off the
+    4-point and adds one to the 2-point is 5/2 4/off — the 6 may only bear the
+    4-point checker off once the 5-point is empty — yet a die-first pairing
+    grabs 5/off for the 6, finds nothing for the 3 and falls back to 4/2, a
+    two-pip move nobody rolled (reported 2026-09-07).
+
+    Chained steps merge into one journey (13/8 then 8/5 reads 13/5) but never
+    across a hit, which stays its own step (24/18* 18/13) — the notation the
+    diff pairing always produced where it was right. Steps come back in the
+    order they were played.
+
+    Returns ``None`` when no legal sequence reaches ``after`` — the dice are
+    missing or the boards were not produced by this roll — so the caller can
+    fall back to the diff pairing rather than return nothing.
+    """
+    if not (_is_die(die1) and _is_die(die2)) or len(before) != 26 or len(after) != 26:
+        return None
+    start = list(before)
+    target = list(after)
+    if start == target:
+        return []
+
+    def search(board: list[int], dice: list[int]) -> list[tuple[int, int, bool]] | None:
+        tried: set[int] = set()
+        for i, die in enumerate(dice):
+            if die in tried:
+                continue
+            tried.add(die)
+            rest = dice[:i] + dice[i + 1:]
+            for frm, to, next_board in _legal_single_die_moves(board, die):
+                # Only a point holding more checkers than it ends the turn with
+                # can still lose one — this keeps the search to a few branches.
+                if board[frm] <= target[frm]:
+                    continue
+                step = (frm, to, 1 <= to <= 24 and board[to] == -1)
+                if next_board == target:
+                    return [step]
+                if not rest:
+                    continue
+                tail = search(next_board, rest)
+                if tail is not None:
+                    return [step] + tail
+        return None
+
+    plays = search(start, [die1] * 4 if die1 == die2 else [die1, die2])
+    if plays is None:
+        return None
+
+    # Checkers are indistinguishable, so a step from a point an earlier step
+    # reached continues that journey (the latest one, when several could).
+    steps: list[tuple[int, int, bool]] = []
+    for frm, to, hit in plays:
+        for i in range(len(steps) - 1, -1, -1):
+            prior_from, prior_to, prior_hit = steps[i]
+            if prior_to == frm and not prior_hit:
+                steps[i] = (prior_from, to, hit)
+                break
+        else:
+            steps.append((frm, to, hit))
+    return steps
+
+
+def _pair_by_board_diff(
+    before: list[int], after: list[int], die1: int, die2: int
+) -> list[tuple[int, int, bool]]:
+    """Pair the points that lost checkers with the points that gained them,
+    matching by die value first and arbitrarily after that.
+
+    The historical derivation, kept only as the fallback for boards no legal
+    play of the roll connects: it can name a pairing nobody could play (see
+    :func:`_resolve_legal_steps`), but it always describes the board change.
     """
     hit_points: set[int] = set()
     for i in range(1, 25):
@@ -148,7 +279,26 @@ def compute_move_notation(
                     moves[mi:mi + 1] = [(f, mid, True), (mid, t, h)]
                     break
 
-    moves.sort(key=lambda m: (-m[0], -m[1]))
+    return moves
+
+
+def compute_move_notation(
+    before: list[int], after: list[int], die1: int, die2: int
+) -> str:
+    """Compute backgammon move notation from before/after board arrays.
+
+    Board is from the mover's perspective (positive checkers are the mover's).
+    Returns notation like ``"13/7 8/7"`` or ``"bar/20*"`` or ``"6/off(2)"``.
+
+    The steps come from a legal play of the dice (:func:`_resolve_legal_steps`);
+    boards no play of the roll connects fall back to pairing the board diff.
+    """
+    moves = _resolve_legal_steps(before, after, die1, die2)
+    if moves is None:
+        moves = _pair_by_board_diff(before, after, die1, die2)
+
+    # Highest origin first; among identical moves the hit leads (bar/23* bar/23).
+    moves.sort(key=lambda m: (-m[0], -m[1], not m[2]))
 
     combined: list[tuple[int, int, bool, int]] = []
     for f, t, h in moves:
