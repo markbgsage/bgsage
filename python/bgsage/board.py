@@ -31,7 +31,9 @@ def possible_moves(board: list[int], die1: int, die2: int) -> list[list[int]]:
     """Return all legal resulting board positions for the given dice.
 
     Each element is a 26-element board representing one distinct final position.
-    Returns an empty list when no legal moves exist (e.g. dancing on the bar).
+    The list is never empty: when the roll cannot be played at all (e.g. dancing
+    on the bar), the unchanged board is returned as the single result. Test for
+    that with ``result == [board]``; a single result alone may be a forced move.
     """
     return [list(b) for b in bgbot_cpp.possible_moves(board, die1, die2)]
 
