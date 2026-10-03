@@ -6,6 +6,11 @@ move in this situation, with all the analytics to back it up", or "is this a dou
 
 ## What it Contains
 
+Complete, seeded game and match simulation is available through
+`from bgsage import simulate_game, simulate_match, GameConfig`. It records
+positions, dice, cube actions and scores for custom research. See
+[SIMULATION.md](SIMULATION.md) for examples, policy customization and rules.
+
 It is a joint Python/C++ library that includes:
 * A neural network-based backgammon bot.
 * Neural network training framework using both self play and supervised learning, including training code, benchmark scoring, with customizable inputs. Uses your NVIDIA GPU (via CUDA) if you have one.

@@ -44,6 +44,7 @@ from .gnubg import GnuBgAnalyzer
 from .luck import luck_from_equities, roll_luck
 from .types import LuckResult, RollEquity
 from .weights import MODELS, PRODUCTION_MODEL, WeightConfig, WeightConfigPair, default_weights
+from .simulation import GameConfig, SimulationCancelled, SimulationLimitExceeded, simulate_game, simulate_match
 
 # Re-export TrialEvalConfig from the C++ bindings for convenient access
 try:
@@ -53,6 +54,7 @@ except (ImportError, AttributeError):
     TrialEvalConfig = None
 
 __all__ = [
+    "GameConfig", "SimulationCancelled", "SimulationLimitExceeded", "simulate_game", "simulate_match",
     "BgBotAnalyzer",
     "RolloutCancelled",
     "GnuBgAnalyzer",

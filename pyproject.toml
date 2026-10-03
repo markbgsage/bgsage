@@ -86,7 +86,7 @@ skip = [
 ]
 build-verbosity = 1
 # Smoke-test the built wheel: import the package, run a trivial analysis.
-test-command = "python -c \"from bgsage import BgBotAnalyzer, STARTING_BOARD; a = BgBotAnalyzer(); r = a.checker_play(STARTING_BOARD, 3, 1); print('ok', r.moves[0].equity)\""
+test-command = "python -c \"from bgsage import BgBotAnalyzer, STARTING_BOARD, GameConfig, simulate_game; a = BgBotAnalyzer(); r = a.checker_play(STARTING_BOARD, 3, 1); b = [0]*26; b[1]=1; b[24]=-1; g = simulate_game(players=(a,a), config=GameConfig(start_board=tuple(b))); assert g['winner'] == 1; print('ok', r.moves[0].equity)\""
 
 [tool.cibuildwheel.linux]
 # manylinux_2_28 gives us GCC 12+ which supports -mavx2/-mfma out of the box.
