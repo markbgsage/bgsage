@@ -3,6 +3,7 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 #include <pybind11/numpy.h>
+#include "move_arrays.h"
 
 #include <atomic>
 #include <chrono>
@@ -1620,6 +1621,8 @@ PYBIND11_MODULE(bgbot_cpp, m) {
         }
         return out;
     }, "Generate all legal post-move boards");
+
+    bgsage_python::bind_move_arrays(m);
 
     m.def("possible_single_die_moves", [](const std::vector<int>& board, int die) {
         auto b = list_to_board(board);

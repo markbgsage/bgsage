@@ -28,6 +28,7 @@ from .board import (
     is_crashed,
     is_race,
     possible_moves,
+    possible_moves_all,
     possible_single_die_moves,
 )
 from .types import (
@@ -84,6 +85,7 @@ __all__ = [
     "STARTING_BOARD",
     "flip_board",
     "possible_moves",
+    "possible_moves_all",
     "possible_single_die_moves",
     "check_game_over",
     "classify_game_plan",

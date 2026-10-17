@@ -38,6 +38,17 @@ def possible_moves(board: list[int], die1: int, die2: int) -> list[list[int]]:
     return [list(b) for b in bgbot_cpp.possible_moves(board, die1, die2)]
 
 
+def possible_moves_all(board):
+    """All legal endpoints and roll masks as contiguous NumPy arrays.
+
+    Returns int8 boards of shape (N, 26) and uint32 masks of shape (N,).
+    Bit k corresponds to roll (a, b) in a=1..6, b=a..6 order. Uses the
+    native batch binding when available and an exact older-engine fallback.
+    """
+    from .move_arrays import possible_moves_all as all_moves
+    return all_moves(board)
+
+
 def possible_single_die_moves(
     board: list[int], die: int
 ) -> list[dict[str, object]]:
