@@ -1,0 +1,22 @@
+{
+  "2T": {
+    "total_call_seconds": {
+      "baseline": 109.6445833,
+      "candidate": 71.486206
+    },
+    "speedup": 1.5337865783505142,
+    "exact_complete_outputs": 273,
+    "baseline_exact_vs_published": 300,
+    "material_error_changes": {}
+  },
+  "3T": {
+    "total_call_seconds": {
+      "baseline": 299.9471899,
+      "candidate": 263.2732299
+    },
+    "speedup": 1.139299996486274,
+    "exact_complete_outputs": 266,
+    "baseline_exact_vs_published": 300,
+    "material_error_changes": {}
+  }
+}

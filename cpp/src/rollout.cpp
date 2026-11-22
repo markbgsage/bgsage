@@ -83,6 +83,85 @@ constexpr int kTrialChunkSize = 8;
 
 // ======================== Cache Management ========================
 
+// The same board can occur in several trials even after the opening rolls.
+// The VR policy depends on the board and the active selection cubes. The base
+// evaluator and bearoff database are fixed for the lifetime of this table.
+struct RolloutStrategy::VarianceReductionCache {
+    static constexpr int capacity = 2048;
+    using Probabilities = std::array<std::array<float, NUM_OUTPUTS>, Move0Cache::N_ROLLS>;
+    using Picks = std::array<int, Move0Cache::N_ROLLS>;
+
+    struct Entry {
+        Board board;
+        std::array<CubeInfo, 4> cubes;
+        int cube_count;
+        float cube_x;
+        Probabilities probabilities;
+        Picks picks;
+    };
+    std::array<std::atomic<uint8_t>, capacity> state;
+    std::array<Entry, capacity> entries;
+
+    VarianceReductionCache() {
+        for (auto& slot : state) slot.store(0, std::memory_order_relaxed);
+    }
+
+    static size_t slot_for(const Board& board) {
+        uint32_t hash = 2166136261u;
+        for (int point : board) hash = (hash ^ static_cast<uint32_t>(point)) * 16777619u;
+        return (hash ^ (hash >> 16)) & (capacity - 1);
+    }
+
+    static bool same_cube(const CubeInfo& a, const CubeInfo& b) {
+        return a.cube_value == b.cube_value && a.owner == b.owner &&
+            a.match.away1 == b.match.away1 && a.match.away2 == b.match.away2 &&
+            a.match.is_crawford == b.match.is_crawford &&
+            a.cube_x_override == b.cube_x_override && a.jacoby == b.jacoby &&
+            a.beaver == b.beaver && a.max_cube_value == b.max_cube_value;
+    }
+
+    const Entry* lookup(size_t slot, const Board& board, const CubeInfo* cubes,
+                        int cube_count, float cube_x) const {
+        if (state[slot].load(std::memory_order_acquire) != 2) return nullptr;
+        const Entry& entry = entries[slot];
+        if (entry.board != board || entry.cube_count != cube_count || entry.cube_x != cube_x)
+            return nullptr;
+        for (int b = 0; b < cube_count; ++b) {
+            if (!same_cube(entry.cubes[b], cubes[b])) return nullptr;
+        }
+        return &entry;
+    }
+
+    void publish(size_t slot, const Board& board, const CubeInfo* cubes, int cube_count,
+                 float cube_x, const Probabilities& probabilities, const Picks& picks) {
+        // Every slot has a single writer; a concurrent fill or a collision
+        // leaves the original evaluation intact. Published data is immutable.
+        uint8_t empty = 0;
+        if (!state[slot].compare_exchange_strong(empty, 1, std::memory_order_relaxed)) return;
+        Entry& entry = entries[slot];
+        entry.board = board;
+        entry.cube_count = cube_count;
+        for (int b = 0; b < cube_count; ++b) entry.cubes[b] = cubes[b];
+        entry.cube_x = cube_x;
+        entry.probabilities = probabilities;
+        entry.picks = picks;
+        state[slot].store(2, std::memory_order_release);
+    }
+};
+
+RolloutStrategy::Move1Cache::Move1Cache(const RolloutConfig& config) {
+    for (int i = 0; i < Move0Cache::N_ROLLS; ++i) {
+        state[i].store(0, std::memory_order_relaxed);
+        cd_state[i].store(0, std::memory_order_relaxed);
+    }
+    // Allocate once per rollout. Short or low-trial runs have limited reuse.
+    if (config.enable_vr && config.truncation_depth > 2 && config.n_trials >= 288) {
+        vr_cache = std::make_unique<VarianceReductionCache>();
+    }
+}
+
+RolloutStrategy::Move1Cache::~Move1Cache() = default;
+
 void RolloutStrategy::clear_internal_caches() const {
     // Clear thread-local PosCache (shared by all MultiPlyStrategy instances
     // on this thread). This prevents state accumulation across independent
@@ -1568,12 +1647,22 @@ RolloutStrategy::TrialResult RolloutStrategy::run_trial_unified(
                 const CubeInfo* vr_sel_ptr =
                     (vr_n_sel > 0) ? vr_sel_cubes.data() : nullptr;
 
-                for (size_t i = 0; i < ALL_ROLLS.size(); ++i) {
-                    int idx = -1;
-                    roll_best_probs[i] = best_move_probs_for_candidates(
-                        board, move_candidates[i], vr_base, &idx,
-                        vr_sel_ptr, vr_n_sel, cube_x);
-                    best_candidate_idx[i] = idx;
+                auto* cache = move1_cache ? move1_cache->vr_cache.get() : nullptr;
+                size_t slot = cache ? VarianceReductionCache::slot_for(board) : 0;
+                const auto* entry = cache ? cache->lookup(slot, board, vr_sel_ptr, vr_n_sel, cube_x) : nullptr;
+                if (entry) {
+                    roll_best_probs = entry->probabilities;
+                    best_candidate_idx = entry->picks;
+                } else {
+                    for (size_t i = 0; i < ALL_ROLLS.size(); ++i) {
+                        roll_best_probs[i] = best_move_probs_for_candidates(
+                            board, move_candidates[i], vr_base, &best_candidate_idx[i],
+                            vr_sel_ptr, vr_n_sel, cube_x);
+                    }
+                    if (cache) {
+                        cache->publish(slot, board, vr_sel_ptr, vr_n_sel, cube_x,
+                                       roll_best_probs, best_candidate_idx);
+                    }
                 }
 
                 // Cubeless VR mean (always computed)
@@ -2135,7 +2224,7 @@ RolloutResult RolloutStrategy::run_trials_parallel(
     // Move-0 and Move-1 shared caches: all trials share the same starting
     // position, so first two moves can be precomputed and shared.
     Move0Cache move0_cache;
-    Move1Cache move1_cache;
+    Move1Cache move1_cache(config_);
     const bool uses_move1_cache =
         (config_.truncation_depth == 0) || (config_.truncation_depth > 1);
 
@@ -2350,7 +2439,7 @@ RolloutStrategy::CubefulRolloutResult RolloutStrategy::cubeful_cube_decision(
     int n_threads = rollout_thread_count(n_trials);
 
     Move0Cache move0_cache;
-    Move1Cache move1_cache;
+    Move1Cache move1_cache(config_);
     const bool uses_move1_cache =
         (config_.truncation_depth == 0) || (config_.truncation_depth > 1);
 
@@ -2618,7 +2707,7 @@ RolloutStrategy::CubefulRolloutResult RolloutStrategy::cubeful_cube_decision_bat
     // Move0/Move1 caches are prefilled ONCE and reused across every batch: they
     // are determined by the board + strategy, independent of the trial dice/seed.
     Move0Cache move0_cache;
-    Move1Cache move1_cache;
+    Move1Cache move1_cache(config_);
 
     if (n_threads > 1 && !shared_pos_cache_) {
         shared_pos_cache_ = std::make_unique<SharedPosCache>();

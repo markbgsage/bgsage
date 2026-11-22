@@ -1,0 +1,29 @@
+{
+  "control_commit": "60f93556137a7a5c4be671502f4b3f521998ff94",
+  "files": {
+    "cpp/include/bgbot/multipy.h": {
+      "candidate": "74029939de89b16379002d29cfec3fdcb6d7703669629c470cbea27f83d41f8f",
+      "control": "e62afb33ea87169bb68bfb280edecbde54574707a6d7a211f725724a7ba083ae"
+    },
+    "cpp/include/bgbot/rollout.h": {
+      "candidate": "a21c822d891977d1056789413b8fdfed994e4a67d15c3e2cdcff1e87d64e5772",
+      "control": "8266c0f7aba1e6d04338c23cf614071bd57e31e53485c1b8b1e3daf5d43a30df"
+    },
+    "cpp/src/cube_eval.cpp": {
+      "candidate": "4215f547efcbdc5596e5d2abe5ad5228f74169a8fe7674dc768e4c28d7c39921",
+      "control": "4494c51079ce1cd0483ed51dfc507d229b0931a3c974b80ccb7c4a1dc614485b"
+    },
+    "cpp/src/neural_net.cpp": {
+      "candidate": "e5f4ddff2eae89a0ef755cd5126d292baeb62f4383ac06f387c16e39adfc13bb",
+      "control": "2099f73c6569a2e77f0ad7de70a5091495b05169f5aba45cc35ad55f90265725"
+    },
+    "cpp/src/rollout.cpp": {
+      "candidate": "732f594fcc99922d3183908ee5a456d2457b157ffea752b2935b5a59dfc84983",
+      "control": "3e5cda810df397ded3c6426ca2b39f662af651bcbece649a32db660533542f19"
+    },
+    "cpp/src/strategy.cpp": {
+      "candidate": "fd4546283eed61e5a4e7bf4f30bbaecb250814d454977c11bbfd9980924fbe52",
+      "control": "bf98bd240c096ff2188e1514d3a2f33975c2714a73fdf282b1f86adbfc58b761"
+    }
+  }
+}

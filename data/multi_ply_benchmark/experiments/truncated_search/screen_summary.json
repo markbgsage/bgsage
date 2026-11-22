@@ -1,0 +1,382 @@
+{
+  "cache-baseline-1": {
+    "binary": {
+      "path": "build/multi_ply_cpu_fixed/bgbot_cpp.cp314-win_amd64.pyd",
+      "sha256": "b8dddb53f7064bee9b98367019e1568e235486389740ea0b4f4db44dcfa468de",
+      "bytes": 4992000
+    },
+    "levels": {
+      "2T": {
+        "calls": 6,
+        "exact": 6,
+        "seconds": 7.0897790000308305,
+        "material": {}
+      },
+      "3T": {
+        "calls": 6,
+        "exact": 6,
+        "seconds": 19.321048099955078,
+        "material": {}
+      }
+    }
+  },
+  "cache-baseline-2": {
+    "binary": {
+      "path": "build/multi_ply_cpu_fixed/bgbot_cpp.cp314-win_amd64.pyd",
+      "sha256": "b8dddb53f7064bee9b98367019e1568e235486389740ea0b4f4db44dcfa468de",
+      "bytes": 4992000
+    },
+    "levels": {
+      "2T": {
+        "calls": 6,
+        "exact": 6,
+        "seconds": 17.09905070014065,
+        "material": {}
+      },
+      "3T": {
+        "calls": 6,
+        "exact": 6,
+        "seconds": 25.95266260014614,
+        "material": {}
+      }
+    }
+  },
+  "cache-both-1": {
+    "binary": {
+      "path": "build/truncated_cache_arms/both/bgbot_cpp.cp314-win_amd64.pyd",
+      "sha256": "69879dce1c192939cfd1db8cdab1d86254944353a7a4f6dd9f5bdde0ed64d7af",
+      "bytes": 4992000
+    },
+    "levels": {
+      "2T": {
+        "calls": 6,
+        "exact": 6,
+        "seconds": 6.033403100038413,
+        "material": {}
+      },
+      "3T": {
+        "calls": 6,
+        "exact": 6,
+        "seconds": 17.767558699997608,
+        "material": {}
+      }
+    }
+  },
+  "cache-both-2": {
+    "binary": {
+      "path": "build/truncated_cache_arms/both/bgbot_cpp.cp314-win_amd64.pyd",
+      "sha256": "69879dce1c192939cfd1db8cdab1d86254944353a7a4f6dd9f5bdde0ed64d7af",
+      "bytes": 4992000
+    },
+    "levels": {
+      "2T": {
+        "calls": 6,
+        "exact": 6,
+        "seconds": 19.2786731000524,
+        "material": {}
+      },
+      "3T": {
+        "calls": 6,
+        "exact": 6,
+        "seconds": 22.852920399978757,
+        "material": {}
+      }
+    }
+  },
+  "cache-pos-1": {
+    "binary": {
+      "path": "build/truncated_cache_arms/pos/bgbot_cpp.cp314-win_amd64.pyd",
+      "sha256": "87e73bf1a255ba2ecd2f909ce0d870f1fc1961a14e2a0d7a6ac1611a91ba1cfb",
+      "bytes": 4992512
+    },
+    "levels": {
+      "2T": {
+        "calls": 6,
+        "exact": 6,
+        "seconds": 7.068594100070186,
+        "material": {}
+      },
+      "3T": {
+        "calls": 6,
+        "exact": 6,
+        "seconds": 18.81557250005426,
+        "material": {}
+      }
+    }
+  },
+  "cache-pos-2": {
+    "binary": {
+      "path": "build/truncated_cache_arms/pos/bgbot_cpp.cp314-win_amd64.pyd",
+      "sha256": "87e73bf1a255ba2ecd2f909ce0d870f1fc1961a14e2a0d7a6ac1611a91ba1cfb",
+      "bytes": 4992512
+    },
+    "levels": {
+      "2T": {
+        "calls": 6,
+        "exact": 6,
+        "seconds": 8.148500800016336,
+        "material": {}
+      },
+      "3T": {
+        "calls": 6,
+        "exact": 6,
+        "seconds": 24.132157700078096,
+        "material": {}
+      }
+    }
+  },
+  "working_set": {
+    "baseline": {
+      "extension": {
+        "path": "build/multi_ply_cpu_fixed/bgbot_cpp.cp314-win_amd64.pyd",
+        "sha256": "b8dddb53f7064bee9b98367019e1568e235486389740ea0b4f4db44dcfa468de",
+        "bytes": 4992000
+      },
+      "public_position": "cube-match-anchoring-01",
+      "wall_seconds": 0.8601365000358783,
+      "rss_bytes_before": 406970368,
+      "rss_bytes_after": 719908864,
+      "rss_bytes_change": 312938496,
+      "threads": 4,
+      "cpus": [
+        12,
+        13,
+        14,
+        15
+      ],
+      "match_scores_checked": 1922,
+      "match_table_sha256": "f911872f523992a9dcc34962f2436b7372aa49b64139f1f1c78e39f1fa46cd47",
+      "exact": true
+    },
+    "both": {
+      "extension": {
+        "path": "build/truncated_cache_arms/both/bgbot_cpp.cp314-win_amd64.pyd",
+        "sha256": "69879dce1c192939cfd1db8cdab1d86254944353a7a4f6dd9f5bdde0ed64d7af",
+        "bytes": 4992000
+      },
+      "public_position": "cube-match-anchoring-01",
+      "wall_seconds": 0.8379149000393227,
+      "rss_bytes_before": 407019520,
+      "rss_bytes_after": 577490944,
+      "rss_bytes_change": 170471424,
+      "threads": 4,
+      "cpus": [
+        12,
+        13,
+        14,
+        15
+      ],
+      "match_scores_checked": 1922,
+      "match_table_sha256": "f911872f523992a9dcc34962f2436b7372aa49b64139f1f1c78e39f1fa46cd47",
+      "exact": true
+    },
+    "met": {
+      "extension": {
+        "path": "build/truncated_cache_arms/met/bgbot_cpp.cp314-win_amd64.pyd",
+        "sha256": "0190337e453a59f9251cd332c83e372d3f82d75ec111a3df55fd9a7653a3a3b1",
+        "bytes": 4993536
+      },
+      "public_position": "cube-match-anchoring-01",
+      "wall_seconds": 0.8133839999791235,
+      "rss_bytes_before": 407109632,
+      "rss_bytes_after": 577421312,
+      "rss_bytes_change": 170311680,
+      "threads": 4,
+      "cpus": [
+        12,
+        13,
+        14,
+        15
+      ],
+      "match_scores_checked": 1922,
+      "match_table_sha256": "f911872f523992a9dcc34962f2436b7372aa49b64139f1f1c78e39f1fa46cd47",
+      "exact": true
+    },
+    "pos": {
+      "extension": {
+        "path": "build/truncated_cache_arms/pos/bgbot_cpp.cp314-win_amd64.pyd",
+        "sha256": "87e73bf1a255ba2ecd2f909ce0d870f1fc1961a14e2a0d7a6ac1611a91ba1cfb",
+        "bytes": 4992512
+      },
+      "public_position": "cube-match-anchoring-01",
+      "wall_seconds": 0.9852863000123762,
+      "rss_bytes_before": 407048192,
+      "rss_bytes_after": 577540096,
+      "rss_bytes_change": 170491904,
+      "threads": 4,
+      "cpus": [
+        12,
+        13,
+        14,
+        15
+      ],
+      "match_scores_checked": 1922,
+      "match_table_sha256": "f911872f523992a9dcc34962f2436b7372aa49b64139f1f1c78e39f1fa46cd47",
+      "exact": true
+    }
+  },
+  "policy-288-trials": {
+    "binary": {
+      "path": "build/multi_ply_cpu_fixed/bgbot_cpp.cp314-win_amd64.pyd",
+      "sha256": "b8dddb53f7064bee9b98367019e1568e235486389740ea0b4f4db44dcfa468de",
+      "bytes": 4992000
+    },
+    "levels": {
+      "2T": {
+        "calls": 6,
+        "exact": 0,
+        "seconds": 5.524895900103729,
+        "material": {
+          "farther": 1,
+          "closer": 1
+        }
+      },
+      "3T": {
+        "calls": 6,
+        "exact": 0,
+        "seconds": 15.803765600023326,
+        "material": {
+          "farther": 3
+        }
+      }
+    }
+  },
+  "policy-5-half-moves": {
+    "binary": {
+      "path": "build/multi_ply_cpu_fixed/bgbot_cpp.cp314-win_amd64.pyd",
+      "sha256": "b8dddb53f7064bee9b98367019e1568e235486389740ea0b4f4db44dcfa468de",
+      "bytes": 4992000
+    },
+    "levels": {
+      "2T": {
+        "calls": 6,
+        "exact": 0,
+        "seconds": 4.864674699958414,
+        "material": {
+          "farther": 10,
+          "closer": 1
+        }
+      },
+      "3T": {
+        "calls": 6,
+        "exact": 0,
+        "seconds": 17.069758499914315,
+        "material": {
+          "farther": 13,
+          "closer": 1
+        }
+      }
+    }
+  },
+  "policy-custom-control": {
+    "binary": {
+      "path": "build/multi_ply_cpu_fixed/bgbot_cpp.cp314-win_amd64.pyd",
+      "sha256": "b8dddb53f7064bee9b98367019e1568e235486389740ea0b4f4db44dcfa468de",
+      "bytes": 4992000
+    },
+    "levels": {
+      "2T": {
+        "calls": 6,
+        "exact": 6,
+        "seconds": 6.390231100085657,
+        "material": {}
+      },
+      "3T": {
+        "calls": 6,
+        "exact": 6,
+        "seconds": 19.24884260003455,
+        "material": {}
+      }
+    }
+  },
+  "policy-shallower-leaf": {
+    "binary": {
+      "path": "build/multi_ply_cpu_fixed/bgbot_cpp.cp314-win_amd64.pyd",
+      "sha256": "b8dddb53f7064bee9b98367019e1568e235486389740ea0b4f4db44dcfa468de",
+      "bytes": 4992000
+    },
+    "levels": {
+      "2T": {
+        "calls": 6,
+        "exact": 0,
+        "seconds": 13.449339599930681,
+        "material": {
+          "farther": 24,
+          "closer": 10
+        }
+      },
+      "3T": {
+        "calls": 6,
+        "exact": 0,
+        "seconds": 23.51968000002671,
+        "material": {
+          "closer": 22,
+          "farther": 6
+        }
+      }
+    }
+  },
+  "table-both-1": {
+    "binary": {
+      "path": "build/truncated_cache_arms/both/bgbot_cpp.cp314-win_amd64.pyd",
+      "sha256": "69879dce1c192939cfd1db8cdab1d86254944353a7a4f6dd9f5bdde0ed64d7af",
+      "bytes": 4992000
+    },
+    "levels": {
+      "2T": {
+        "calls": 6,
+        "exact": 6,
+        "seconds": 6.793019599921536,
+        "material": {}
+      },
+      "3T": {
+        "calls": 6,
+        "exact": 6,
+        "seconds": 19.667017999920063,
+        "material": {}
+      }
+    }
+  },
+  "table-met-1": {
+    "binary": {
+      "path": "build/truncated_cache_arms/met/bgbot_cpp.cp314-win_amd64.pyd",
+      "sha256": "0190337e453a59f9251cd332c83e372d3f82d75ec111a3df55fd9a7653a3a3b1",
+      "bytes": 4993536
+    },
+    "levels": {
+      "2T": {
+        "calls": 6,
+        "exact": 6,
+        "seconds": 6.826027500152122,
+        "material": {}
+      },
+      "3T": {
+        "calls": 6,
+        "exact": 6,
+        "seconds": 19.707377399899997,
+        "material": {}
+      }
+    }
+  },
+  "table-met-2": {
+    "binary": {
+      "path": "build/truncated_cache_arms/met/bgbot_cpp.cp314-win_amd64.pyd",
+      "sha256": "0190337e453a59f9251cd332c83e372d3f82d75ec111a3df55fd9a7653a3a3b1",
+      "bytes": 4993536
+    },
+    "levels": {
+      "2T": {
+        "calls": 6,
+        "exact": 6,
+        "seconds": 6.239259100169875,
+        "material": {}
+      },
+      "3T": {
+        "calls": 6,
+        "exact": 6,
+        "seconds": 18.03446510003414,
+        "material": {}
+      }
+    }
+  }
+}

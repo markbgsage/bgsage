@@ -1,0 +1,14 @@
+{
+  "candidate": {
+    "cpp/include/bgbot/multipy.h": "74029939de89b16379002d29cfec3fdcb6d7703669629c470cbea27f83d41f8f",
+    "cpp/include/bgbot/rollout.h": "8266c0f7aba1e6d04338c23cf614071bd57e31e53485c1b8b1e3daf5d43a30df",
+    "cpp/src/cube_eval.cpp": "0bd578cc69f6fd0cac53144e1fce218ef506a1a580807bd89e62236447afecc4",
+    "cpp/src/neural_net.cpp": "e5f4ddff2eae89a0ef755cd5126d292baeb62f4383ac06f387c16e39adfc13bb",
+    "cpp/src/rollout.cpp": "3e5cda810df397ded3c6426ca2b39f662af651bcbece649a32db660533542f19",
+    "cpp/src/strategy.cpp": "fd4546283eed61e5a4e7bf4f30bbaecb250814d454977c11bbfd9980924fbe52"
+  },
+  "control": {
+    "cpp/include/bgbot/rollout.h": "8266c0f7aba1e6d04338c23cf614071bd57e31e53485c1b8b1e3daf5d43a30df",
+    "cpp/src/rollout.cpp": "3e5cda810df397ded3c6426ca2b39f662af651bcbece649a32db660533542f19"
+  }
+}

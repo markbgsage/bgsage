@@ -844,6 +844,10 @@ std::array<float, NN_OUTPUTS> NeuralNetwork::forward_from_base(
         }
     }
 
+    // The sparse list may have filled before the last changed input. Use
+    // the complete input vector for such widely separated candidates.
+    if (n_deltas == 64) return forward(inputs);
+
     // Apply deltas using transposed weight matrix for contiguous column access.
     // hidden_weights_T_[col * nh + h] gives the weight for hidden node h, input col.
     // This avoids the strided column extraction step entirely.

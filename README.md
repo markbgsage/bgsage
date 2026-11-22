@@ -40,7 +40,7 @@ The engine exposes Python and C++ interfaces. In Python, import `BgBotAnalyzer` 
 * Game plan classification identifies both players' game plans.
 * Game utilities (flip a board, etc).
 
-## Benchmarking 3-ply analytics
+## Benchmarking multi-ply and truncated-rollout analytics
 
 The timing runner measures 100 checker calls, 100 cube calls and 100 post-move calls. Each 100-position set is split evenly between unlimited play and five-point matches, with 20 positions per game plan. The cube and post-move calls use the same physical positions from opposite players' perspectives. The runner saves every returned field and reports timings by API, game plan and play format. [Positions and commands](data/multi_ply_benchmark/README.md)
 
@@ -50,6 +50,9 @@ The [1T, 2T and 3T timing study](data/multi_ply_benchmark/experiments/truncated_
 compares all three public truncated-rollout presets with the same fixed
 positions and full-game references. It includes the full analytics for
 every timed call, per-position wall times and rollout standard errors.
+
+The [2T and 3T optimization study](data/multi_ply_benchmark/experiments/truncated_search/README.md)
+profiles each trial phase and compares CPU implementations against the full-game references.
 
 ## How Does it Compare to XG?
 

@@ -1,0 +1,63 @@
+{
+  "metadata": {
+    "threads": 4,
+    "mask": 15,
+    "repeats": 3,
+    "builds": {
+      "base": "568cb07b852329986d9cdeb4d524fa49933d43bed76b367a4f3a573f2973f61a",
+      "mean": "aac78c26266b5760b9620760a670ad54e64b14a58860968084648f24f4f65f01"
+    }
+  },
+  "complete_blocks": 42,
+  "total_calls": 84,
+  "levels": {
+    "truncated2": {
+      "base": {
+        "seconds": 17.07194569997955,
+        "ratio": 1.0,
+        "median_ratio": 1.0,
+        "faster": 0,
+        "exact": 21,
+        "count": 21
+      },
+      "mean": {
+        "seconds": 17.072845700080507,
+        "ratio": 0.9999472847048017,
+        "median_ratio": 1.0047420266323293,
+        "faster": 11,
+        "exact": 21,
+        "count": 21
+      }
+    },
+    "truncated3": {
+      "base": {
+        "seconds": 44.30642729997635,
+        "ratio": 1.0,
+        "median_ratio": 1.0,
+        "faster": 0,
+        "exact": 21,
+        "count": 21
+      },
+      "mean": {
+        "seconds": 45.75822200003313,
+        "ratio": 0.9682724844497732,
+        "median_ratio": 0.9694770500959995,
+        "faster": 8,
+        "exact": 21,
+        "count": 21
+      }
+    }
+  },
+  "archived_16_thread_control": {
+    "truncated2": {
+      "exact": 0,
+      "count": 21,
+      "max_abs_numeric_delta": 1.1920928955078125e-07
+    },
+    "truncated3": {
+      "exact": 0,
+      "count": 21,
+      "max_abs_numeric_delta": 1.1920928955078125e-07
+    }
+  }
+}

@@ -121,11 +121,8 @@ void get_ecf3_local(
 
 // ======================== Per-thread cache ========================
 //
-// Open-addressing, epoch-free. The key incorporates a fingerprint of the
-// cube-state array, so entries remain valid across calls and across cube
-// contexts — no global invalidation needed (unlike the old cubeful cache,
-// whose process-global epoch bump per top-level call destroyed every other
-// thread's in-flight memoization under parallel trial dispatch).
+// The key incorporates the ordered cube states and evaluator context. Each
+// thread owns its lookup table and advances its own generation on clear.
 
 uint64_t fp_mix(uint64_t h, uint64_t v) {
     h ^= v + 0x9e3779b97f4a7c15ULL + (h << 12) + (h >> 4);
@@ -158,12 +155,13 @@ uint64_t hash_board64(const Board& b) {
 }
 
 struct CubefulEvalCacheEntry {
-    uint64_t key = 0;            // 0 = empty
+    uint64_t key = 0;
     uint64_t cube_fp = 0;
     Board board{};
     int16_t plies = 0;
     int16_t cci = 0;
     uint8_t ftop = 0;
+    uint32_t generation = 0;
     float vals[16];
     float probs[NUM_OUTPUTS];
 };
@@ -173,11 +171,15 @@ struct CubefulEvalCache {
     static constexpr size_t MASK = SIZE - 1;
     static constexpr int MAX_PROBE = 4;
     std::vector<CubefulEvalCacheEntry> entries;
+    uint32_t generation = 1;
 
     CubefulEvalCache() : entries(SIZE) {}
 
     void clear() {
-        for (auto& e : entries) e.key = 0;
+        if (++generation == 0) {
+            for (auto& e : entries) e.generation = 0;
+            generation = 1;
+        }
     }
 
     bool get(uint64_t key, uint64_t fp, const Board& b, int plies, int cci,
@@ -186,6 +188,9 @@ struct CubefulEvalCache {
         size_t idx = static_cast<size_t>(key) & MASK;
         for (int p = 0; p < MAX_PROBE; ++p, idx = (idx + 1) & MASK) {
             const auto& e = entries[idx];
+            // Inserts stop at the first vacant slot. No occupied slots are removed
+            // within a generation, so a vacant slot terminates the probe.
+            if (e.generation != generation) return false;
             if (e.key != key) continue;
             if (e.cube_fp != fp || e.plies != plies || e.cci != cci ||
                 e.ftop != (ftop ? 1 : 0) || !(e.board == b)) continue;
@@ -206,9 +211,10 @@ struct CubefulEvalCache {
         size_t target = idx;
         for (int p = 0; p < MAX_PROBE; ++p, idx = (idx + 1) & MASK) {
             const auto& e = entries[idx];
-            if (e.key == 0 || e.key == key) { target = idx; break; }
+            if (e.generation != generation || e.key == key) { target = idx; break; }
         }
         auto& e = entries[target];
+        e.generation = generation;
         e.key = key;
         e.cube_fp = fp;
         e.board = b;

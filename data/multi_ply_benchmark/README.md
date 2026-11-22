@@ -129,6 +129,9 @@ including the available standard errors. Use
 `scripts/compare_truncated_benchmark.py` to compare two complete runs with
 the [position-level rollout references](rollout_positions/README.md).
 
+The [2T and 3T optimization study](experiments/truncated_search/README.md) includes
+native phase measurements, the tested alternatives and the complete paired analytics.
+
 ## Stage 11 baseline, 2026-11-21
 
 The saved baseline used two configured threads, a fresh process, and one pass

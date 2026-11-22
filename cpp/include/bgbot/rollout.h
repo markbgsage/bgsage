@@ -385,6 +385,8 @@ private:
         }
     };
 
+    struct VarianceReductionCache;
+
     // Precomputed move-1 data for cubeful pre-roll rollouts.
     // After move 0 there are only 21 possible boards (one per first roll), so
     // we can share the entire move-1 VR table and actual-roll decision across
@@ -415,12 +417,10 @@ private:
         uint64_t cd_fp[Move0Cache::N_ROLLS][2] = {};
         CubeDecision cd[Move0Cache::N_ROLLS][2] = {};
 
-        Move1Cache() {
-            for (int i = 0; i < Move0Cache::N_ROLLS; ++i) {
-                state[i].store(0, std::memory_order_relaxed);
-                cd_state[i].store(0, std::memory_order_relaxed);
-            }
-        }
+        // Shared between trials of this position, including after move 1.
+        std::unique_ptr<VarianceReductionCache> vr_cache;
+        explicit Move1Cache(const RolloutConfig& config);
+        ~Move1Cache();
     };
 
     // --- Cubeful rollout internals ---

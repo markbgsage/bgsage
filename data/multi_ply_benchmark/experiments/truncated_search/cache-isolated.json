@@ -1,0 +1,80 @@
+{
+  "metadata": {
+    "threads": 16,
+    "mask": 65535,
+    "repeats": 2,
+    "builds": {
+      "base": "b8dddb53f7064bee9b98367019e1568e235486389740ea0b4f4db44dcfa468de",
+      "pos": "87e73bf1a255ba2ecd2f909ce0d870f1fc1961a14e2a0d7a6ac1611a91ba1cfb",
+      "both": "69879dce1c192939cfd1db8cdab1d86254944353a7a4f6dd9f5bdde0ed64d7af"
+    }
+  },
+  "complete_blocks": 28,
+  "total_calls": 84,
+  "levels": {
+    "truncated2": {
+      "base": {
+        "seconds": 3.776665800018236,
+        "ratio": 1.0,
+        "median_ratio": 1.0,
+        "faster": 0,
+        "exact": 14,
+        "count": 14
+      },
+      "pos": {
+        "seconds": 3.5081177999381907,
+        "ratio": 1.0765504510951076,
+        "median_ratio": 1.075866418445361,
+        "faster": 14,
+        "exact": 14,
+        "count": 14
+      },
+      "both": {
+        "seconds": 3.5242602999787778,
+        "ratio": 1.0716194260795602,
+        "median_ratio": 1.073237127046816,
+        "faster": 14,
+        "exact": 14,
+        "count": 14
+      }
+    },
+    "truncated3": {
+      "base": {
+        "seconds": 9.212533600104507,
+        "ratio": 1.0,
+        "median_ratio": 1.0,
+        "faster": 0,
+        "exact": 14,
+        "count": 14
+      },
+      "pos": {
+        "seconds": 9.08499920007307,
+        "ratio": 1.0140379098801033,
+        "median_ratio": 1.0210724498724484,
+        "faster": 9,
+        "exact": 14,
+        "count": 14
+      },
+      "both": {
+        "seconds": 9.131494399916846,
+        "ratio": 1.0088746919878087,
+        "median_ratio": 1.0284912742923118,
+        "faster": 11,
+        "exact": 14,
+        "count": 14
+      }
+    }
+  },
+  "archived_16_thread_control": {
+    "truncated2": {
+      "exact": 14,
+      "count": 14,
+      "max_abs_numeric_delta": 0.0
+    },
+    "truncated3": {
+      "exact": 14,
+      "count": 14,
+      "max_abs_numeric_delta": 0.0
+    }
+  }
+}

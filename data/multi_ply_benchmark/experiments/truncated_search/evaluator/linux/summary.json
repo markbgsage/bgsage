@@ -1,0 +1,268 @@
+{
+  "hashes": {
+    "control": "a46aa05f411a3a244139e08d49ccc356c6ff8a6cb0cc1290334c48a8559c83f0",
+    "candidate": "548181d12e97c4b9faf9df516601ea6b82a9745f7de4b089fb586ea9c29bf1d2"
+  },
+  "rows": [
+    {
+      "level": "2T",
+      "api": "checker_play",
+      "position_id": "checker-money-attacking-05",
+      "elapsed": {
+        "control": 0.2157128030000024,
+        "candidate": 0.12520548099999473
+      },
+      "matches_published_control": {
+        "control": false,
+        "candidate": false
+      }
+    },
+    {
+      "level": "2T",
+      "api": "cube_action",
+      "position_id": "cube-match-attacking-01",
+      "elapsed": {
+        "candidate": 0.3160344390000205,
+        "control": 0.4650980530000197
+      },
+      "matches_published_control": {
+        "candidate": false,
+        "control": false
+      }
+    },
+    {
+      "level": "2T",
+      "api": "post_move_analytics",
+      "position_id": "cube-money-priming-09",
+      "elapsed": {
+        "control": 0.49316871199999923,
+        "candidate": 0.2863204450000012
+      },
+      "matches_published_control": {
+        "control": false,
+        "candidate": false
+      }
+    },
+    {
+      "level": "2T",
+      "api": "checker_play",
+      "position_id": "checker-match-priming-02",
+      "elapsed": {
+        "candidate": 0.809726822000016,
+        "control": 1.22168413899999
+      },
+      "matches_published_control": {
+        "candidate": false,
+        "control": false
+      }
+    },
+    {
+      "level": "2T",
+      "api": "cube_action",
+      "position_id": "cube-money-anchoring-04",
+      "elapsed": {
+        "control": 0.43636622200000375,
+        "candidate": 0.28654740900000775
+      },
+      "matches_published_control": {
+        "control": false,
+        "candidate": false
+      }
+    },
+    {
+      "level": "2T",
+      "api": "post_move_analytics",
+      "position_id": "cube-match-anchoring-08",
+      "elapsed": {
+        "candidate": 0.17620364499998686,
+        "control": 0.24487316599999076
+      },
+      "matches_published_control": {
+        "candidate": false,
+        "control": false
+      }
+    },
+    {
+      "level": "2T",
+      "api": "checker_play",
+      "position_id": "checker-money-racing-02",
+      "elapsed": {
+        "control": 0.16430386499999372,
+        "candidate": 0.10946426300000667
+      },
+      "matches_published_control": {
+        "control": false,
+        "candidate": false
+      }
+    },
+    {
+      "level": "2T",
+      "api": "cube_action",
+      "position_id": "cube-match-racing-03",
+      "elapsed": {
+        "candidate": 0.492123687000003,
+        "control": 0.6219924690000198
+      },
+      "matches_published_control": {
+        "candidate": false,
+        "control": false
+      }
+    },
+    {
+      "level": "2T",
+      "api": "post_move_analytics",
+      "position_id": "cube-money-purerace-07",
+      "elapsed": {
+        "control": 0.06410521800000879,
+        "candidate": 0.04626360999998269
+      },
+      "matches_published_control": {
+        "control": false,
+        "candidate": false
+      }
+    },
+    {
+      "level": "2T",
+      "api": "checker_play",
+      "position_id": "checker-match-purerace-09",
+      "elapsed": {
+        "candidate": 0.007044518999975935,
+        "control": 0.024218414000017674
+      },
+      "matches_published_control": {
+        "candidate": false,
+        "control": false
+      }
+    },
+    {
+      "level": "3T",
+      "api": "checker_play",
+      "position_id": "checker-money-attacking-05",
+      "elapsed": {
+        "control": 0.247213424999984,
+        "candidate": 0.209836260000003
+      },
+      "matches_published_control": {
+        "control": false,
+        "candidate": false
+      }
+    },
+    {
+      "level": "3T",
+      "api": "cube_action",
+      "position_id": "cube-match-attacking-01",
+      "elapsed": {
+        "candidate": 1.146186795999995,
+        "control": 1.3096775500000035
+      },
+      "matches_published_control": {
+        "candidate": false,
+        "control": false
+      }
+    },
+    {
+      "level": "3T",
+      "api": "post_move_analytics",
+      "position_id": "cube-money-priming-09",
+      "elapsed": {
+        "control": 1.8431329600000197,
+        "candidate": 1.5800196940000149
+      },
+      "matches_published_control": {
+        "control": false,
+        "candidate": false
+      }
+    },
+    {
+      "level": "3T",
+      "api": "checker_play",
+      "position_id": "checker-match-priming-02",
+      "elapsed": {
+        "candidate": 3.684474695999995,
+        "control": 4.007580367000003
+      },
+      "matches_published_control": {
+        "candidate": false,
+        "control": false
+      }
+    },
+    {
+      "level": "3T",
+      "api": "cube_action",
+      "position_id": "cube-money-anchoring-04",
+      "elapsed": {
+        "control": 1.1259346219999884,
+        "candidate": 0.9352112039999838
+      },
+      "matches_published_control": {
+        "control": false,
+        "candidate": false
+      }
+    },
+    {
+      "level": "3T",
+      "api": "post_move_analytics",
+      "position_id": "cube-match-anchoring-08",
+      "elapsed": {
+        "candidate": 0.759722561000018,
+        "control": 0.8613555050000059
+      },
+      "matches_published_control": {
+        "candidate": false,
+        "control": false
+      }
+    },
+    {
+      "level": "3T",
+      "api": "checker_play",
+      "position_id": "checker-money-racing-02",
+      "elapsed": {
+        "control": 0.571926115999986,
+        "candidate": 0.505157252999993
+      },
+      "matches_published_control": {
+        "control": false,
+        "candidate": false
+      }
+    },
+    {
+      "level": "3T",
+      "api": "cube_action",
+      "position_id": "cube-match-racing-03",
+      "elapsed": {
+        "candidate": 0.7873790299999825,
+        "control": 0.902435319999995
+      },
+      "matches_published_control": {
+        "candidate": false,
+        "control": false
+      }
+    },
+    {
+      "level": "3T",
+      "api": "post_move_analytics",
+      "position_id": "cube-money-purerace-07",
+      "elapsed": {
+        "control": 0.20547563300002025,
+        "candidate": 0.19216855199999827
+      },
+      "matches_published_control": {
+        "control": false,
+        "candidate": false
+      }
+    },
+    {
+      "level": "3T",
+      "api": "checker_play",
+      "position_id": "checker-match-purerace-09",
+      "elapsed": {
+        "candidate": 0.009809361000009176,
+        "control": 0.024246424000011757
+      },
+      "matches_published_control": {
+        "candidate": false,
+        "control": false
+      }
+    }
+  ]
+}

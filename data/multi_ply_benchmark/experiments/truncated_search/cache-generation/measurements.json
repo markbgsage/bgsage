@@ -1,0 +1,1219 @@
+{
+  "threads": 16,
+  "cpu_mask": "0xffff",
+  "shuffle_seed": 20261121,
+  "binaries": {
+    "control": {
+      "path": "build/truncated_cache_arms/pos/bgbot_cpp.cp314-win_amd64.pyd",
+      "sha256": "87e73bf1a255ba2ecd2f909ce0d870f1fc1961a14e2a0d7a6ac1611a91ba1cfb",
+      "bytes": 4992512
+    },
+    "candidate": {
+      "path": "build/truncated_cache_arms/both/bgbot_cpp.cp314-win_amd64.pyd",
+      "sha256": "69879dce1c192939cfd1db8cdab1d86254944353a7a4f6dd9f5bdde0ed64d7af",
+      "bytes": 4992000
+    }
+  },
+  "cases": [
+    {
+      "level": "truncated2",
+      "api": "post_move_analytics",
+      "position_id": "cube-match-purerace-01",
+      "seed": 1646374122,
+      "order": [
+        "control",
+        "candidate"
+      ],
+      "control": {
+        "wall_seconds": 0.00550709996605292,
+        "process_cpu_seconds": 0.0,
+        "exact": true
+      },
+      "candidate": {
+        "wall_seconds": 0.00590859999647364,
+        "process_cpu_seconds": 0.0,
+        "exact": true
+      }
+    },
+    {
+      "level": "truncated2",
+      "api": "cube_action",
+      "position_id": "cube-match-purerace-01",
+      "seed": 1646374122,
+      "order": [
+        "candidate",
+        "control"
+      ],
+      "candidate": {
+        "wall_seconds": 0.002470300009008497,
+        "process_cpu_seconds": 0.0,
+        "exact": true
+      },
+      "control": {
+        "wall_seconds": 0.0036915999953635037,
+        "process_cpu_seconds": 0.203125,
+        "exact": true
+      }
+    },
+    {
+      "level": "truncated2",
+      "api": "checker_play",
+      "position_id": "checker-money-priming-01",
+      "seed": 3041275113,
+      "order": [
+        "control",
+        "candidate"
+      ],
+      "control": {
+        "wall_seconds": 0.5284372000023723,
+        "process_cpu_seconds": 7.078125,
+        "exact": true
+      },
+      "candidate": {
+        "wall_seconds": 0.5378646999597549,
+        "process_cpu_seconds": 6.9375,
+        "exact": true
+      }
+    },
+    {
+      "level": "truncated2",
+      "api": "post_move_analytics",
+      "position_id": "cube-match-racing-01",
+      "seed": 1003876134,
+      "order": [
+        "candidate",
+        "control"
+      ],
+      "candidate": {
+        "wall_seconds": 0.16918809997150674,
+        "process_cpu_seconds": 2.421875,
+        "exact": true
+      },
+      "control": {
+        "wall_seconds": 0.18051710003055632,
+        "process_cpu_seconds": 2.421875,
+        "exact": true
+      }
+    },
+    {
+      "level": "truncated2",
+      "api": "checker_play",
+      "position_id": "checker-money-racing-01",
+      "seed": 1146611758,
+      "order": [
+        "control",
+        "candidate"
+      ],
+      "control": {
+        "wall_seconds": 0.6293369000195526,
+        "process_cpu_seconds": 8.578125,
+        "exact": true
+      },
+      "candidate": {
+        "wall_seconds": 0.6475403999793343,
+        "process_cpu_seconds": 8.265625,
+        "exact": true
+      }
+    },
+    {
+      "level": "truncated2",
+      "api": "cube_action",
+      "position_id": "cube-money-anchoring-01",
+      "seed": 2029800079,
+      "order": [
+        "candidate",
+        "control"
+      ],
+      "candidate": {
+        "wall_seconds": 0.41126699995948,
+        "process_cpu_seconds": 5.53125,
+        "exact": true
+      },
+      "control": {
+        "wall_seconds": 0.4570584000321105,
+        "process_cpu_seconds": 5.390625,
+        "exact": true
+      }
+    },
+    {
+      "level": "truncated2",
+      "api": "cube_action",
+      "position_id": "cube-money-purerace-01",
+      "seed": 262294228,
+      "order": [
+        "control",
+        "candidate"
+      ],
+      "control": {
+        "wall_seconds": 0.01583079999545589,
+        "process_cpu_seconds": 0.234375,
+        "exact": true
+      },
+      "candidate": {
+        "wall_seconds": 0.015098700008820742,
+        "process_cpu_seconds": 0.234375,
+        "exact": true
+      }
+    },
+    {
+      "level": "truncated2",
+      "api": "checker_play",
+      "position_id": "checker-match-racing-01",
+      "seed": 2205714610,
+      "order": [
+        "candidate",
+        "control"
+      ],
+      "candidate": {
+        "wall_seconds": 1.049493899976369,
+        "process_cpu_seconds": 13.3125,
+        "exact": true
+      },
+      "control": {
+        "wall_seconds": 1.020289900014177,
+        "process_cpu_seconds": 13.28125,
+        "exact": true
+      }
+    },
+    {
+      "level": "truncated3",
+      "api": "post_move_analytics",
+      "position_id": "cube-match-anchoring-01",
+      "seed": 2941524523,
+      "order": [
+        "control",
+        "candidate"
+      ],
+      "control": {
+        "wall_seconds": 0.598796299949754,
+        "process_cpu_seconds": 7.921875,
+        "exact": true
+      },
+      "candidate": {
+        "wall_seconds": 0.6192074999562465,
+        "process_cpu_seconds": 7.9375,
+        "exact": true
+      }
+    },
+    {
+      "level": "truncated3",
+      "api": "cube_action",
+      "position_id": "cube-money-purerace-01",
+      "seed": 262294228,
+      "order": [
+        "candidate",
+        "control"
+      ],
+      "candidate": {
+        "wall_seconds": 0.08649279997916892,
+        "process_cpu_seconds": 1.125,
+        "exact": true
+      },
+      "control": {
+        "wall_seconds": 0.08732450002571568,
+        "process_cpu_seconds": 1.15625,
+        "exact": true
+      }
+    },
+    {
+      "level": "truncated3",
+      "api": "checker_play",
+      "position_id": "checker-match-purerace-01",
+      "seed": 2346305876,
+      "order": [
+        "control",
+        "candidate"
+      ],
+      "control": {
+        "wall_seconds": 0.18676990002859384,
+        "process_cpu_seconds": 2.5,
+        "exact": true
+      },
+      "candidate": {
+        "wall_seconds": 0.18436880002263933,
+        "process_cpu_seconds": 2.484375,
+        "exact": true
+      }
+    },
+    {
+      "level": "truncated2",
+      "api": "post_move_analytics",
+      "position_id": "cube-match-anchoring-01",
+      "seed": 2941524523,
+      "order": [
+        "candidate",
+        "control"
+      ],
+      "candidate": {
+        "wall_seconds": 0.2448127999668941,
+        "process_cpu_seconds": 3.328125,
+        "exact": true
+      },
+      "control": {
+        "wall_seconds": 0.24842369998805225,
+        "process_cpu_seconds": 3.234375,
+        "exact": true
+      }
+    },
+    {
+      "level": "truncated3",
+      "api": "cube_action",
+      "position_id": "cube-money-anchoring-01",
+      "seed": 2029800079,
+      "order": [
+        "control",
+        "candidate"
+      ],
+      "control": {
+        "wall_seconds": 1.0166302000288852,
+        "process_cpu_seconds": 13.828125,
+        "exact": true
+      },
+      "candidate": {
+        "wall_seconds": 1.046869199955836,
+        "process_cpu_seconds": 14.015625,
+        "exact": true
+      }
+    },
+    {
+      "level": "truncated2",
+      "api": "checker_play",
+      "position_id": "checker-match-purerace-01",
+      "seed": 2346305876,
+      "order": [
+        "candidate",
+        "control"
+      ],
+      "candidate": {
+        "wall_seconds": 0.1294120000093244,
+        "process_cpu_seconds": 1.609375,
+        "exact": true
+      },
+      "control": {
+        "wall_seconds": 0.13325229997280985,
+        "process_cpu_seconds": 1.84375,
+        "exact": true
+      }
+    },
+    {
+      "level": "truncated3",
+      "api": "checker_play",
+      "position_id": "checker-match-priming-01",
+      "seed": 1912855467,
+      "order": [
+        "control",
+        "candidate"
+      ],
+      "control": {
+        "wall_seconds": 2.6574435000075027,
+        "process_cpu_seconds": 35.3125,
+        "exact": true
+      },
+      "candidate": {
+        "wall_seconds": 2.7526416999753565,
+        "process_cpu_seconds": 34.21875,
+        "exact": true
+      }
+    },
+    {
+      "level": "truncated3",
+      "api": "post_move_analytics",
+      "position_id": "cube-match-purerace-01",
+      "seed": 1646374122,
+      "order": [
+        "candidate",
+        "control"
+      ],
+      "candidate": {
+        "wall_seconds": 0.003767099988181144,
+        "process_cpu_seconds": 0.015625,
+        "exact": true
+      },
+      "control": {
+        "wall_seconds": 0.003888100036419928,
+        "process_cpu_seconds": 0.0,
+        "exact": true
+      }
+    },
+    {
+      "level": "truncated3",
+      "api": "checker_play",
+      "position_id": "checker-money-anchoring-01",
+      "seed": 1842203250,
+      "order": [
+        "control",
+        "candidate"
+      ],
+      "control": {
+        "wall_seconds": 0.43786539998836815,
+        "process_cpu_seconds": 5.421875,
+        "exact": true
+      },
+      "candidate": {
+        "wall_seconds": 0.41129910002928227,
+        "process_cpu_seconds": 5.4375,
+        "exact": true
+      }
+    },
+    {
+      "level": "truncated2",
+      "api": "cube_action",
+      "position_id": "cube-match-racing-01",
+      "seed": 1003876134,
+      "order": [
+        "candidate",
+        "control"
+      ],
+      "candidate": {
+        "wall_seconds": 0.19070879998616874,
+        "process_cpu_seconds": 2.125,
+        "exact": true
+      },
+      "control": {
+        "wall_seconds": 0.18372959998669103,
+        "process_cpu_seconds": 2.265625,
+        "exact": true
+      }
+    },
+    {
+      "level": "truncated3",
+      "api": "checker_play",
+      "position_id": "checker-match-attacking-01",
+      "seed": 3249248278,
+      "order": [
+        "control",
+        "candidate"
+      ],
+      "control": {
+        "wall_seconds": 2.0973412999883294,
+        "process_cpu_seconds": 26.828125,
+        "exact": true
+      },
+      "candidate": {
+        "wall_seconds": 2.192024099989794,
+        "process_cpu_seconds": 26.890625,
+        "exact": true
+      }
+    },
+    {
+      "level": "truncated2",
+      "api": "post_move_analytics",
+      "position_id": "cube-money-purerace-01",
+      "seed": 262294228,
+      "order": [
+        "candidate",
+        "control"
+      ],
+      "candidate": {
+        "wall_seconds": 0.016301600029692054,
+        "process_cpu_seconds": 0.1875,
+        "exact": true
+      },
+      "control": {
+        "wall_seconds": 0.01747860002797097,
+        "process_cpu_seconds": 0.25,
+        "exact": true
+      }
+    },
+    {
+      "level": "truncated2",
+      "api": "cube_action",
+      "position_id": "cube-money-racing-01",
+      "seed": 203644446,
+      "order": [
+        "control",
+        "candidate"
+      ],
+      "control": {
+        "wall_seconds": 0.11754410003777593,
+        "process_cpu_seconds": 1.515625,
+        "exact": true
+      },
+      "candidate": {
+        "wall_seconds": 0.11909819999709725,
+        "process_cpu_seconds": 1.5,
+        "exact": true
+      }
+    },
+    {
+      "level": "truncated3",
+      "api": "checker_play",
+      "position_id": "checker-money-priming-01",
+      "seed": 3041275113,
+      "order": [
+        "candidate",
+        "control"
+      ],
+      "candidate": {
+        "wall_seconds": 1.5595361999585293,
+        "process_cpu_seconds": 19.890625,
+        "exact": true
+      },
+      "control": {
+        "wall_seconds": 1.560082899988629,
+        "process_cpu_seconds": 20.46875,
+        "exact": true
+      }
+    },
+    {
+      "level": "truncated2",
+      "api": "cube_action",
+      "position_id": "cube-match-priming-01",
+      "seed": 965321798,
+      "order": [
+        "control",
+        "candidate"
+      ],
+      "control": {
+        "wall_seconds": 0.41709000000264496,
+        "process_cpu_seconds": 5.3125,
+        "exact": true
+      },
+      "candidate": {
+        "wall_seconds": 0.42092060000868514,
+        "process_cpu_seconds": 5.375,
+        "exact": true
+      }
+    },
+    {
+      "level": "truncated3",
+      "api": "cube_action",
+      "position_id": "cube-money-priming-01",
+      "seed": 851928682,
+      "order": [
+        "candidate",
+        "control"
+      ],
+      "candidate": {
+        "wall_seconds": 0.9376002000062726,
+        "process_cpu_seconds": 11.3125,
+        "exact": true
+      },
+      "control": {
+        "wall_seconds": 0.9376700000138953,
+        "process_cpu_seconds": 11.328125,
+        "exact": true
+      }
+    },
+    {
+      "level": "truncated3",
+      "api": "post_move_analytics",
+      "position_id": "cube-match-attacking-01",
+      "seed": 993809272,
+      "order": [
+        "control",
+        "candidate"
+      ],
+      "control": {
+        "wall_seconds": 0.6968217000248842,
+        "process_cpu_seconds": 9.53125,
+        "exact": true
+      },
+      "candidate": {
+        "wall_seconds": 0.7737922000233084,
+        "process_cpu_seconds": 9.5,
+        "exact": true
+      }
+    },
+    {
+      "level": "truncated3",
+      "api": "cube_action",
+      "position_id": "cube-match-purerace-01",
+      "seed": 1646374122,
+      "order": [
+        "candidate",
+        "control"
+      ],
+      "candidate": {
+        "wall_seconds": 0.00298689998453483,
+        "process_cpu_seconds": 0.0,
+        "exact": true
+      },
+      "control": {
+        "wall_seconds": 0.004809700010810047,
+        "process_cpu_seconds": 0.0,
+        "exact": true
+      }
+    },
+    {
+      "level": "truncated2",
+      "api": "checker_play",
+      "position_id": "checker-match-priming-01",
+      "seed": 1912855467,
+      "order": [
+        "control",
+        "candidate"
+      ],
+      "control": {
+        "wall_seconds": 0.9841689000022598,
+        "process_cpu_seconds": 11.890625,
+        "exact": true
+      },
+      "candidate": {
+        "wall_seconds": 0.9365061999997124,
+        "process_cpu_seconds": 11.953125,
+        "exact": true
+      }
+    },
+    {
+      "level": "truncated3",
+      "api": "post_move_analytics",
+      "position_id": "cube-money-anchoring-01",
+      "seed": 2029800079,
+      "order": [
+        "candidate",
+        "control"
+      ],
+      "candidate": {
+        "wall_seconds": 0.9912304999888875,
+        "process_cpu_seconds": 14.0625,
+        "exact": true
+      },
+      "control": {
+        "wall_seconds": 1.0874405999784358,
+        "process_cpu_seconds": 13.890625,
+        "exact": true
+      }
+    },
+    {
+      "level": "truncated3",
+      "api": "checker_play",
+      "position_id": "checker-match-anchoring-01",
+      "seed": 3798737322,
+      "order": [
+        "control",
+        "candidate"
+      ],
+      "control": {
+        "wall_seconds": 5.052746700006537,
+        "process_cpu_seconds": 61.875,
+        "exact": true
+      },
+      "candidate": {
+        "wall_seconds": 4.729887900000904,
+        "process_cpu_seconds": 61.578125,
+        "exact": true
+      }
+    },
+    {
+      "level": "truncated2",
+      "api": "checker_play",
+      "position_id": "checker-money-anchoring-01",
+      "seed": 1842203250,
+      "order": [
+        "candidate",
+        "control"
+      ],
+      "candidate": {
+        "wall_seconds": 0.23173270002007484,
+        "process_cpu_seconds": 3.28125,
+        "exact": true
+      },
+      "control": {
+        "wall_seconds": 0.2305851000128314,
+        "process_cpu_seconds": 3.28125,
+        "exact": true
+      }
+    },
+    {
+      "level": "truncated3",
+      "api": "checker_play",
+      "position_id": "checker-money-purerace-01",
+      "seed": 2614997811,
+      "order": [
+        "control",
+        "candidate"
+      ],
+      "control": {
+        "wall_seconds": 0.05576319998363033,
+        "process_cpu_seconds": 0.484375,
+        "exact": true
+      },
+      "candidate": {
+        "wall_seconds": 0.05366059998050332,
+        "process_cpu_seconds": 0.671875,
+        "exact": true
+      }
+    },
+    {
+      "level": "truncated2",
+      "api": "post_move_analytics",
+      "position_id": "cube-money-attacking-01",
+      "seed": 1720888050,
+      "order": [
+        "candidate",
+        "control"
+      ],
+      "candidate": {
+        "wall_seconds": 0.4142166000092402,
+        "process_cpu_seconds": 5.25,
+        "exact": true
+      },
+      "control": {
+        "wall_seconds": 0.41461189999245107,
+        "process_cpu_seconds": 4.9375,
+        "exact": true
+      }
+    },
+    {
+      "level": "truncated3",
+      "api": "post_move_analytics",
+      "position_id": "cube-money-racing-01",
+      "seed": 203644446,
+      "order": [
+        "control",
+        "candidate"
+      ],
+      "control": {
+        "wall_seconds": 0.3218661999562755,
+        "process_cpu_seconds": 4.15625,
+        "exact": true
+      },
+      "candidate": {
+        "wall_seconds": 0.3232694999896921,
+        "process_cpu_seconds": 4.265625,
+        "exact": true
+      }
+    },
+    {
+      "level": "truncated3",
+      "api": "checker_play",
+      "position_id": "checker-money-attacking-01",
+      "seed": 200024665,
+      "order": [
+        "candidate",
+        "control"
+      ],
+      "candidate": {
+        "wall_seconds": 1.7520836999756284,
+        "process_cpu_seconds": 22.796875,
+        "exact": true
+      },
+      "control": {
+        "wall_seconds": 1.8571886999998242,
+        "process_cpu_seconds": 21.90625,
+        "exact": true
+      }
+    },
+    {
+      "level": "truncated3",
+      "api": "post_move_analytics",
+      "position_id": "cube-money-priming-01",
+      "seed": 851928682,
+      "order": [
+        "control",
+        "candidate"
+      ],
+      "control": {
+        "wall_seconds": 0.9691852999967523,
+        "process_cpu_seconds": 11.171875,
+        "exact": true
+      },
+      "candidate": {
+        "wall_seconds": 0.8677927000098862,
+        "process_cpu_seconds": 11.40625,
+        "exact": true
+      }
+    },
+    {
+      "level": "truncated2",
+      "api": "post_move_analytics",
+      "position_id": "cube-match-priming-01",
+      "seed": 965321798,
+      "order": [
+        "candidate",
+        "control"
+      ],
+      "candidate": {
+        "wall_seconds": 0.3987836999585852,
+        "process_cpu_seconds": 5.234375,
+        "exact": true
+      },
+      "control": {
+        "wall_seconds": 0.3958336999639869,
+        "process_cpu_seconds": 5.34375,
+        "exact": true
+      }
+    },
+    {
+      "level": "truncated2",
+      "api": "cube_action",
+      "position_id": "cube-match-attacking-01",
+      "seed": 993809272,
+      "order": [
+        "control",
+        "candidate"
+      ],
+      "control": {
+        "wall_seconds": 0.2300870000035502,
+        "process_cpu_seconds": 2.890625,
+        "exact": true
+      },
+      "candidate": {
+        "wall_seconds": 0.22343070001807064,
+        "process_cpu_seconds": 3.265625,
+        "exact": true
+      }
+    },
+    {
+      "level": "truncated2",
+      "api": "checker_play",
+      "position_id": "checker-match-anchoring-01",
+      "seed": 3798737322,
+      "order": [
+        "candidate",
+        "control"
+      ],
+      "candidate": {
+        "wall_seconds": 1.2733446000493132,
+        "process_cpu_seconds": 17.640625,
+        "exact": true
+      },
+      "control": {
+        "wall_seconds": 1.3604955999762751,
+        "process_cpu_seconds": 17.25,
+        "exact": true
+      }
+    },
+    {
+      "level": "truncated3",
+      "api": "cube_action",
+      "position_id": "cube-money-racing-01",
+      "seed": 203644446,
+      "order": [
+        "control",
+        "candidate"
+      ],
+      "control": {
+        "wall_seconds": 0.3025928999995813,
+        "process_cpu_seconds": 4.140625,
+        "exact": true
+      },
+      "candidate": {
+        "wall_seconds": 0.31216329999733716,
+        "process_cpu_seconds": 4.296875,
+        "exact": true
+      }
+    },
+    {
+      "level": "truncated3",
+      "api": "cube_action",
+      "position_id": "cube-money-attacking-01",
+      "seed": 1720888050,
+      "order": [
+        "candidate",
+        "control"
+      ],
+      "candidate": {
+        "wall_seconds": 1.0362981000216678,
+        "process_cpu_seconds": 13.109375,
+        "exact": true
+      },
+      "control": {
+        "wall_seconds": 0.9869193999911658,
+        "process_cpu_seconds": 13.515625,
+        "exact": true
+      }
+    },
+    {
+      "level": "truncated3",
+      "api": "cube_action",
+      "position_id": "cube-match-priming-01",
+      "seed": 965321798,
+      "order": [
+        "control",
+        "candidate"
+      ],
+      "control": {
+        "wall_seconds": 0.6439276999444701,
+        "process_cpu_seconds": 8.265625,
+        "exact": true
+      },
+      "candidate": {
+        "wall_seconds": 0.6363701000227593,
+        "process_cpu_seconds": 8.34375,
+        "exact": true
+      }
+    },
+    {
+      "level": "truncated2",
+      "api": "post_move_analytics",
+      "position_id": "cube-match-attacking-01",
+      "seed": 993809272,
+      "order": [
+        "candidate",
+        "control"
+      ],
+      "candidate": {
+        "wall_seconds": 0.23189840000122786,
+        "process_cpu_seconds": 3.125,
+        "exact": true
+      },
+      "control": {
+        "wall_seconds": 0.24444869998842478,
+        "process_cpu_seconds": 3.0625,
+        "exact": true
+      }
+    },
+    {
+      "level": "truncated3",
+      "api": "cube_action",
+      "position_id": "cube-match-anchoring-01",
+      "seed": 2941524523,
+      "order": [
+        "control",
+        "candidate"
+      ],
+      "control": {
+        "wall_seconds": 0.6313827999983914,
+        "process_cpu_seconds": 8.09375,
+        "exact": true
+      },
+      "candidate": {
+        "wall_seconds": 0.6776335000176914,
+        "process_cpu_seconds": 7.8125,
+        "exact": true
+      }
+    },
+    {
+      "level": "truncated3",
+      "api": "post_move_analytics",
+      "position_id": "cube-money-purerace-01",
+      "seed": 262294228,
+      "order": [
+        "candidate",
+        "control"
+      ],
+      "candidate": {
+        "wall_seconds": 0.08712130005005747,
+        "process_cpu_seconds": 1.3125,
+        "exact": true
+      },
+      "control": {
+        "wall_seconds": 0.08737179997842759,
+        "process_cpu_seconds": 1.0625,
+        "exact": true
+      }
+    },
+    {
+      "level": "truncated3",
+      "api": "cube_action",
+      "position_id": "cube-match-attacking-01",
+      "seed": 993809272,
+      "order": [
+        "control",
+        "candidate"
+      ],
+      "control": {
+        "wall_seconds": 0.7198461000225507,
+        "process_cpu_seconds": 9.515625,
+        "exact": true
+      },
+      "candidate": {
+        "wall_seconds": 0.7590488999849185,
+        "process_cpu_seconds": 9.296875,
+        "exact": true
+      }
+    },
+    {
+      "level": "truncated3",
+      "api": "cube_action",
+      "position_id": "cube-match-racing-01",
+      "seed": 1003876134,
+      "order": [
+        "candidate",
+        "control"
+      ],
+      "candidate": {
+        "wall_seconds": 0.6740124999778345,
+        "process_cpu_seconds": 8.125,
+        "exact": true
+      },
+      "control": {
+        "wall_seconds": 0.6419690999900922,
+        "process_cpu_seconds": 8.359375,
+        "exact": true
+      }
+    },
+    {
+      "level": "truncated3",
+      "api": "post_move_analytics",
+      "position_id": "cube-match-priming-01",
+      "seed": 965321798,
+      "order": [
+        "control",
+        "candidate"
+      ],
+      "control": {
+        "wall_seconds": 0.6549511000048369,
+        "process_cpu_seconds": 8.5625,
+        "exact": true
+      },
+      "candidate": {
+        "wall_seconds": 0.6190958999795839,
+        "process_cpu_seconds": 8.390625,
+        "exact": true
+      }
+    },
+    {
+      "level": "truncated2",
+      "api": "post_move_analytics",
+      "position_id": "cube-money-racing-01",
+      "seed": 203644446,
+      "order": [
+        "candidate",
+        "control"
+      ],
+      "candidate": {
+        "wall_seconds": 0.11441559996455908,
+        "process_cpu_seconds": 1.5625,
+        "exact": true
+      },
+      "control": {
+        "wall_seconds": 0.11546409997390583,
+        "process_cpu_seconds": 1.4375,
+        "exact": true
+      }
+    },
+    {
+      "level": "truncated2",
+      "api": "cube_action",
+      "position_id": "cube-money-attacking-01",
+      "seed": 1720888050,
+      "order": [
+        "control",
+        "candidate"
+      ],
+      "control": {
+        "wall_seconds": 0.3847943000146188,
+        "process_cpu_seconds": 5.21875,
+        "exact": true
+      },
+      "candidate": {
+        "wall_seconds": 0.36836520000360906,
+        "process_cpu_seconds": 4.9375,
+        "exact": true
+      }
+    },
+    {
+      "level": "truncated3",
+      "api": "post_move_analytics",
+      "position_id": "cube-match-racing-01",
+      "seed": 1003876134,
+      "order": [
+        "candidate",
+        "control"
+      ],
+      "candidate": {
+        "wall_seconds": 0.603833700006362,
+        "process_cpu_seconds": 8.21875,
+        "exact": true
+      },
+      "control": {
+        "wall_seconds": 0.6329237000318244,
+        "process_cpu_seconds": 8.46875,
+        "exact": true
+      }
+    },
+    {
+      "level": "truncated2",
+      "api": "checker_play",
+      "position_id": "checker-money-attacking-01",
+      "seed": 200024665,
+      "order": [
+        "control",
+        "candidate"
+      ],
+      "control": {
+        "wall_seconds": 0.581541899999138,
+        "process_cpu_seconds": 7.4375,
+        "exact": true
+      },
+      "candidate": {
+        "wall_seconds": 0.5783454999909736,
+        "process_cpu_seconds": 7.6875,
+        "exact": true
+      }
+    },
+    {
+      "level": "truncated2",
+      "api": "checker_play",
+      "position_id": "checker-money-purerace-01",
+      "seed": 2614997811,
+      "order": [
+        "candidate",
+        "control"
+      ],
+      "candidate": {
+        "wall_seconds": 0.02443610003683716,
+        "process_cpu_seconds": 0.28125,
+        "exact": true
+      },
+      "control": {
+        "wall_seconds": 0.02889560000039637,
+        "process_cpu_seconds": 0.46875,
+        "exact": true
+      }
+    },
+    {
+      "level": "truncated2",
+      "api": "post_move_analytics",
+      "position_id": "cube-money-priming-01",
+      "seed": 851928682,
+      "order": [
+        "control",
+        "candidate"
+      ],
+      "control": {
+        "wall_seconds": 0.27477839996572584,
+        "process_cpu_seconds": 3.828125,
+        "exact": true
+      },
+      "candidate": {
+        "wall_seconds": 0.27071609999984503,
+        "process_cpu_seconds": 3.71875,
+        "exact": true
+      }
+    },
+    {
+      "level": "truncated2",
+      "api": "checker_play",
+      "position_id": "checker-match-attacking-01",
+      "seed": 3249248278,
+      "order": [
+        "candidate",
+        "control"
+      ],
+      "candidate": {
+        "wall_seconds": 0.6871371000306681,
+        "process_cpu_seconds": 9.046875,
+        "exact": true
+      },
+      "control": {
+        "wall_seconds": 0.7050671999459155,
+        "process_cpu_seconds": 9.15625,
+        "exact": true
+      }
+    },
+    {
+      "level": "truncated3",
+      "api": "checker_play",
+      "position_id": "checker-match-racing-01",
+      "seed": 2205714610,
+      "order": [
+        "control",
+        "candidate"
+      ],
+      "control": {
+        "wall_seconds": 1.7230794000206515,
+        "process_cpu_seconds": 23.34375,
+        "exact": true
+      },
+      "candidate": {
+        "wall_seconds": 1.7670624000020325,
+        "process_cpu_seconds": 23.109375,
+        "exact": true
+      }
+    },
+    {
+      "level": "truncated3",
+      "api": "post_move_analytics",
+      "position_id": "cube-money-attacking-01",
+      "seed": 1720888050,
+      "order": [
+        "candidate",
+        "control"
+      ],
+      "candidate": {
+        "wall_seconds": 1.034920699952636,
+        "process_cpu_seconds": 12.9375,
+        "exact": true
+      },
+      "control": {
+        "wall_seconds": 1.081298400007654,
+        "process_cpu_seconds": 13.3125,
+        "exact": true
+      }
+    },
+    {
+      "level": "truncated2",
+      "api": "post_move_analytics",
+      "position_id": "cube-money-anchoring-01",
+      "seed": 2029800079,
+      "order": [
+        "control",
+        "candidate"
+      ],
+      "control": {
+        "wall_seconds": 0.4495351000223309,
+        "process_cpu_seconds": 5.75,
+        "exact": true
+      },
+      "candidate": {
+        "wall_seconds": 0.42599299998255447,
+        "process_cpu_seconds": 5.359375,
+        "exact": true
+      }
+    },
+    {
+      "level": "truncated2",
+      "api": "cube_action",
+      "position_id": "cube-match-anchoring-01",
+      "seed": 2941524523,
+      "order": [
+        "candidate",
+        "control"
+      ],
+      "candidate": {
+        "wall_seconds": 0.24269040004583076,
+        "process_cpu_seconds": 3.1875,
+        "exact": true
+      },
+      "control": {
+        "wall_seconds": 0.2493858999805525,
+        "process_cpu_seconds": 3.25,
+        "exact": true
+      }
+    },
+    {
+      "level": "truncated2",
+      "api": "cube_action",
+      "position_id": "cube-money-priming-01",
+      "seed": 851928682,
+      "order": [
+        "control",
+        "candidate"
+      ],
+      "control": {
+        "wall_seconds": 0.2721517999889329,
+        "process_cpu_seconds": 3.859375,
+        "exact": true
+      },
+      "candidate": {
+        "wall_seconds": 0.2709350999793969,
+        "process_cpu_seconds": 3.765625,
+        "exact": true
+      }
+    },
+    {
+      "level": "truncated3",
+      "api": "checker_play",
+      "position_id": "checker-money-racing-01",
+      "seed": 1146611758,
+      "order": [
+        "candidate",
+        "control"
+      ],
+      "candidate": {
+        "wall_seconds": 1.0643406000453979,
+        "process_cpu_seconds": 14.171875,
+        "exact": true
+      },
+      "control": {
+        "wall_seconds": 1.0765940999845043,
+        "process_cpu_seconds": 14.359375,
+        "exact": true
+      }
+    }
+  ]
+}

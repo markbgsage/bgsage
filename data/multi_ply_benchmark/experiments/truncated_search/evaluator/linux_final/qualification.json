@@ -1,0 +1,34 @@
+{
+  "2T": {
+    "total_call_seconds": {
+      "baseline": 117.83311254200001,
+      "candidate": 77.579602018
+    },
+    "speedup": 1.5188671954602242,
+    "identical_calls": 270,
+    "same_best_decisions": 200,
+    "same_full_checker_rankings": 100,
+    "max_probability_shift": 1.8969178199768066e-05,
+    "max_equity_shift": 4.5612454414367676e-05,
+    "max_se_shift": 1.3560056686401367e-06,
+    "scored_truth_fields": 4724,
+    "materially_farther": 0,
+    "materially_closer": 0
+  },
+  "3T": {
+    "total_call_seconds": {
+      "baseline": 302.451396897,
+      "candidate": 259.308328323
+    },
+    "speedup": 1.1663774891188996,
+    "identical_calls": 275,
+    "same_best_decisions": 200,
+    "same_full_checker_rankings": 100,
+    "max_probability_shift": 1.3619661331176758e-05,
+    "max_equity_shift": 9.953975677490234e-06,
+    "max_se_shift": 1.1874362826347351e-07,
+    "scored_truth_fields": 4724,
+    "materially_farther": 0,
+    "materially_closer": 0
+  }
+}

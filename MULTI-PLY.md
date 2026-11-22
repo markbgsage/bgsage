@@ -303,8 +303,8 @@ and [routing implementation](cpp/src/neural_net.cpp)
 input vector and pre-activation hidden sums. For each sibling the evaluator
 adds the weight columns for its differing input features, then calculates the
 outputs. The order of the batch determines its base. Changing the base can
-change floating-point results. The delta evaluator also processes at most the
-first 64 differing inputs. AVX2 scans eight differences at a time and applies
+change floating-point results. If the list reaches 64 differing inputs, the
+evaluator uses a full forward pass on that sibling. AVX2 scans eight differences at a time and applies
 four changed columns per hidden-vector load, in input order. The saved base
 and the sibling order are therefore part of a reusable batch's contract.
 [Neural kernel](cpp/src/neural_net.cpp)
@@ -460,8 +460,9 @@ publication. Trials can start while workers finish other roll indices.
 | Cache | Scope and contents | Reuse conditions |
 | --- | --- | --- |
 | Cubeful recursion | Per native thread, 32,768 slots, up to four probes. An entry contains the full board, five probabilities and up to 16 state values. | Internal nodes with at least two plies and at most 16 cube states. Match the full board, ply, state count, top flag and context fingerprint. |
-| Cubeless `PosCache` | Per thread, 262,144 slots, up to eight probes, clears at 75% occupancy. Used by the dedicated hybrid/full-depth recursion. | Board equality and a key salted with the base strategy, ply and full-depth-opponent setting. |
+| Cubeless `PosCache` | Per thread, 262,144 slots allocated on first insertion, up to eight probes, clears at 75% occupancy. Used by the dedicated hybrid/full-depth recursion. | Board equality and a key salted with the base strategy, ply and full-depth-opponent setting. |
 | Rollout `SharedPosCache` | Up to 2,097,152 slots, eight probes. Shared by participating trial workers. | A matching key and full board. Dedicated cubeless and structurally dead cube-tree computations use distinct key spaces. |
+| Rollout VR move selections | 2,048 slots per position, shared by its trials. Stores the 21 selected indices and their five probabilities. | VR enabled, at least 288 trials and a truncation depth above two. A hit matches the full board, ordered active selection cubes and cube efficiency. |
 | 3P candidate batches | Per cube-action request, at most 22 nodes × 21 rolls. | Identical raw ordered batch as described in section 5. Contains probabilities only. |
 
 The main cube cache fingerprints each ordered cube state's value, owner, away
@@ -475,7 +476,9 @@ wrappers around the same database and model can share work.
 An available matching/empty slot is used within the four probes. Otherwise
 the first slot is replaced. `clear_cache` on a multi-ply strategy clears the
 calling thread's local tables. Rollout dispatch clears the relevant worker
-tables at operation boundaries. [Cube cache](cpp/src/cube_eval.cpp) and
+tables at operation boundaries. A clear advances the cubeful table's
+generation. Lookups stop at the first slot from an earlier generation.
+The hybrid table clears populated storage only. [Cube cache](cpp/src/cube_eval.cpp) and
 [bearoff identity](cpp/src/bearoff.cpp)
 
 The shared cache claims an empty slot atomically, publishes a board/key as

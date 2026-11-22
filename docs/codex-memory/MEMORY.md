@@ -1,5 +1,17 @@
 # Engine project notes
 
+- **2026-11-21, truncated-rollout optimization.** At 2T the 21-roll
+  variance-reduction mean took 78% of instrumented worker time. At 3T
+  the largest costs were the truncation evaluation (32%) and the VR
+  mean (29%). Share VR winner indices and probabilities only within the
+  same rollout position, with the board, ordered selection cubes and
+  cube efficiency matched. The four-worker replay matched all 60 public
+  outputs. Both 16-worker 2T/3T comparisons preserved all checker
+  rankings and cube decisions on Windows and Linux with zero material
+  regressions against the frozen reference. The hybrid search table allocates on its first insert. In
+  the four-worker memory check this avoided 136 MiB of resident memory.
+  [Profile, public results and reproducible experiments](../../data/multi_ply_benchmark/experiments/truncated_search/README.md)
+
 - **2026-11-21, 3-ply optimization.** Compare Release builds with the same
   compiler and flags, including the original Python package with the control
   binary. A rebuild of the original source shifted a few historical predictions

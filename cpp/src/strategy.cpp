@@ -4,8 +4,10 @@
 #include "bgbot/board.h"
 #include "bgbot/cube.h"        // for CubeInfo + cl2cf (cube-aware defaults)
 #include "bgbot/encoding.h"
+#include "bgbot/neural_net.h"
 #include <limits>
 #include <algorithm>
+#include <typeinfo>
 #include <vector>
 
 namespace bgbot {
@@ -48,15 +50,8 @@ int Strategy::best_move_index(const std::vector<Board>& candidates,
 
 // ----- Cube-aware move selection (default implementations) -----
 //
-// Both defaults dispatch through batch_evaluate_candidates_equity_probs so
-// subclasses with optimized batch NN forward passes (e.g. GamePlanStrategy)
-// pick up the optimization automatically — no per-subclass override needed
-// for cubeful selection unless the subclass wants something fancier (e.g.
-// MultiPlyStrategy delegating to cubeful_equity_nply_multi).
-//
-// batch_evaluate_candidates_equity_probs already substitutes terminal_probs
-// for game-over candidates. We clamp afterward to enforce position invariants
-// before Janowski (cl2cf) sees them.
+// Clamp the candidate probabilities to enforce position invariants before
+// Janowski (cl2cf) sees them. Both selectors share the same tie-break rule.
 
 int Strategy::best_move_index_cubeful(
     const std::vector<Board>& candidates,
@@ -66,8 +61,9 @@ int Strategy::best_move_index_cubeful(
 {
     const int n = static_cast<int>(candidates.size());
     std::vector<std::array<float, NUM_OUTPUTS>> probs_per(n);
+    std::vector<double> equities(n);
     batch_evaluate_candidates_equity_probs(candidates, pre_move_board,
-                                           nullptr, probs_per.data());
+                                           equities.data(), probs_per.data());
 
     // Same ranking rule as best_move_index_cubeful_multi below -- cubeful
     // equity, ties broken on money cubeless equity. These two must never
@@ -94,16 +90,18 @@ void Strategy::best_move_index_cubeful_multi(
     // then loop cl2cf per cube state (cheap).
     const int n = static_cast<int>(candidates.size());
     std::vector<std::array<float, NUM_OUTPUTS>> probs_per(n);
-    // NOTE: tried batch_evaluate_candidates_equity_probs (Idea 5) and it
-    // segfaults under parallel trial dispatch. The batch implementation in
-    // GamePlanStrategy is not safe for concurrent use across many threads
-    // running this from inside rollout trials. Loop evaluate_probs instead.
-    for (int i = 0; i < n; ++i) {
-        GameResult r = check_game_over(candidates[i]);
-        if (r != GameResult::NOT_OVER) {
-            probs_per[i] = terminal_probs(r);
-        } else {
-            probs_per[i] = evaluate_probs(candidates[i], pre_move_board);
+    if (typeid(*this) == typeid(BackgameAwarePairStrategy)) {
+        // Siblings share their pre-move network and hidden-layer base. The
+        // batch writes both arrays, even though only probabilities rank moves.
+        thread_local std::vector<double> equities;
+        equities.resize(n);
+        batch_evaluate_candidates_equity_probs(
+            candidates, pre_move_board, equities.data(), probs_per.data());
+    } else {
+        for (int i = 0; i < n; ++i) {
+            const GameResult result = check_game_over(candidates[i]);
+            probs_per[i] = result == GameResult::NOT_OVER
+                ? evaluate_probs(candidates[i], pre_move_board) : terminal_probs(result);
         }
     }
     for (int i = 0; i < n; ++i) {

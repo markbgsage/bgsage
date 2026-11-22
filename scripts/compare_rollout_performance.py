@@ -129,7 +129,7 @@ def paired(args):
     output.mkdir(parents=True, exist_ok=False)
     manifest=truth.read(truth.OUT/"manifest.json")
     baseline_exe=args.baseline_extension or truth.FROZEN / manifest["assets"][0]["path"]
-    arms={"baseline": (truth.FROZEN/"python",baseline_exe),
+    arms={"baseline": (args.baseline_python,baseline_exe),
           "candidate": (args.candidate_python,args.candidate_extension)}
     for name,(src,exe) in arms.items():
         snapshot(output/name,src,exe,manifest)
@@ -170,7 +170,9 @@ if __name__ == "__main__":
     ap.add_argument("action",choices=("paired","worker"))
     ap.add_argument("--candidate-extension",type=Path)
     ap.add_argument("--baseline-extension",type=Path,
-                    help="Use a matched-toolchain control extension with the frozen baseline Python")
+                    help="Use a matched-toolchain control extension")
+    ap.add_argument("--baseline-python",type=Path,default=truth.FROZEN/"python",
+                    help="Python package root corresponding to the control extension")
     ap.add_argument("--candidate-python",type=Path,default=ROOT/"python")
     ap.add_argument("--worker-snapshot",type=Path)
     ap.add_argument("--output",type=Path,required=True)

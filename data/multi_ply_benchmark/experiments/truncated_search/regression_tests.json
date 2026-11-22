@@ -1,0 +1,13 @@
+{
+  "extension_sha256": "4d54d2a940632fecf6dbfec1169e35305e1741c5457b242a7ba9c5f217540c4f",
+  "thread_affinity": "12-15",
+  "pytest_result": "76 passed in 36.63s",
+  "test_modules": [
+    "tests/test_rollout_prefill.py",
+    "tests/test_cube_candidate_batch_reuse.py",
+    "tests/test_multi_ply_bearoff_cache.py",
+    "tests/test_2ply_details.py",
+    "tests/test_cube_points.py",
+    "tests/test_vr_and_dead_cube.py"
+  ]
+}

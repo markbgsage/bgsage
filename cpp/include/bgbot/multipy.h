@@ -409,13 +409,11 @@ private:
         static std::atomic<std::size_t> global_hits;
         static std::atomic<std::size_t> global_misses;
 
-        PosCache() : entries(CAPACITY) {
-            clear();
-        }
-
         void clear() {
-            std::memset(entries.data(), 0, CAPACITY * sizeof(CacheEntry));
-            count = 0;
+            if (count != 0) {
+                std::memset(entries.data(), 0, entries.size() * sizeof(CacheEntry));
+                count = 0;
+            }
             hits = 0;
             misses = 0;
         }
@@ -425,6 +423,10 @@ private:
         // protect against hash collisions (different positions with same hash).
         const std::array<float, NUM_OUTPUTS>* lookup(std::size_t h, int plies,
                                                       const Board& board) const {
+            if (entries.empty()) {
+                global_misses.fetch_add(1, std::memory_order_relaxed);
+                return nullptr;
+            }
             // Ensure hash is never 0 (our empty marker)
             std::size_t key = h | 1;
             std::size_t idx = key & MASK;
@@ -446,6 +448,8 @@ private:
 
         void insert(std::size_t h, int plies, const Board& board,
                     const std::array<float, NUM_OUTPUTS>& probs) {
+            // Standard cubeful search never populates this hybrid search cache.
+            if (entries.empty()) entries.resize(CAPACITY);
             // Clear if too full (>75% load factor)
             if (count >= (CAPACITY * 3) / 4) {
                 clear();
