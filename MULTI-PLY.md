@@ -317,12 +317,12 @@ can offer different specialists. A strategy with blended networks evaluates
 a blended candidate individually. [Model registry](python/bgsage/weights.py)
 and [routing implementation](cpp/src/neural_net.cpp)
 
-**CPU evaluation.** In a standalone tree, a worker encodes the pre-roll board
+**CPU evaluation.** In standalone trees and searches inside rollout trials, a worker encodes the pre-roll board
 and saves its pre-activation hidden sums once for each network it uses at
 that node. All 21 dice rolls have that same starting board. Each worker keeps
 separate scratch space by depth and network and tags it with the node's
-unique identity. A tree using the deep rollout prefilter takes the first
-surviving candidate in each network group as its base. For each candidate
+unique identity. The deep rollout prefilter selects which candidates receive
+a neural evaluation. For each candidate
 evaluated by differences, the kernel compares the 24 board points to its base and encodes point features
 only where the checker count changed. It recomputes each side's auxiliary
 features (two per side for race, 26 for contact) and compares them to the
@@ -497,7 +497,7 @@ publication. Trials can start while workers finish other roll indices.
 | --- | --- | --- |
 | Cubeful recursion | Per native thread, 32,768 slots, up to four probes. An entry contains the full board, five probabilities and up to 16 state values. | Internal nodes with at least two plies and at most 16 cube states. Match the full board, ply, state count, top flag and context fingerprint. |
 | Cubeless `PosCache` | Per thread, 262,144 slots allocated on first insertion, up to eight probes, clears at 75% occupancy. Used by the dedicated hybrid/full-depth recursion. | Board equality and a key salted with the base strategy, ply and full-depth-opponent setting. |
-| Rollout `SharedPosCache` | Up to 2,097,152 slots, eight probes. Shared by participating trial workers. | A matching key and full board. Dedicated cubeless and structurally dead cube-tree computations use distinct key spaces. |
+| Rollout `SharedPosCache` | 2,097,152 slots, eight probes. The first search that uses the table allocates it once for all participating trial workers. | A matching key and full board. Dedicated cubeless and structurally dead cube-tree computations use distinct key spaces. |
 | Rollout VR move selections | 2,048 slots per position, shared by its trials. Stores the 21 selected indices and their five probabilities. | VR enabled, at least 288 trials and a truncation depth above two. A hit matches the full board, ordered active selection cubes and cube efficiency. |
 | 3P and 4P candidate batches | Per cube-action request, 22 nodes at 3P or 463 at 4P, each with 21 roll slots. Allocated on a live root search. | Complete batches of 2–16 candidates, or an eligible filtered subset with its generator indices. The reader applies its own policy. [Reuse conditions](#reusing-candidate-evaluations-at-3p-and-4p) |
 | 4P checker subtrees | Per parallel checker decision, 64 independently locked shards of at most 128 completed entries each. | At the 2P layer, the full board and cube fingerprint must match. Each entry stores four equities and the five probabilities, with the model and root pin fixed for the request. |

@@ -661,8 +661,9 @@ class _RolloutAnalyzer(_CubelessBase):
 
             # Trial-level progress callback: maps trial progress within
             # the current move to overall progress across all moves.
-            def _trial_progress(completed_trials, total_trials, _move_idx=i):
-                if progress_callback:
+            _trial_progress = None
+            if progress_callback:
+                def _trial_progress(completed_trials, total_trials, _move_idx=i):
                     overall = _move_idx * n_trials + completed_trials
                     overall_total = total_moves * n_trials
                     progress_callback(overall, overall_total, results)

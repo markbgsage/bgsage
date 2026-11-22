@@ -2953,13 +2953,9 @@ int BackgameAwarePairStrategy::batch_evaluate_candidates_equity(
 
     std::array<float, NUM_OUTPUTS> out;
     for (int j = 1; j < nn_count; ++j) {
-        if (is_pr) {
-            auto inp = compute_tesauro_inputs(candidates[nn_indices[j]]);
-            out = nn.forward_from_base(inp.data(), saved_base.data(), saved_inputs.data());
-        } else {
-            auto inp = compute_extended_contact_inputs(candidates[nn_indices[j]]);
-            out = nn.forward_from_base(inp.data(), saved_base.data(), saved_inputs.data());
-        }
+        out = nn.forward_board_from_base(
+            candidates[nn_indices[j]], candidates[nn_indices[0]],
+            saved_base.data(), saved_inputs.data());
         double val = NeuralNetwork::compute_equity(out);
         equities[nn_indices[j]] = val;
         if (val > best_val) { best_val = val; best_idx = nn_indices[j]; }
@@ -3051,13 +3047,9 @@ int BackgameAwarePairStrategy::batch_evaluate_candidates_equity_probs(
 
     std::array<float, NUM_OUTPUTS> out;
     for (int j = 1; j < nn_count; ++j) {
-        if (is_pr) {
-            auto inp = compute_tesauro_inputs(candidates[nn_indices[j]]);
-            out = nn.forward_from_base(inp.data(), saved_base.data(), saved_inputs.data());
-        } else {
-            auto inp = compute_extended_contact_inputs(candidates[nn_indices[j]]);
-            out = nn.forward_from_base(inp.data(), saved_base.data(), saved_inputs.data());
-        }
+        out = nn.forward_board_from_base(
+            candidates[nn_indices[j]], candidates[nn_indices[0]],
+            saved_base.data(), saved_inputs.data());
         probs_out[nn_indices[j]] = out;
         equities[nn_indices[j]] = NeuralNetwork::compute_equity(out);
         if (equities[nn_indices[j]] > best_val) {
@@ -3165,13 +3157,9 @@ int BackgameAwarePairStrategy::batch_evaluate_candidates_best_prob(
 
     std::array<float, NUM_OUTPUTS> out;
     for (int j = 1; j < nn_count; ++j) {
-        if (is_pr) {
-            auto inp = compute_tesauro_inputs(candidates[nn_indices[j]]);
-            out = nn.forward_from_base(inp.data(), saved_base.data(), saved_inputs.data());
-        } else {
-            auto inp = compute_extended_contact_inputs(candidates[nn_indices[j]]);
-            out = nn.forward_from_base(inp.data(), saved_base.data(), saved_inputs.data());
-        }
+        out = nn.forward_board_from_base(
+            candidates[nn_indices[j]], candidates[nn_indices[0]],
+            saved_base.data(), saved_inputs.data());
         double val = NeuralNetwork::compute_equity(out);
         if (equities) equities[nn_indices[j]] = val;
         if (val > best_val) {

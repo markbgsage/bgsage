@@ -35,15 +35,11 @@ is bounded by a timeout so the hang variant fails the test instead of wedging
 the suite. A healthy run of either child takes ~0.2 s.
 """
 
-import os
+from pathlib import Path
 import subprocess
 import sys
 
 import pytest
-
-_HERE = os.path.dirname(os.path.abspath(__file__))
-_BUILD_DIR = os.path.abspath(os.path.join(_HERE, '..', '..', 'build'))
-_PKG_DIR = os.path.abspath(os.path.join(_HERE, '..', 'python'))
 
 #: Generous relative to the ~0.2 s a healthy run takes; this only has to be
 #: short enough that the deadlock variant fails rather than hangs the suite.
@@ -56,14 +52,29 @@ _BOARD = [1, -2, 0, 0, 2, 2, 3, 0, 3, 0, 0, 2, -3, 2, -1, 0, 0, 0,
 
 _PREAMBLE = """
 import os, sys
-sys.path.insert(0, {build!r})
-sys.path.insert(0, {pkg!r})
+from importlib.util import module_from_spec, spec_from_file_location
+from pathlib import Path
 if sys.platform == "win32":
     _cuda = r"C:\\Program Files\\NVIDIA GPU Computing Toolkit\\CUDA\\v13.1\\bin\\x64"
     if os.path.isdir(_cuda):
-        os.add_dll_directory(_cuda)
+        _cuda_handle = os.add_dll_directory(_cuda)
 
+spec = spec_from_file_location("bgbot_cpp", {extension!r})
+cpp = module_from_spec(spec)
+sys.modules["bgbot_cpp"] = cpp
+spec.loader.exec_module(cpp)
+sys.path.insert(0, str(Path({package!r}).parent.parent))
+import bgsage
 from bgsage import BgBotAnalyzer
+from bgsage.weights import bearoff_db_path
+assert Path(cpp.__file__).resolve() == Path({extension!r})
+assert Path(bgsage.__file__).resolve() == Path({package!r})
+weights = bgsage.default_weights()
+weights.validate()
+assert [str(Path(p).resolve()) for p in weights.weight_paths_list] == {weights!r}
+database = bearoff_db_path()
+assert (str(Path(database).resolve()) if database else None) == {database!r}
+print("VERIFIED_ENGINE_FILES")
 
 BOARD = {board!r}
 
@@ -91,8 +102,20 @@ print("REACHED_END")
 
 
 def _run_child(callback_src: str, expected: str) -> subprocess.CompletedProcess:
-    src = _PREAMBLE.format(build=_BUILD_DIR, pkg=_PKG_DIR, board=_BOARD,
-                           callback=callback_src, expected=expected)
+    import bgbot_cpp
+    import bgsage
+    from bgsage.weights import bearoff_db_path
+
+    weights = bgsage.default_weights()
+    weights.validate()
+    database = bearoff_db_path()
+    src = _PREAMBLE.format(
+        extension=str(Path(bgbot_cpp.__file__).resolve()),
+        package=str(Path(bgsage.__file__).resolve()),
+        weights=[str(Path(p).resolve()) for p in weights.weight_paths_list],
+        database=str(Path(database).resolve()) if database else None,
+        board=_BOARD, callback=callback_src, expected=expected,
+    )
     try:
         return subprocess.run(
             [sys.executable, "-u", "-c", src],
@@ -118,6 +141,7 @@ def _assert_clean(proc: subprocess.CompletedProcess, expected_exc: str) -> None:
         "the rollout process died after a progress callback raised; it must "
         "unwind cleanly instead" + detail
     )
+    assert "VERIFIED_ENGINE_FILES" in out, detail
     assert "REACHED_END" in out, (
         "the child never reached the end of the script" + detail
     )
@@ -148,3 +172,63 @@ def test_wrong_arity_progress_callback_does_not_kill_the_process():
         expected="TypeError",
     )
     _assert_clean(proc, "TypeError")
+
+
+def test_checker_progress_is_opt_in():
+    from bgsage import BgBotAnalyzer
+
+    analyzer = BgBotAnalyzer(
+        eval_level="rollout", parallel_threads=4, n_trials=36,
+        truncation_depth=2, decision_ply=1, seed=42,
+    )
+    inner = analyzer._analyzer._inner
+    native = inner._rollout_strategy
+    bridges = []
+
+    class Monitor:
+        def cubeful_evaluate_board(self, *args, **kwargs):
+            bridges.append(kwargs["progress"])
+            return native.cubeful_evaluate_board(*args, **kwargs)
+
+    inner._rollout_strategy = Monitor()
+    without = analyzer.checker_play(_BOARD, 4, 2)
+    assert bridges and all(callback is None for callback in bridges)
+
+    bridges.clear()
+    assert analyzer.checker_play(_BOARD, 4, 2, progress_callback=False) == without
+    assert bridges and all(callback is None for callback in bridges)
+
+    bridges.clear()
+    reports = []
+    with_progress = analyzer.checker_play(
+        _BOARD, 4, 2,
+        progress_callback=lambda done, total, partial: reports.append((done, total)),
+    )
+    assert with_progress == without
+    assert any(callable(callback) for callback in bridges)
+    assert reports and any(done == total > 0 for done, total in reports)
+
+
+def test_checker_native_cancellation_without_progress():
+    from bgsage import BgBotAnalyzer
+    from bgsage.analyzer import RolloutCancelled
+
+    analyzer = BgBotAnalyzer(
+        eval_level="rollout", parallel_threads=4, n_trials=36,
+        truncation_depth=2, decision_ply=1, seed=42,
+    )
+    inner = analyzer._analyzer._inner
+    native = inner._rollout_strategy
+
+    class CancelAtTrialEntry:
+        def cubeful_evaluate_board(self, *args, **kwargs):
+            assert kwargs["progress"] is None
+            native.cancel()
+            return native.cubeful_evaluate_board(*args, **kwargs)
+
+    inner._rollout_strategy = CancelAtTrialEntry()
+    with pytest.raises(RolloutCancelled):
+        analyzer.checker_play(_BOARD, 4, 2)
+    inner._rollout_strategy = native
+    analyzer.reset_cancel()
+    assert analyzer.checker_play(_BOARD, 4, 2).moves

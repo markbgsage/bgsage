@@ -10,7 +10,7 @@
 // Key mechanics (see MULTI-PLY.md for the full specification):
 //   * Interior move-picks evaluate all candidates of a roll through a batched
 //     delta-evaluation kernel (one pre-roll base per worker and network in
-//     standalone trees, a sibling base in deep-prefilter trees), then
+//     both standalone and rollout-internal trees), then
 //     pick by 1-ply cubeful equity against the primary cube state.
 //   * At plies==2 internal nodes the leaf value of the picked move reuses the
 //     pick batch's NN output (leaf = invert(NN(chosen))) � no leaf NN evals.
@@ -272,9 +272,8 @@ void eval_groups_pair(const S& s, const std::vector<Board>& cands,
 {
     thread_local std::vector<int> nn_idx_of;
     thread_local std::vector<char> done;
-    thread_local DiceNetworkBase scratch;
     thread_local std::vector<std::vector<DiceNetworkBase>> by_depth;
-    if (node.id && static_cast<int>(by_depth.size()) <= node.depth)
+    if (static_cast<int>(by_depth.size()) <= node.depth)
         by_depth.resize(node.depth + 1);
 
     nn_idx_of.resize(n);
@@ -296,34 +295,29 @@ void eval_groups_pair(const S& s, const std::vector<Board>& cands,
         const NeuralNetwork& nn = *s.nn(nidx);
         const int ni = nn.n_inputs();
         const int nh = nn.n_hidden();
-        DiceNetworkBase* slot = &scratch;
-        if (node.id) {
-            auto& nets = by_depth[node.depth];
-            if (static_cast<int>(nets.size()) <= nidx) nets.resize(nidx + 1);
-            slot = &nets[nidx];
-        }
-        auto& saved_base = slot->hidden;
-        auto& saved_inputs = slot->inputs;
+        auto& nets = by_depth[node.depth];
+        if (static_cast<int>(nets.size()) <= nidx) nets.resize(nidx + 1);
+        auto& slot = nets[nidx];
+        auto& saved_base = slot.hidden;
+        auto& saved_inputs = slot.inputs;
         const bool is_pr = (nidx == 0);
         // Only the constructor taking prebuilt pair nets can supply a network
         // that consumes a prefix of its slot's standard encoding.
         const int slot_width = is_pr ? TESAURO_INPUTS : EXTENDED_CONTACT_INPUTS;
         const bool standard_width = !std::is_same_v<S, GamePlanPairStrategy> || ni == slot_width;
 
-        const Board& base = node.id ? node.board : cands[idxs[j]];
-        if (!node.id || slot->node != node.id) {
+        const Board& base = node.board;
+        if (slot.node != node.id) {
             saved_base.resize(nh);
             saved_inputs.resize(ni);
             const auto save = [&](const auto& inputs) {
-                return nn.forward_save_base(inputs.data(), saved_base.data(), saved_inputs.data());
+                nn.forward_save_base(inputs.data(), saved_base.data(), saved_inputs.data());
             };
-            const auto probs = is_pr ? save(compute_tesauro_inputs(base))
-                                     : save(compute_extended_contact_inputs(base));
-            if (!node.id) out[idxs[j]] = probs;
-            slot->node = node.id;
+            if (is_pr) save(compute_tesauro_inputs(base));
+            else save(compute_extended_contact_inputs(base));
+            slot.node = node.id;
         }
-        if (!node.id) done[j] = 1;
-        for (int k = node.id ? j : j + 1; k < n; ++k) {
+        for (int k = j; k < n; ++k) {
             if (done[k] || nn_idx_of[k] != nidx) continue;
             if (standard_width) {
                 out[idxs[k]] = nn.forward_board_from_base(
@@ -795,11 +789,9 @@ void cubeful_eval_recursive(
     if constexpr (ShareBatches)
         batch_node = ctx.batches->match_node(roll_path, board, ctx);
 
-    // Rollout-internal trees retain their original sibling delta base. A
-    // unique node ID prevents any reuse across unrelated searches or mutable
-    // evaluators, even when a later call uses the same board.
-    const DiceNode dice_node{board, plies, ctx.deep_prefilter ? 0 :
-        next_dice_node.fetch_add(1, std::memory_order_relaxed)};
+    // Each worker can reuse its pre-move hidden sums across all 21 rolls,
+    // including the shortlisted moves of a rollout-internal search.
+    const DiceNode dice_node{board, plies, next_dice_node.fetch_add(1, std::memory_order_relaxed)};
     auto eval_roll = [&](int r, float* rollCf,
                          std::array<float, NUM_OUTPUTS>& rollProbs) {
         thread_local std::vector<Board> candidates;
@@ -912,7 +904,7 @@ void cubeful_eval_recursive(
                     // the ordered group. Only a built-in pair with a node base
                     // shares surviving indices between differently ordered lists.
                     if (saved && !ctx.batches->reading && n_eval <= CandidateBatchCache::MAX_CANDIDATES &&
-                        (full || (dice_node.id && ctx.batches->share_survivors))) {
+                        (full || ctx.batches->share_survivors)) {
                         saved->count = n_eval;
                         saved->total = n_cand;
                         saved->subset = !full;

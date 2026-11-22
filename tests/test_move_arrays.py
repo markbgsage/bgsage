@@ -18,15 +18,22 @@ if os.environ.get("BGSAGE_MOVE_ARRAY_EXTENSION"):
     extension_path = Path(os.environ["BGSAGE_MOVE_ARRAY_EXTENSION"]).resolve()
     if not extension_path.is_relative_to(ROOT):
         raise ValueError("The test extension must stay inside the engine repository")
-    extension_spec = importlib.util.spec_from_file_location("bgbot_cpp", extension_path)
-    probe = importlib.util.module_from_spec(extension_spec)
-    extension_spec.loader.exec_module(probe)
+    loaded = sys.modules.get("bgbot_cpp")
+    if loaded is not None and Path(loaded.__file__).resolve() == extension_path:
+        probe = loaded
+    else:
+        extension_spec = importlib.util.spec_from_file_location("bgbot_cpp", extension_path)
+        probe = importlib.util.module_from_spec(extension_spec)
+        extension_spec.loader.exec_module(probe)
 else:
     try:
         import _bgsage_move_array_probe as probe
     except ImportError:
         probe = pytest.importorskip("bgbot_cpp")
-spec = importlib.util.spec_from_file_location("move_arrays_under_test", ROOT / "python/bgsage/move_arrays.py")
+# A qualification runner may select a frozen package before collecting tests.
+package = sys.modules.get("bgsage")
+source = Path(package.__file__).parent if package else ROOT / "python/bgsage"
+spec = importlib.util.spec_from_file_location("move_arrays_under_test", source / "move_arrays.py")
 arrays = importlib.util.module_from_spec(spec)
 previous_cpp = sys.modules.get("bgbot_cpp")
 try:

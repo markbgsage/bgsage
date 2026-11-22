@@ -401,7 +401,6 @@ private:
             std::array<double, NUM_OUTPUTS> cl_mean_probs = {0, 0, 0, 0, 0};
             double cl_mean_eq = 0.0;
             std::array<Board, Move0Cache::N_ROLLS> chosen = {};
-            std::array<std::array<float, NUM_OUTPUTS>, Move0Cache::N_ROLLS> actual_probs = {};
         };
 
         std::atomic<int> state[Move0Cache::N_ROLLS];  // 0=empty, 1=computing, 2=ready
@@ -508,6 +507,11 @@ private:
         int n_sel_cubes = 0,
         float sel_cube_x = 0.0f) const;
 
+    void evaluate_vr_rolls(
+        const Board& board, const std::array<std::vector<Board>, 21>& candidates,
+        const CubeInfo* cubes, int cube_count, float cube_x, std::array<int, 21>& picks,
+        std::array<std::array<float, NUM_OUTPUTS>, 21>& probabilities) const;
+
     // Precompute the move-0 choice for each opening roll.
     //
     // When `select_cubes` is non-null and `n_select_cubes > 0`
@@ -526,8 +530,8 @@ private:
     // Compute the move-1 cache entry for a specific first roll.
     // When `select_cubes` is non-null, `chosen[]` reflects cubeful-best
     // second moves under those cube states (cubes flipped internally to
-    // match the move-1 mover's perspective). mover_probs, roll_best_probs,
-    // and the cl_mean fields remain cube-state-independent (1-ply cubeless).
+    // match the move-1 mover's perspective). The selected boards determine
+    // the stored static probabilities and weighted cubeless means.
     void populate_move1_cache_entry(const Move0Cache& move0_cache,
                                     int first_roll_idx,
                                     Move1Cache::Entry& entry,
