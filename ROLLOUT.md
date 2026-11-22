@@ -134,6 +134,13 @@ For the public `cube_action` on a custom rollout, `target_se > 0` selects native
 
 ## 14. Bearoff database and neural evaluations
 
+The contact encoder derives hit counts and pip loss for the 21 dice rolls from
+point masks. The CPU path uses direct entry calculations when a checker is on
+the bar. On AVX2, off-bar rolls are evaluated in vector lanes. Both paths
+produce the same network inputs. Higher-ply trial searches using the deep
+move prefilter form neural deltas from the first surviving candidate in each
+network group. Trial workers run these searches serially. [Feature encoding and tree evaluation](MULTI-PLY.md#6-checker-selection-within-the-cube-tree)
+
 With a loaded one-sided bearoff database, the base evaluator used for rollout leaves and VR can return exact in-range probabilities. A cubeless static roll ranks terminal candidates by their result, in-range candidates by database equity and other candidates by NN equity. An all-bearoff cube-aware roll ranks exact post-move probabilities for each cube and keeps the first candidate at the largest exact cubeful value. At a mixed cube-aware boundary, the wrapper delegates the whole ranking to the base strategy. A selected winner in range still receives its exact probabilities when the VR evaluator scores that board. The public checker output also uses exact database probabilities for an in-range endpoint.
 
 Probability clamping uses the board the evaluation describes. Once a side has borne off a checker, set its gammon and backgammon loss probabilities to zero. In a race, if that side has no checker on the bar or in its opponent's home board, set its backgammon loss probability to zero. Apply both rules symmetrically. Terminal positions have exact 0/1 outcome probabilities. Clamping a static or horizon input precedes cubeful conversion and VR subtraction. [Bearoff strategy](cpp/src/bearoff.cpp) · [Board clamping](cpp/include/bgbot/strategy.h) · [Neural evaluator](cpp/src/neural_net.cpp)

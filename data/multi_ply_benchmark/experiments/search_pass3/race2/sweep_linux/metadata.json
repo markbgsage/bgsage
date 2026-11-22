@@ -1,0 +1,93 @@
+{
+  "binaries": {
+    "current": "c96503d998c13946d065387a817dbeabb21886b2a5f94307b4a25c4442108e25",
+    "w1": "4499397572a804acfff07a2ebdc633abf128fcf3d972991f4893ad0d057c6061",
+    "w2": "4499397572a804acfff07a2ebdc633abf128fcf3d972991f4893ad0d057c6061",
+    "w4": "6e8935595beb9161545864dfdd229f3414e30ed4911b203a13eeadf49a27f5a7",
+    "w8": "4499397572a804acfff07a2ebdc633abf128fcf3d972991f4893ad0d057c6061",
+    "w16": "4499397572a804acfff07a2ebdc633abf128fcf3d972991f4893ad0d057c6061"
+  },
+  "arms": [
+    [
+      "current",
+      "build/search_pass3/evaluator/lanes_final",
+      "build/search_pass3/evaluator/lanes_final/python",
+      "16"
+    ],
+    [
+      "w1",
+      "build/search_pass3/evaluator/raceenv",
+      "build/search_pass3/evaluator/raceenv/python",
+      "1"
+    ],
+    [
+      "w2",
+      "build/search_pass3/evaluator/raceenv",
+      "build/search_pass3/evaluator/raceenv/python",
+      "2"
+    ],
+    [
+      "w4",
+      "build/search_pass3/evaluator/race4",
+      "build/search_pass3/evaluator/race4/python",
+      "4"
+    ],
+    [
+      "w8",
+      "build/search_pass3/evaluator/raceenv",
+      "build/search_pass3/evaluator/raceenv/python",
+      "8"
+    ],
+    [
+      "w16",
+      "build/search_pass3/evaluator/raceenv",
+      "build/search_pass3/evaluator/raceenv/python",
+      "16"
+    ]
+  ],
+  "repeats": 5,
+  "race_only": true,
+  "block": 10,
+  "seed": 10931,
+  "threads": 16,
+  "warmup": {
+    "board": [
+      0,
+      0,
+      0,
+      -2,
+      2,
+      0,
+      4,
+      2,
+      2,
+      2,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      -3,
+      -2,
+      -2,
+      -4,
+      2,
+      -1,
+      -1,
+      0,
+      0,
+      0
+    ],
+    "cube_value": 1,
+    "cube_owner": "centered",
+    "away1": 0,
+    "away2": 0,
+    "is_crawford": false,
+    "jacoby": true,
+    "beaver": true,
+    "max_cube_value": 0,
+    "die1": 6,
+    "die2": 5
+  }
+}

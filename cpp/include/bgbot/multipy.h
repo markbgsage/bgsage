@@ -506,4 +506,8 @@ void multipy_parallel_for(int n_items, int n_threads,
 // worker pulls items from a shared atomic counter.
 void multipy_parallel_run(int n_workers, const std::function<void()>& fn);
 
+// A caller inside the pool can complete every unclaimed item itself. On return,
+// every callback has finished, even if queued helpers have not started yet.
+void multipy_cooperative_for(int n_items, int n_workers, std::function<void(int)> fn);
+
 } // namespace bgbot

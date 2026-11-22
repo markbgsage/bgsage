@@ -1651,20 +1651,159 @@ static bool two_hits_from_separate_checkers(unsigned high_targets, unsigned low_
     return false;
 }
 
+// The trained pip-loss feature takes the largest hit target for each roll.
+// With one on the bar it also allows a direct hit by an on-board checker
+// when the other die can enter. The legacy feature visits the smaller direct
+// die first and uses at most one on-board hit; on doubles it checks the
+// two-die entry point for that direct hit.
+static int entry_pip_loss(const Board& board, const ContactPointMasks& masks) {
+    constexpr unsigned bar = 1u << 24;
+    const unsigned targets = masks.pip_loss_targets;
+    if (!targets) return 0;
+    const unsigned blocks = masks.enemy_blocks;
+    unsigned direct[7], entered[7];
+    int total = 0;
+    const bool one_on_bar = board[25] == 1;
+    for (int die = 1; die <= 6; ++die) {
+        entered[die] = (bar >> die) & targets;
+        direct[die] = (masks.pip_loss_sources >> die) & targets;
+        unsigned hits = entered[die];
+        if (one_on_bar) {
+            hits = double_roll_targets(bar, targets, die, blocks >> die, blocks >> (2*die),
+                                      blocks >> (3*die));
+            if (!(blocks & (bar >> (2 * die)))) hits |= direct[die];
+        }
+        total += highest_set_point(hits);
+    }
+    for (int high = 2; high <= 6; ++high) {
+        for (int low = 1; low < high; ++low) {
+            unsigned hits = entered[low] | entered[high];
+            if (one_on_bar) {
+                const bool enter_high = !(blocks & (bar >> high));
+                const bool enter_low = !(blocks & (bar >> low));
+                if (enter_high || enter_low) hits |= (bar >> (high + low)) & targets;
+                if (enter_high && direct[low]) hits |= direct[low];
+                else if (enter_low) hits |= direct[high];
+            }
+            total += 2 * highest_set_point(hits);
+        }
+    }
+    return total;
+}
+
 struct ShotFeatures {
     int single_hits = 0;
     int double_hits = 0;
     int pip_loss = 0;
 };
 
+#if defined(__AVX2__)
+// Eight independent 24-point target masks, one per dice roll.
+struct RollMasks {
+    __m256i bits;
+    explicit RollMasks(unsigned value) : bits(_mm256_set1_epi32(value)) {}
+    RollMasks(__m256i value) : bits(value) {}
+    friend RollMasks operator&(RollMasks a, RollMasks b) { return _mm256_and_si256(a.bits, b.bits); }
+    friend RollMasks operator|(RollMasks a, RollMasks b) { return _mm256_or_si256(a.bits, b.bits); }
+    friend RollMasks operator~(RollMasks a) { return _mm256_xor_si256(a.bits, _mm256_set1_epi32(-1)); }
+    friend RollMasks operator+(RollMasks a, RollMasks b) { return _mm256_add_epi32(a.bits, b.bits); }
+    friend RollMasks operator-(RollMasks a, RollMasks b) { return _mm256_sub_epi32(a.bits, b.bits); }
+    friend RollMasks operator>>(RollMasks a, RollMasks b) { return _mm256_srlv_epi32(a.bits, b.bits); }
+    friend RollMasks operator<<(RollMasks a, RollMasks b) { return _mm256_sllv_epi32(a.bits, b.bits); }
+    RollMasks first() const { return *this & (RollMasks(0u) - *this); }
+    RollMasks nonempty() const { return _mm256_cmpgt_epi32(bits, _mm256_setzero_si256()); }
+    int hit_rolls() const {
+        return _mm_popcnt_u32(_mm256_movemask_ps(_mm256_castsi256_ps(nonempty().bits)));
+    }
+    RollMasks highest_points() const {
+        // A 24-bit mask converts exactly to binary32. Its unbiased exponent
+        // plus one is the point index. Clamp the empty mask's result to zero.
+        const __m256i exp = _mm256_srli_epi32(_mm256_castps_si256(_mm256_cvtepi32_ps(bits)), 23);
+        return _mm256_max_epi32(_mm256_setzero_si256(), _mm256_sub_epi32(exp, _mm256_set1_epi32(126)));
+    }
+    int sum() const {
+        int lanes[8];
+        _mm256_storeu_si256(reinterpret_cast<__m256i*>(lanes), bits);
+        return std::accumulate(lanes, lanes + 8, 0);
+    }
+};
+
+static ShotFeatures off_bar_shots(const ContactPointMasks& masks, unsigned reachable_blots) {
+    ShotFeatures counts;
+    const RollMasks occupied(masks.occupied), made(masks.made), blocks(masks.enemy_blocks);
+    const RollMasks pip_sources(masks.pip_loss_sources), pip_targets(masks.pip_loss_targets);
+    const RollMasks blots(reachable_blots);
+    const bool multiple = (reachable_blots & (reachable_blots - 1)) != 0;
+
+    // Six doubles. Shifts of 32 make the spare lanes empty.
+    const RollMasks die = _mm256_setr_epi32(1,2,3,4,5,6,32,32);
+    const RollMasks twice = die + die, three = twice + die, four = twice + twice;
+    const RollMasks b1 = blocks >> die, b2 = blocks >> twice, b3 = blocks >> three;
+    const auto double_paths = [&](RollMasks sources) {
+        return (sources >> die) | (~b1 & ((sources >> twice) |
+               (~b2 & ((sources >> three) | (~b3 & (sources >> four))))));
+    };
+    counts.single_hits = (blots & double_paths(occupied)).hit_rolls();
+    if (multiple) {
+        const RollMasks direct = blots & (occupied >> die);
+        const RollMasks from2 = occupied >> twice, from3 = occupied >> three, from4 = occupied >> four;
+        const RollMasks all = direct | (blots & ~b1 & (from2 | (~b2 & from3)));
+        const RollMasks distinct = direct.nonempty() & all & (all - RollMasks(1u));
+        const RollMasks lower = (blots << die) | (~(blocks << die) &
+            ((blots << twice) | (~(blocks << twice) & (blots << three))));
+        const RollMasks higher = blots >> die;
+        const RollMasks via_blot = (higher & from2) | (~b2 & (higher | (blots >> twice)) & (from3 | (~b3 & from4)));
+        counts.double_hits = (distinct | (direct & lower) | (blots & ~b1 & via_blot)).hit_rolls();
+    }
+    RollMasks pip_total = (pip_targets & double_paths(pip_sources)).highest_points();
+
+    // Fifteen unlike rolls, each with two equally likely dice orders.
+    const RollMasks high[] = {_mm256_setr_epi32(2,3,3,4,4,4,5,5), _mm256_setr_epi32(5,5,6,6,6,6,6,32)};
+    const RollMasks low[] = {_mm256_setr_epi32(1,1,2,1,2,3,1,2), _mm256_setr_epi32(3,4,1,2,3,4,5,32)};
+    for (int group = 0; group < 2; ++group) {
+        const RollMasks h = high[group], l = low[group], sum = h + l;
+        const RollMasks open = ~((blocks >> h) & (blocks >> l));
+        const RollMasks hd = blots & (occupied >> h), ld = blots & (occupied >> l);
+        counts.single_hits += 2 * (hd | ld | (blots & open & (occupied >> sum))).hit_rolls();
+        if (multiple) {
+            const RollMasks through = (hd & (blots << l)) | (ld & (blots << h));
+            // A pair of direct hits can fail only on the same target or from
+            // the same lone checker. If the two lowest targets coincide, any
+            // higher h target works. If they share a source, any higher l target
+            // works. Testing each lowest target against the other set suffices.
+            const RollMasks first_h = hd.first(), first_l = ld.first();
+            const RollMasks lone_h = ~made & (first_h << h), lone_l = ~made & (first_l << l);
+            const RollMasks other_l = ld & ~(first_h | (lone_h >> l));
+            const RollMasks other_h = hd & ~(first_l | (lone_l >> h));
+            counts.double_hits += 2 * (through | (hd.nonempty() & other_l) |
+                                       (ld.nonempty() & other_h)).hit_rolls();
+        }
+        const RollMasks hits = pip_targets &
+            ((pip_sources >> h) | (pip_sources >> l) | (open & (pip_sources >> sum)));
+        const RollMasks points = hits.highest_points();
+        pip_total = pip_total + points + points;
+    }
+    counts.pip_loss = pip_total.sum();
+    return counts;
+}
+#endif
+
 // The bar changes the GNUbg pip-loss calculation. Its no-bar case uses the
-// highest hittable target per roll; with checkers on the bar we call the
-// original entry-aware calculation. Both cases share the same shot features.
+// highest hittable target per roll. Checkers on the bar restrict legal entries
+// and which direct hits by on-board checkers contribute to pip loss.
 template<bool OnBar>
 static ShotFeatures shot_features(const Board& board, const ContactPointMasks& masks) {
     ShotFeatures counts;
-    const unsigned blots = masks.enemy_blots;
+    unsigned blots = masks.enemy_blots;
+    if (!OnBar && blots) {
+        if (!masks.occupied) return counts;
+        // Blots at or beyond the rearmost checker cannot be hit.
+        blots &= (1u << (highest_set_point(masks.occupied) - 1)) - 1;
+    }
     if (blots == 0) return counts;
+#if defined(__AVX2__)
+    if constexpr (!OnBar) return off_bar_shots(masks, blots);
+#endif
     const bool multiple_blots = (blots & (blots - 1)) != 0;
     // The trained single-shot feature uses only on-board sources. The
     // double-shot feature also considers entries, including a stacked bar.
@@ -1708,7 +1847,7 @@ static ShotFeatures shot_features(const Board& board, const ContactPointMasks& m
             }
         }
     }
-    if constexpr (OnBar) counts.pip_loss = compute_piploss(board);
+    if constexpr (OnBar) counts.pip_loss = entry_pip_loss(board, masks);
     return counts;
 }
 

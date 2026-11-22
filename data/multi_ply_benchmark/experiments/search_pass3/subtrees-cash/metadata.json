@@ -1,0 +1,51 @@
+{
+  "args": {
+    "arm": [
+      [
+        "checkpoint",
+        "build/multi_ply_second_final",
+        "python"
+      ],
+      [
+        "transposition",
+        "build/multi_ply_third_share",
+        "python"
+      ],
+      [
+        "cash",
+        "build/multi_ply_third_cash",
+        "python"
+      ]
+    ],
+    "env": [
+      [
+        "transposition",
+        "BGSAGE_BENCH_CACHE_STATS",
+        "1"
+      ]
+    ],
+    "cores": [
+      12,
+      13,
+      14,
+      15
+    ],
+    "levels": [
+      "3ply",
+      "4ply"
+    ],
+    "apis": [
+      "checker_play",
+      "cube_action",
+      "post_move_analytics"
+    ],
+    "per_cell": 2,
+    "repeats": 1,
+    "output": "data\\multi_ply_benchmark\\experiments\\search_pass3\\subtrees-cash"
+  },
+  "binaries": {
+    "checkpoint": "fd4630f514159877922dfc425de3503694385a82d55d523c6f9964e2bdc3d728",
+    "transposition": "53f7c7d44dc5dd439c43d60b79f082c6cf78648d1231e0a002ba77ee4e285448",
+    "cash": "849b68bd6728eda85f3235ce629654c2a4c6e24da108d8b7687b3acc7781415d"
+  }
+}

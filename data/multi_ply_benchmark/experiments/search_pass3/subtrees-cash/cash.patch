@@ -1,0 +1,356 @@
+--- a/cpp/src/cube.cpp
++++ b/cpp/src/cube.cpp
+@@ -6,6 +6,8 @@
+ #include "bgbot/neural_net.h"
+ #include "bgbot/multipy.h"
+ #include <algorithm>
++#include <climits>
++#include <stdexcept>
+ #include <cmath>
+ #include <cstdint>
+ #include <limits>
+@@ -205,130 +207,121 @@
+ //   p < opponent's TG: opponent too good to double
+ //   opponent's TG < p < player's TG: in doubling window
+ //   p > player's TG: player too good to double
+-// Automatic redouble detection (GNUbg's GetCubePrimeValue).
+-// When the doubler (away_i) is close enough that losing at cv or 2*cv costs
+-// the same, they always take a recube — making the effective cube 2*cv.
+-// Uses 1-indexed away values (GNUbg uses 0-indexed).
+-static int get_cube_prime_value(int away_i, int away_j, int cv) {
+-    if ((away_i - 1) < 2 * cv && (away_j - 1) >= 2 * cv)
+-        return 2 * cv;
+-    return cv;
+-}
+-
+-// Compute live-cube cash points for both players simultaneously using
+-// GNUbg's recursive GetPoints algorithm.
+-//
+-// The algorithm works from the "dead" cube level (highest level where at
+-// least one player can't survive a recube) DOWN to the current cube level,
+-// computing cash points recursively.
+-//
+-// At dead cube levels: CP = (DTL - DP) / (DTL - DTW)
+-//   with the doubler's own prime for BOTH DTW and DTL.
+-// At live cube levels: CP = 1 - opp_CP_above * (DP - DTW) / (rRDP - DTW)
+-//   where rRDP = MWC after losing at the doubled value (recube-drop payoff).
+-//
+-// Parameters use 1-indexed away values. Gammon ratios are from the player's
+-// perspective: rG0/rBG0 for player's wins, rG1/rBG1 for player's losses.
+-void get_match_points(
+-    int away1, int away2, int cv, bool craw,
+-    float rG0, float rBG0,        // gammon/bg ratios for player's wins
+-    float rG1, float rBG1,        // gammon/bg ratios for player's losses
+-    float& player_cp,             // out: player's cash point
+-    float& opp_cp)                // out: opponent's cash point
+-{
+-    // 0-indexed away values (GNUbg convention)
+-    int idx0 = away1 - 1;
+-    int idx1 = away2 - 1;
+-
+-    // Gammon/bg ratios per side (0=player, 1=opponent)
+-    float arG[2] = {rG0, rG1};
+-    float arBG[2] = {rBG0, rBG1};
+-
+-    // Find the dead cube level: highest cube where both can survive a recube
+-    int nDead = cv;
+-    int nMax = 0;
+-    while (idx0 >= 2 * nDead && idx1 >= 2 * nDead) {
+-        nMax++;
+-        nDead *= 2;
+-    }
+-
+-    // Cash points at each level (k=0: player, k=1: opponent)
+-    constexpr int MAX_LEVELS = 16;
+-    float arCPLive[2][MAX_LEVELS] = {};
+-
+-    for (int nCubeValue = nDead, n = nMax; nCubeValue >= cv;
+-         nCubeValue >>= 1, n--) {
+-        // Auto-redouble primes at this cube level (0-indexed comparisons)
+-        int prime[2];
+-        prime[0] = (idx0 < 2*nCubeValue && idx1 >= 2*nCubeValue)
+-                   ? 2*nCubeValue : nCubeValue;
+-        prime[1] = (idx1 < 2*nCubeValue && idx0 >= 2*nCubeValue)
+-                   ? 2*nCubeValue : nCubeValue;
+-
+-        for (int k = 0; k < 2; k++) {
+-            // k=0: player doubles, k=1: opponent doubles
+-            int away_d = (k == 0) ? away1 : away2;
+-            int away_t = (k == 0) ? away2 : away1;
+-            int id = (k == 0) ? idx0 : idx1;
+-            int it = (k == 0) ? idx1 : idx0;
+-
+-            float gW = arG[k], bgW = arBG[k];       // doubler's wins
+-            float gL = arG[1-k], bgL = arBG[1-k];   // doubler's losses
+-
+-            if (id < 2*nCubeValue || it < 2*nCubeValue) {
+-                // Dead cube: at least one player can't survive a recube.
+-                // Use doubler's own prime for BOTH DTW and DTL.
+-                // The effective cube after DT (with possible auto-redouble) is
+-                // 2*prime[k], so outcomes are at 2*p, 4*p, 6*p (not p, 2p, 3p).
+-                int p = prime[k];
+-                int dp = 2 * p;  // effective cube level after DT + auto-redouble
+-
+-                float rDP = get_met_after(away_d, away_t, nCubeValue, true, craw);
+-
+-                float rDTW = (1.0f - gW - bgW)
+-                                * get_met_after(away_d, away_t, dp, true, craw)
+-                           + gW * get_met_after(away_d, away_t, 2*dp, true, craw)
+-                           + bgW * get_met_after(away_d, away_t, 3*dp, true, craw);
+-
+-                float rDTL = (1.0f - gL - bgL)
+-                                * get_met_after(away_d, away_t, dp, false, craw)
+-                           + gL * get_met_after(away_d, away_t, 2*dp, false, craw)
+-                           + bgL * get_met_after(away_d, away_t, 3*dp, false, craw);
+-
+-                float denom = rDTL - rDTW;
+-                if (std::abs(denom) < 1e-10f)
+-                    arCPLive[k][n] = 0.5f;
+-                else
+-                    arCPLive[k][n] = std::clamp(
+-                        (rDTL - rDP) / denom, 0.0f, 1.0f);
+-            } else {
+-                // Live cube: both players can survive a recube.
+-                // Use standard doubled value, recursive formula.
+-                int dcv = 2 * nCubeValue;
+-
+-                float rDP = get_met_after(away_d, away_t,
+-                                          nCubeValue, true, craw);
+-                float rRDP = get_met_after(away_d, away_t,
+-                                           dcv, false, craw);
+-
+-                float rDTW = (1.0f - gW - bgW)
+-                                * get_met_after(away_d, away_t, dcv, true, craw)
+-                           + gW * get_met_after(away_d, away_t, 2*dcv, true, craw)
+-                           + bgW * get_met_after(away_d, away_t, 3*dcv, true, craw);
+-
+-                float denom = rRDP - rDTW;
+-                if (std::abs(denom) < 1e-10f)
+-                    arCPLive[k][n] = 0.5f;
+-                else
+-                    arCPLive[k][n] = std::clamp(
+-                        1.0f - arCPLive[1-k][n+1] * (rDP - rDTW) / denom,
+-                        0.0f, 1.0f);
+-            }
+-        }
+-    }
+-
+-    player_cp = arCPLive[0][0];
+-    opp_cp = arCPLive[1][0];
++namespace {
++
++struct ScoreOutcomes {
++    float single, gammon, backgammon;
++
++    float conditional(float g, float bg) const {
++        return (1.0f - g - bg) * single + g * gammon + bg * backgammon;
++    }
++};
++
++ScoreOutcomes score_outcomes(int away1, int away2, int64_t cv, bool win, bool craw) {
++    auto after = [&](int multiple) {
++        int points = static_cast<int>(std::min<int64_t>(multiple * cv, INT_MAX));
++        return get_met_after(away1, away2, points, win, craw);
++    };
++    return {after(1), after(2), after(3)};
++}
++
++struct CashLevel {
++    struct Side {
++        ScoreOutcomes wins, losses;
++        float pass;
++    };
++    Side sides[2];
++};
++
++// The score determines the recube ladder and all its MET entries. Only
++// gammon rates, and therefore the interpolation, vary between candidate boards.
++struct MatchCashPlan {
++    int away1 = 0, away2 = 0, value = 0;
++    bool crawford = false;
++    ScoreOutcomes wins{}, losses{};
++    std::vector<CashLevel> levels; // Current cube through the dead cube.
++
++    void prepare(int a1, int a2, int cv, bool craw) {
++        away1 = a1;
++        away2 = a2;
++        value = cv;
++        crawford = craw;
++        wins = score_outcomes(a1, a2, cv, true, craw);
++        losses = score_outcomes(a1, a2, cv, false, craw);
++        levels.clear();
++        for (int64_t cube = cv;; cube *= 2) {
++            auto& level = levels.emplace_back();
++            bool live = a1 > 2 * cube && a2 > 2 * cube;
++            for (int k = 0; k < 2; ++k) {
++                const int d = k == 0 ? a1 : a2, t = k == 0 ? a2 : a1;
++                const bool auto_redouble = d <= 2 * cube && t > 2 * cube;
++                const int64_t stake = (auto_redouble ? 4 : 2) * cube;
++                auto& side = level.sides[k];
++                side.wins = score_outcomes(d, t, stake, true, craw);
++                side.losses = score_outcomes(d, t, stake, false, craw);
++                side.pass = get_met_after(d, t, static_cast<int>(cube), true, craw);
++            }
++            if (!live) break;
++        }
++    }
++
++    float dead_mwc(const std::array<float, NUM_OUTPUTS>& p) const {
++        float mwc = 0.0f;
++        mwc += (p[0] - p[1]) * wins.single;
++        mwc += (p[1] - p[2]) * wins.gammon;
++        mwc += p[2] * wins.backgammon;
++        mwc += ((1.0f - p[0]) - p[3]) * losses.single;
++        mwc += (p[3] - p[4]) * losses.gammon;
++        mwc += p[4] * losses.backgammon;
++        return mwc;
++    }
++
++    void cash_points(float g0, float bg0, float g1, float bg1,
++                     float& player, float& opponent) const {
++        const float g[] = {g0, g1}, bg[] = {bg0, bg1};
++        float cp[2];
++        const auto& last = levels.back();
++        for (int k = 0; k < 2; ++k) {
++            const auto& side = last.sides[k];
++            const float win = side.wins.conditional(g[k], bg[k]);
++            const float loss = side.losses.conditional(g[1-k], bg[1-k]);
++            const float denom = loss - win;
++            cp[k] = std::abs(denom) < 1e-10f ? 0.5f :
++                    std::clamp((loss - side.pass) / denom, 0.0f, 1.0f);
++        }
++        for (int i = static_cast<int>(levels.size()) - 2; i >= 0; --i) {
++            const float above[] = {cp[0], cp[1]};
++            for (int k = 0; k < 2; ++k) {
++                const auto& side = levels[i].sides[k];
++                const float win = side.wins.conditional(g[k], bg[k]);
++                const float denom = side.losses.single - win;
++                cp[k] = std::abs(denom) < 1e-10f ? 0.5f :
++                        std::clamp(1.0f - above[1-k] * (side.pass - win) / denom, 0.0f, 1.0f);
++            }
++        }
++        player = cp[0];
++        opponent = cp[1];
++    }
++};
++
++const MatchCashPlan& match_cash_plan(int a1, int a2, int cv, bool craw) {
++    // Score and cube-state equality are verified on every hit. A collision
++    // simply rebuilds the entry. Independent callers share no mutable state.
++    thread_local std::array<MatchCashPlan, 32> plans;
++    if (cv <= 0) throw std::invalid_argument("Cube value must be positive");
++    unsigned index = 13u * a1 + 7u * a2 + 5u * (cv ^ (cv >> 3)) + craw;
++    auto& plan = plans[index % plans.size()];
++    if (plan.away1 != a1 || plan.away2 != a2 || plan.value != cv || plan.crawford != craw)
++        plan.prepare(a1, a2, cv, craw);
++    return plan;
++}
++
++} // namespace
++
++void get_match_points(int away1, int away2, int cv, bool craw,
++                      float g0, float bg0, float g1, float bg1,
++                      float& player, float& opponent) {
++    match_cash_plan(away1, away2, cv, craw).cash_points(g0, bg0, g1, bg1, player, opponent);
+ }
+ 
+ static float cl2cf_match_centered(
+@@ -361,15 +354,16 @@
+     }
+ 
+     // Dead cube MWC (uses MET-weighted outcome values, not linear approximation)
+-    float mwc_dead = cubeless_mwc(probs, away1, away2, cv, craw);
++    const auto& plan = match_cash_plan(away1, away2, cv, craw);
++    float mwc_dead = plan.dead_mwc(probs);
+ 
+     // MET lookups at current cube value (for no-double outcomes)
+-    float mwc_win_s  = get_met_after(away1, away2, cv, true, craw);
+-    float mwc_win_g  = get_met_after(away1, away2, 2*cv, true, craw);
+-    float mwc_win_b  = get_met_after(away1, away2, 3*cv, true, craw);
+-    float mwc_lose_s = get_met_after(away1, away2, cv, false, craw);
+-    float mwc_lose_g = get_met_after(away1, away2, 2*cv, false, craw);
+-    float mwc_lose_b = get_met_after(away1, away2, 3*cv, false, craw);
++    float mwc_win_s  = plan.wins.single;
++    float mwc_win_g  = plan.wins.gammon;
++    float mwc_win_b  = plan.wins.backgammon;
++    float mwc_lose_s = plan.losses.single;
++    float mwc_lose_g = plan.losses.gammon;
++    float mwc_lose_b = plan.losses.backgammon;
+ 
+     // D/P MWC (player cashes cv points)
+     float mwc_cash = mwc_win_s;
+@@ -384,7 +378,7 @@
+ 
+     // Compute live-cube cash points using recursive algorithm (GNUbg GetPoints).
+     float player_cp, opp_cp;
+-    get_match_points(away1, away2, cv, craw, rG0, rBG0, rG1, rBG1,
++    plan.cash_points(rG0, rBG0, rG1, rBG1,
+                      player_cp, opp_cp);
+ 
+     // Convert to the thresholds used in the piecewise interpolation
+@@ -460,15 +454,16 @@
+     }
+ 
+     // Dead cube MWC (uses MET-weighted outcome values, not linear approximation)
+-    float mwc_dead = cubeless_mwc(probs, away1, away2, cv, craw);
++    const auto& plan = match_cash_plan(away1, away2, cv, craw);
++    float mwc_dead = plan.dead_mwc(probs);
+ 
+     // MET lookups at current cube value
+-    float mwc_win_s  = get_met_after(away1, away2, cv, true, craw);
+-    float mwc_win_g  = get_met_after(away1, away2, 2*cv, true, craw);
+-    float mwc_win_b  = get_met_after(away1, away2, 3*cv, true, craw);
+-    float mwc_lose_s = get_met_after(away1, away2, cv, false, craw);
+-    float mwc_lose_g = get_met_after(away1, away2, 2*cv, false, craw);
+-    float mwc_lose_b = get_met_after(away1, away2, 3*cv, false, craw);
++    float mwc_win_s  = plan.wins.single;
++    float mwc_win_g  = plan.wins.gammon;
++    float mwc_win_b  = plan.wins.backgammon;
++    float mwc_lose_s = plan.losses.single;
++    float mwc_lose_g = plan.losses.gammon;
++    float mwc_lose_b = plan.losses.backgammon;
+ 
+     float mwc_cash = mwc_win_s;
+ 
+@@ -480,7 +475,7 @@
+ 
+     // Player's cash point using recursive algorithm (GNUbg GetPoints)
+     float player_cp_val, opp_cp_val;
+-    get_match_points(away1, away2, cv, craw, rG0, rBG0, rG1, rBG1,
++    plan.cash_points(rG0, rBG0, rG1, rBG1,
+                      player_cp_val, opp_cp_val);
+     float player_tg = player_cp_val;
+ 
+@@ -541,15 +536,16 @@
+     }
+ 
+     // Dead cube MWC (uses MET-weighted outcome values, not linear approximation)
+-    float mwc_dead = cubeless_mwc(probs, away1, away2, cv, craw);
++    const auto& plan = match_cash_plan(away1, away2, cv, craw);
++    float mwc_dead = plan.dead_mwc(probs);
+ 
+     // MET lookups at current cube value
+-    float mwc_win_s  = get_met_after(away1, away2, cv, true, craw);
+-    float mwc_win_g  = get_met_after(away1, away2, 2*cv, true, craw);
+-    float mwc_win_b  = get_met_after(away1, away2, 3*cv, true, craw);
+-    float mwc_lose_s = get_met_after(away1, away2, cv, false, craw);
+-    float mwc_lose_g = get_met_after(away1, away2, 2*cv, false, craw);
+-    float mwc_lose_b = get_met_after(away1, away2, 3*cv, false, craw);
++    float mwc_win_s  = plan.wins.single;
++    float mwc_win_g  = plan.wins.gammon;
++    float mwc_win_b  = plan.wins.backgammon;
++    float mwc_lose_s = plan.losses.single;
++    float mwc_lose_g = plan.losses.gammon;
++    float mwc_lose_b = plan.losses.backgammon;
+ 
+     float mwc_opp_cash = mwc_lose_s;
+ 
+@@ -561,7 +557,7 @@
+ 
+     // Opponent's cash point using recursive algorithm (GNUbg GetPoints)
+     float player_cp_val, opp_cp_val;
+-    get_match_points(away1, away2, cv, craw, rG0, rBG0, rG1, rBG1,
++    plan.cash_points(rG0, rBG0, rG1, rBG1,
+                      player_cp_val, opp_cp_val);
+     float opp_tg = 1.0f - opp_cp_val;
+ 

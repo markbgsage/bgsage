@@ -1,0 +1,23 @@
+{
+  "exact_comparisons": 12,
+  "control": {
+    "path": "build/pass3_tree_arms/node/bgbot_cpp.cp314-win_amd64.pyd",
+    "sha256": "58a8d38880257163b356033b70a3fdc9d77f67e948d778407868fa4c5702969a",
+    "bytes": 5013504
+  },
+  "candidate": {
+    "path": "build/pass3_tree_arms/partial_scoped/bgbot_cpp.cp314-win_amd64.pyd",
+    "sha256": "c62ba0557edb4d8f22a1b18f2efc814ad307c74712aa13cdc936b82494b9c120",
+    "bytes": 5017088
+  },
+  "models": [
+    "stage10",
+    "standard_pair",
+    "stage5"
+  ],
+  "threads": [
+    1,
+    4
+  ],
+  "cpu_mask": "0xf"
+}

@@ -1,0 +1,19 @@
+{
+  "source_commit": "82e63972379b77ab52ebafc716620e813ff7baa1",
+  "corpus_and_targeted_boards": 413,
+  "four_checker_positions": 3465,
+  "random_positions": 12000,
+  "random_seed": 1234567,
+  "positions_total": 15878,
+  "ordered_dice_cases_per_arm": 571608,
+  "endpoints_per_api_per_arm": 13882557,
+  "arms_checked": {
+    "ordered": ["unsorted"],
+    "reverse": ["unsorted"],
+    "both": ["unsorted"],
+    "fast": ["unsorted", "sorted"],
+    "relative": ["unsorted", "sorted"]
+  },
+  "endpoint_mismatches": 0,
+  "order_mismatches": 0
+}

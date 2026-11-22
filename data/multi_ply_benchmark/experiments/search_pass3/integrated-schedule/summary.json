@@ -1,0 +1,20 @@
+{
+  "4ply": {
+    "checker_play": {
+      "checkpoint": {
+        "seconds": 30.893452647000146,
+        "cpu_seconds": 362.9165025510001,
+        "calls": 100,
+        "exact": 100,
+        "faster": 0
+      },
+      "lanes": {
+        "seconds": 27.83820118900013,
+        "cpu_seconds": 386.71420560700034,
+        "calls": 100,
+        "exact": 100,
+        "faster": 74
+      }
+    }
+  }
+}

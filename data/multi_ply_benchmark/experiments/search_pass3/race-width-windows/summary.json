@@ -1,0 +1,584 @@
+{
+  "checker_play": {
+    "current": [
+      {
+        "seconds": 0.0037144999999999995,
+        "pure_seconds": 0.0037144999999999995,
+        "exact": 20,
+        "calls": 20
+      },
+      {
+        "seconds": 0.0029962999999999995,
+        "pure_seconds": 0.0029962999999999995,
+        "exact": 20,
+        "calls": 20
+      },
+      {
+        "seconds": 0.0035375000000000003,
+        "pure_seconds": 0.0035375000000000003,
+        "exact": 20,
+        "calls": 20
+      },
+      {
+        "seconds": 0.0030208,
+        "pure_seconds": 0.0030208,
+        "exact": 20,
+        "calls": 20
+      },
+      {
+        "seconds": 0.0031604999999999997,
+        "pure_seconds": 0.0031604999999999997,
+        "exact": 20,
+        "calls": 20
+      }
+    ],
+    "one": [
+      {
+        "seconds": 0.003755600000000001,
+        "pure_seconds": 0.003755600000000001,
+        "exact": 20,
+        "calls": 20
+      },
+      {
+        "seconds": 0.0033936,
+        "pure_seconds": 0.0033936,
+        "exact": 20,
+        "calls": 20
+      },
+      {
+        "seconds": 0.0031882000000000004,
+        "pure_seconds": 0.0031882000000000004,
+        "exact": 20,
+        "calls": 20
+      },
+      {
+        "seconds": 0.0030507999999999993,
+        "pure_seconds": 0.0030507999999999993,
+        "exact": 20,
+        "calls": 20
+      },
+      {
+        "seconds": 0.0029766,
+        "pure_seconds": 0.0029766,
+        "exact": 20,
+        "calls": 20
+      }
+    ],
+    "two": [
+      {
+        "seconds": 0.0033839000000000004,
+        "pure_seconds": 0.0033839000000000004,
+        "exact": 20,
+        "calls": 20
+      },
+      {
+        "seconds": 0.0037446999999999997,
+        "pure_seconds": 0.0037446999999999997,
+        "exact": 20,
+        "calls": 20
+      },
+      {
+        "seconds": 0.0038197,
+        "pure_seconds": 0.0038197,
+        "exact": 20,
+        "calls": 20
+      },
+      {
+        "seconds": 0.0027784999999999997,
+        "pure_seconds": 0.0027784999999999997,
+        "exact": 20,
+        "calls": 20
+      },
+      {
+        "seconds": 0.002863,
+        "pure_seconds": 0.002863,
+        "exact": 20,
+        "calls": 20
+      }
+    ],
+    "four": [
+      {
+        "seconds": 0.0028918000000000012,
+        "pure_seconds": 0.0028918000000000012,
+        "exact": 20,
+        "calls": 20
+      },
+      {
+        "seconds": 0.0030606,
+        "pure_seconds": 0.0030606,
+        "exact": 20,
+        "calls": 20
+      },
+      {
+        "seconds": 0.0037111000000000006,
+        "pure_seconds": 0.0037111000000000006,
+        "exact": 20,
+        "calls": 20
+      },
+      {
+        "seconds": 0.0034889,
+        "pure_seconds": 0.0034889,
+        "exact": 20,
+        "calls": 20
+      },
+      {
+        "seconds": 0.0026157000000000008,
+        "pure_seconds": 0.0026157000000000008,
+        "exact": 20,
+        "calls": 20
+      }
+    ],
+    "eight": [
+      {
+        "seconds": 0.0030220999999999994,
+        "pure_seconds": 0.0030220999999999994,
+        "exact": 20,
+        "calls": 20
+      },
+      {
+        "seconds": 0.002886,
+        "pure_seconds": 0.002886,
+        "exact": 20,
+        "calls": 20
+      },
+      {
+        "seconds": 0.0035337,
+        "pure_seconds": 0.0035337,
+        "exact": 20,
+        "calls": 20
+      },
+      {
+        "seconds": 0.0034218,
+        "pure_seconds": 0.0034218,
+        "exact": 20,
+        "calls": 20
+      },
+      {
+        "seconds": 0.0034919999999999994,
+        "pure_seconds": 0.0034919999999999994,
+        "exact": 20,
+        "calls": 20
+      }
+    ],
+    "sixteen": [
+      {
+        "seconds": 0.0026505,
+        "pure_seconds": 0.0026505,
+        "exact": 20,
+        "calls": 20
+      },
+      {
+        "seconds": 0.0026983,
+        "pure_seconds": 0.0026983,
+        "exact": 20,
+        "calls": 20
+      },
+      {
+        "seconds": 0.0032891000000000005,
+        "pure_seconds": 0.0032891000000000005,
+        "exact": 20,
+        "calls": 20
+      },
+      {
+        "seconds": 0.0033334999999999997,
+        "pure_seconds": 0.0033334999999999997,
+        "exact": 20,
+        "calls": 20
+      },
+      {
+        "seconds": 0.003348,
+        "pure_seconds": 0.003348,
+        "exact": 20,
+        "calls": 20
+      }
+    ]
+  },
+  "cube_action": {
+    "current": [
+      {
+        "seconds": 0.0012753,
+        "pure_seconds": 0.0012753,
+        "exact": 20,
+        "calls": 20
+      },
+      {
+        "seconds": 0.0012361,
+        "pure_seconds": 0.0012361,
+        "exact": 20,
+        "calls": 20
+      },
+      {
+        "seconds": 0.0013249000000000002,
+        "pure_seconds": 0.0013249000000000002,
+        "exact": 20,
+        "calls": 20
+      },
+      {
+        "seconds": 0.0012843,
+        "pure_seconds": 0.0012843,
+        "exact": 20,
+        "calls": 20
+      },
+      {
+        "seconds": 0.0011615999999999996,
+        "pure_seconds": 0.0011615999999999996,
+        "exact": 20,
+        "calls": 20
+      }
+    ],
+    "one": [
+      {
+        "seconds": 0.0021464999999999995,
+        "pure_seconds": 0.0021464999999999995,
+        "exact": 20,
+        "calls": 20
+      },
+      {
+        "seconds": 0.0021554,
+        "pure_seconds": 0.0021554,
+        "exact": 20,
+        "calls": 20
+      },
+      {
+        "seconds": 0.0021787,
+        "pure_seconds": 0.0021787,
+        "exact": 20,
+        "calls": 20
+      },
+      {
+        "seconds": 0.0020813999999999997,
+        "pure_seconds": 0.0020813999999999997,
+        "exact": 20,
+        "calls": 20
+      },
+      {
+        "seconds": 0.0020709,
+        "pure_seconds": 0.0020709,
+        "exact": 20,
+        "calls": 20
+      }
+    ],
+    "two": [
+      {
+        "seconds": 0.0021734000000000002,
+        "pure_seconds": 0.0021734000000000002,
+        "exact": 20,
+        "calls": 20
+      },
+      {
+        "seconds": 0.0018862,
+        "pure_seconds": 0.0018862,
+        "exact": 20,
+        "calls": 20
+      },
+      {
+        "seconds": 0.0016363,
+        "pure_seconds": 0.0016363,
+        "exact": 20,
+        "calls": 20
+      },
+      {
+        "seconds": 0.0014378999999999998,
+        "pure_seconds": 0.0014378999999999998,
+        "exact": 20,
+        "calls": 20
+      },
+      {
+        "seconds": 0.0014783,
+        "pure_seconds": 0.0014783,
+        "exact": 20,
+        "calls": 20
+      }
+    ],
+    "four": [
+      {
+        "seconds": 0.0013712000000000002,
+        "pure_seconds": 0.0013712000000000002,
+        "exact": 20,
+        "calls": 20
+      },
+      {
+        "seconds": 0.0011723,
+        "pure_seconds": 0.0011723,
+        "exact": 20,
+        "calls": 20
+      },
+      {
+        "seconds": 0.0012961000000000003,
+        "pure_seconds": 0.0012961000000000003,
+        "exact": 20,
+        "calls": 20
+      },
+      {
+        "seconds": 0.0010314,
+        "pure_seconds": 0.0010314,
+        "exact": 20,
+        "calls": 20
+      },
+      {
+        "seconds": 0.0011656999999999998,
+        "pure_seconds": 0.0011656999999999998,
+        "exact": 20,
+        "calls": 20
+      }
+    ],
+    "eight": [
+      {
+        "seconds": 0.0011765,
+        "pure_seconds": 0.0011765,
+        "exact": 20,
+        "calls": 20
+      },
+      {
+        "seconds": 0.0011699999999999998,
+        "pure_seconds": 0.0011699999999999998,
+        "exact": 20,
+        "calls": 20
+      },
+      {
+        "seconds": 0.0012809,
+        "pure_seconds": 0.0012809,
+        "exact": 20,
+        "calls": 20
+      },
+      {
+        "seconds": 0.001446,
+        "pure_seconds": 0.001446,
+        "exact": 20,
+        "calls": 20
+      },
+      {
+        "seconds": 0.00105,
+        "pure_seconds": 0.00105,
+        "exact": 20,
+        "calls": 20
+      }
+    ],
+    "sixteen": [
+      {
+        "seconds": 0.0012251,
+        "pure_seconds": 0.0012251,
+        "exact": 20,
+        "calls": 20
+      },
+      {
+        "seconds": 0.0012004000000000001,
+        "pure_seconds": 0.0012004000000000001,
+        "exact": 20,
+        "calls": 20
+      },
+      {
+        "seconds": 0.0012865,
+        "pure_seconds": 0.0012865,
+        "exact": 20,
+        "calls": 20
+      },
+      {
+        "seconds": 0.0012159,
+        "pure_seconds": 0.0012159,
+        "exact": 20,
+        "calls": 20
+      },
+      {
+        "seconds": 0.0015932999999999995,
+        "pure_seconds": 0.0015932999999999995,
+        "exact": 20,
+        "calls": 20
+      }
+    ]
+  },
+  "post_move_analytics": {
+    "current": [
+      {
+        "seconds": 0.0009215,
+        "pure_seconds": 0.0009215,
+        "exact": 20,
+        "calls": 20
+      },
+      {
+        "seconds": 0.0010034,
+        "pure_seconds": 0.0010034,
+        "exact": 20,
+        "calls": 20
+      },
+      {
+        "seconds": 0.0009853000000000002,
+        "pure_seconds": 0.0009853000000000002,
+        "exact": 20,
+        "calls": 20
+      },
+      {
+        "seconds": 0.0009343000000000001,
+        "pure_seconds": 0.0009343000000000001,
+        "exact": 20,
+        "calls": 20
+      },
+      {
+        "seconds": 0.0010112,
+        "pure_seconds": 0.0010112,
+        "exact": 20,
+        "calls": 20
+      }
+    ],
+    "one": [
+      {
+        "seconds": 0.0013276000000000002,
+        "pure_seconds": 0.0013276000000000002,
+        "exact": 20,
+        "calls": 20
+      },
+      {
+        "seconds": 0.0014044999999999997,
+        "pure_seconds": 0.0014044999999999997,
+        "exact": 20,
+        "calls": 20
+      },
+      {
+        "seconds": 0.0014290000000000001,
+        "pure_seconds": 0.0014290000000000001,
+        "exact": 20,
+        "calls": 20
+      },
+      {
+        "seconds": 0.0013124,
+        "pure_seconds": 0.0013124,
+        "exact": 20,
+        "calls": 20
+      },
+      {
+        "seconds": 0.0013461,
+        "pure_seconds": 0.0013461,
+        "exact": 20,
+        "calls": 20
+      }
+    ],
+    "two": [
+      {
+        "seconds": 0.0009976,
+        "pure_seconds": 0.0009976,
+        "exact": 20,
+        "calls": 20
+      },
+      {
+        "seconds": 0.0011259,
+        "pure_seconds": 0.0011259,
+        "exact": 20,
+        "calls": 20
+      },
+      {
+        "seconds": 0.0009930000000000002,
+        "pure_seconds": 0.0009930000000000002,
+        "exact": 20,
+        "calls": 20
+      },
+      {
+        "seconds": 0.0009295000000000002,
+        "pure_seconds": 0.0009295000000000002,
+        "exact": 20,
+        "calls": 20
+      },
+      {
+        "seconds": 0.0009291,
+        "pure_seconds": 0.0009291,
+        "exact": 20,
+        "calls": 20
+      }
+    ],
+    "four": [
+      {
+        "seconds": 0.0006947,
+        "pure_seconds": 0.0006947,
+        "exact": 20,
+        "calls": 20
+      },
+      {
+        "seconds": 0.0007834999999999999,
+        "pure_seconds": 0.0007834999999999999,
+        "exact": 20,
+        "calls": 20
+      },
+      {
+        "seconds": 0.0007298000000000001,
+        "pure_seconds": 0.0007298000000000001,
+        "exact": 20,
+        "calls": 20
+      },
+      {
+        "seconds": 0.0006445,
+        "pure_seconds": 0.0006445,
+        "exact": 20,
+        "calls": 20
+      },
+      {
+        "seconds": 0.0007318000000000001,
+        "pure_seconds": 0.0007318000000000001,
+        "exact": 20,
+        "calls": 20
+      }
+    ],
+    "eight": [
+      {
+        "seconds": 0.0007383000000000001,
+        "pure_seconds": 0.0007383000000000001,
+        "exact": 20,
+        "calls": 20
+      },
+      {
+        "seconds": 0.0008561000000000003,
+        "pure_seconds": 0.0008561000000000003,
+        "exact": 20,
+        "calls": 20
+      },
+      {
+        "seconds": 0.0010194,
+        "pure_seconds": 0.0010194,
+        "exact": 20,
+        "calls": 20
+      },
+      {
+        "seconds": 0.0007509999999999999,
+        "pure_seconds": 0.0007509999999999999,
+        "exact": 20,
+        "calls": 20
+      },
+      {
+        "seconds": 0.0007756,
+        "pure_seconds": 0.0007756,
+        "exact": 20,
+        "calls": 20
+      }
+    ],
+    "sixteen": [
+      {
+        "seconds": 0.0008770000000000001,
+        "pure_seconds": 0.0008770000000000001,
+        "exact": 20,
+        "calls": 20
+      },
+      {
+        "seconds": 0.0010398999999999999,
+        "pure_seconds": 0.0010398999999999999,
+        "exact": 20,
+        "calls": 20
+      },
+      {
+        "seconds": 0.0010967999999999998,
+        "pure_seconds": 0.0010967999999999998,
+        "exact": 20,
+        "calls": 20
+      },
+      {
+        "seconds": 0.0011882999999999998,
+        "pure_seconds": 0.0011882999999999998,
+        "exact": 20,
+        "calls": 20
+      },
+      {
+        "seconds": 0.0008805000000000001,
+        "pure_seconds": 0.0008805000000000001,
+        "exact": 20,
+        "calls": 20
+      }
+    ]
+  }
+}

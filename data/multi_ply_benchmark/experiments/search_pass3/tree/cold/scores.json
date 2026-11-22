@@ -1,0 +1,110 @@
+[
+  {
+    "level": "4ply",
+    "api": "checker_play",
+    "arm": "node",
+    "calls": 10,
+    "exact": 1,
+    "decision_changes": 0,
+    "wall": 11.932826800039038,
+    "control_wall": 12.738536199904047,
+    "thresholds": {
+      "probability": 0.0025,
+      "equity": 0.005
+    },
+    "fields": {
+      "probability": {
+        "count": 895,
+        "max_shift": 3.8370490074157715e-06,
+        "material_shifts": 0,
+        "references": 160,
+        "control_abs_error": 1.3982489451084796,
+        "arm_abs_error": 1.398249314814438,
+        "materially_farther": 0,
+        "materially_closer": 0
+      },
+      "equity": {
+        "count": 537,
+        "max_shift": 3.02016269415617e-06,
+        "material_shifts": 0,
+        "references": 96,
+        "control_abs_error": 2.391534544323804,
+        "arm_abs_error": 2.3915378794190474,
+        "materially_farther": 0,
+        "materially_closer": 0
+      }
+    }
+  },
+  {
+    "level": "4ply",
+    "api": "cube_action",
+    "arm": "node",
+    "calls": 10,
+    "exact": 1,
+    "decision_changes": 0,
+    "wall": 1.2331915999529883,
+    "control_wall": 1.3599775000475347,
+    "thresholds": {
+      "probability": 0.0025,
+      "equity": 0.005
+    },
+    "fields": {
+      "probability": {
+        "count": 50,
+        "max_shift": 1.9222497940063477e-06,
+        "material_shifts": 0,
+        "references": 50,
+        "control_abs_error": 0.35430947184068184,
+        "arm_abs_error": 0.3543099260059561,
+        "materially_farther": 0,
+        "materially_closer": 0
+      },
+      "equity": {
+        "count": 50,
+        "max_shift": 2.8312206268310547e-07,
+        "material_shifts": 0,
+        "references": 50,
+        "control_abs_error": 1.2273731529712677,
+        "arm_abs_error": 1.227373644709587,
+        "materially_farther": 0,
+        "materially_closer": 0
+      }
+    }
+  },
+  {
+    "level": "4ply",
+    "api": "post_move_analytics",
+    "arm": "node",
+    "calls": 10,
+    "exact": 2,
+    "decision_changes": 0,
+    "wall": 0.9392825999530032,
+    "control_wall": 0.96564060007222,
+    "thresholds": {
+      "probability": 0.0025,
+      "equity": 0.005
+    },
+    "fields": {
+      "probability": {
+        "count": 50,
+        "max_shift": 5.960464477539063e-08,
+        "material_shifts": 0,
+        "references": 50,
+        "control_abs_error": 0.28636129397637244,
+        "arm_abs_error": 0.2863611404463908,
+        "materially_farther": 0,
+        "materially_closer": 0
+      },
+      "equity": {
+        "count": 20,
+        "max_shift": 3.5762786865234375e-07,
+        "material_shifts": 0,
+        "references": 20,
+        "control_abs_error": 0.7695599638083372,
+        "arm_abs_error": 0.7695592734873067,
+        "materially_farther": 0,
+        "materially_closer": 0
+      }
+    }
+  }
+]

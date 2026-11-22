@@ -95,6 +95,27 @@ def test_checker_batch_matches_individual_opponent_trees(model):
             ) == expected
 
 
+def test_four_ply_checker_subtrees_are_private_to_each_request(model):
+    _, strategy, db = model
+    owner = bgbot_cpp.CubeOwner.OPPONENT
+    contexts = [(0, 0, 0), (5, 3, 4)]
+
+    def evaluate(context, threads):
+        away1, away2, cap = context
+        return bgbot_cpp.cubeful_checker_moves_nply(
+            BOARD, 3, 1, owner, strategy, 4, threads, 2, away1, away2,
+            False, True, True, db, cap)
+
+    # A serial batch uses only the thread-local recursion cache. Parallel
+    # batches share 2P results among endpoints, including under concurrent scores.
+    expected = [evaluate(context, 1) for context in contexts]
+    assert expected[0] != expected[1]
+    for threads in (4, 16):
+        with ThreadPoolExecutor(max_workers=2) as pool:
+            futures = [pool.submit(evaluate, context, threads) for context in contexts]
+            assert [future.result() for future in futures] == expected
+
+
 def test_checker_batch_requires_strategy():
     with pytest.raises(TypeError):
         bgbot_cpp.cubeful_checker_moves_nply(

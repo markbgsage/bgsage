@@ -1,5 +1,17 @@
 # Engine project notes
 
+- **2026-11-22, third multi-ply CPU study.** Within a standalone dice node,
+  the pre-roll board is a stable neural base across rolls. A partial
+  live-cube shortlist can serve the independent cubeless traversal only
+  when both use compatible neural arithmetic and the original move indices
+  are preserved. Parallel 4P checker alternatives can also share complete
+  2P subtrees within the same decision. The integrated 16-thread scheduler
+  cut the 100-position Linux 4P checker panel from 30.893 to 27.838 seconds
+  with every full response equal. The new move generator reproduced both
+  endpoint orders across 571,608 rolls. Check timings by game plan as well
+  as by preset. On the same CPU, Linux 2P pure-race roots were fastest
+  serially and Windows benefited from roll parallelism. [Study and reproduction](../../data/multi_ply_benchmark/experiments/search_pass3/README.md)
+
 - **2026-11-22, deterministic CPU search.** Keep the analyzer's loaded
   evaluator for 1P cube calls and batch all legal checker endpoints in one
   native call at 2P–4P. All 2,100 checkpoint responses matched on each of

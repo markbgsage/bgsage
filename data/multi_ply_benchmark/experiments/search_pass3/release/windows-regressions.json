@@ -1,0 +1,25 @@
+{
+  "extension": {
+    "path": "build/multi_ply_third_release/bgbot_cpp.cp314-win_amd64.pyd",
+    "sha256": "5791d60bbeb4ee8e025ba347e4e86480cad25519812c4dcae4983e107eaade0a",
+    "bytes": 4965376
+  },
+  "modules": [
+    "test_rollout_prefill",
+    "test_cube_candidate_batch_reuse",
+    "test_multi_ply_bearoff_cache",
+    "test_2ply_details",
+    "test_cube_points",
+    "test_vr_and_dead_cube",
+    "test_backgame_category",
+    "test_extended_inputs",
+    "test_extended_inputs_v2",
+    "test_checker_cube_symmetry",
+    "test_move_arrays",
+    "test_move_dice",
+    "test_move_notation"
+  ],
+  "exit_code": 0,
+  "summary": "227 passed in 97.41s (0:01:37)",
+  "diagnostics": []
+}

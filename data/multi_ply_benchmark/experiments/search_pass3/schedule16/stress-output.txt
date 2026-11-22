@@ -1,0 +1,2 @@
+100 saturated groups, 35700 roll callbacks, all visited once; exception and capture release checks passed
+98 scheduling combinations satisfied callback counts and CPU budgets

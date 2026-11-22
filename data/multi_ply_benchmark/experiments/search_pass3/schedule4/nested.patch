@@ -1,0 +1,100 @@
+--- a/cpp/include/bgbot/multipy.h
++++ b/cpp/include/bgbot/multipy.h
+@@ -505,5 +505,6 @@
+ // until all workers complete. Useful for work-stealing patterns where each
+ // worker pulls items from a shared atomic counter.
+ void multipy_parallel_run(int n_workers, const std::function<void()>& fn);
++void multipy_roll_for(int n_items, int n_workers, const std::function<void(int)>& fn);
+ 
+ } // namespace bgbot
+--- a/cpp/src/multipy.cpp
++++ b/cpp/src/multipy.cpp
+@@ -136,6 +136,39 @@
+         }
+     }
+ 
++    // Nested fan-out waits only for claimed items. A caller can finish all
++    // the work even when every pool thread is running an outer checker task.
++    void roll_for(int n_items, int workers, const std::function<void(int)>& fn) const {
++        struct Job {
++            std::atomic<int> next{0};
++            std::mutex mutex;
++            std::condition_variable done;
++            int completed = 0;
++            std::exception_ptr error;
++        };
++        auto job = std::make_shared<Job>();
++        auto claim = [job, n_items, &fn] {
++            int done = 0;
++            std::exception_ptr error;
++            for (int i = job->next.fetch_add(1, std::memory_order_relaxed); i < n_items;
++                 i = job->next.fetch_add(1, std::memory_order_relaxed)) {
++                try { fn(i); } catch (...) { error = std::current_exception(); }
++                ++done;
++            }
++            if (done) {
++                std::lock_guard lock(job->mutex);
++                if (error) job->error = error;
++                job->completed += done;
++                if (job->completed == n_items) job->done.notify_one();
++            }
++        };
++        for (int t = 1; t < workers; ++t) enqueue(claim);
++        claim();
++        std::unique_lock lock(job->mutex);
++        job->done.wait(lock, [&] { return job->completed == n_items; });
++        if (job->error) std::rethrow_exception(job->error);
++    }
++
+     // Dispatch n_workers copies of fn() — caller runs one, pool runs the rest.
+     // Each worker runs the same function; callers use shared atomics for
+     // work-stealing coordination.
+@@ -236,6 +269,10 @@
+ 
+ void multipy_parallel_run(int n_workers, const std::function<void()>& fn) {
+     get_multipy_executor().parallel_run(n_workers, fn);
++}
++
++void multipy_roll_for(int n_items, int n_workers, const std::function<void(int)>& fn) {
++    get_multipy_executor().roll_for(n_items, n_workers, fn);
+ }
+ 
+ // ======================== Static Members ========================
+--- a/cpp/src/cube_eval.cpp
++++ b/cpp/src/cube_eval.cpp
+@@ -888,7 +888,11 @@
+     std::array<std::array<float, NUM_OUTPUTS>, 21> roll_probs{};
+     float roll_cf[21][EVAL_MAX_CCI * 2];
+ 
+-    if (allow_parallel && ctx.n_threads >= 4 && ctx.n_threads <= 21) {
++    if (allow_parallel && ctx.n_threads >= 2 && ctx.n_threads <= 21) {
++        multipy_roll_for(21, ctx.n_threads, [&](int r) {
++            eval_roll(r, roll_cf[r], roll_probs[r]);
++        });
++    } else if (allow_parallel && ctx.n_threads >= 4 && ctx.n_threads <= 21) {
+         std::atomic<int> next_roll{0};
+         multipy_parallel_run(ctx.n_threads, [&] {
+             for (int r = next_roll.fetch_add(1, std::memory_order_relaxed); r < 21;
+--- a/cpp/pybind/bindings.cpp
++++ b/cpp/pybind/bindings.cpp
+@@ -5763,13 +5763,18 @@
+             moves.resize(endpoints.size());
+             std::vector<std::exception_ptr> errors(endpoints.size());
+             const int count = static_cast<int>(endpoints.size());
+-            const int workers = std::clamp(n_threads, 1, std::max(count, 1));
++            const char* env = std::getenv("BGSAGE_BENCH_ROLL_WIDTH");
++            const int width = env ? std::atoi(env) : 1;
++            const int cap = std::clamp(n_threads, 1, 21);
++            const int min_width = n_plies > 2 ? std::clamp(width, 1, cap) : 1;
++            const int workers = std::clamp(cap / min_width, 1, std::max(count, 1));
++            const int roll_workers = n_plies > 2 ? std::max(1, cap / workers) : 1;
+             std::atomic<int> next{0};
+             auto evaluate = [&](int i) {
+                 try {
+                     const auto r = cubeful_probs_and_equity_nply(
+                         flip(endpoints[i]), ci, *eval, n_plies, MoveFilters::TINY,
+-                        count == 1 ? std::min(n_threads, 21) : 1, nullptr, &board);
++                        roll_workers, nullptr, &board);
+                     moves[i] = {endpoints[i], r.probs, r.equity};
+                 } catch (...) {
+                     errors[i] = std::current_exception();

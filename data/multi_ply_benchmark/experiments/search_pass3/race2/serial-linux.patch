@@ -1,0 +1,35 @@
+--- a/cpp/src/cube_eval.cpp
++++ b/cpp/src/cube_eval.cpp
+@@ -1131,6 +1131,16 @@
+     return fp;
+ }
+ 
++// A shallow race has few replies to evaluate. Bound the cost of waking
++// pool workers while leaving deeper searches and serial rollout trials alone.
++static int root_roll_threads(const Board& board, int plies, int threads) {
++#if defined(__linux__)
++    constexpr int race_threads = 1;
++    if (plies == 2 && threads > race_threads && is_race(board)) return race_threads;
++#endif
++    return threads;
++}
++
+ template<bool ShareBatches>
+ static void cubeful_equity_nply_multi_impl(
+     const Board& board,
+@@ -1169,6 +1179,7 @@
+     CubeInfo aciCubePos[EVAL_MAX_CCI];
+     for (int i = 0; i < n_cubes; ++i) aciCubePos[i] = cubes[i];
+ 
++    n_threads = root_roll_threads(board, n_plies, n_threads);
+     EvalCtx ctx{&strategy, move_filter, n_plies, n_threads, deep_prefilter};
+     ctx.pinned_nn = pinned;
+     ctx.batches = batches;
+@@ -1286,6 +1297,7 @@
+         aciCubePos[2 * i + 1].owner      = CubeOwner::OPPONENT;
+     }
+ 
++    n_threads = root_roll_threads(board, n_plies, n_threads);
+     EvalCtx ctx{&strategy, move_filter, n_plies, n_threads, deep_prefilter};
+     ctx.pinned_nn = pinned;
+     ctx.batches = batches;

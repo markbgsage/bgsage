@@ -1,0 +1,347 @@
+{
+  "suite": "release/windows",
+  "archive_sha256": "bd7875795886c48cdb6fd17875ffb87d5134c522a89030665080d3be0f83d58e",
+  "baseline_commit": "82e63972379b77ab52ebafc716620e813ff7baa1",
+  "rollout_truth_sha256": "23b7bca2272c8ea750020f82c066dd489d3d556e39f0b8b2ec1cf99740051845",
+  "identities": {
+    "baseline": {
+      "source_files": 76,
+      "extension_sha256": "fd4630f514159877922dfc425de3503694385a82d55d523c6f9964e2bdc3d728",
+      "raw_source_manifest_sha256": "00e6a39dd07eae559ac0abfe8a730ab823c52be3531bf6d50d1cb40952d517b0",
+      "ordered_weights_sha256": "3cf4b744013e3b7d1b9f1dd9200091b0f40426105b49fd1c1d2ab3eee25854ca",
+      "bearoff_sha256": "907bbe0042dadfa14840a9f470b6b5adac213d5b2c17dc0e41aec27b087e3fe6",
+      "position_sha256": {
+        "checker_play": "1e69cf43b3bb4ae29b4337e8008f5e30c76f7b8b8f6f1bf271e46d75d8beac0b",
+        "cube_action": "31f56488ded1f2d0f3f280db754be4bce39e136b605bd5a7318952c2361830de"
+      }
+    },
+    "candidate": {
+      "source_files": 76,
+      "extension_sha256": "5791d60bbeb4ee8e025ba347e4e86480cad25519812c4dcae4983e107eaade0a",
+      "raw_source_manifest_sha256": "f44ef8fa851652412d05806cc72a013d14bcbb1ba7a8cae3a0100ac7c4d04a4a",
+      "ordered_weights_sha256": "3cf4b744013e3b7d1b9f1dd9200091b0f40426105b49fd1c1d2ab3eee25854ca",
+      "bearoff_sha256": "907bbe0042dadfa14840a9f470b6b5adac213d5b2c17dc0e41aec27b087e3fe6",
+      "position_sha256": {
+        "checker_play": "1e69cf43b3bb4ae29b4337e8008f5e30c76f7b8b8f6f1bf271e46d75d8beac0b",
+        "cube_action": "31f56488ded1f2d0f3f280db754be4bce39e136b605bd5a7318952c2361830de"
+      }
+    }
+  },
+  "levels": {
+    "1P": {
+      "seconds": {
+        "baseline": 0.0198516,
+        "candidate": 0.0198758
+      },
+      "speedup": 0.9987824389458538,
+      "exact": 300,
+      "same_best_checker": 100,
+      "same_cube_action": 100,
+      "same_checker_order": 100,
+      "observations": 4724,
+      "material_farther": 0,
+      "material_closer": 0,
+      "api_seconds": {
+        "checker_play": [
+          0.0153983,
+          0.0149782
+        ],
+        "cube_action": [
+          0.0025151,
+          0.0026803
+        ],
+        "post_move_analytics": [
+          0.0019382,
+          0.0022173
+        ]
+      },
+      "changed_decision_ids": {
+        "checker_play": [],
+        "cube_action": []
+      },
+      "max_prediction_shifts": {
+        "probability": 0.0,
+        "equity": 0.0
+      },
+      "recording_origin": {
+        "baseline": "new measurement",
+        "candidate": "new measurement"
+      },
+      "candidate_vs_wide_race": {
+        "calls": 300,
+        "exact_analytics": 300,
+        "changed_calls": []
+      }
+    },
+    "2P": {
+      "seconds": {
+        "baseline": 0.32956430000000003,
+        "candidate": 0.17397459999999998
+      },
+      "speedup": 1.8943242289391673,
+      "exact": 45,
+      "same_best_checker": 100,
+      "same_cube_action": 100,
+      "same_checker_order": 100,
+      "observations": 4724,
+      "material_farther": 0,
+      "material_closer": 0,
+      "api_seconds": {
+        "checker_play": [
+          0.1574288,
+          0.1270441
+        ],
+        "cube_action": [
+          0.1007348,
+          0.0277844
+        ],
+        "post_move_analytics": [
+          0.0714007,
+          0.0191461
+        ]
+      },
+      "changed_decision_ids": {
+        "checker_play": [],
+        "cube_action": []
+      },
+      "max_prediction_shifts": {
+        "probability": 2.384185791015625e-07,
+        "equity": 1.430511474609375e-06
+      },
+      "recording_origin": {
+        "baseline": "new measurement",
+        "candidate": "new measurement"
+      },
+      "candidate_vs_wide_race": {
+        "calls": 300,
+        "exact_analytics": 300,
+        "changed_calls": []
+      }
+    },
+    "3P": {
+      "seconds": {
+        "baseline": 2.5152566,
+        "candidate": 1.8886866
+      },
+      "speedup": 1.3317490577843882,
+      "exact": 50,
+      "same_best_checker": 100,
+      "same_cube_action": 100,
+      "same_checker_order": 100,
+      "observations": 4724,
+      "material_farther": 0,
+      "material_closer": 0,
+      "api_seconds": {
+        "checker_play": [
+          2.1300453,
+          1.6533572
+        ],
+        "cube_action": [
+          0.2346996,
+          0.1354653
+        ],
+        "post_move_analytics": [
+          0.1505117,
+          0.0998641
+        ]
+      },
+      "changed_decision_ids": {
+        "checker_play": [],
+        "cube_action": []
+      },
+      "max_prediction_shifts": {
+        "probability": 1.7229467630386353e-06,
+        "equity": 2.3096799850463867e-06
+      },
+      "recording_origin": {
+        "baseline": "new measurement",
+        "candidate": "new measurement"
+      },
+      "candidate_vs_wide_race": {
+        "calls": 300,
+        "exact_analytics": 300,
+        "changed_calls": []
+      }
+    },
+    "4P": {
+      "seconds": {
+        "baseline": 52.6422314,
+        "candidate": 31.8849409
+      },
+      "speedup": 1.6510060835646712,
+      "exact": 49,
+      "same_best_checker": 100,
+      "same_cube_action": 100,
+      "same_checker_order": 100,
+      "observations": 4724,
+      "material_farther": 0,
+      "material_closer": 0,
+      "api_seconds": {
+        "checker_play": [
+          44.9179035,
+          26.6286191
+        ],
+        "cube_action": [
+          4.6396979,
+          2.9317376
+        ],
+        "post_move_analytics": [
+          3.08463,
+          2.3245842
+        ]
+      },
+      "changed_decision_ids": {
+        "checker_play": [],
+        "cube_action": []
+      },
+      "max_prediction_shifts": {
+        "probability": 7.033348083496094e-06,
+        "equity": 7.420312613248825e-06
+      },
+      "recording_origin": {
+        "baseline": "new measurement",
+        "candidate": "new measurement"
+      },
+      "candidate_vs_wide_race": {
+        "calls": 300,
+        "exact_analytics": 300,
+        "changed_calls": []
+      }
+    },
+    "1T": {
+      "seconds": {
+        "baseline": 10.4570959,
+        "candidate": 8.4322432
+      },
+      "speedup": 1.240132151311765,
+      "exact": 300,
+      "same_best_checker": 100,
+      "same_cube_action": 100,
+      "same_checker_order": 100,
+      "observations": 4724,
+      "material_farther": 0,
+      "material_closer": 0,
+      "api_seconds": {
+        "checker_play": [
+          6.0933383,
+          4.9736413
+        ],
+        "cube_action": [
+          2.184262,
+          1.7353742
+        ],
+        "post_move_analytics": [
+          2.1794956,
+          1.7232277
+        ]
+      },
+      "changed_decision_ids": {
+        "checker_play": [],
+        "cube_action": []
+      },
+      "max_prediction_shifts": {
+        "probability": 0.0,
+        "equity": 0.0
+      },
+      "recording_origin": {
+        "baseline": "same-pass truncated control, exact archived bytes",
+        "candidate": "new measurement"
+      },
+      "candidate_vs_wide_race": {
+        "calls": 300,
+        "exact_analytics": 300,
+        "changed_calls": []
+      }
+    },
+    "2T": {
+      "seconds": {
+        "baseline": 64.9948484,
+        "candidate": 52.7035295
+      },
+      "speedup": 1.233216238392535,
+      "exact": 221,
+      "same_best_checker": 100,
+      "same_cube_action": 100,
+      "same_checker_order": 100,
+      "observations": 4724,
+      "material_farther": 0,
+      "material_closer": 0,
+      "api_seconds": {
+        "checker_play": [
+          37.5430879,
+          29.8361947
+        ],
+        "cube_action": [
+          13.8116723,
+          11.546107300000001
+        ],
+        "post_move_analytics": [
+          13.6400882,
+          11.321227499999999
+        ]
+      },
+      "changed_decision_ids": {
+        "checker_play": [],
+        "cube_action": []
+      },
+      "max_prediction_shifts": {
+        "probability": 2.384185791015625e-07,
+        "equity": 8.344650268554688e-07
+      },
+      "recording_origin": {
+        "baseline": "same-pass truncated control, exact archived bytes",
+        "candidate": "new measurement"
+      },
+      "candidate_vs_wide_race": {
+        "calls": 300,
+        "exact_analytics": 300,
+        "changed_calls": []
+      }
+    },
+    "3T": {
+      "seconds": {
+        "baseline": 226.1010325,
+        "candidate": 191.9700773
+      },
+      "speedup": 1.177793100258339,
+      "exact": 219,
+      "same_best_checker": 100,
+      "same_cube_action": 100,
+      "same_checker_order": 100,
+      "observations": 4724,
+      "material_farther": 0,
+      "material_closer": 0,
+      "api_seconds": {
+        "checker_play": [
+          126.8817544,
+          107.9616536
+        ],
+        "cube_action": [
+          49.5846103,
+          41.3141613
+        ],
+        "post_move_analytics": [
+          49.6346678,
+          42.6942624
+        ]
+      },
+      "changed_decision_ids": {
+        "checker_play": [],
+        "cube_action": []
+      },
+      "max_prediction_shifts": {
+        "probability": 2.384185791015625e-07,
+        "equity": 1.5422701835632324e-06
+      },
+      "recording_origin": {
+        "baseline": "same-pass truncated control, exact archived bytes",
+        "candidate": "new measurement"
+      },
+      "candidate_vs_wide_race": {
+        "calls": 300,
+        "exact_analytics": 300,
+        "changed_calls": []
+      }
+    }
+  }
+}

@@ -11,6 +11,9 @@ references](rollout_positions/README.md) reuse the archived full-game checker
 decisions and complete the other positions with 1,296-game public analytics.
 The [second CPU search study](experiments/search_pass2/README.md) measures
 1P through 4P, checks the truncated presets and includes the full responses.
+The [third CPU search study](experiments/search_pass3/README.md) includes
+paired timings, rollout comparisons, and separate experiments on legal moves,
+contact features, subtree reuse and parallel scheduling.
 
 | File | Calls | Positions |
 | --- | --- | ---: |

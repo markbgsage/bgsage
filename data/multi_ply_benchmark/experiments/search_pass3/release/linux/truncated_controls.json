@@ -1,0 +1,17 @@
+{
+  "1T": {
+    "path": "logs/search_pass3/linux/baseline/1T/results.jsonl",
+    "sha256": "5bbfda65dd63c52d5e64023cbc90a8f314a78bfb7f5b128d205484fb9bfe9da1",
+    "bytes": 1057522
+  },
+  "2T": {
+    "path": "logs/search_pass3/linux/baseline/2T/results.jsonl",
+    "sha256": "ede934ae78d6c0f48e8e83e0ba0a8814a76aecc64833dc71037f13fbf2acb35a",
+    "bytes": 1057847
+  },
+  "3T": {
+    "path": "logs/search_pass3/linux/baseline/3T/results.jsonl",
+    "sha256": "5f7fdd5f0aec9f15e2b140b68fde70716b5f051dea3d4449932a987ae605a2dd",
+    "bytes": 1063250
+  }
+}

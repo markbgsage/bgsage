@@ -1,0 +1,34 @@
+--- a/cpp/src/cube_eval.cpp
++++ b/cpp/src/cube_eval.cpp
+@@ -1131,6 +1131,15 @@
+     return fp;
+ }
+ 
++// A shallow race has few replies to evaluate. Bound the cost of waking
++// pool workers while leaving deeper searches and serial rollout trials alone.
++static int root_roll_threads(const Board& board, int plies, int threads) {
++    static const char* value = std::getenv("BGSAGE_RACE_TEST_THREADS");
++    static const int race_threads = value ? std::clamp(std::atoi(value), 1, 21) : 16;
++    if (plies == 2 && threads > race_threads && is_race(board)) return race_threads;
++    return threads;
++}
++
+ template<bool ShareBatches>
+ static void cubeful_equity_nply_multi_impl(
+     const Board& board,
+@@ -1169,6 +1178,7 @@
+     CubeInfo aciCubePos[EVAL_MAX_CCI];
+     for (int i = 0; i < n_cubes; ++i) aciCubePos[i] = cubes[i];
+ 
++    n_threads = root_roll_threads(board, n_plies, n_threads);
+     EvalCtx ctx{&strategy, move_filter, n_plies, n_threads, deep_prefilter};
+     ctx.pinned_nn = pinned;
+     ctx.batches = batches;
+@@ -1286,6 +1296,7 @@
+         aciCubePos[2 * i + 1].owner      = CubeOwner::OPPONENT;
+     }
+ 
++    n_threads = root_roll_threads(board, n_plies, n_threads);
+     EvalCtx ctx{&strategy, move_filter, n_plies, n_threads, deep_prefilter};
+     ctx.pinned_nn = pinned;
+     ctx.batches = batches;

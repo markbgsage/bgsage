@@ -1,0 +1,198 @@
+{
+  "1P": {
+    "seconds": {
+      "baseline": 0.0198516,
+      "candidate": 0.0198758
+    },
+    "speedup": 0.9987824389458538,
+    "exact": 300,
+    "same_best_checker": 100,
+    "same_checker_order": 100,
+    "same_cube_action": 100,
+    "observations": 4724,
+    "material_farther": 0,
+    "material_closer": 0,
+    "api_seconds": {
+      "checker_play": [
+        0.0153983,
+        0.0149782
+      ],
+      "cube_action": [
+        0.0025151,
+        0.0026803
+      ],
+      "post_move_analytics": [
+        0.0019382,
+        0.0022173
+      ]
+    }
+  },
+  "2P": {
+    "seconds": {
+      "baseline": 0.32956430000000003,
+      "candidate": 0.17397459999999998
+    },
+    "speedup": 1.8943242289391673,
+    "exact": 45,
+    "same_best_checker": 100,
+    "same_checker_order": 100,
+    "same_cube_action": 100,
+    "observations": 4724,
+    "material_farther": 0,
+    "material_closer": 0,
+    "api_seconds": {
+      "checker_play": [
+        0.1574288,
+        0.1270441
+      ],
+      "cube_action": [
+        0.1007348,
+        0.0277844
+      ],
+      "post_move_analytics": [
+        0.0714007,
+        0.0191461
+      ]
+    }
+  },
+  "3P": {
+    "seconds": {
+      "baseline": 2.5152566,
+      "candidate": 1.8886866
+    },
+    "speedup": 1.3317490577843882,
+    "exact": 50,
+    "same_best_checker": 100,
+    "same_checker_order": 100,
+    "same_cube_action": 100,
+    "observations": 4724,
+    "material_farther": 0,
+    "material_closer": 0,
+    "api_seconds": {
+      "checker_play": [
+        2.1300453,
+        1.6533572
+      ],
+      "cube_action": [
+        0.2346996,
+        0.1354653
+      ],
+      "post_move_analytics": [
+        0.1505117,
+        0.0998641
+      ]
+    }
+  },
+  "4P": {
+    "seconds": {
+      "baseline": 52.6422314,
+      "candidate": 31.8849409
+    },
+    "speedup": 1.6510060835646712,
+    "exact": 49,
+    "same_best_checker": 100,
+    "same_checker_order": 100,
+    "same_cube_action": 100,
+    "observations": 4724,
+    "material_farther": 0,
+    "material_closer": 0,
+    "api_seconds": {
+      "checker_play": [
+        44.9179035,
+        26.6286191
+      ],
+      "cube_action": [
+        4.6396979,
+        2.9317376
+      ],
+      "post_move_analytics": [
+        3.08463,
+        2.3245842
+      ]
+    }
+  },
+  "1T": {
+    "seconds": {
+      "baseline": 10.4570959,
+      "candidate": 8.4322432
+    },
+    "speedup": 1.240132151311765,
+    "exact": 300,
+    "same_best_checker": 100,
+    "same_checker_order": 100,
+    "same_cube_action": 100,
+    "observations": 4724,
+    "material_farther": 0,
+    "material_closer": 0,
+    "api_seconds": {
+      "checker_play": [
+        6.0933383,
+        4.9736413
+      ],
+      "cube_action": [
+        2.184262,
+        1.7353742
+      ],
+      "post_move_analytics": [
+        2.1794956,
+        1.7232277
+      ]
+    }
+  },
+  "2T": {
+    "seconds": {
+      "baseline": 64.9948484,
+      "candidate": 52.7035295
+    },
+    "speedup": 1.233216238392535,
+    "exact": 221,
+    "same_best_checker": 100,
+    "same_checker_order": 100,
+    "same_cube_action": 100,
+    "observations": 4724,
+    "material_farther": 0,
+    "material_closer": 0,
+    "api_seconds": {
+      "checker_play": [
+        37.5430879,
+        29.8361947
+      ],
+      "cube_action": [
+        13.8116723,
+        11.546107300000001
+      ],
+      "post_move_analytics": [
+        13.6400882,
+        11.321227499999999
+      ]
+    }
+  },
+  "3T": {
+    "seconds": {
+      "baseline": 226.1010325,
+      "candidate": 191.9700773
+    },
+    "speedup": 1.177793100258339,
+    "exact": 219,
+    "same_best_checker": 100,
+    "same_checker_order": 100,
+    "same_cube_action": 100,
+    "observations": 4724,
+    "material_farther": 0,
+    "material_closer": 0,
+    "api_seconds": {
+      "checker_play": [
+        126.8817544,
+        107.9616536
+      ],
+      "cube_action": [
+        49.5846103,
+        41.3141613
+      ],
+      "post_move_analytics": [
+        49.6346678,
+        42.6942624
+      ]
+    }
+  }
+}

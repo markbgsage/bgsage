@@ -1,0 +1,114 @@
+{
+  "1P": {
+    "seconds": {
+      "baseline": 0.021575832,
+      "candidate": 0.02121996
+    },
+    "speedup": 1.0167706253923192,
+    "exact": 300,
+    "same_best_checker": 100,
+    "same_checker_order": 100,
+    "same_cube_action": 100,
+    "observations": 4724,
+    "material_farther": 0,
+    "material_closer": 0,
+    "api_seconds": {
+      "checker_play": [
+        0.015419176,
+        0.015332661000000001
+      ],
+      "cube_action": [
+        0.0036116580000000002,
+        0.003496986
+      ],
+      "post_move_analytics": [
+        0.002544998,
+        0.002390313
+      ]
+    }
+  },
+  "2P": {
+    "seconds": {
+      "baseline": 0.35160448099999997,
+      "candidate": 0.214910637
+    },
+    "speedup": 1.636049689806652,
+    "exact": 28,
+    "same_best_checker": 100,
+    "same_checker_order": 100,
+    "same_cube_action": 100,
+    "observations": 4724,
+    "material_farther": 0,
+    "material_closer": 0,
+    "api_seconds": {
+      "checker_play": [
+        0.185228856,
+        0.144271776
+      ],
+      "cube_action": [
+        0.098280731,
+        0.043711951
+      ],
+      "post_move_analytics": [
+        0.068094894,
+        0.026926910000000002
+      ]
+    }
+  },
+  "3P": {
+    "seconds": {
+      "baseline": 2.452848548,
+      "candidate": 1.88853636
+    },
+    "speedup": 1.2988092789486987,
+    "exact": 30,
+    "same_best_checker": 100,
+    "same_checker_order": 100,
+    "same_cube_action": 100,
+    "observations": 4724,
+    "material_farther": 0,
+    "material_closer": 0,
+    "api_seconds": {
+      "checker_play": [
+        2.103726449,
+        1.624609329
+      ],
+      "cube_action": [
+        0.213855311,
+        0.152073743
+      ],
+      "post_move_analytics": [
+        0.135266788,
+        0.111853288
+      ]
+    }
+  },
+  "4P": {
+    "seconds": {
+      "baseline": 47.053947535,
+      "candidate": 31.779622006
+    },
+    "speedup": 1.4806326999772434,
+    "exact": 31,
+    "same_best_checker": 100,
+    "same_checker_order": 100,
+    "same_cube_action": 100,
+    "observations": 4724,
+    "material_farther": 0,
+    "material_closer": 0,
+    "api_seconds": {
+      "checker_play": [
+        40.064445812,
+        26.635496321
+      ],
+      "cube_action": [
+        4.06379679,
+        2.800839705
+      ],
+      "post_move_analytics": [
+        2.925704933,
+        2.34328598
+      ]
+    }
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "extension": {
+    "path": "build/pass3_tree_arms/node/bgbot_cpp.cp314-win_amd64.pyd",
+    "sha256": "58a8d38880257163b356033b70a3fdc9d77f67e948d778407868fa4c5702969a",
+    "bytes": 5013504
+  },
+  "calls": 24,
+  "controls": 6,
+  "exact_against_cold": 18,
+  "after_model_switch": 12,
+  "distinguishing_calls": 1,
+  "threads": [
+    1,
+    4,
+    16
+  ],
+  "cpu_mask": "0xf"
+}

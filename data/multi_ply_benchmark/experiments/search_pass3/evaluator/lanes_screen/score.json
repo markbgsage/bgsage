@@ -1,0 +1,82 @@
+{
+  "lanes": {
+    "2ply": {
+      "checker_play": {
+        "calls": 100,
+        "exact": 100,
+        "material": [],
+        "seconds": 0.4641711150001129,
+        "baseline": 0.5709196849995806,
+        "speedup": 1.2299767619091113
+      },
+      "cube_action": {
+        "calls": 100,
+        "exact": 100,
+        "material": [],
+        "seconds": 0.1310281979993988,
+        "baseline": 0.15845263800008524,
+        "speedup": 1.2093018176195347
+      },
+      "post_move_analytics": {
+        "calls": 100,
+        "exact": 100,
+        "material": [],
+        "seconds": 0.09551491799993528,
+        "baseline": 0.11384254199992938,
+        "speedup": 1.1918823193671853
+      }
+    },
+    "3ply": {
+      "checker_play": {
+        "calls": 100,
+        "exact": 100,
+        "material": [],
+        "seconds": 5.7175219450006125,
+        "baseline": 6.813288950999777,
+        "speedup": 1.1916506865281558
+      },
+      "cube_action": {
+        "calls": 100,
+        "exact": 100,
+        "material": [],
+        "seconds": 0.5013658370003213,
+        "baseline": 0.5803761810001333,
+        "speedup": 1.1575902029394982
+      },
+      "post_move_analytics": {
+        "calls": 100,
+        "exact": 100,
+        "material": [],
+        "seconds": 0.35104814800081385,
+        "baseline": 0.39816323999946235,
+        "speedup": 1.1342126208811085
+      }
+    },
+    "4ply": {
+      "checker_play": {
+        "calls": 20,
+        "exact": 20,
+        "material": [],
+        "seconds": 19.923676067000315,
+        "baseline": 24.536185768000223,
+        "speedup": 1.2315089688011758
+      },
+      "cube_action": {
+        "calls": 20,
+        "exact": 20,
+        "material": [],
+        "seconds": 1.7673783220000132,
+        "baseline": 2.0820628050001915,
+        "speedup": 1.1780515688593898
+      },
+      "post_move_analytics": {
+        "calls": 20,
+        "exact": 20,
+        "material": [],
+        "seconds": 1.2864319620000515,
+        "baseline": 1.5717434799998955,
+        "speedup": 1.221785159594653
+      }
+    }
+  }
+}

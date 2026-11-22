@@ -1,0 +1,96 @@
+{
+  "metadata": {
+    "hashes": {
+      "fast": "92d31211f25a86f3857da9f4d6e731ba634bcdcde5b897a80938ad24aed11f35",
+      "base": "19e8097153b517bfb801e63b49d7544d1b50275115f964da5ae4ecefa348d50c"
+    },
+    "mask": 3840,
+    "threads": 4,
+    "levels": [
+      "1ply=2",
+      "2ply=2",
+      "3ply=2"
+    ],
+    "cases_per_repeat": 300
+  },
+  "levels": {
+    "1ply": {
+      "fast": {
+        "calls": 600,
+        "seconds": 0.0637013001833111,
+        "speedup_vs_relink": 1.021181680874352,
+        "paired_median_speedup": 1.018144472012388,
+        "faster_pairs": 327,
+        "exact_vs_relink": 600,
+        "by_repeat": {
+          "0": 0.0345582997542806,
+          "1": 0.029143000429030508
+        }
+      },
+      "base": {
+        "calls": 600,
+        "seconds": 0.0650506007950753,
+        "speedup_vs_relink": 1.0,
+        "paired_median_speedup": 1.0,
+        "faster_pairs": 0,
+        "exact_vs_relink": 600,
+        "by_repeat": {
+          "0": 0.035004300298169255,
+          "1": 0.030046300496906042
+        }
+      }
+    },
+    "2ply": {
+      "fast": {
+        "calls": 600,
+        "seconds": 1.3903940001619048,
+        "speedup_vs_relink": 1.0431007317729786,
+        "paired_median_speedup": 1.0600466001247693,
+        "faster_pairs": 432,
+        "exact_vs_relink": 600,
+        "by_repeat": {
+          "0": 0.7458444997901097,
+          "1": 0.6445495003717951
+        }
+      },
+      "base": {
+        "calls": 600,
+        "seconds": 1.450320999021642,
+        "speedup_vs_relink": 1.0,
+        "paired_median_speedup": 1.0,
+        "faster_pairs": 0,
+        "exact_vs_relink": 600,
+        "by_repeat": {
+          "0": 0.7778176995925605,
+          "1": 0.6725032994290814
+        }
+      }
+    },
+    "3ply": {
+      "fast": {
+        "calls": 600,
+        "seconds": 14.243866600154433,
+        "speedup_vs_relink": 1.0420039105897212,
+        "paired_median_speedup": 1.0563188954005125,
+        "faster_pairs": 453,
+        "exact_vs_relink": 600,
+        "by_repeat": {
+          "0": 7.175224500533659,
+          "1": 7.068642099620774
+        }
+      },
+      "base": {
+        "calls": 600,
+        "seconds": 14.842164699279238,
+        "speedup_vs_relink": 1.0,
+        "paired_median_speedup": 1.0,
+        "faster_pairs": 0,
+        "exact_vs_relink": 600,
+        "by_repeat": {
+          "0": 7.4813848995254375,
+          "1": 7.3607797997538
+        }
+      }
+    }
+  }
+}

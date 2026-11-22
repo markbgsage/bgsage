@@ -1,0 +1,52 @@
+{
+  "3ply": {
+    "checker_play": {
+      "checkpoint": {
+        "seconds": 1.1872236997587606,
+        "cpu_seconds": 14.515625,
+        "calls": 40,
+        "exact": 40,
+        "faster": 0
+      },
+      "spare": {
+        "seconds": 1.152727399719879,
+        "cpu_seconds": 14.59375,
+        "calls": 40,
+        "exact": 40,
+        "faster": 29
+      },
+      "lanes2": {
+        "seconds": 1.1657625998486765,
+        "cpu_seconds": 15.046875,
+        "calls": 40,
+        "exact": 40,
+        "faster": 28
+      }
+    }
+  },
+  "4ply": {
+    "checker_play": {
+      "checkpoint": {
+        "seconds": 20.210514599864837,
+        "cpu_seconds": 214.140625,
+        "calls": 40,
+        "exact": 40,
+        "faster": 0
+      },
+      "spare": {
+        "seconds": 17.95007339969743,
+        "cpu_seconds": 216.109375,
+        "calls": 40,
+        "exact": 40,
+        "faster": 26
+      },
+      "lanes2": {
+        "seconds": 17.459500399709214,
+        "cpu_seconds": 226.53125,
+        "calls": 40,
+        "exact": 40,
+        "faster": 27
+      }
+    }
+  }
+}

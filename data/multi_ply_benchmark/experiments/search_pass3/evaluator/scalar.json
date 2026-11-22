@@ -1,0 +1,12 @@
+{
+  "scalar_control": {
+    "sha256": "33bc06c5903ea055b17df16ed1de931e1c7e8b5fabb3d72f6186f140dc548d34",
+    "bytes": 63910432,
+    "audit": "262144 integer shot triples equal the scalar reference"
+  },
+  "scalar_candidate": {
+    "sha256": "33bc06c5903ea055b17df16ed1de931e1c7e8b5fabb3d72f6186f140dc548d34",
+    "bytes": 63910432,
+    "audit": "262144 integer shot triples equal the scalar reference"
+  }
+}

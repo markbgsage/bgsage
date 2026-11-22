@@ -1,0 +1,144 @@
+{
+  "2ply": {
+    "checker_play": {
+      "checkpoint": {
+        "seconds": 0.9896852129996887,
+        "cpu_seconds": 3.472026347000001,
+        "calls": 200,
+        "exact": 200,
+        "faster": 0
+      },
+      "cash": {
+        "seconds": 0.9739535839993323,
+        "cpu_seconds": 3.426372143999999,
+        "calls": 200,
+        "exact": 196,
+        "faster": 121
+      },
+      "shallow": {
+        "seconds": 0.9812421709988257,
+        "cpu_seconds": 3.4463861459999996,
+        "calls": 200,
+        "exact": 200,
+        "faster": 109
+      }
+    },
+    "cube_action": {
+      "checkpoint": {
+        "seconds": 0.2927802390005354,
+        "cpu_seconds": 0.29257142700000527,
+        "calls": 200,
+        "exact": 200,
+        "faster": 0
+      },
+      "cash": {
+        "seconds": 0.29653237300055935,
+        "cpu_seconds": 0.2965144039999985,
+        "calls": 200,
+        "exact": 196,
+        "faster": 100
+      },
+      "shallow": {
+        "seconds": 0.15276385099912204,
+        "cpu_seconds": 0.4137812550000002,
+        "calls": 200,
+        "exact": 200,
+        "faster": 160
+      }
+    },
+    "post_move_analytics": {
+      "checkpoint": {
+        "seconds": 0.20189205299891455,
+        "cpu_seconds": 0.2018975879999989,
+        "calls": 200,
+        "exact": 200,
+        "faster": 0
+      },
+      "cash": {
+        "seconds": 0.199333592999551,
+        "cpu_seconds": 0.19928890699999657,
+        "calls": 200,
+        "exact": 200,
+        "faster": 104
+      },
+      "shallow": {
+        "seconds": 0.09042737599918382,
+        "cpu_seconds": 0.2689614730000005,
+        "calls": 200,
+        "exact": 200,
+        "faster": 168
+      }
+    }
+  },
+  "3ply": {
+    "checker_play": {
+      "checkpoint": {
+        "seconds": 12.647586423999655,
+        "cpu_seconds": 47.06362440599999,
+        "calls": 200,
+        "exact": 200,
+        "faster": 0
+      },
+      "cash": {
+        "seconds": 12.441806612998676,
+        "cpu_seconds": 46.39328232,
+        "calls": 200,
+        "exact": 192,
+        "faster": 114
+      },
+      "shallow": {
+        "seconds": 12.619691952999005,
+        "cpu_seconds": 46.99640213900002,
+        "calls": 200,
+        "exact": 200,
+        "faster": 102
+      }
+    },
+    "cube_action": {
+      "checkpoint": {
+        "seconds": 1.284546819999946,
+        "cpu_seconds": 4.297923963999981,
+        "calls": 200,
+        "exact": 200,
+        "faster": 0
+      },
+      "cash": {
+        "seconds": 1.2773796989997663,
+        "cpu_seconds": 4.29092624999997,
+        "calls": 200,
+        "exact": 200,
+        "faster": 102
+      },
+      "shallow": {
+        "seconds": 1.2924356139996007,
+        "cpu_seconds": 4.334174881000006,
+        "calls": 200,
+        "exact": 200,
+        "faster": 98
+      }
+    },
+    "post_move_analytics": {
+      "checkpoint": {
+        "seconds": 0.8471979989996044,
+        "cpu_seconds": 2.9348989490000115,
+        "calls": 200,
+        "exact": 200,
+        "faster": 0
+      },
+      "cash": {
+        "seconds": 0.8293559030001916,
+        "cpu_seconds": 2.8826244570000057,
+        "calls": 200,
+        "exact": 198,
+        "faster": 117
+      },
+      "shallow": {
+        "seconds": 0.8650894600000356,
+        "cpu_seconds": 2.9944305820000032,
+        "calls": 200,
+        "exact": 200,
+        "faster": 89
+      }
+    }
+  }
+}

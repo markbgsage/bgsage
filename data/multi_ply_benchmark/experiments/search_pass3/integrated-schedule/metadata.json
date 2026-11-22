@@ -1,0 +1,48 @@
+{
+  "args": {
+    "arm": [
+      [
+        "checkpoint",
+        "build/search_pass3/evaluator/final",
+        "build/search_pass3/evaluator/final/python"
+      ],
+      [
+        "lanes",
+        "build/search_pass3/evaluator/lanes_final",
+        "build/search_pass3/evaluator/lanes_final/python"
+      ]
+    ],
+    "env": [],
+    "cores": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15
+    ],
+    "levels": [
+      "4ply"
+    ],
+    "apis": [
+      "checker_play"
+    ],
+    "per_cell": 10,
+    "repeats": 1,
+    "output": "data/multi_ply_benchmark/experiments/search_pass3/integrated-schedule"
+  },
+  "binaries": {
+    "checkpoint": "582e14ca2badc72afbaa80f1bcc78e9d1e6005a48aa43a3d34b421e012619c00",
+    "lanes": "c96503d998c13946d065387a817dbeabb21886b2a5f94307b4a25c4442108e25"
+  }
+}

@@ -1,0 +1,185 @@
+--- a/cpp/include/bgbot/cube.h
++++ b/cpp/include/bgbot/cube.h
+@@ -368,6 +368,10 @@
+     const Strategy* move_filter = nullptr,
+     const Board* root_board = nullptr);   // root routing: the decision's pre-move board
+ 
++std::vector<CubefulProbsAndEquity> evaluate_checker_endpoints(
++    const Board& before, const std::vector<Board>& endpoints, const CubeInfo& cube,
++    const Strategy& strategy, int plies, int threads);
++
+ // Batched version: evaluate cubeful equity for the SAME board at N-ply depth
+ // against MULTIPLE cube states simultaneously. Returns one equity per cube
+ // state in `out`, in the same order as `cubes`.
+--- a/cpp/src/cube_eval.cpp
++++ b/cpp/src/cube_eval.cpp
+@@ -38,6 +38,8 @@
+ #include <cstring>
+ #include <limits>
+ #include <type_traits>
++#include <mutex>
++#include <unordered_map>
+ #include <vector>
+ 
+ namespace bgbot {
+@@ -362,6 +364,45 @@
+ 
+ struct CandidateBatchCache;
+ 
++struct CheckerSubtrees {
++    struct Value {
++        Board board;
++        std::array<float, 4> equity;
++        std::array<float, NUM_OUTPUTS> probs;
++        uint64_t fingerprint;
++    };
++    struct Shard {
++        std::mutex mutex;
++        std::unordered_map<uint64_t, Value> nodes;
++        unsigned hits = 0, probes = 0;
++    };
++    std::array<Shard, 64> shards;
++    bool get(uint64_t key, uint64_t fp, const Board& board, int cci,
++             float* eq, std::array<float, NUM_OUTPUTS>* probs) {
++        auto& shard = shards[key % shards.size()];
++        std::lock_guard lock(shard.mutex);
++        ++shard.probes;
++        auto it = shard.nodes.find(key);
++        if (it == shard.nodes.end() || it->second.fingerprint != fp || it->second.board != board)
++            return false;
++        ++shard.hits;
++        std::copy_n(it->second.equity.begin(), cci, eq);
++        if (probs) *probs = it->second.probs;
++        return true;
++    }
++    void put(uint64_t key, uint64_t fp, const Board& board, int cci, const float* eq,
++             const std::array<float, NUM_OUTPUTS>& probs) {
++        auto& shard = shards[key % shards.size()];
++        std::lock_guard lock(shard.mutex);
++        if (shard.nodes.size() >= 128) return;
++        auto& v = shard.nodes[key];
++        v.board = board;
++        v.fingerprint = fp;
++        std::copy_n(eq, cci, v.equity.begin());
++        v.probs = probs;
++    }
++};
++
+ struct EvalCtx {
+     const Strategy* strategy;
+     const Strategy* move_filter;
+@@ -372,6 +413,7 @@
+     bool deep_prefilter = false;  // aggressive PubEval prune at deep nodes
+                                   // (rollout-internal evaluations only)
+     CandidateBatchCache* batches = nullptr;
++    CheckerSubtrees* checker = nullptr;
+     int pinned_nn = -1;   // root routing: the net every node uses (-1 = per node)
+ };
+ 
+@@ -578,6 +620,9 @@
+                              arCubeful, arProbsOut)) {
+             return;
+         }
++        if (ctx.checker && cci <= 4 && plies < ctx.top_plies &&
++            ctx.checker->get(key, fp, board, cci, arCubeful, arProbsOut))
++            return;
+     }
+ 
+     // Terminal check
+@@ -948,6 +993,8 @@
+     }
+     if (can_cache) {
+         g_cubeful_eval_cache.put(key, fp, board, plies, cci, fTop, arCubeful, probs_final);
++        if (ctx.checker && cci <= 4 && plies < ctx.top_plies)
++            ctx.checker->put(key, fp, board, cci, arCubeful, probs_final);
+     }
+     if (shared_reservation) {
+         shared_cache->publish(shared_reservation, probs_final);
+@@ -1032,7 +1079,7 @@
+     bool fTop,
+     std::array<float, NUM_OUTPUTS>* probs_out,
+     bool deep_prefilter,
+-    const Board* root_board, CandidateBatchCache* batches)
++    const Board* root_board, CandidateBatchCache* batches, CheckerSubtrees* checker = nullptr)
+ {
+     (void)filter;  // candidate selection inside the tree is single-pick
+     if (n_cubes <= 0) return;
+@@ -1059,6 +1106,7 @@
+     EvalCtx ctx{&strategy, move_filter, n_plies, n_threads, deep_prefilter};
+     ctx.pinned_nn = pinned;
+     ctx.batches = batches;
++    ctx.checker = checker;
+     const bool allow_parallel = (n_threads > 1 && n_plies > 2);
+     float arCubeful[EVAL_MAX_CCI];
+     cubeful_eval_recursive<ShareBatches>(board, aciCubePos, n_cubes, ctx, n_plies, fTop,
+@@ -1092,6 +1140,36 @@
+     cubeful_equity_nply_multi_impl<false>(
+         board, cubes, n_cubes, strategy, n_plies, out, filter, n_threads,
+         move_filter, fTop, probs_out, deep_prefilter, root_board, nullptr);
++}
++
++std::vector<CubefulProbsAndEquity> evaluate_checker_endpoints(
++    const Board& before, const std::vector<Board>& endpoints, const CubeInfo& cube,
++    const Strategy& strategy, int plies, int threads) {
++    const int count = static_cast<int>(endpoints.size());
++    const int workers = std::clamp(threads, 1, std::max(count, 1));
++    std::vector<CubefulProbsAndEquity> moves(count);
++    std::vector<std::exception_ptr> errors(count);
++    CheckerSubtrees cache;
++    std::atomic<int> next{0};
++    multipy_parallel_run(workers, [&] {
++        for (int i = next.fetch_add(1, std::memory_order_relaxed); i < count;
++             i = next.fetch_add(1, std::memory_order_relaxed)) {
++            try {
++                auto& r = moves[i];
++                cubeful_equity_nply_multi_impl<false>(flip(endpoints[i]), &cube, 1, strategy,
++                    plies, &r.equity, MoveFilters::TINY, count == 1 ? std::min(threads, 21) : 1,
++                    nullptr, false, &r.probs, false, &before, nullptr,
++                    workers > 1 && plies > 2 ? &cache : nullptr);
++            } catch (...) { errors[i] = std::current_exception(); }
++        }
++    });
++    if (std::getenv("BGSAGE_BENCH_CACHE_STATS")) {
++        unsigned hits = 0, probes = 0;
++        for (const auto& s : cache.shards) { hits += s.hits; probes += s.probes; }
++        std::fprintf(stderr, "checker-subtrees %d %d %u %u\n", plies, count, hits, probes);
++    }
++    for (const auto& e : errors) if (e) std::rethrow_exception(e);
++    return moves;
+ }
+ 
+ template<bool ShareBatches>
+--- a/cpp/pybind/bindings.cpp
++++ b/cpp/pybind/bindings.cpp
+@@ -5761,28 +5761,9 @@
+             std::vector<Board> endpoints;
+             possible_boards(board, die1, die2, endpoints);
+             moves.resize(endpoints.size());
+-            std::vector<std::exception_ptr> errors(endpoints.size());
+-            const int count = static_cast<int>(endpoints.size());
+-            const int workers = std::clamp(n_threads, 1, std::max(count, 1));
+-            std::atomic<int> next{0};
+-            auto evaluate = [&](int i) {
+-                try {
+-                    const auto r = cubeful_probs_and_equity_nply(
+-                        flip(endpoints[i]), ci, *eval, n_plies, MoveFilters::TINY,
+-                        count == 1 ? std::min(n_threads, 21) : 1, nullptr, &board);
+-                    moves[i] = {endpoints[i], r.probs, r.equity};
+-                } catch (...) {
+-                    errors[i] = std::current_exception();
+-                }
+-            };
+-            multipy_parallel_run(workers, [&] {
+-                for (int i = next.fetch_add(1, std::memory_order_relaxed); i < count;
+-                     i = next.fetch_add(1, std::memory_order_relaxed))
+-                    evaluate(i);
+-            });
+-            for (const auto& error : errors) {
+-                if (error) std::rethrow_exception(error);
+-            }
++            auto results = evaluate_checker_endpoints(board, endpoints, ci, *eval, n_plies, n_threads);
++            for (size_t i = 0; i < endpoints.size(); ++i)
++                moves[i] = {endpoints[i], results[i].probs, results[i].equity};
+         }
+         return moves;
+     }, "Evaluate all checker endpoints in legal move order, from the opponent's perspective.",

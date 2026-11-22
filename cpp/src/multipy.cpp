@@ -15,6 +15,8 @@
 #include <array>
 #include <condition_variable>
 #include <deque>
+#include <exception>
+#include <memory>
 #include <mutex>
 
 #ifdef _WIN32
@@ -136,6 +138,61 @@ public:
         }
     }
 
+    // A nested caller must never wait for an idle pool thread. It claims work
+    // alongside the helpers and waits only for items another thread has taken.
+    void cooperative_for(int n_items, int n_workers, std::function<void(int)> fn) const {
+        if (n_items <= 1 || n_workers <= 1) {
+            for (int i = 0; i < n_items; ++i) fn(i);
+            return;
+        }
+        struct Job {
+            explicit Job(std::function<void(int)> task) : evaluate(std::move(task)) {}
+            std::function<void(int)> evaluate;
+            std::atomic<int> next{0};
+            std::mutex mutex;
+            std::condition_variable done;
+            int completed = 0;
+            std::exception_ptr error;
+        };
+        auto job = std::make_shared<Job>(std::move(fn));
+        auto claim = [job, n_items] {
+            int completed = 0;
+            std::exception_ptr error;
+            for (int i = job->next.fetch_add(1, std::memory_order_relaxed); i < n_items;
+                 i = job->next.fetch_add(1, std::memory_order_relaxed)) {
+                try {
+                    job->evaluate(i);
+                } catch (...) {
+                    if (!error) error = std::current_exception();
+                }
+                ++completed;
+            }
+            if (!completed) return;
+            std::lock_guard lock(job->mutex);
+            if (error && !job->error) job->error = error;
+            job->completed += completed;
+            if (job->completed == n_items) job->done.notify_one();
+        };
+
+        // If submission fails after a helper starts, we still have to drain
+        // the job before releasing the evaluation's captured buffers.
+        std::exception_ptr submission_error;
+        try {
+            const int workers = std::min(n_workers, n_items);
+            for (int t = 1; t < workers; ++t) enqueue(claim);
+        } catch (...) {
+            submission_error = std::current_exception();
+        }
+        claim();
+        std::unique_lock lock(job->mutex);
+        job->done.wait(lock, [&] { return job->completed == n_items; });
+        // Late helpers own only this drained job. Release the caller's
+        // captures now, before its stack and roll-result storage go away.
+        job->evaluate = nullptr;
+        if (submission_error) std::rethrow_exception(submission_error);
+        if (job->error) std::rethrow_exception(job->error);
+    }
+
     // Dispatch n_workers copies of fn() — caller runs one, pool runs the rest.
     // Each worker runs the same function; callers use shared atomics for
     // work-stealing coordination.
@@ -236,6 +293,10 @@ void multipy_parallel_for(int n_items, int n_threads,
 
 void multipy_parallel_run(int n_workers, const std::function<void()>& fn) {
     get_multipy_executor().parallel_run(n_workers, fn);
+}
+
+void multipy_cooperative_for(int n_items, int n_workers, std::function<void(int)> fn) {
+    get_multipy_executor().cooperative_for(n_items, n_workers, std::move(fn));
 }
 
 // ======================== Static Members ========================
@@ -437,7 +498,7 @@ std::array<float, NUM_OUTPUTS> MultiPlyStrategy::evaluate_probs_nply(
         // the standalone cubeful entry points. BMI rescoring below uses the
         // deep prune (its band-level shifts were validated on the checker
         // benchmark and the benchmark ER).
-        int n_threads = (parallel_evaluate_ && plies == n_plies_ && plies > 2)
+        int n_threads = (parallel_evaluate_ && plies == n_plies_ && plies >= 2)
             ? parallel_thread_count(plies) : 1;
         return cubeless_tree_probs(board, pre_move_board, plies, n_threads,
                                    /*deep_prefilter=*/false);

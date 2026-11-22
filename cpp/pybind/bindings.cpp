@@ -4208,6 +4208,8 @@ PYBIND11_MODULE(bgbot_cpp, m) {
             parsed[i].board = list_to_board(checkers);
             parsed[i].die1 = inp["die1"].cast<int>();
             parsed[i].die2 = inp["die2"].cast<int>();
+            validate_die(parsed[i].die1);
+            validate_die(parsed[i].die2);
             parsed[i].cube_value = inp["cube_value"].cast<int>();
             parsed[i].owner = inp["cube_owner"].cast<CubeOwner>();
             if (inp.contains("away1")) {
@@ -4380,6 +4382,8 @@ PYBIND11_MODULE(bgbot_cpp, m) {
             parsed[i].board = list_to_board(checkers);
             parsed[i].die1 = inp["die1"].cast<int>();
             parsed[i].die2 = inp["die2"].cast<int>();
+            validate_die(parsed[i].die1);
+            validate_die(parsed[i].die2);
             parsed[i].cube_value = inp["cube_value"].cast<int>();
             parsed[i].owner = inp["cube_owner"].cast<CubeOwner>();
             if (inp.contains("away1")) {
@@ -4543,6 +4547,8 @@ PYBIND11_MODULE(bgbot_cpp, m) {
             parsed[i].board = list_to_board(checkers);
             parsed[i].die1 = inp["die1"].cast<int>();
             parsed[i].die2 = inp["die2"].cast<int>();
+            validate_die(parsed[i].die1);
+            validate_die(parsed[i].die2);
             parsed[i].cube_value = inp["cube_value"].cast<int>();
             parsed[i].owner = inp["cube_owner"].cast<CubeOwner>();
             if (inp.contains("away1")) {
@@ -4806,6 +4812,8 @@ PYBIND11_MODULE(bgbot_cpp, m) {
             parsed[i].board = list_to_board(checkers);
             parsed[i].die1 = inp["die1"].cast<int>();
             parsed[i].die2 = inp["die2"].cast<int>();
+            validate_die(parsed[i].die1);
+            validate_die(parsed[i].die2);
             parsed[i].cube_value = inp["cube_value"].cast<int>();
             parsed[i].owner = inp["cube_owner"].cast<CubeOwner>();
             if (inp.contains("away1")) {
@@ -5761,27 +5769,10 @@ PYBIND11_MODULE(bgbot_cpp, m) {
             std::vector<Board> endpoints;
             possible_boards(board, die1, die2, endpoints);
             moves.resize(endpoints.size());
-            std::vector<std::exception_ptr> errors(endpoints.size());
-            const int count = static_cast<int>(endpoints.size());
-            const int workers = std::clamp(n_threads, 1, std::max(count, 1));
-            std::atomic<int> next{0};
-            auto evaluate = [&](int i) {
-                try {
-                    const auto r = cubeful_probs_and_equity_nply(
-                        flip(endpoints[i]), ci, *eval, n_plies, MoveFilters::TINY,
-                        count == 1 ? std::min(n_threads, 21) : 1, nullptr, &board);
-                    moves[i] = {endpoints[i], r.probs, r.equity};
-                } catch (...) {
-                    errors[i] = std::current_exception();
-                }
-            };
-            multipy_parallel_run(workers, [&] {
-                for (int i = next.fetch_add(1, std::memory_order_relaxed); i < count;
-                     i = next.fetch_add(1, std::memory_order_relaxed))
-                    evaluate(i);
-            });
-            for (const auto& error : errors) {
-                if (error) std::rethrow_exception(error);
+            const auto results = cubeful_checker_endpoints_nply(
+                board, endpoints, ci, *eval, n_plies, n_threads);
+            for (size_t i = 0; i < endpoints.size(); ++i) {
+                moves[i] = {endpoints[i], results[i].probs, results[i].equity};
             }
         }
         return moves;

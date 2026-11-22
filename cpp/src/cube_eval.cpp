@@ -9,8 +9,8 @@
 //
 // Key mechanics (see MULTI-PLY.md for the full specification):
 //   * Interior move-picks evaluate all candidates of a roll through a batched
-//     delta-evaluation kernel (encode base candidate once, sparse hidden-layer
-//     updates per sibling) with per-candidate game-plan NN selection, then
+//     delta-evaluation kernel (one pre-roll base per worker and network in
+//     standalone trees, a sibling base in deep-prefilter trees), then
 //     pick by 1-ply cubeful equity against the primary cube state.
 //   * At plies==2 internal nodes the leaf value of the picked move reuses the
 //     pick batch's NN output (leaf = invert(NN(chosen))) � no leaf NN evals.
@@ -37,7 +37,9 @@
 #include <cstdlib>
 #include <cstring>
 #include <limits>
+#include <mutex>
 #include <type_traits>
+#include <unordered_map>
 #include <vector>
 
 namespace bgbot {
@@ -247,17 +249,33 @@ const PubEval& static_pubeval() {
 
 // ======================== Batched candidate evaluation ========================
 
-// Grouped delta evaluation for pair-NN strategies. Candidates are classified
-// per-candidate (matching the interior-pick convention) and grouped by NN
-// index; within a group the first candidate is the delta base.
+// A node may distribute its 21 rolls across workers. Each worker saves a
+// dense neural base for the pre-roll board the first time it uses a network
+// at this node. Its next roll on the same network applies only input deltas.
+// An outer base survives recursive children because their depths differ.
+struct DiceNode {
+    const Board& board;
+    int depth;
+    uint64_t id;
+};
+std::atomic<uint64_t> next_dice_node{1};
+
+struct DiceNetworkBase {
+    std::vector<float> hidden, inputs;
+    uint64_t node = 0;
+};
+
 template <class S>
 void eval_groups_pair(const S& s, const std::vector<Board>& cands,
-                      const int* idxs, int n,
+                      const int* idxs, int n, const DiceNode& node,
                       std::array<float, NUM_OUTPUTS>* out, int pinned = -1)
 {
     thread_local std::vector<int> nn_idx_of;
     thread_local std::vector<char> done;
-    thread_local std::vector<float> saved_base, saved_inputs;
+    thread_local DiceNetworkBase scratch;
+    thread_local std::vector<std::vector<DiceNetworkBase>> by_depth;
+    if (node.id && static_cast<int>(by_depth.size()) <= node.depth)
+        by_depth.resize(node.depth + 1);
 
     nn_idx_of.resize(n);
     done.assign(n, 0);
@@ -278,30 +296,38 @@ void eval_groups_pair(const S& s, const std::vector<Board>& cands,
         const NeuralNetwork& nn = *s.nn(nidx);
         const int ni = nn.n_inputs();
         const int nh = nn.n_hidden();
-        if (static_cast<int>(saved_base.size()) < nh) saved_base.resize(nh);
-        if (static_cast<int>(saved_inputs.size()) < ni) saved_inputs.resize(ni);
+        DiceNetworkBase* slot = &scratch;
+        if (node.id) {
+            auto& nets = by_depth[node.depth];
+            if (static_cast<int>(nets.size()) <= nidx) nets.resize(nidx + 1);
+            slot = &nets[nidx];
+        }
+        auto& saved_base = slot->hidden;
+        auto& saved_inputs = slot->inputs;
         const bool is_pr = (nidx == 0);
         // Only the constructor taking prebuilt pair nets can supply a network
         // that consumes a prefix of its slot's standard encoding.
         const int slot_width = is_pr ? TESAURO_INPUTS : EXTENDED_CONTACT_INPUTS;
         const bool standard_width = !std::is_same_v<S, GamePlanPairStrategy> || ni == slot_width;
 
-        if (is_pr) {
-            auto inp = compute_tesauro_inputs(cands[idxs[j]]);
-            out[idxs[j]] = nn.forward_save_base(
-                inp.data(), saved_base.data(), saved_inputs.data());
-        } else {
-            auto inp = compute_extended_contact_inputs(cands[idxs[j]]);
-            out[idxs[j]] = nn.forward_save_base(
-                inp.data(), saved_base.data(), saved_inputs.data());
+        const Board& base = node.id ? node.board : cands[idxs[j]];
+        if (!node.id || slot->node != node.id) {
+            saved_base.resize(nh);
+            saved_inputs.resize(ni);
+            const auto save = [&](const auto& inputs) {
+                return nn.forward_save_base(inputs.data(), saved_base.data(), saved_inputs.data());
+            };
+            const auto probs = is_pr ? save(compute_tesauro_inputs(base))
+                                     : save(compute_extended_contact_inputs(base));
+            if (!node.id) out[idxs[j]] = probs;
+            slot->node = node.id;
         }
-        done[j] = 1;
-
-        for (int k = j + 1; k < n; ++k) {
+        if (!node.id) done[j] = 1;
+        for (int k = node.id ? j : j + 1; k < n; ++k) {
             if (done[k] || nn_idx_of[k] != nidx) continue;
             if (standard_width) {
                 out[idxs[k]] = nn.forward_board_from_base(
-                    cands[idxs[k]], cands[idxs[j]], saved_base.data(), saved_inputs.data());
+                    cands[idxs[k]], base, saved_base.data(), saved_inputs.data());
             } else {
                 const auto from_prefix = [&](const auto& inputs) {
                     return nn.forward_from_base(inputs.data(), saved_base.data(), saved_inputs.data());
@@ -315,7 +341,7 @@ void eval_groups_pair(const S& s, const std::vector<Board>& cands,
 }
 
 void eval_each_impl(const Strategy& strat, const std::vector<Board>& cands,
-                    const int* idxs, int n,
+                    const int* idxs, int n, const DiceNode& node,
                     std::array<float, NUM_OUTPUTS>* out, int pinned = -1)
 {
     if (n <= 0) return;
@@ -343,11 +369,11 @@ void eval_each_impl(const Strategy& strat, const std::vector<Board>& cands,
     }
 
     if (const auto* bg = dynamic_cast<const BackgameAwarePairStrategy*>(model)) {
-        eval_groups_pair(*bg, cands, idxs, n, out, pinned);
+        eval_groups_pair(*bg, cands, idxs, n, node, out, pinned);
         return;
     }
     if (const auto* gp = dynamic_cast<const GamePlanPairStrategy*>(model)) {
-        eval_groups_pair(*gp, cands, idxs, n, out, pinned);
+        eval_groups_pair(*gp, cands, idxs, n, node, out, pinned);
         return;
     }
 
@@ -362,6 +388,46 @@ void eval_each_impl(const Strategy& strat, const std::vector<Board>& cands,
 
 struct CandidateBatchCache;
 
+// Different legal checker moves can reach the same board two turns later.
+// Only the 2-ply layer of one 4-ply checker call uses this table. Every
+// endpoint starts with the same cube, model, filters and pre-move root pin.
+class CheckerSubtrees {
+    struct Entry {
+        Board board;
+        uint64_t cube_fp;
+        std::array<float, 4> equities;
+        std::array<float, NUM_OUTPUTS> probs;
+    };
+    struct Shard {
+        std::mutex mutex;
+        std::unordered_map<uint64_t, Entry> nodes;
+    };
+    std::array<Shard, 64> shards_;
+
+public:
+    bool get(uint64_t key, uint64_t fp, const Board& board, float* equities,
+             std::array<float, NUM_OUTPUTS>* probs) {
+        auto& shard = shards_[key % shards_.size()];
+        std::lock_guard lock(shard.mutex);
+        auto it = shard.nodes.find(key);
+        if (it == shard.nodes.end() || it->second.cube_fp != fp || it->second.board != board)
+            return false;
+        std::copy(it->second.equities.begin(), it->second.equities.end(), equities);
+        if (probs) *probs = it->second.probs;
+        return true;
+    }
+
+    void put(uint64_t key, uint64_t fp, const Board& board, const float* equities,
+             const std::array<float, NUM_OUTPUTS>& probs) {
+        auto& shard = shards_[key % shards_.size()];
+        std::lock_guard lock(shard.mutex);
+        if (shard.nodes.size() < 128) {
+            shard.nodes.try_emplace(key, Entry{board, fp,
+                {equities[0], equities[1], equities[2], equities[3]}, probs});
+        }
+    }
+};
+
 struct EvalCtx {
     const Strategy* strategy;
     const Strategy* move_filter;
@@ -373,6 +439,7 @@ struct EvalCtx {
                                   // (rollout-internal evaluations only)
     CandidateBatchCache* batches = nullptr;
     int pinned_nn = -1;   // root routing: the net every node uses (-1 = per node)
+    CheckerSubtrees* checker = nullptr;
 };
 
 // Post-move probs of `board` under root routing: the pinned net when one is
@@ -494,7 +561,10 @@ struct CandidateBatchCache {
 
     struct Roll {
         std::array<Probs, MAX_CANDIDATES> probs;
+        std::array<int, MAX_CANDIDATES> original;
         int count = 0;
+        int total = 0;
+        bool subset = false;
     };
     struct Node {
         std::array<Roll, 21> rolls;
@@ -502,8 +572,9 @@ struct CandidateBatchCache {
         const Strategy* model = nullptr;
         int pin = -1;
     };
-    explicit CandidateBatchCache(int plies)
-        : node_count(plies == 4 ? 1 + 21 + 21 * 21 : 1 + 21) {}
+    const bool share_survivors;
+    explicit CandidateBatchCache(int plies, bool share_survivors)
+        : share_survivors(share_survivors), node_count(plies == 4 ? 1 + 21 + 21 * 21 : 1 + 21) {}
     const int node_count;
     std::vector<Node> nodes;
     bool reading = false;
@@ -576,6 +647,10 @@ void cubeful_eval_recursive(
         key = make_cache_key(board, fp, plies, cci, fTop);
         if (g_cubeful_eval_cache.get(key, fp, board, plies, cci, fTop,
                              arCubeful, arProbsOut)) {
+            return;
+        }
+        if (ctx.checker && plies == 2 && cci == 4 &&
+            ctx.checker->get(key, fp, board, arCubeful, arProbsOut)) {
             return;
         }
     }
@@ -720,6 +795,11 @@ void cubeful_eval_recursive(
     if constexpr (ShareBatches)
         batch_node = ctx.batches->match_node(roll_path, board, ctx);
 
+    // Rollout-internal trees retain their original sibling delta base. A
+    // unique node ID prevents any reuse across unrelated searches or mutable
+    // evaluators, even when a later call uses the same board.
+    const DiceNode dice_node{board, plies, ctx.deep_prefilter ? 0 :
+        next_dice_node.fetch_add(1, std::memory_order_relaxed)};
     auto eval_roll = [&](int r, float* rollCf,
                          std::array<float, NUM_OUTPUTS>& rollProbs) {
         thread_local std::vector<Board> candidates;
@@ -760,8 +840,8 @@ void cubeful_eval_recursive(
 
         // Determine eval candidate set (cheap pre-filter for big sets).
         const std::vector<Board>* eval_candidates = &candidates;
+        thread_local std::vector<std::pair<double, int>> filter_scores;
         if (prefilter && n_cand > pf_threshold) {
-            thread_local std::vector<std::pair<double, int>> filter_scores;
             filter_scores.clear();
             filter_scores.reserve(n_cand);
             bool pre_move_race = is_race(board);
@@ -797,10 +877,18 @@ void cubeful_eval_recursive(
             // Batched per-candidate probs (terminals get terminal_probs;
             // others per-candidate NN classification — pick convention).
             cand_probs.resize(n_eval);
-            auto evaluate_batch = [&] {
+            using SavedRoll = CandidateBatchCache::Roll;
+            auto evaluate_batch = [&](const SavedRoll* partial = nullptr) {
+                int reused = 0;
                 live_idx.clear();
                 live_idx.reserve(n_eval);
                 for (int c = 0; c < n_eval; ++c) {
+                    if constexpr (ShareBatches) {
+                        if (partial && reused < partial->count && partial->original[reused] == c) {
+                            cand_probs[c] = partial->probs[reused++];
+                            continue;
+                        }
+                    }
                     GameResult gr = check_game_over((*eval_candidates)[c]);
                     if (gr != GameResult::NOT_OVER) {
                         cand_probs[c] = terminal_probs(gr);
@@ -809,22 +897,39 @@ void cubeful_eval_recursive(
                     }
                 }
                 eval_each_impl(*ctx.strategy, *eval_candidates,
-                               live_idx.data(), static_cast<int>(live_idx.size()),
+                               live_idx.data(), static_cast<int>(live_idx.size()), dice_node,
                                cand_probs.data(), ctx.pinned_nn);
             };
             if constexpr (ShareBatches) {
-                // Equal pre-roll board and dice generate the same ordered legal list.
-                // A filtered list can change the NN delta base even for moves it keeps.
-                auto* saved = batch_node && eval_candidates == &candidates &&
-                              n_eval <= CandidateBatchCache::MAX_CANDIDATES
-                    ? &batch_node->rolls[r] : nullptr;
-                if (saved && ctx.batches->reading && saved->count == n_eval) {
+                auto* saved = batch_node ? &batch_node->rolls[r] : nullptr;
+                const bool full = eval_candidates == &candidates;
+                const bool hit = saved && ctx.batches->reading && full && saved->total == n_cand;
+                if (hit && !saved->subset && saved->count == n_eval) {
                     std::copy_n(saved->probs.begin(), n_eval, cand_probs.begin());
                 } else {
-                    evaluate_batch();
-                    if (saved && !ctx.batches->reading) {
-                        std::copy_n(cand_probs.begin(), n_eval, saved->probs.begin());
+                    evaluate_batch(hit && saved->subset ? saved : nullptr);
+                    // A first-sibling delta or a custom evaluator may depend on
+                    // the ordered group. Only a built-in pair with a node base
+                    // shares surviving indices between differently ordered lists.
+                    if (saved && !ctx.batches->reading && n_eval <= CandidateBatchCache::MAX_CANDIDATES &&
+                        (full || (dice_node.id && ctx.batches->share_survivors))) {
                         saved->count = n_eval;
+                        saved->total = n_cand;
+                        saved->subset = !full;
+                        if (full) {
+                            std::copy_n(cand_probs.begin(), n_eval, saved->probs.begin());
+                        } else {
+                            // Record survivors in the generator's order, independently of
+                            // PubEval rank. The reader scans them alongside its full list.
+                            std::array<int, CandidateBatchCache::MAX_CANDIDATES> ranks;
+                            for (int k = 0; k < n_eval; ++k) ranks[k] = k;
+                            std::sort(ranks.begin(), ranks.begin() + n_eval,
+                                [&](int a, int b) { return filter_scores[a].second < filter_scores[b].second; });
+                            for (int k = 0; k < n_eval; ++k) {
+                                saved->original[k] = filter_scores[ranks[k]].second;
+                                saved->probs[k] = cand_probs[ranks[k]];
+                            }
+                        }
                     }
                 }
             } else {
@@ -888,7 +993,13 @@ void cubeful_eval_recursive(
     std::array<std::array<float, NUM_OUTPUTS>, 21> roll_probs{};
     float roll_cf[21][EVAL_MAX_CCI * 2];
 
-    if (allow_parallel && ctx.n_threads >= 4 && ctx.n_threads <= 21) {
+    if (ctx.checker && allow_parallel && ctx.n_threads >= 2 && ctx.n_threads <= 21) {
+        // Each checker endpoint owns this many lanes. Its caller may already
+        // occupy a pool worker, so it must be able to finish its own rolls.
+        multipy_cooperative_for(21, ctx.n_threads, [&](int r) {
+            eval_roll(r, roll_cf[r], roll_probs[r]);
+        });
+    } else if (allow_parallel && ctx.n_threads >= 4 && ctx.n_threads <= 21) {
         std::atomic<int> next_roll{0};
         multipy_parallel_run(ctx.n_threads, [&] {
             for (int r = next_roll.fetch_add(1, std::memory_order_relaxed); r < 21;
@@ -948,6 +1059,8 @@ void cubeful_eval_recursive(
     }
     if (can_cache) {
         g_cubeful_eval_cache.put(key, fp, board, plies, cci, fTop, arCubeful, probs_final);
+        if (ctx.checker && plies == 2 && cci == 4)
+            ctx.checker->put(key, fp, board, arCubeful, probs_final);
     }
     if (shared_reservation) {
         shared_cache->publish(shared_reservation, probs_final);
@@ -1018,6 +1131,16 @@ uint64_t cube_state_fingerprint(const CubeInfo* cubes, int n) {
     return fp;
 }
 
+// A shallow race has few replies to evaluate. Bound the cost of waking
+// pool workers while leaving deeper searches and serial rollout trials alone.
+static int root_roll_threads(const Board& board, int plies, int threads) {
+#if defined(__linux__)
+    constexpr int race_threads = 1;
+    if (plies == 2 && threads > race_threads && is_race(board)) return race_threads;
+#endif
+    return threads;
+}
+
 template<bool ShareBatches>
 static void cubeful_equity_nply_multi_impl(
     const Board& board,
@@ -1032,7 +1155,7 @@ static void cubeful_equity_nply_multi_impl(
     bool fTop,
     std::array<float, NUM_OUTPUTS>* probs_out,
     bool deep_prefilter,
-    const Board* root_board, CandidateBatchCache* batches)
+    const Board* root_board, CandidateBatchCache* batches, CheckerSubtrees* checker = nullptr)
 {
     (void)filter;  // candidate selection inside the tree is single-pick
     if (n_cubes <= 0) return;
@@ -1056,10 +1179,12 @@ static void cubeful_equity_nply_multi_impl(
     CubeInfo aciCubePos[EVAL_MAX_CCI];
     for (int i = 0; i < n_cubes; ++i) aciCubePos[i] = cubes[i];
 
+    n_threads = root_roll_threads(board, n_plies, n_threads);
     EvalCtx ctx{&strategy, move_filter, n_plies, n_threads, deep_prefilter};
     ctx.pinned_nn = pinned;
     ctx.batches = batches;
-    const bool allow_parallel = (n_threads > 1 && n_plies > 2);
+    ctx.checker = checker;
+    const bool allow_parallel = n_threads > 1 && n_plies >= 2;
     float arCubeful[EVAL_MAX_CCI];
     cubeful_eval_recursive<ShareBatches>(board, aciCubePos, n_cubes, ctx, n_plies, fTop,
                    arCubeful, probs_out, allow_parallel);
@@ -1092,6 +1217,43 @@ void cubeful_equity_nply_multi(
     cubeful_equity_nply_multi_impl<false>(
         board, cubes, n_cubes, strategy, n_plies, out, filter, n_threads,
         move_filter, fTop, probs_out, deep_prefilter, root_board, nullptr);
+}
+
+std::vector<CubefulProbsAndEquity> cubeful_checker_endpoints_nply(
+    const Board& before, const std::vector<Board>& endpoints, const CubeInfo& cube,
+    const Strategy& strategy, int plies, int threads)
+{
+    const int count = static_cast<int>(endpoints.size());
+    const bool split_rolls = plies == 4 && count >= 2 && threads >= 8 && threads <= 21;
+    // Long 4P endpoints can finish their 21 rolls sooner with at least two
+    // lanes each. All concurrent endpoint groups share the same thread budget.
+    const int workers = split_rolls ? std::min(count, threads / 2)
+                                    : std::clamp(threads, 1, std::max(count, 1));
+    const int roll_threads = split_rolls ? threads / workers
+                                         : (count == 1 ? std::min(threads, 21) : 1);
+    std::vector<CubefulProbsAndEquity> results(count);
+    std::vector<std::exception_ptr> errors(count);
+    std::unique_ptr<CheckerSubtrees> cache;
+    if (workers > 1 && plies == 4) cache = std::make_unique<CheckerSubtrees>();
+    std::atomic<int> next{0};
+    multipy_parallel_run(workers, [&] {
+        for (int i = next.fetch_add(1, std::memory_order_relaxed); i < count;
+             i = next.fetch_add(1, std::memory_order_relaxed)) {
+            try {
+                auto& result = results[i];
+                cubeful_equity_nply_multi_impl<false>(
+                    flip(endpoints[i]), &cube, 1, strategy, plies, &result.equity,
+                    MoveFilters::TINY, roll_threads, nullptr, false, &result.probs,
+                    false, &before, nullptr, cache.get());
+            } catch (...) {
+                errors[i] = std::current_exception();
+            }
+        }
+    });
+    for (const auto& error : errors) {
+        if (error) std::rethrow_exception(error);
+    }
+    return results;
 }
 
 template<bool ShareBatches>
@@ -1135,10 +1297,11 @@ static void cube_decision_nply_multi_impl(
         aciCubePos[2 * i + 1].owner      = CubeOwner::OPPONENT;
     }
 
+    n_threads = root_roll_threads(board, n_plies, n_threads);
     EvalCtx ctx{&strategy, move_filter, n_plies, n_threads, deep_prefilter};
     ctx.pinned_nn = pinned;
     ctx.batches = batches;
-    const bool allow_parallel = (n_threads > 1 && n_plies > 2);
+    const bool allow_parallel = n_threads > 1 && n_plies >= 2;
     float arCubeful[EVAL_MAX_CCI];
     cubeful_eval_recursive<ShareBatches>(board, aciCubePos, n_states, ctx, n_plies, /*fTop=*/true,
                    arCubeful, nullptr, allow_parallel);
@@ -1300,7 +1463,11 @@ CubeDecision MultiPlyStrategy::cube_decision_with_cubeless_probs(
         return decision;
     }
 
-    CandidateBatchCache batches(n_plies_);
+    const Strategy* model = base_.get();
+    while (const auto* wrapped = dynamic_cast<const BearoffStrategy*>(model)) model = &wrapped->base();
+    const bool share_survivors = dynamic_cast<const BackgameAwarePairStrategy*>(model) ||
+                                 dynamic_cast<const GamePlanPairStrategy*>(model);
+    CandidateBatchCache batches(n_plies_, share_survivors);
     CubeDecision decision{};
     cube_decision_nply_multi_impl<true>(board, &cube, 1, *base_, n_plies_, &decision,
         move_filter_, parallel_threads_, cube_move_filter, false, &batches);

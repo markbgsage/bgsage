@@ -368,6 +368,11 @@ CubefulProbsAndEquity cubeful_probs_and_equity_nply(
     const Strategy* move_filter = nullptr,
     const Board* root_board = nullptr);   // root routing: the decision's pre-move board
 
+// Evaluate all legal checker endpoints using the shared decision context.
+std::vector<CubefulProbsAndEquity> cubeful_checker_endpoints_nply(
+    const Board& before, const std::vector<Board>& endpoints, const CubeInfo& cube,
+    const Strategy& strategy, int plies, int threads);
+
 // Batched version: evaluate cubeful equity for the SAME board at N-ply depth
 // against MULTIPLE cube states simultaneously. Returns one equity per cube
 // state in `out`, in the same order as `cubes`.

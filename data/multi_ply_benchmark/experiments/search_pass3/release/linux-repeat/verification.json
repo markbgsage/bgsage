@@ -1,0 +1,228 @@
+{
+  "suite": "release/linux-repeat",
+  "archive_sha256": "e60cdf6adac3c9c0c781ebc37fae3b543c6ed3b763a387ab795dbb9b0e5bf650",
+  "baseline_commit": "82e63972379b77ab52ebafc716620e813ff7baa1",
+  "rollout_truth_sha256": "23b7bca2272c8ea750020f82c066dd489d3d556e39f0b8b2ec1cf99740051845",
+  "identities": {
+    "baseline": {
+      "source_files": 76,
+      "extension_sha256": "39c443658441df8474ff4ee3892e555afd7e191616f6e4ed54e840bb38acef5f",
+      "raw_source_manifest_sha256": "c16bc5897952ca120ac46f11ed889f44828eac8c4d541f6491260d37985b8698",
+      "ordered_weights_sha256": "3cf4b744013e3b7d1b9f1dd9200091b0f40426105b49fd1c1d2ab3eee25854ca",
+      "bearoff_sha256": "907bbe0042dadfa14840a9f470b6b5adac213d5b2c17dc0e41aec27b087e3fe6",
+      "position_sha256": {
+        "checker_play": "1e69cf43b3bb4ae29b4337e8008f5e30c76f7b8b8f6f1bf271e46d75d8beac0b",
+        "cube_action": "31f56488ded1f2d0f3f280db754be4bce39e136b605bd5a7318952c2361830de"
+      }
+    },
+    "candidate": {
+      "source_files": 76,
+      "extension_sha256": "c71851b01e3bc209c3887fcf28021d4a94412f408dcb563b1c0678841f30e407",
+      "raw_source_manifest_sha256": "e71383ad292528d34b6db843e53b6010436316e334fc7150606e2668d46e5091",
+      "ordered_weights_sha256": "3cf4b744013e3b7d1b9f1dd9200091b0f40426105b49fd1c1d2ab3eee25854ca",
+      "bearoff_sha256": "907bbe0042dadfa14840a9f470b6b5adac213d5b2c17dc0e41aec27b087e3fe6",
+      "position_sha256": {
+        "checker_play": "1e69cf43b3bb4ae29b4337e8008f5e30c76f7b8b8f6f1bf271e46d75d8beac0b",
+        "cube_action": "31f56488ded1f2d0f3f280db754be4bce39e136b605bd5a7318952c2361830de"
+      }
+    }
+  },
+  "levels": {
+    "1P": {
+      "seconds": {
+        "baseline": 0.021575832,
+        "candidate": 0.02121996
+      },
+      "speedup": 1.0167706253923192,
+      "exact": 300,
+      "same_best_checker": 100,
+      "same_cube_action": 100,
+      "same_checker_order": 100,
+      "observations": 4724,
+      "material_farther": 0,
+      "material_closer": 0,
+      "api_seconds": {
+        "checker_play": [
+          0.015419176,
+          0.015332661000000001
+        ],
+        "cube_action": [
+          0.0036116580000000002,
+          0.003496986
+        ],
+        "post_move_analytics": [
+          0.002544998,
+          0.002390313
+        ]
+      },
+      "changed_decision_ids": {
+        "checker_play": [],
+        "cube_action": []
+      },
+      "max_prediction_shifts": {
+        "probability": 0.0,
+        "equity": 0.0
+      },
+      "recording_origin": {
+        "baseline": "new measurement",
+        "candidate": "new measurement"
+      },
+      "candidate_vs_wide_race": {
+        "calls": 300,
+        "exact_analytics": 300,
+        "changed_calls": []
+      },
+      "changed_full_outputs_from_primary": {
+        "baseline": [],
+        "candidate": []
+      }
+    },
+    "2P": {
+      "seconds": {
+        "baseline": 0.35160448099999997,
+        "candidate": 0.214910637
+      },
+      "speedup": 1.636049689806652,
+      "exact": 28,
+      "same_best_checker": 100,
+      "same_cube_action": 100,
+      "same_checker_order": 100,
+      "observations": 4724,
+      "material_farther": 0,
+      "material_closer": 0,
+      "api_seconds": {
+        "checker_play": [
+          0.185228856,
+          0.144271776
+        ],
+        "cube_action": [
+          0.098280731,
+          0.043711951
+        ],
+        "post_move_analytics": [
+          0.068094894,
+          0.026926910000000002
+        ]
+      },
+      "changed_decision_ids": {
+        "checker_play": [],
+        "cube_action": []
+      },
+      "max_prediction_shifts": {
+        "probability": 3.5762786865234375e-07,
+        "equity": 2.7120113372802734e-06
+      },
+      "recording_origin": {
+        "baseline": "new measurement",
+        "candidate": "new measurement"
+      },
+      "candidate_vs_wide_race": {
+        "calls": 300,
+        "exact_analytics": 300,
+        "changed_calls": []
+      },
+      "changed_full_outputs_from_primary": {
+        "baseline": [],
+        "candidate": []
+      }
+    },
+    "3P": {
+      "seconds": {
+        "baseline": 2.452848548,
+        "candidate": 1.88853636
+      },
+      "speedup": 1.2988092789486987,
+      "exact": 30,
+      "same_best_checker": 100,
+      "same_cube_action": 100,
+      "same_checker_order": 100,
+      "observations": 4724,
+      "material_farther": 0,
+      "material_closer": 0,
+      "api_seconds": {
+        "checker_play": [
+          2.103726449,
+          1.624609329
+        ],
+        "cube_action": [
+          0.213855311,
+          0.152073743
+        ],
+        "post_move_analytics": [
+          0.135266788,
+          0.111853288
+        ]
+      },
+      "changed_decision_ids": {
+        "checker_play": [],
+        "cube_action": []
+      },
+      "max_prediction_shifts": {
+        "probability": 1.7220154404640198e-06,
+        "equity": 2.3096799850463867e-06
+      },
+      "recording_origin": {
+        "baseline": "new measurement",
+        "candidate": "new measurement"
+      },
+      "candidate_vs_wide_race": {
+        "calls": 300,
+        "exact_analytics": 300,
+        "changed_calls": []
+      },
+      "changed_full_outputs_from_primary": {
+        "baseline": [],
+        "candidate": []
+      }
+    },
+    "4P": {
+      "seconds": {
+        "baseline": 47.053947535,
+        "candidate": 31.779622006
+      },
+      "speedup": 1.4806326999772434,
+      "exact": 31,
+      "same_best_checker": 100,
+      "same_cube_action": 100,
+      "same_checker_order": 100,
+      "observations": 4724,
+      "material_farther": 0,
+      "material_closer": 0,
+      "api_seconds": {
+        "checker_play": [
+          40.064445812,
+          26.635496321
+        ],
+        "cube_action": [
+          4.06379679,
+          2.800839705
+        ],
+        "post_move_analytics": [
+          2.925704933,
+          2.34328598
+        ]
+      },
+      "changed_decision_ids": {
+        "checker_play": [],
+        "cube_action": []
+      },
+      "max_prediction_shifts": {
+        "probability": 6.9141387939453125e-06,
+        "equity": 7.152557373046875e-06
+      },
+      "recording_origin": {
+        "baseline": "new measurement",
+        "candidate": "new measurement"
+      },
+      "candidate_vs_wide_race": {
+        "calls": 300,
+        "exact_analytics": 300,
+        "changed_calls": []
+      },
+      "changed_full_outputs_from_primary": {
+        "baseline": [],
+        "candidate": []
+      }
+    }
+  }
+}

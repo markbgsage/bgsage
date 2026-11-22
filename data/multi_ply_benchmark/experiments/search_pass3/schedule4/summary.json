@@ -1,0 +1,66 @@
+{
+  "3ply": {
+    "checker_play": {
+      "checkpoint": {
+        "seconds": 3.831435699830763,
+        "cpu_seconds": 13.609375,
+        "calls": 40,
+        "exact": 40,
+        "faster": 0
+      },
+      "spare": {
+        "seconds": 3.8815063000074588,
+        "cpu_seconds": 13.453125,
+        "calls": 40,
+        "exact": 40,
+        "faster": 20
+      },
+      "lanes2": {
+        "seconds": 4.04637059988454,
+        "cpu_seconds": 14.0,
+        "calls": 40,
+        "exact": 40,
+        "faster": 19
+      },
+      "lanes4": {
+        "seconds": 4.231876700010616,
+        "cpu_seconds": 13.875,
+        "calls": 40,
+        "exact": 40,
+        "faster": 13
+      }
+    }
+  },
+  "4ply": {
+    "checker_play": {
+      "checkpoint": {
+        "seconds": 65.46706559980521,
+        "cpu_seconds": 197.328125,
+        "calls": 40,
+        "exact": 40,
+        "faster": 0
+      },
+      "spare": {
+        "seconds": 61.54835279996041,
+        "cpu_seconds": 198.34375,
+        "calls": 40,
+        "exact": 40,
+        "faster": 24
+      },
+      "lanes2": {
+        "seconds": 65.00887400010834,
+        "cpu_seconds": 204.421875,
+        "calls": 40,
+        "exact": 40,
+        "faster": 21
+      },
+      "lanes4": {
+        "seconds": 62.157967499806546,
+        "cpu_seconds": 208.71875,
+        "calls": 40,
+        "exact": 40,
+        "faster": 18
+      }
+    }
+  }
+}

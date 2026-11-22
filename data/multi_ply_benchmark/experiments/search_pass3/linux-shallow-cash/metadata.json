@@ -1,0 +1,45 @@
+{
+  "args": {
+    "arm": [
+      [
+        "checkpoint",
+        "build/det_eval2/linux_release/guarded",
+        "build/det_eval2/linux_release/guarded/python"
+      ],
+      [
+        "cash",
+        "build/search_pass3/evaluator/cash",
+        "build/search_pass3/evaluator/cash/python"
+      ],
+      [
+        "shallow",
+        "build/search_pass3/evaluator/shallow",
+        "build/search_pass3/evaluator/shallow/python"
+      ]
+    ],
+    "env": [],
+    "cores": [
+      12,
+      13,
+      14,
+      15
+    ],
+    "levels": [
+      "2ply",
+      "3ply"
+    ],
+    "apis": [
+      "checker_play",
+      "cube_action",
+      "post_move_analytics"
+    ],
+    "per_cell": 10,
+    "repeats": 2,
+    "output": "data/multi_ply_benchmark/experiments/search_pass3/linux-shallow-cash"
+  },
+  "binaries": {
+    "checkpoint": "39c443658441df8474ff4ee3892e555afd7e191616f6e4ed54e840bb38acef5f",
+    "cash": "32b1734dca796067b2d6a9bf98605f5db196067e3a93f6b467e9675baac233d6",
+    "shallow": "1a00c5422d9e7c6a283becfff1c374e8141c94155a589e3fdde56484c71b301c"
+  }
+}

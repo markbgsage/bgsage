@@ -1,0 +1,74 @@
+[
+  {
+    "level": "3ply",
+    "api": "cube_action",
+    "arm": "partial",
+    "calls": 20,
+    "exact": 20,
+    "decision_changes": 0,
+    "wall": 0.07052279985509813,
+    "control_wall": 0.07853990001603961,
+    "thresholds": {
+      "probability": 0.0025,
+      "equity": 0.005
+    },
+    "fields": {
+      "probability": {
+        "count": 100,
+        "max_shift": 0.0,
+        "material_shifts": 0,
+        "references": 100,
+        "control_abs_error": 0.9299926894658066,
+        "arm_abs_error": 0.9299926894658066,
+        "materially_farther": 0,
+        "materially_closer": 0
+      },
+      "equity": {
+        "count": 100,
+        "max_shift": 0.0,
+        "material_shifts": 0,
+        "references": 100,
+        "control_abs_error": 2.9821731355041265,
+        "arm_abs_error": 2.9821731355041265,
+        "materially_farther": 0,
+        "materially_closer": 0
+      }
+    }
+  },
+  {
+    "level": "4ply",
+    "api": "cube_action",
+    "arm": "partial",
+    "calls": 20,
+    "exact": 20,
+    "decision_changes": 0,
+    "wall": 1.9438664998160675,
+    "control_wall": 2.233255500032101,
+    "thresholds": {
+      "probability": 0.0025,
+      "equity": 0.005
+    },
+    "fields": {
+      "probability": {
+        "count": 100,
+        "max_shift": 0.0,
+        "material_shifts": 0,
+        "references": 100,
+        "control_abs_error": 0.8878767686196083,
+        "arm_abs_error": 0.8878767686196083,
+        "materially_farther": 0,
+        "materially_closer": 0
+      },
+      "equity": {
+        "count": 100,
+        "max_shift": 0.0,
+        "material_shifts": 0,
+        "references": 100,
+        "control_abs_error": 2.773252746090293,
+        "arm_abs_error": 2.773252746090293,
+        "materially_farther": 0,
+        "materially_closer": 0
+      }
+    }
+  }
+]

@@ -1,0 +1,650 @@
+[
+  {
+    "level": "3ply",
+    "api": "checker_play",
+    "arm": "anchor",
+    "calls": 10,
+    "exact": 1,
+    "decision_changes": 0,
+    "wall": 0.5585082001052797,
+    "control_wall": 0.6121890999493189,
+    "thresholds": {
+      "probability": 0.0025,
+      "equity": 0.005
+    },
+    "fields": {
+      "probability": {
+        "count": 895,
+        "max_shift": 1.1920928955078125e-07,
+        "material_shifts": 0,
+        "references": 160,
+        "control_abs_error": 1.3712710644834254,
+        "arm_abs_error": 1.3712710057809994,
+        "materially_farther": 0,
+        "materially_closer": 0
+      },
+      "equity": {
+        "count": 537,
+        "max_shift": 7.748603820800781e-07,
+        "material_shifts": 0,
+        "references": 96,
+        "control_abs_error": 2.1797246081696358,
+        "arm_abs_error": 2.1797263196785934,
+        "materially_farther": 0,
+        "materially_closer": 0
+      }
+    }
+  },
+  {
+    "level": "3ply",
+    "api": "checker_play",
+    "arm": "anchor_memo",
+    "calls": 10,
+    "exact": 1,
+    "decision_changes": 0,
+    "wall": 0.598483000183478,
+    "control_wall": 0.6121890999493189,
+    "thresholds": {
+      "probability": 0.0025,
+      "equity": 0.005
+    },
+    "fields": {
+      "probability": {
+        "count": 895,
+        "max_shift": 1.1920928955078125e-07,
+        "material_shifts": 0,
+        "references": 160,
+        "control_abs_error": 1.3712710644834254,
+        "arm_abs_error": 1.3712710057809994,
+        "materially_farther": 0,
+        "materially_closer": 0
+      },
+      "equity": {
+        "count": 537,
+        "max_shift": 7.748603820800781e-07,
+        "material_shifts": 0,
+        "references": 96,
+        "control_abs_error": 2.1797246081696358,
+        "arm_abs_error": 2.1797263196785934,
+        "materially_farther": 0,
+        "materially_closer": 0
+      }
+    }
+  },
+  {
+    "level": "3ply",
+    "api": "checker_play",
+    "arm": "sibling_memo",
+    "calls": 10,
+    "exact": 10,
+    "decision_changes": 0,
+    "wall": 0.7489179001422599,
+    "control_wall": 0.6121890999493189,
+    "thresholds": {
+      "probability": 0.0025,
+      "equity": 0.005
+    },
+    "fields": {
+      "probability": {
+        "count": 895,
+        "max_shift": 0.0,
+        "material_shifts": 0,
+        "references": 160,
+        "control_abs_error": 1.3712710644834254,
+        "arm_abs_error": 1.3712710644834254,
+        "materially_farther": 0,
+        "materially_closer": 0
+      },
+      "equity": {
+        "count": 537,
+        "max_shift": 0.0,
+        "material_shifts": 0,
+        "references": 96,
+        "control_abs_error": 2.1797246081696358,
+        "arm_abs_error": 2.1797246081696358,
+        "materially_farther": 0,
+        "materially_closer": 0
+      }
+    }
+  },
+  {
+    "level": "3ply",
+    "api": "cube_action",
+    "arm": "anchor",
+    "calls": 10,
+    "exact": 1,
+    "decision_changes": 0,
+    "wall": 0.04486079991329461,
+    "control_wall": 0.05386489990632981,
+    "thresholds": {
+      "probability": 0.0025,
+      "equity": 0.005
+    },
+    "fields": {
+      "probability": {
+        "count": 50,
+        "max_shift": 5.960464477539063e-08,
+        "material_shifts": 0,
+        "references": 50,
+        "control_abs_error": 0.3608504034110789,
+        "arm_abs_error": 0.3608506307702024,
+        "materially_farther": 0,
+        "materially_closer": 0
+      },
+      "equity": {
+        "count": 50,
+        "max_shift": 4.76837158203125e-07,
+        "material_shifts": 0,
+        "references": 50,
+        "control_abs_error": 1.279077012091875,
+        "arm_abs_error": 1.279075264930725,
+        "materially_farther": 0,
+        "materially_closer": 0
+      }
+    }
+  },
+  {
+    "level": "3ply",
+    "api": "cube_action",
+    "arm": "anchor_memo",
+    "calls": 10,
+    "exact": 1,
+    "decision_changes": 0,
+    "wall": 0.047361699980683625,
+    "control_wall": 0.05386489990632981,
+    "thresholds": {
+      "probability": 0.0025,
+      "equity": 0.005
+    },
+    "fields": {
+      "probability": {
+        "count": 50,
+        "max_shift": 5.960464477539063e-08,
+        "material_shifts": 0,
+        "references": 50,
+        "control_abs_error": 0.3608504034110789,
+        "arm_abs_error": 0.3608506307702024,
+        "materially_farther": 0,
+        "materially_closer": 0
+      },
+      "equity": {
+        "count": 50,
+        "max_shift": 4.76837158203125e-07,
+        "material_shifts": 0,
+        "references": 50,
+        "control_abs_error": 1.279077012091875,
+        "arm_abs_error": 1.279075264930725,
+        "materially_farther": 0,
+        "materially_closer": 0
+      }
+    }
+  },
+  {
+    "level": "3ply",
+    "api": "cube_action",
+    "arm": "sibling_memo",
+    "calls": 10,
+    "exact": 10,
+    "decision_changes": 0,
+    "wall": 0.05483320006169379,
+    "control_wall": 0.05386489990632981,
+    "thresholds": {
+      "probability": 0.0025,
+      "equity": 0.005
+    },
+    "fields": {
+      "probability": {
+        "count": 50,
+        "max_shift": 0.0,
+        "material_shifts": 0,
+        "references": 50,
+        "control_abs_error": 0.3608504034110789,
+        "arm_abs_error": 0.3608504034110789,
+        "materially_farther": 0,
+        "materially_closer": 0
+      },
+      "equity": {
+        "count": 50,
+        "max_shift": 0.0,
+        "material_shifts": 0,
+        "references": 50,
+        "control_abs_error": 1.279077012091875,
+        "arm_abs_error": 1.279077012091875,
+        "materially_farther": 0,
+        "materially_closer": 0
+      }
+    }
+  },
+  {
+    "level": "3ply",
+    "api": "post_move_analytics",
+    "arm": "anchor",
+    "calls": 10,
+    "exact": 1,
+    "decision_changes": 0,
+    "wall": 0.03841370000736788,
+    "control_wall": 0.038959600031375885,
+    "thresholds": {
+      "probability": 0.0025,
+      "equity": 0.005
+    },
+    "fields": {
+      "probability": {
+        "count": 50,
+        "max_shift": 5.960464477539063e-08,
+        "material_shifts": 0,
+        "references": 50,
+        "control_abs_error": 0.2994152767697793,
+        "arm_abs_error": 0.2994153519740772,
+        "materially_farther": 0,
+        "materially_closer": 0
+      },
+      "equity": {
+        "count": 20,
+        "max_shift": 4.76837158203125e-07,
+        "material_shifts": 0,
+        "references": 20,
+        "control_abs_error": 0.8431582632474601,
+        "arm_abs_error": 0.8431582234334201,
+        "materially_farther": 0,
+        "materially_closer": 0
+      }
+    }
+  },
+  {
+    "level": "3ply",
+    "api": "post_move_analytics",
+    "arm": "anchor_memo",
+    "calls": 10,
+    "exact": 1,
+    "decision_changes": 0,
+    "wall": 0.04078680009115487,
+    "control_wall": 0.038959600031375885,
+    "thresholds": {
+      "probability": 0.0025,
+      "equity": 0.005
+    },
+    "fields": {
+      "probability": {
+        "count": 50,
+        "max_shift": 5.960464477539063e-08,
+        "material_shifts": 0,
+        "references": 50,
+        "control_abs_error": 0.2994152767697793,
+        "arm_abs_error": 0.2994153519740772,
+        "materially_farther": 0,
+        "materially_closer": 0
+      },
+      "equity": {
+        "count": 20,
+        "max_shift": 4.76837158203125e-07,
+        "material_shifts": 0,
+        "references": 20,
+        "control_abs_error": 0.8431582632474601,
+        "arm_abs_error": 0.8431582234334201,
+        "materially_farther": 0,
+        "materially_closer": 0
+      }
+    }
+  },
+  {
+    "level": "3ply",
+    "api": "post_move_analytics",
+    "arm": "sibling_memo",
+    "calls": 10,
+    "exact": 10,
+    "decision_changes": 0,
+    "wall": 0.04166500014252961,
+    "control_wall": 0.038959600031375885,
+    "thresholds": {
+      "probability": 0.0025,
+      "equity": 0.005
+    },
+    "fields": {
+      "probability": {
+        "count": 50,
+        "max_shift": 0.0,
+        "material_shifts": 0,
+        "references": 50,
+        "control_abs_error": 0.2994152767697793,
+        "arm_abs_error": 0.2994152767697793,
+        "materially_farther": 0,
+        "materially_closer": 0
+      },
+      "equity": {
+        "count": 20,
+        "max_shift": 0.0,
+        "material_shifts": 0,
+        "references": 20,
+        "control_abs_error": 0.8431582632474601,
+        "arm_abs_error": 0.8431582632474601,
+        "materially_farther": 0,
+        "materially_closer": 0
+      }
+    }
+  },
+  {
+    "level": "4ply",
+    "api": "checker_play",
+    "arm": "anchor",
+    "calls": 10,
+    "exact": 1,
+    "decision_changes": 0,
+    "wall": 17.312087999947835,
+    "control_wall": 19.290567900112364,
+    "thresholds": {
+      "probability": 0.0025,
+      "equity": 0.005
+    },
+    "fields": {
+      "probability": {
+        "count": 895,
+        "max_shift": 3.8370490074157715e-06,
+        "material_shifts": 0,
+        "references": 160,
+        "control_abs_error": 1.3982489451084796,
+        "arm_abs_error": 1.398249314814438,
+        "materially_farther": 0,
+        "materially_closer": 0
+      },
+      "equity": {
+        "count": 537,
+        "max_shift": 3.02016269415617e-06,
+        "material_shifts": 0,
+        "references": 96,
+        "control_abs_error": 2.391534544323804,
+        "arm_abs_error": 2.3915378794190474,
+        "materially_farther": 0,
+        "materially_closer": 0
+      }
+    }
+  },
+  {
+    "level": "4ply",
+    "api": "checker_play",
+    "arm": "anchor_memo",
+    "calls": 10,
+    "exact": 1,
+    "decision_changes": 0,
+    "wall": 17.079978200024925,
+    "control_wall": 19.290567900112364,
+    "thresholds": {
+      "probability": 0.0025,
+      "equity": 0.005
+    },
+    "fields": {
+      "probability": {
+        "count": 895,
+        "max_shift": 3.8370490074157715e-06,
+        "material_shifts": 0,
+        "references": 160,
+        "control_abs_error": 1.3982489451084796,
+        "arm_abs_error": 1.398249314814438,
+        "materially_farther": 0,
+        "materially_closer": 0
+      },
+      "equity": {
+        "count": 537,
+        "max_shift": 3.02016269415617e-06,
+        "material_shifts": 0,
+        "references": 96,
+        "control_abs_error": 2.391534544323804,
+        "arm_abs_error": 2.3915378794190474,
+        "materially_farther": 0,
+        "materially_closer": 0
+      }
+    }
+  },
+  {
+    "level": "4ply",
+    "api": "checker_play",
+    "arm": "sibling_memo",
+    "calls": 10,
+    "exact": 10,
+    "decision_changes": 0,
+    "wall": 17.82510829990497,
+    "control_wall": 19.290567900112364,
+    "thresholds": {
+      "probability": 0.0025,
+      "equity": 0.005
+    },
+    "fields": {
+      "probability": {
+        "count": 895,
+        "max_shift": 0.0,
+        "material_shifts": 0,
+        "references": 160,
+        "control_abs_error": 1.3982489451084796,
+        "arm_abs_error": 1.3982489451084796,
+        "materially_farther": 0,
+        "materially_closer": 0
+      },
+      "equity": {
+        "count": 537,
+        "max_shift": 0.0,
+        "material_shifts": 0,
+        "references": 96,
+        "control_abs_error": 2.391534544323804,
+        "arm_abs_error": 2.391534544323804,
+        "materially_farther": 0,
+        "materially_closer": 0
+      }
+    }
+  },
+  {
+    "level": "4ply",
+    "api": "cube_action",
+    "arm": "anchor",
+    "calls": 10,
+    "exact": 1,
+    "decision_changes": 0,
+    "wall": 1.756365399924107,
+    "control_wall": 2.1982967999065295,
+    "thresholds": {
+      "probability": 0.0025,
+      "equity": 0.005
+    },
+    "fields": {
+      "probability": {
+        "count": 50,
+        "max_shift": 1.9222497940063477e-06,
+        "material_shifts": 0,
+        "references": 50,
+        "control_abs_error": 0.35430947184068184,
+        "arm_abs_error": 0.3543099260059561,
+        "materially_farther": 0,
+        "materially_closer": 0
+      },
+      "equity": {
+        "count": 50,
+        "max_shift": 2.8312206268310547e-07,
+        "material_shifts": 0,
+        "references": 50,
+        "control_abs_error": 1.2273731529712677,
+        "arm_abs_error": 1.227373644709587,
+        "materially_farther": 0,
+        "materially_closer": 0
+      }
+    }
+  },
+  {
+    "level": "4ply",
+    "api": "cube_action",
+    "arm": "anchor_memo",
+    "calls": 10,
+    "exact": 1,
+    "decision_changes": 0,
+    "wall": 1.8970574998529628,
+    "control_wall": 2.1982967999065295,
+    "thresholds": {
+      "probability": 0.0025,
+      "equity": 0.005
+    },
+    "fields": {
+      "probability": {
+        "count": 50,
+        "max_shift": 1.9222497940063477e-06,
+        "material_shifts": 0,
+        "references": 50,
+        "control_abs_error": 0.35430947184068184,
+        "arm_abs_error": 0.3543099260059561,
+        "materially_farther": 0,
+        "materially_closer": 0
+      },
+      "equity": {
+        "count": 50,
+        "max_shift": 2.8312206268310547e-07,
+        "material_shifts": 0,
+        "references": 50,
+        "control_abs_error": 1.2273731529712677,
+        "arm_abs_error": 1.227373644709587,
+        "materially_farther": 0,
+        "materially_closer": 0
+      }
+    }
+  },
+  {
+    "level": "4ply",
+    "api": "cube_action",
+    "arm": "sibling_memo",
+    "calls": 10,
+    "exact": 10,
+    "decision_changes": 0,
+    "wall": 1.8902090999181382,
+    "control_wall": 2.1982967999065295,
+    "thresholds": {
+      "probability": 0.0025,
+      "equity": 0.005
+    },
+    "fields": {
+      "probability": {
+        "count": 50,
+        "max_shift": 0.0,
+        "material_shifts": 0,
+        "references": 50,
+        "control_abs_error": 0.35430947184068184,
+        "arm_abs_error": 0.35430947184068184,
+        "materially_farther": 0,
+        "materially_closer": 0
+      },
+      "equity": {
+        "count": 50,
+        "max_shift": 0.0,
+        "material_shifts": 0,
+        "references": 50,
+        "control_abs_error": 1.2273731529712677,
+        "arm_abs_error": 1.2273731529712677,
+        "materially_farther": 0,
+        "materially_closer": 0
+      }
+    }
+  },
+  {
+    "level": "4ply",
+    "api": "post_move_analytics",
+    "arm": "anchor",
+    "calls": 10,
+    "exact": 2,
+    "decision_changes": 0,
+    "wall": 1.2255324000143446,
+    "control_wall": 1.3621619999757968,
+    "thresholds": {
+      "probability": 0.0025,
+      "equity": 0.005
+    },
+    "fields": {
+      "probability": {
+        "count": 50,
+        "max_shift": 5.960464477539063e-08,
+        "material_shifts": 0,
+        "references": 50,
+        "control_abs_error": 0.28636129397637244,
+        "arm_abs_error": 0.2863611404463908,
+        "materially_farther": 0,
+        "materially_closer": 0
+      },
+      "equity": {
+        "count": 20,
+        "max_shift": 3.5762786865234375e-07,
+        "material_shifts": 0,
+        "references": 20,
+        "control_abs_error": 0.7695599638083372,
+        "arm_abs_error": 0.7695592734873067,
+        "materially_farther": 0,
+        "materially_closer": 0
+      }
+    }
+  },
+  {
+    "level": "4ply",
+    "api": "post_move_analytics",
+    "arm": "anchor_memo",
+    "calls": 10,
+    "exact": 2,
+    "decision_changes": 0,
+    "wall": 1.1680704998434521,
+    "control_wall": 1.3621619999757968,
+    "thresholds": {
+      "probability": 0.0025,
+      "equity": 0.005
+    },
+    "fields": {
+      "probability": {
+        "count": 50,
+        "max_shift": 5.960464477539063e-08,
+        "material_shifts": 0,
+        "references": 50,
+        "control_abs_error": 0.28636129397637244,
+        "arm_abs_error": 0.2863611404463908,
+        "materially_farther": 0,
+        "materially_closer": 0
+      },
+      "equity": {
+        "count": 20,
+        "max_shift": 3.5762786865234375e-07,
+        "material_shifts": 0,
+        "references": 20,
+        "control_abs_error": 0.7695599638083372,
+        "arm_abs_error": 0.7695592734873067,
+        "materially_farther": 0,
+        "materially_closer": 0
+      }
+    }
+  },
+  {
+    "level": "4ply",
+    "api": "post_move_analytics",
+    "arm": "sibling_memo",
+    "calls": 10,
+    "exact": 10,
+    "decision_changes": 0,
+    "wall": 1.247469900001306,
+    "control_wall": 1.3621619999757968,
+    "thresholds": {
+      "probability": 0.0025,
+      "equity": 0.005
+    },
+    "fields": {
+      "probability": {
+        "count": 50,
+        "max_shift": 0.0,
+        "material_shifts": 0,
+        "references": 50,
+        "control_abs_error": 0.28636129397637244,
+        "arm_abs_error": 0.28636129397637244,
+        "materially_farther": 0,
+        "materially_closer": 0
+      },
+      "equity": {
+        "count": 20,
+        "max_shift": 0.0,
+        "material_shifts": 0,
+        "references": 20,
+        "control_abs_error": 0.7695599638083372,
+        "arm_abs_error": 0.7695599638083372,
+        "materially_farther": 0,
+        "materially_closer": 0
+      }
+    }
+  }
+]

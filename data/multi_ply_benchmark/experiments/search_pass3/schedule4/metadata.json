@@ -1,0 +1,60 @@
+{
+  "args": {
+    "arm": [
+      [
+        "checkpoint",
+        "build/multi_ply_second_final",
+        "python"
+      ],
+      [
+        "spare",
+        "build/multi_ply_third_sched",
+        "python"
+      ],
+      [
+        "lanes2",
+        "build/multi_ply_third_sched",
+        "python"
+      ],
+      [
+        "lanes4",
+        "build/multi_ply_third_sched",
+        "python"
+      ]
+    ],
+    "env": [
+      [
+        "lanes2",
+        "BGSAGE_BENCH_ROLL_WIDTH",
+        "2"
+      ],
+      [
+        "lanes4",
+        "BGSAGE_BENCH_ROLL_WIDTH",
+        "4"
+      ]
+    ],
+    "cores": [
+      12,
+      13,
+      14,
+      15
+    ],
+    "levels": [
+      "3ply",
+      "4ply"
+    ],
+    "apis": [
+      "checker_play"
+    ],
+    "per_cell": 2,
+    "repeats": 2,
+    "output": "data\\multi_ply_benchmark\\experiments\\search_pass3\\schedule4"
+  },
+  "binaries": {
+    "checkpoint": "fd4630f514159877922dfc425de3503694385a82d55d523c6f9964e2bdc3d728",
+    "spare": "359803006784e94bd1ce6f001c2718b75c6bd5b9bc46e43ca674dbb69ee03de4",
+    "lanes2": "359803006784e94bd1ce6f001c2718b75c6bd5b9bc46e43ca674dbb69ee03de4",
+    "lanes4": "359803006784e94bd1ce6f001c2718b75c6bd5b9bc46e43ca674dbb69ee03de4"
+  }
+}

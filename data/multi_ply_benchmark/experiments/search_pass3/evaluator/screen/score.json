@@ -1,0 +1,162 @@
+{
+  "bar": {
+    "2ply": {
+      "checker_play": {
+        "calls": 80,
+        "exact": 80,
+        "material": [],
+        "seconds": 0.33784625599997753,
+        "baseline": 0.3753971649999812,
+        "speedup": 1.1111479210827964
+      },
+      "cube_action": {
+        "calls": 80,
+        "exact": 80,
+        "material": [],
+        "seconds": 0.09964848100031531,
+        "baseline": 0.1059741970000232,
+        "speedup": 1.0634803053313764
+      },
+      "post_move_analytics": {
+        "calls": 80,
+        "exact": 80,
+        "material": [],
+        "seconds": 0.06497725299976764,
+        "baseline": 0.07231225999998969,
+        "speedup": 1.1128857663503915
+      }
+    },
+    "3ply": {
+      "checker_play": {
+        "calls": 80,
+        "exact": 80,
+        "material": [],
+        "seconds": 4.511979080000117,
+        "baseline": 4.767717473999994,
+        "speedup": 1.0566798713968928
+      },
+      "cube_action": {
+        "calls": 80,
+        "exact": 80,
+        "material": [],
+        "seconds": 0.35660025600014933,
+        "baseline": 0.36991581899985704,
+        "speedup": 1.0373403069001221
+      },
+      "post_move_analytics": {
+        "calls": 80,
+        "exact": 80,
+        "material": [],
+        "seconds": 0.25270631699993373,
+        "baseline": 0.26025066200014635,
+        "speedup": 1.0298542002818813
+      }
+    },
+    "4ply": {
+      "checker_play": {
+        "calls": 40,
+        "exact": 40,
+        "material": [],
+        "seconds": 35.13740863399988,
+        "baseline": 38.39375277500011,
+        "speedup": 1.0926745672943365
+      },
+      "cube_action": {
+        "calls": 40,
+        "exact": 40,
+        "material": [],
+        "seconds": 3.3531963559998985,
+        "baseline": 3.40632877399986,
+        "speedup": 1.015845304706028
+      },
+      "post_move_analytics": {
+        "calls": 40,
+        "exact": 40,
+        "material": [],
+        "seconds": 2.3464348049999444,
+        "baseline": 2.555629058999955,
+        "speedup": 1.0891540875349466
+      }
+    }
+  },
+  "combined": {
+    "2ply": {
+      "checker_play": {
+        "calls": 80,
+        "exact": 80,
+        "material": [],
+        "seconds": 0.31727927500026,
+        "baseline": 0.3753971649999812,
+        "speedup": 1.183175815690053
+      },
+      "cube_action": {
+        "calls": 80,
+        "exact": 80,
+        "material": [],
+        "seconds": 0.09026081000024533,
+        "baseline": 0.1059741970000232,
+        "speedup": 1.1740886991789146
+      },
+      "post_move_analytics": {
+        "calls": 80,
+        "exact": 80,
+        "material": [],
+        "seconds": 0.060877707000145165,
+        "baseline": 0.07231225999998969,
+        "speedup": 1.1878282472074262
+      }
+    },
+    "3ply": {
+      "checker_play": {
+        "calls": 80,
+        "exact": 80,
+        "material": [],
+        "seconds": 4.12407174499981,
+        "baseline": 4.767717473999994,
+        "speedup": 1.1560704490120877
+      },
+      "cube_action": {
+        "calls": 80,
+        "exact": 80,
+        "material": [],
+        "seconds": 0.32507610799973463,
+        "baseline": 0.36991581899985704,
+        "speedup": 1.1379360398893388
+      },
+      "post_move_analytics": {
+        "calls": 80,
+        "exact": 80,
+        "material": [],
+        "seconds": 0.23638491599956524,
+        "baseline": 0.26025066200014635,
+        "speedup": 1.1009613743739257
+      }
+    },
+    "4ply": {
+      "checker_play": {
+        "calls": 40,
+        "exact": 40,
+        "material": [],
+        "seconds": 32.10370455200007,
+        "baseline": 38.39375277500011,
+        "speedup": 1.195929046531428
+      },
+      "cube_action": {
+        "calls": 40,
+        "exact": 40,
+        "material": [],
+        "seconds": 3.0634981229998175,
+        "baseline": 3.40632877399986,
+        "speedup": 1.1119082294930014
+      },
+      "post_move_analytics": {
+        "calls": 40,
+        "exact": 40,
+        "material": [],
+        "seconds": 2.2024231430001464,
+        "baseline": 2.555629058999955,
+        "speedup": 1.160371505867247
+      }
+    }
+  }
+}

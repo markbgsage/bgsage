@@ -1,0 +1,682 @@
+{
+  "binaries": {
+    "control": {
+      "path": "build/multi_ply_second_final/bgbot_cpp.cp314-win_amd64.pyd",
+      "sha256": "fd4630f514159877922dfc425de3503694385a82d55d523c6f9964e2bdc3d728",
+      "bytes": 5009920
+    },
+    "node": {
+      "path": "build/pass3_tree_arms/node/bgbot_cpp.cp314-win_amd64.pyd",
+      "sha256": "58a8d38880257163b356033b70a3fdc9d77f67e948d778407868fa4c5702969a",
+      "bytes": 5013504
+    }
+  },
+  "threads": 4,
+  "mask": "0xf",
+  "python_revision": "82e63972379b77ab52ebafc716620e813ff7baa1",
+  "per_stratum": 1,
+  "seed": 887450,
+  "cases": [
+    {
+      "level": "4ply",
+      "api": "post_move_analytics",
+      "position_id": "cube-match-priming-01",
+      "repeat": 0,
+      "order": [
+        "control",
+        "node"
+      ],
+      "arms": {
+        "control": {
+          "wall": 0.15653620002558455,
+          "cpu": 0.609375,
+          "sha256": "d95b2c70cc2cc06cf6d7869fc5478e7923a65e66f711eea1f8688bf52d3ff4ec"
+        },
+        "node": {
+          "wall": 0.1519071999937296,
+          "cpu": 0.59375,
+          "sha256": "a14d56b2b43cc5ba72fb5ddeeadf1d76394b8f475ec9783d92ed1f4130f77b52"
+        }
+      }
+    },
+    {
+      "level": "4ply",
+      "api": "cube_action",
+      "position_id": "cube-money-anchoring-01",
+      "repeat": 0,
+      "order": [
+        "node",
+        "control"
+      ],
+      "arms": {
+        "node": {
+          "wall": 0.28731390001485124,
+          "cpu": 1.0,
+          "sha256": "0526b899dacf69a3514e1a2d40ba6a53d83837f874cb564ec6cc48036f8cecd1"
+        },
+        "control": {
+          "wall": 0.3595465000253171,
+          "cpu": 1.21875,
+          "sha256": "189eec4f2d771d42e884100c5531b9356e26f91b4e2ed5f3924ec24696dcbf07"
+        }
+      }
+    },
+    {
+      "level": "4ply",
+      "api": "checker_play",
+      "position_id": "checker-match-racing-01",
+      "repeat": 0,
+      "order": [
+        "node",
+        "control"
+      ],
+      "arms": {
+        "node": {
+          "wall": 0.7118266000179574,
+          "cpu": 1.4375,
+          "sha256": "e6a24f4ab6d1c7161620b5af2802672c712e8de0876529a2fd33b896278e44c9"
+        },
+        "control": {
+          "wall": 0.836233300040476,
+          "cpu": 1.546875,
+          "sha256": "ae73d1654563e65aaf294b7d9ca8e03bf69fe0e74625c4c130699ecce88c9afe"
+        }
+      }
+    },
+    {
+      "level": "4ply",
+      "api": "checker_play",
+      "position_id": "checker-money-purerace-01",
+      "repeat": 0,
+      "order": [
+        "control",
+        "node"
+      ],
+      "arms": {
+        "control": {
+          "wall": 0.05215209996094927,
+          "cpu": 0.171875,
+          "sha256": "63bc8078b2f51a73c1f2339746f2d563625c60e59d733b3bd59f05b050ec1ee9"
+        },
+        "node": {
+          "wall": 0.049255300022196025,
+          "cpu": 0.171875,
+          "sha256": "51861fdc861e08d2064c0af7777f3a0504071572c9754d5f4f02b192990d87de"
+        }
+      }
+    },
+    {
+      "level": "4ply",
+      "api": "checker_play",
+      "position_id": "checker-match-anchoring-01",
+      "repeat": 0,
+      "order": [
+        "control",
+        "node"
+      ],
+      "arms": {
+        "control": {
+          "wall": 1.745854299981147,
+          "cpu": 6.09375,
+          "sha256": "5a56644b78b6acad437210ec035e6701f03f5fcc5b4ad875f0acf0236c90e9e5"
+        },
+        "node": {
+          "wall": 1.5675225000013597,
+          "cpu": 5.78125,
+          "sha256": "e0cda6c8c40286fb8edd04aa4b82f05919de08ba947ce293ae866ad11cf9f647"
+        }
+      }
+    },
+    {
+      "level": "4ply",
+      "api": "post_move_analytics",
+      "position_id": "cube-match-attacking-01",
+      "repeat": 0,
+      "order": [
+        "node",
+        "control"
+      ],
+      "arms": {
+        "node": {
+          "wall": 0.10659739997936413,
+          "cpu": 0.375,
+          "sha256": "d54afa1e0a814a7caef0808a0315d5b1a3dc037f6f89cdf3f7935f1c3000625f"
+        },
+        "control": {
+          "wall": 0.106248099997174,
+          "cpu": 0.40625,
+          "sha256": "4fd0ffcb36e13bbc60f7213d460f4427939c26c021ed1bf0ddaadba4c185b829"
+        }
+      }
+    },
+    {
+      "level": "4ply",
+      "api": "checker_play",
+      "position_id": "checker-money-anchoring-01",
+      "repeat": 0,
+      "order": [
+        "control",
+        "node"
+      ],
+      "arms": {
+        "control": {
+          "wall": 0.1541946000070311,
+          "cpu": 0.5,
+          "sha256": "2bf13fdf7f068575477681c9704ef9c1b5721716b3fcbed8026e472635aec547"
+        },
+        "node": {
+          "wall": 0.15769899997394532,
+          "cpu": 0.515625,
+          "sha256": "7cd94aa3fc3cbee6144165aeb7c86c5fb763c1f626ee5e75930842c3e2db8fb4"
+        }
+      }
+    },
+    {
+      "level": "4ply",
+      "api": "checker_play",
+      "position_id": "checker-match-purerace-01",
+      "repeat": 0,
+      "order": [
+        "node",
+        "control"
+      ],
+      "arms": {
+        "node": {
+          "wall": 0.048635599960107356,
+          "cpu": 0.09375,
+          "sha256": "5902a6d06f45586ff57bf3a188fee6fd053697fb2f4fc1ef239d88d3d4e228de"
+        },
+        "control": {
+          "wall": 0.05803569999989122,
+          "cpu": 0.125,
+          "sha256": "5902a6d06f45586ff57bf3a188fee6fd053697fb2f4fc1ef239d88d3d4e228de"
+        }
+      }
+    },
+    {
+      "level": "4ply",
+      "api": "cube_action",
+      "position_id": "cube-match-racing-01",
+      "repeat": 0,
+      "order": [
+        "node",
+        "control"
+      ],
+      "arms": {
+        "node": {
+          "wall": 0.061530099948868155,
+          "cpu": 0.25,
+          "sha256": "f36cc99a302f15c4ad539c128f088592e1150776e2660ee1224fdd4690755401"
+        },
+        "control": {
+          "wall": 0.06745069997850806,
+          "cpu": 0.265625,
+          "sha256": "38bf9e15e4fcd935ca08c145eea80d2ca8e5da5c74fa9a06d42ea44ccda6d4cd"
+        }
+      }
+    },
+    {
+      "level": "4ply",
+      "api": "cube_action",
+      "position_id": "cube-money-attacking-01",
+      "repeat": 0,
+      "order": [
+        "control",
+        "node"
+      ],
+      "arms": {
+        "control": {
+          "wall": 0.24196090002078563,
+          "cpu": 0.828125,
+          "sha256": "f73a9aa4ed8db5d962c0232cedd27f84f1791cee44149c0c1752862ceb4a5dc8"
+        },
+        "node": {
+          "wall": 0.23015489999670535,
+          "cpu": 0.75,
+          "sha256": "b80ad88c07650821fa59c48da4c62f41dde3e0b2333ba0aca71e72de0f32857c"
+        }
+      }
+    },
+    {
+      "level": "4ply",
+      "api": "post_move_analytics",
+      "position_id": "cube-match-purerace-01",
+      "repeat": 0,
+      "order": [
+        "node",
+        "control"
+      ],
+      "arms": {
+        "node": {
+          "wall": 0.00318689999403432,
+          "cpu": 0.0,
+          "sha256": "e4ddb72aab41e97ec58d127b6376117781f354a1b2d23e559def780578701525"
+        },
+        "control": {
+          "wall": 0.0025507999816909432,
+          "cpu": 0.0625,
+          "sha256": "e4ddb72aab41e97ec58d127b6376117781f354a1b2d23e559def780578701525"
+        }
+      }
+    },
+    {
+      "level": "4ply",
+      "api": "post_move_analytics",
+      "position_id": "cube-money-racing-01",
+      "repeat": 0,
+      "order": [
+        "control",
+        "node"
+      ],
+      "arms": {
+        "control": {
+          "wall": 0.0642636000411585,
+          "cpu": 0.25,
+          "sha256": "bf8065260e2d286eff6d5c743e84011bb73a1c795008662eee96ce9e724f3a1f"
+        },
+        "node": {
+          "wall": 0.05808919999981299,
+          "cpu": 0.25,
+          "sha256": "b97901445892017b4318c51ffda6aa285279f94484c0467c0c84cad0a1ad515f"
+        }
+      }
+    },
+    {
+      "level": "4ply",
+      "api": "cube_action",
+      "position_id": "cube-money-priming-01",
+      "repeat": 0,
+      "order": [
+        "node",
+        "control"
+      ],
+      "arms": {
+        "node": {
+          "wall": 0.14245020004455,
+          "cpu": 0.515625,
+          "sha256": "0de19e1ccab6975b9333ef212ddd792b9ebf77285ab5b6f4ffb56360329c1f91"
+        },
+        "control": {
+          "wall": 0.140555799996946,
+          "cpu": 0.5625,
+          "sha256": "d65ec6a2de0031b42ecfbe3e74df3518a3397b0b0edcfdaf536133b92743722a"
+        }
+      }
+    },
+    {
+      "level": "4ply",
+      "api": "post_move_analytics",
+      "position_id": "cube-money-priming-01",
+      "repeat": 0,
+      "order": [
+        "control",
+        "node"
+      ],
+      "arms": {
+        "control": {
+          "wall": 0.10840520000783727,
+          "cpu": 0.34375,
+          "sha256": "29fb37aa0061ff13b4092e661b22f11f7985e54e5133decc931ce863941494d6"
+        },
+        "node": {
+          "wall": 0.10530529997777194,
+          "cpu": 0.328125,
+          "sha256": "72ec082151781796fc862dd3ec6a70dd155fffd1e24640e8969a69eec0dcf233"
+        }
+      }
+    },
+    {
+      "level": "4ply",
+      "api": "checker_play",
+      "position_id": "checker-match-priming-01",
+      "repeat": 0,
+      "order": [
+        "control",
+        "node"
+      ],
+      "arms": {
+        "control": {
+          "wall": 1.851549500017427,
+          "cpu": 6.84375,
+          "sha256": "140ed3d8ed88cb8aa0525fa4f48dc634710afc8bcf8670f915a2afddf95766ad"
+        },
+        "node": {
+          "wall": 1.7109762000036426,
+          "cpu": 6.484375,
+          "sha256": "27228c6666aa12319f503b948d3100cf22e9400c461f4f99abdb460e18071a21"
+        }
+      }
+    },
+    {
+      "level": "4ply",
+      "api": "checker_play",
+      "position_id": "checker-match-attacking-01",
+      "repeat": 0,
+      "order": [
+        "node",
+        "control"
+      ],
+      "arms": {
+        "node": {
+          "wall": 3.9908395999809727,
+          "cpu": 15.15625,
+          "sha256": "a2faadd96f26f288b1afe3638f542c2f36de5a0e60f98016a29f147398c19411"
+        },
+        "control": {
+          "wall": 4.146630899980664,
+          "cpu": 15.765625,
+          "sha256": "f42c3fd85c87b43dacc5979afce15131001c159c2593436f73e4fb0a556dffe9"
+        }
+      }
+    },
+    {
+      "level": "4ply",
+      "api": "post_move_analytics",
+      "position_id": "cube-money-anchoring-01",
+      "repeat": 0,
+      "order": [
+        "node",
+        "control"
+      ],
+      "arms": {
+        "node": {
+          "wall": 0.20466300001135096,
+          "cpu": 0.78125,
+          "sha256": "16d0ca3c2e7820b4f9f1d9e99fbf73b59699f4a5ab20263d74a2da09e996b2fb"
+        },
+        "control": {
+          "wall": 0.21290270000463352,
+          "cpu": 0.828125,
+          "sha256": "ab913ab186d630f4521f50e8211249032cbaff6c04f1c1bf92679bcbd538c7ca"
+        }
+      }
+    },
+    {
+      "level": "4ply",
+      "api": "cube_action",
+      "position_id": "cube-match-anchoring-01",
+      "repeat": 0,
+      "order": [
+        "control",
+        "node"
+      ],
+      "arms": {
+        "control": {
+          "wall": 0.12025410000933334,
+          "cpu": 0.4375,
+          "sha256": "d4402d3cdb1f8a4d44e2ea72be30c783cbf375595111916c95ebf20816677f89"
+        },
+        "node": {
+          "wall": 0.11001809994922951,
+          "cpu": 0.421875,
+          "sha256": "c9835787209af251dcfa59c7aefa20eb65b96ed9b162d457455ee3089cac9396"
+        }
+      }
+    },
+    {
+      "level": "4ply",
+      "api": "checker_play",
+      "position_id": "checker-money-racing-01",
+      "repeat": 0,
+      "order": [
+        "control",
+        "node"
+      ],
+      "arms": {
+        "control": {
+          "wall": 0.27397759997984394,
+          "cpu": 0.546875,
+          "sha256": "e05714b340a171d4c328560eebc42c188f52494e5a4c5b4894127e516251c6c9"
+        },
+        "node": {
+          "wall": 0.26814460003515705,
+          "cpu": 0.546875,
+          "sha256": "95bc5b16f4ba1d357acc060f735f3c6b2197368e177fdeb8adedaa6d7155b1ca"
+        }
+      }
+    },
+    {
+      "level": "4ply",
+      "api": "checker_play",
+      "position_id": "checker-money-attacking-01",
+      "repeat": 0,
+      "order": [
+        "node",
+        "control"
+      ],
+      "arms": {
+        "node": {
+          "wall": 1.6264057999942452,
+          "cpu": 6.046875,
+          "sha256": "91eefcefd191b5b6a4ce34d0ffe1788c55bdee3952cfbe28e398e6d5c661a459"
+        },
+        "control": {
+          "wall": 1.7010032999678515,
+          "cpu": 6.40625,
+          "sha256": "4193c472c358ebc037a70dbad6b9dc6be9592596921f23700c9eb442c287bd71"
+        }
+      }
+    },
+    {
+      "level": "4ply",
+      "api": "post_move_analytics",
+      "position_id": "cube-money-purerace-01",
+      "repeat": 0,
+      "order": [
+        "node",
+        "control"
+      ],
+      "arms": {
+        "node": {
+          "wall": 0.013579199963714927,
+          "cpu": 0.0625,
+          "sha256": "de8d34c32f20afcc30dc5608237b5c8e0cba174a2fb64b6b4408e9d66fc1e49c"
+        },
+        "control": {
+          "wall": 0.012806400016415864,
+          "cpu": 0.0625,
+          "sha256": "de8d34c32f20afcc30dc5608237b5c8e0cba174a2fb64b6b4408e9d66fc1e49c"
+        }
+      }
+    },
+    {
+      "level": "4ply",
+      "api": "cube_action",
+      "position_id": "cube-money-purerace-01",
+      "repeat": 0,
+      "order": [
+        "control",
+        "node"
+      ],
+      "arms": {
+        "control": {
+          "wall": 0.018645500007551163,
+          "cpu": 0.0625,
+          "sha256": "4a376cac8e011f06d3470936026048244bd01dcfeb1f90eef3665eafd61da775"
+        },
+        "node": {
+          "wall": 0.01875280000967905,
+          "cpu": 0.0625,
+          "sha256": "12d22f02bab9407bc159f59a35305574db9cce4c1089e9d6aa4ed7910d299207"
+        }
+      }
+    },
+    {
+      "level": "4ply",
+      "api": "checker_play",
+      "position_id": "checker-money-priming-01",
+      "repeat": 0,
+      "order": [
+        "node",
+        "control"
+      ],
+      "arms": {
+        "node": {
+          "wall": 1.8015216000494547,
+          "cpu": 7.015625,
+          "sha256": "3d67444ad8475a1fde27df31678561932ea550cb1254ac0daae1b2c5866a090a"
+        },
+        "control": {
+          "wall": 1.9189048999687657,
+          "cpu": 7.453125,
+          "sha256": "29da4087433f5ad39c05de2ce4c5d45a58deb0d016f6d2ed1904115f713c07b9"
+        }
+      }
+    },
+    {
+      "level": "4ply",
+      "api": "cube_action",
+      "position_id": "cube-money-racing-01",
+      "repeat": 0,
+      "order": [
+        "control",
+        "node"
+      ],
+      "arms": {
+        "control": {
+          "wall": 0.08401140000205487,
+          "cpu": 0.3125,
+          "sha256": "99947b950c53c4ac05d490d5067f16697fe0e8e6698ada22825ffdceea1a32c3"
+        },
+        "node": {
+          "wall": 0.07789119996596128,
+          "cpu": 0.28125,
+          "sha256": "14e972d3594e504fb60ce508cb9684d6710a6faf9466be10a7ae320bdd6058e6"
+        }
+      }
+    },
+    {
+      "level": "4ply",
+      "api": "post_move_analytics",
+      "position_id": "cube-match-racing-01",
+      "repeat": 0,
+      "order": [
+        "control",
+        "node"
+      ],
+      "arms": {
+        "control": {
+          "wall": 0.05003119999310002,
+          "cpu": 0.1875,
+          "sha256": "00953a64e166bb6c61c4162e461c8c7b1de020f5e5883604566775638c449014"
+        },
+        "node": {
+          "wall": 0.04810439998982474,
+          "cpu": 0.1875,
+          "sha256": "b946672a3a43002e4796a6e3f1e1c70365d3541ecf75d77cf06b89cd68942915"
+        }
+      }
+    },
+    {
+      "level": "4ply",
+      "api": "cube_action",
+      "position_id": "cube-match-priming-01",
+      "repeat": 0,
+      "order": [
+        "node",
+        "control"
+      ],
+      "arms": {
+        "node": {
+          "wall": 0.16909090004628524,
+          "cpu": 0.578125,
+          "sha256": "4f77a2fd452276a29b3e94ee81549245d27e547422960f53bfe14877aaff8504"
+        },
+        "control": {
+          "wall": 0.1784205000149086,
+          "cpu": 0.6875,
+          "sha256": "21841d4f5de58c2c2d93c0610e322bab36836cfd8fbfc9cc1afa5a15eefbaf96"
+        }
+      }
+    },
+    {
+      "level": "4ply",
+      "api": "cube_action",
+      "position_id": "cube-match-purerace-01",
+      "repeat": 0,
+      "order": [
+        "control",
+        "node"
+      ],
+      "arms": {
+        "control": {
+          "wall": 0.0032071000314317644,
+          "cpu": 0.0,
+          "sha256": "1bbdc1432eefee880558087f6cb15c48c63508c216f1a9ffeb6ed42c718b6ef4"
+        },
+        "node": {
+          "wall": 0.0030227999668568373,
+          "cpu": 0.015625,
+          "sha256": "1bbdc1432eefee880558087f6cb15c48c63508c216f1a9ffeb6ed42c718b6ef4"
+        }
+      }
+    },
+    {
+      "level": "4ply",
+      "api": "post_move_analytics",
+      "position_id": "cube-match-anchoring-01",
+      "repeat": 0,
+      "order": [
+        "node",
+        "control"
+      ],
+      "arms": {
+        "node": {
+          "wall": 0.08766820002347231,
+          "cpu": 0.34375,
+          "sha256": "e4f60a2ec223087146f4948a3778f31456b8c67ab7b28f7535568fc0d270cdba"
+        },
+        "control": {
+          "wall": 0.0836909000063315,
+          "cpu": 0.328125,
+          "sha256": "e846b3fae33021be9bb790b30f2ed2c040c52e0c299c4fe45e4dc32f78274f38"
+        }
+      }
+    },
+    {
+      "level": "4ply",
+      "api": "cube_action",
+      "position_id": "cube-match-attacking-01",
+      "repeat": 0,
+      "order": [
+        "control",
+        "node"
+      ],
+      "arms": {
+        "control": {
+          "wall": 0.1459249999606982,
+          "cpu": 0.5625,
+          "sha256": "ad2e299249b8334905c4f59dd0d21d10a65af42fa9d1c319e059e1dbd7664bd4"
+        },
+        "node": {
+          "wall": 0.13296670001000166,
+          "cpu": 0.484375,
+          "sha256": "e3e04521dc2e035ee580e607f74a091ee0c1d829c1c32fedea6b9ecc1dc1de6b"
+        }
+      }
+    },
+    {
+      "level": "4ply",
+      "api": "post_move_analytics",
+      "position_id": "cube-money-attacking-01",
+      "repeat": 0,
+      "order": [
+        "node",
+        "control"
+      ],
+      "arms": {
+        "node": {
+          "wall": 0.16018180001992732,
+          "cpu": 0.59375,
+          "sha256": "d082209028386fafa32352db5bb936791549160e159537e61bfa6acfa1aefa14"
+        },
+        "control": {
+          "wall": 0.16820549999829382,
+          "cpu": 0.609375,
+          "sha256": "d72da3df6999a221fe00fa2362a895afb4a6df8d4b19052593d39a6bd8fdc0ed"
+        }
+      }
+    }
+  ],
+  "fresh_process_per_call": true
+}

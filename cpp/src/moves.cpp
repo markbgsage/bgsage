@@ -3,13 +3,19 @@
 #include "bgbot/moves.h"
 #include <algorithm>
 #include <cstdint>
+#include <stdexcept>
 #ifdef _MSC_VER
 #include <intrin.h>
 #endif
 
 namespace bgbot {
 
+void validate_die(int die) {
+    if (die < 1 || die > 6) throw std::invalid_argument("Die must be between 1 and 6");
+}
+
 void possible_boards_one_die(const Board& b, int die, std::vector<Board>& out) {
+    validate_die(die);
     // Push-then-mutate-in-place: each legal move pushes a copy of `b` into the
     // output vector and mutates it there, instead of copying to a stack `nb`
     // and then copying that into the vector (two 104-byte copies -> one).
@@ -90,173 +96,17 @@ void possible_boards_one_die(const Board& b, int die, std::vector<Board>& out) {
     }
 }
 
-namespace {
-
-// Check if player 1 has any checkers on the board
-bool has_checkers(const Board& b) {
-    if (b[25] > 0) return true;
-    for (int i = 1; i <= 24; ++i) {
-        if (b[i] > 0) return true;
-    }
-    return false;
-}
-
-struct BoardLess {
-    bool operator()(const Board& a, const Board& b) const noexcept {
-        for (int i = 0; i < 26; ++i) {
-            if (a[i] != b[i]) return a[i] < b[i];
-        }
-        return false;
-    }
-};
-
-void sort_unique_boards(std::vector<Board>& results) {
-    if (results.size() <= 1) return;
-
-    constexpr BoardLess board_less{};
-
-    // Candidate lists are usually small; maintaining a sorted unique vector
-    // avoids the heavier general-purpose introsort path in the hot move-gen loop.
-    if (results.size() <= 48) {
-        std::vector<Board> sorted_unique;
-        sorted_unique.reserve(results.size());
-        for (const auto& board : results) {
-            auto it = std::lower_bound(sorted_unique.begin(), sorted_unique.end(), board, board_less);
-            if (it == sorted_unique.end() || *it != board) {
-                sorted_unique.insert(it, board);
-            }
-        }
-        results.swap(sorted_unique);
-        return;
-    }
-
-    std::sort(results.begin(), results.end(), board_less);
-    results.erase(std::unique(results.begin(), results.end()), results.end());
-}
-
-// Strict recursive generator: only adds boards where ALL n_dice are used.
-// Does NOT add partial (fewer-dice) fallback results.
-// This enforces the backgammon rule: must use maximum number of dice possible.
-//
-// Each recursion depth gets its own scratch vector so we don't have to copy the
-// current level's candidate list before descending.
-void generate_boards_strict(const Board& b, const int* dice, int n_dice,
-                            std::vector<Board>& results,
-                            std::vector<Board>* scratch_by_depth,
-                            int depth = 0) {
-    // All checkers borne off mid-sequence — game over, remaining dice irrelevant
-    if (!has_checkers(b)) {
-        results.push_back(b);
-        return;
-    }
-
-    std::vector<Board>& scratch = scratch_by_depth[depth];
-    scratch.clear();
-    possible_boards_one_die(b, dice[0], scratch);
-
-    if (n_dice == 1) {
-        if (!scratch.empty()) {
-            results.insert(results.end(), scratch.begin(), scratch.end());
-        }
-        return;
-    }
-
-    if (scratch.empty()) {
-        return;
-    }
-
-    for (const auto& nb : scratch) {
-        // Only recurse — do NOT add intermediate if remaining dice can't be used.
-        generate_boards_strict(nb, dice + 1, n_dice - 1, results, scratch_by_depth, depth + 1);
-    }
-}
-
-} // anonymous namespace
-
 std::vector<Board> possible_boards(const Board& board, int die1, int die2) {
     std::vector<Board> results;
     results.reserve(32);
-    std::array<std::vector<Board>, 4> scratch_by_depth;
-    for (auto& scratch : scratch_by_depth) {
-        scratch.reserve(16);
-    }
-
-    if (die1 == die2) {
-        // Doubles: must use maximum number of dice possible (4, then 3, ...)
-        int dice[4] = {die1, die1, die1, die1};
-        for (int n = 4; n >= 1; --n) {
-            generate_boards_strict(board, dice, n, results, scratch_by_depth.data());
-            if (!results.empty()) break;
-        }
-    } else {
-        // Non-doubles: must use both dice if possible
-        int dice_a[2] = {die1, die2};
-        int dice_b[2] = {die2, die1};
-        generate_boards_strict(board, dice_a, 2, results, scratch_by_depth.data());
-        generate_boards_strict(board, dice_b, 2, results, scratch_by_depth.data());
-
-        if (results.empty()) {
-            // Can't use both dice. Must use the larger one if possible.
-            int large = std::max(die1, die2);
-            int small = std::min(die1, die2);
-            possible_boards_one_die(board, large, results);
-            if (results.empty()) {
-                possible_boards_one_die(board, small, results);
-            }
-        }
-    }
-
-    if (results.empty()) {
-        results.push_back(board);
-        return results;
-    }
-
-    sort_unique_boards(results);
-
+    possible_boards(board, die1, die2, results);
     return results;
 }
 
 void possible_boards(const Board& board, int die1, int die2,
                      std::vector<Board>& results) {
-    results.clear();
-    thread_local std::array<std::vector<Board>, 4> scratch_by_depth;
-    for (auto& scratch : scratch_by_depth) {
-        if (scratch.capacity() < 16) {
-            scratch.reserve(16);
-        }
-    }
-
-    if (die1 == die2) {
-        // Doubles: must use maximum number of dice possible (4, then 3, ...)
-        int dice[4] = {die1, die1, die1, die1};
-        for (int n = 4; n >= 1; --n) {
-            generate_boards_strict(board, dice, n, results, scratch_by_depth.data());
-            if (!results.empty()) break;
-        }
-    } else {
-        // Non-doubles: must use both dice if possible
-        int dice_a[2] = {die1, die2};
-        int dice_b[2] = {die2, die1};
-        generate_boards_strict(board, dice_a, 2, results, scratch_by_depth.data());
-        generate_boards_strict(board, dice_b, 2, results, scratch_by_depth.data());
-
-        if (results.empty()) {
-            // Can't use both dice. Must use the larger one if possible.
-            int large = std::max(die1, die2);
-            int small = std::min(die1, die2);
-            possible_boards_one_die(board, large, results);
-            if (results.empty()) {
-                possible_boards_one_die(board, small, results);
-            }
-        }
-    }
-
-    if (results.empty()) {
-        results.push_back(board);
-        return;
-    }
-
-    sort_unique_boards(results);
+    possible_boards_unsorted(board, die1, die2, results);
+    std::sort(results.begin(), results.end());
 }
 
 namespace {
@@ -315,8 +165,7 @@ struct MoveDedup {
     // Returns true if `b` is new; records `idx` (the board's position in the
     // output vector) as its slot value.
     bool insert(const Board& b, const std::vector<Board>& v, int idx, uint32_t hash) {
-        // A legal double can have over 2,048 distinct results. Always
-        // leave an empty slot so probing terminates, including on a miss.
+        // Keep an empty slot so probing always terminates.
         if (static_cast<uint32_t>(idx) >= mask - mask / 4) grow(v);
         uint32_t slot = hash & mask;
         for (;;) {
@@ -333,63 +182,45 @@ struct MoveDedup {
 
 thread_local MoveDedup g_move_dedup;
 
-// Moving checkers in a different order can reach exactly the same board
-// after two or three dice of a double. From there the remaining dice are
-// identical, so the first visit emitted every reachable leaf. A hash
-// collision here can evict an entry and cost work, but cannot discard a play.
-struct DoublesPrefixes {
-    static constexpr int slots = 256;
-    uint32_t generation = 0;
-    uint32_t stamps[2][slots]{};
-    Board boards[2][slots];
-
-    void begin() {
-        if (++generation == 0) {
-            for (auto& row : stamps) std::fill_n(row, slots, 0u);
-            ++generation;
-        }
-    }
-
-    bool already_visited(const Board& board, int depth, uint32_t hash) {
-        const auto slot = hash & (slots - 1);
-        auto& stamp = stamps[depth - 2][slot];
-        auto& previous = boards[depth - 2][slot];
-        if (stamp == generation && previous == board) return true;
-        stamp = generation;
-        previous = board;
-        return false;
-    }
-};
-thread_local DoublesPrefixes g_doubles_prefixes;
-
-// Each ply changes at most an origin, a destination and the opponent's bar.
-// Mutate one board while descending, then restore it before emitting siblings.
-struct RollMoves {
+struct RollState {
     Board board;
-    std::vector<Board>& results;
     uint32_t occupied = 0;
-    uint32_t hash;
+    uint32_t blocked = 0;
 
-    RollMoves(const Board& start, std::vector<Board>& out)
-        : board(start), results(out), hash(raw_board_hash(start)) {
-        for (int i = 1; i <= 25; ++i)
+    explicit RollState(const Board& start) : board(start) {
+        for (int i = 1; i <= 25; ++i) {
             if (board[i] > 0) occupied |= 1u << i;
+            if (board[i] < -1) blocked |= 1u << i;
+        }
     }
 
-    void generate(const int* dice, int left, uint32_t occupied_now, uint32_t raw_hash,
-                  int depth = 0) {
-        const uint32_t mixed = raw_hash ^ (raw_hash >> 16);
-        if (left && depth >= 2 && g_doubles_prefixes.already_visited(board, depth, mixed))
-            return;
-        if (!left || !occupied_now) {
-            if (g_move_dedup.insert(board, results, static_cast<int>(results.size()), mixed))
-                results.push_back(board);
-            return;
-        }
+    // Made points cannot change while the player is on roll. All regular
+    // moves with this die can use the same destination availability mask.
+    uint32_t allowed(int die) const {
+        return ~(blocked << die) & (~1u << die);
+    }
+
+    static uint32_t legal(uint32_t men, uint32_t allowed, int die) {
         constexpr uint32_t bar = 1u << 25;
-        constexpr uint32_t home = (1u << 7) - 1;
-        const int die = *dice;
-        uint32_t origins = (occupied_now & bar) ? bar : occupied_now;
+        if (men & bar) return bar & allowed;
+        uint32_t origins = men & allowed;
+        if (men && men < (1u << 7)) {
+            const uint32_t exact = 1u << die;
+            if (men >= exact) origins |= men & exact;
+            else {
+                // An oversized die can only take the farthest checker.
+                uint32_t highest = men;
+                while (highest & (highest - 1)) highest &= highest - 1;
+                origins |= highest;
+            }
+        }
+        return origins;
+    }
+
+    // Changes are local to the callback, including hits to the opponent bar.
+    // Ascending origin order is part of the unsorted API's tie behavior.
+    template<class Visit>
+    void each(int die, uint32_t men, uint32_t origins, Visit visit) {
         while (origins) {
 #ifdef _MSC_VER
             unsigned long bit;
@@ -399,36 +230,65 @@ struct RollMoves {
             const int from = __builtin_ctz(origins);
 #endif
             origins &= origins - 1;
+            uint32_t next = --board[from] ? men : men & ~(1u << from);
             const int to = from - die;
+            const int target = to > 0 ? board[to] : 0;
+            const bool hit = target == -1;
             if (to > 0) {
-                if (board[to] < -1) continue;
-            } else {
-                if (occupied_now & ~home) continue;
-                if (to < 0 && (occupied_now >> (from + 1))) continue;
+                board[to] = hit ? 1 : target + 1;
+                if (hit) ++board[0];
+                next |= 1u << to;
             }
-            const uint32_t from_bit = 1u << from;
-            uint32_t next_occupied = board[from] == 1 ? (occupied_now & ~from_bit) : occupied_now;
-            uint32_t next_hash = raw_hash - coefficients[from];
-            --board[from];
-            const int old_target = to > 0 ? board[to] : 0;
-            if (to > 0) {
-                next_occupied |= 1u << to;
-                if (old_target == -1) {
-                    ++board[0];
-                    board[to] = 1;
-                    next_hash += coefficients[0] + 2u * coefficients[to];
-                } else {
-                    ++board[to];
-                    next_hash += coefficients[to];
-                }
-            }
-            generate(dice + 1, left - 1, next_occupied, next_hash, depth + 1);
-            if (to > 0) {
-                board[to] = old_target;
-                if (old_target == -1) --board[0];
-            }
+            visit(from, to, hit, next);
+            if (to > 0) board[to] = target;
+            if (hit) --board[0];
             ++board[from];
         }
+    }
+
+    // A double's endpoint determines how often each origin was used. Start
+    // at the bar and work down: starting men plus arrivals minus men left
+    // equals departures. Emit the earliest legal ordering of this multiset.
+    // Other origins cannot disable a legal move, so an earlier sibling can
+    // always play its own origin first if a later sequence ever uses it.
+    void doubles(int die, int left, uint32_t men, uint32_t allowed,
+                 uint32_t passed, std::vector<Board>& results) {
+        if (!left || !men) {
+            results.push_back(board);
+            return;
+        }
+        each(die, men, legal(men, allowed, die) & ~passed,
+             [&](int from, int, bool, uint32_t next) {
+                 doubles(die, left - 1, next, allowed, passed, results);
+                 passed |= 1u << from;
+             });
+    }
+
+    static uint32_t moved_hash(uint32_t hash, int from, int to, bool hit) {
+        hash -= coefficients[from];
+        if (to > 0) hash += coefficients[to];
+        if (hit) hash += coefficients[0] + coefficients[to];
+        return hash;
+    }
+
+    void mixed(int die1, int die2, uint32_t first, uint32_t allowed_second,
+               uint32_t skip_second, uint32_t hash, std::vector<Board>& results) {
+        auto emit = [&](uint32_t raw) {
+            const uint32_t hash_key = raw ^ (raw >> 16);
+            if (g_move_dedup.insert(board, results, static_cast<int>(results.size()), hash_key))
+                results.push_back(board);
+        };
+        each(die1, occupied, first, [&](int from, int to, bool hit, uint32_t next) {
+            const auto after_first = moved_hash(hash, from, to, hit);
+            if (!next) {
+                emit(after_first);
+                return;
+            }
+            const auto second = legal(next, allowed_second, die2) & ~skip_second;
+            each(die2, next, second, [&](int from2, int to2, bool hit2, uint32_t) {
+                emit(moved_hash(after_first, from2, to2, hit2));
+            });
+        });
     }
 };
 
@@ -436,20 +296,24 @@ struct RollMoves {
 
 void possible_boards_unsorted(const Board& board, int die1, int die2,
                               std::vector<Board>& results) {
+    validate_die(die1);
+    validate_die(die2);
     results.clear();
-    g_move_dedup.begin();
-    RollMoves walker(board, results);
+    RollState roll(board);
+    const uint32_t allowed_first = roll.allowed(die1);
     if (die1 == die2) {
-        const int dice[] = {die1, die1, die1, die1};
-        for (int count = 4; count >= 1 && results.empty(); --count) {
-            g_doubles_prefixes.begin();
-            walker.generate(dice, count, walker.occupied, walker.hash);
-        }
+        for (int count = 4; count >= 1 && results.empty(); --count)
+            roll.doubles(die1, count, roll.occupied, allowed_first, 0, results);
     } else {
-        const int forward[] = {die1, die2};
-        const int reverse[] = {die2, die1};
-        walker.generate(forward, 2, walker.occupied, walker.hash);
-        walker.generate(reverse, 2, walker.occupied, walker.hash);
+        g_move_dedup.begin();
+        const uint32_t hash = raw_board_hash(board);
+        const uint32_t allowed_second = roll.allowed(die2);
+        const auto first = roll.legal(roll.occupied, allowed_first, die1);
+        const auto second = roll.legal(roll.occupied, allowed_second, die2);
+        roll.mixed(die1, die2, first, allowed_second, 0, hash, results);
+        // If both steps were legal initially, the first order already emitted
+        // their endpoint. The second order needs only newly enabled origins.
+        roll.mixed(die2, die1, second, allowed_first, first, hash, results);
         if (results.empty()) {
             possible_boards_one_die(board, std::max(die1, die2), results);
             if (results.empty()) possible_boards_one_die(board, std::min(die1, die2), results);

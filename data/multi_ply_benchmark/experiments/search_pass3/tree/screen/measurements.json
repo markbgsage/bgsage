@@ -1,0 +1,2071 @@
+{
+  "binaries": {
+    "control": {
+      "path": "build/multi_ply_second_final/bgbot_cpp.cp314-win_amd64.pyd",
+      "sha256": "fd4630f514159877922dfc425de3503694385a82d55d523c6f9964e2bdc3d728",
+      "bytes": 5009920
+    },
+    "anchor_memo": {
+      "path": "build/pass3_tree_arms/anchor_memo/bgbot_cpp.cp314-win_amd64.pyd",
+      "sha256": "04f2dc5fdfce1f043be43da8378adc3f14ab81c48122d6abb1535ba508d8b3db",
+      "bytes": 5062144
+    },
+    "sibling_memo": {
+      "path": "build/pass3_tree_arms/sibling_memo/bgbot_cpp.cp314-win_amd64.pyd",
+      "sha256": "d5727ef1996588e9ea59976f6441c3534115809979d1de7d4e80ed356a94e702",
+      "bytes": 5062656
+    },
+    "anchor": {
+      "path": "build/pass3_tree_arms/anchor/bgbot_cpp.cp314-win_amd64.pyd",
+      "sha256": "8031a8a1911222a0b8d252bbb74a5ed8716239c8bf2eba4fc0508e02893cf7ad",
+      "bytes": 5061120
+    }
+  },
+  "threads": 4,
+  "mask": "0xf",
+  "python_revision": "82e63972379b77ab52ebafc716620e813ff7baa1",
+  "per_stratum": 1,
+  "seed": 887450,
+  "cases": [
+    {
+      "level": "3ply",
+      "api": "post_move_analytics",
+      "position_id": "cube-match-anchoring-01",
+      "repeat": 0,
+      "order": [
+        "anchor",
+        "control",
+        "anchor_memo",
+        "sibling_memo"
+      ],
+      "arms": {
+        "anchor": {
+          "wall": 0.009185200033243746,
+          "cpu": 0.0,
+          "sha256": "19976300877368f99b9c8039ac8c78f10cebdc387322377a1a207294b3edc0c2"
+        },
+        "control": {
+          "wall": 0.009431099984794855,
+          "cpu": 0.0,
+          "sha256": "23b902f9efb3d62de4371be968bd01af711b0235ebda277326be0097bd17abec"
+        },
+        "anchor_memo": {
+          "wall": 0.009468100033700466,
+          "cpu": 0.046875,
+          "sha256": "19976300877368f99b9c8039ac8c78f10cebdc387322377a1a207294b3edc0c2"
+        },
+        "sibling_memo": {
+          "wall": 0.009508900053333491,
+          "cpu": 0.0625,
+          "sha256": "23b902f9efb3d62de4371be968bd01af711b0235ebda277326be0097bd17abec"
+        }
+      }
+    },
+    {
+      "level": "3ply",
+      "api": "cube_action",
+      "position_id": "cube-money-anchoring-01",
+      "repeat": 0,
+      "order": [
+        "control",
+        "anchor_memo",
+        "sibling_memo",
+        "anchor"
+      ],
+      "arms": {
+        "control": {
+          "wall": 0.005437400017399341,
+          "cpu": 0.0,
+          "sha256": "1dc6d28adf1f6d872b008bf262b304fb24722198a7e63f8e9354344579f8ab33"
+        },
+        "anchor_memo": {
+          "wall": 0.005132500024046749,
+          "cpu": 0.0625,
+          "sha256": "3f08b00621997eb22b8aa899f9c8af213337fbac41026e899417e3ebd014de69"
+        },
+        "sibling_memo": {
+          "wall": 0.006584200018551201,
+          "cpu": 0.0,
+          "sha256": "1dc6d28adf1f6d872b008bf262b304fb24722198a7e63f8e9354344579f8ab33"
+        },
+        "anchor": {
+          "wall": 0.0045266999513842165,
+          "cpu": 0.0,
+          "sha256": "3f08b00621997eb22b8aa899f9c8af213337fbac41026e899417e3ebd014de69"
+        }
+      }
+    },
+    {
+      "level": "4ply",
+      "api": "checker_play",
+      "position_id": "checker-match-purerace-01",
+      "repeat": 0,
+      "order": [
+        "anchor_memo",
+        "sibling_memo",
+        "anchor",
+        "control"
+      ],
+      "arms": {
+        "anchor_memo": {
+          "wall": 0.06126260000746697,
+          "cpu": 0.109375,
+          "sha256": "5902a6d06f45586ff57bf3a188fee6fd053697fb2f4fc1ef239d88d3d4e228de"
+        },
+        "sibling_memo": {
+          "wall": 0.07174349995329976,
+          "cpu": 0.109375,
+          "sha256": "5902a6d06f45586ff57bf3a188fee6fd053697fb2f4fc1ef239d88d3d4e228de"
+        },
+        "anchor": {
+          "wall": 0.054986100003588945,
+          "cpu": 0.109375,
+          "sha256": "5902a6d06f45586ff57bf3a188fee6fd053697fb2f4fc1ef239d88d3d4e228de"
+        },
+        "control": {
+          "wall": 0.06896520004374906,
+          "cpu": 0.109375,
+          "sha256": "5902a6d06f45586ff57bf3a188fee6fd053697fb2f4fc1ef239d88d3d4e228de"
+        }
+      }
+    },
+    {
+      "level": "3ply",
+      "api": "checker_play",
+      "position_id": "checker-match-priming-01",
+      "repeat": 0,
+      "order": [
+        "sibling_memo",
+        "anchor",
+        "control",
+        "anchor_memo"
+      ],
+      "arms": {
+        "sibling_memo": {
+          "wall": 0.09701399999903515,
+          "cpu": 0.375,
+          "sha256": "1a64d6937e6fbea32a682cb349c7531bc91c0cd6d3af6848a692346a04ffc1fc"
+        },
+        "anchor": {
+          "wall": 0.08320930000627413,
+          "cpu": 0.34375,
+          "sha256": "561a939141f724242feff6f8ba22229b044d210ae72f756040a455b94694d4c4"
+        },
+        "control": {
+          "wall": 0.09185879997676238,
+          "cpu": 0.34375,
+          "sha256": "1a64d6937e6fbea32a682cb349c7531bc91c0cd6d3af6848a692346a04ffc1fc"
+        },
+        "anchor_memo": {
+          "wall": 0.09718680003425106,
+          "cpu": 0.328125,
+          "sha256": "561a939141f724242feff6f8ba22229b044d210ae72f756040a455b94694d4c4"
+        }
+      }
+    },
+    {
+      "level": "4ply",
+      "api": "cube_action",
+      "position_id": "cube-match-racing-01",
+      "repeat": 0,
+      "order": [
+        "anchor",
+        "control",
+        "anchor_memo",
+        "sibling_memo"
+      ],
+      "arms": {
+        "anchor": {
+          "wall": 0.06311230000574142,
+          "cpu": 0.25,
+          "sha256": "f36cc99a302f15c4ad539c128f088592e1150776e2660ee1224fdd4690755401"
+        },
+        "control": {
+          "wall": 0.07005159999243915,
+          "cpu": 0.265625,
+          "sha256": "38bf9e15e4fcd935ca08c145eea80d2ca8e5da5c74fa9a06d42ea44ccda6d4cd"
+        },
+        "anchor_memo": {
+          "wall": 0.0651497999788262,
+          "cpu": 0.21875,
+          "sha256": "f36cc99a302f15c4ad539c128f088592e1150776e2660ee1224fdd4690755401"
+        },
+        "sibling_memo": {
+          "wall": 0.074922300002072,
+          "cpu": 0.28125,
+          "sha256": "38bf9e15e4fcd935ca08c145eea80d2ca8e5da5c74fa9a06d42ea44ccda6d4cd"
+        }
+      }
+    },
+    {
+      "level": "4ply",
+      "api": "cube_action",
+      "position_id": "cube-match-attacking-01",
+      "repeat": 0,
+      "order": [
+        "control",
+        "anchor_memo",
+        "sibling_memo",
+        "anchor"
+      ],
+      "arms": {
+        "control": {
+          "wall": 0.17124620004324242,
+          "cpu": 0.625,
+          "sha256": "ad2e299249b8334905c4f59dd0d21d10a65af42fa9d1c319e059e1dbd7664bd4"
+        },
+        "anchor_memo": {
+          "wall": 0.1582676999969408,
+          "cpu": 0.5625,
+          "sha256": "e3e04521dc2e035ee580e607f74a091ee0c1d829c1c32fedea6b9ecc1dc1de6b"
+        },
+        "sibling_memo": {
+          "wall": 0.17201869998825714,
+          "cpu": 0.625,
+          "sha256": "ad2e299249b8334905c4f59dd0d21d10a65af42fa9d1c319e059e1dbd7664bd4"
+        },
+        "anchor": {
+          "wall": 0.15652550000231713,
+          "cpu": 0.546875,
+          "sha256": "e3e04521dc2e035ee580e607f74a091ee0c1d829c1c32fedea6b9ecc1dc1de6b"
+        }
+      }
+    },
+    {
+      "level": "3ply",
+      "api": "cube_action",
+      "position_id": "cube-money-purerace-01",
+      "repeat": 0,
+      "order": [
+        "anchor_memo",
+        "sibling_memo",
+        "anchor",
+        "control"
+      ],
+      "arms": {
+        "anchor_memo": {
+          "wall": 0.0025704000145196915,
+          "cpu": 0.0,
+          "sha256": "95a2881ef27143555013e6f1b4ced2762b264fbab87432364bb71cf4ff446258"
+        },
+        "sibling_memo": {
+          "wall": 0.0024863999569788575,
+          "cpu": 0.0,
+          "sha256": "6da0e4cf9a7c014a02e0de47a54efa9acaed6105493133ccfc04dee8a5b42e65"
+        },
+        "anchor": {
+          "wall": 0.0019351000082679093,
+          "cpu": 0.0625,
+          "sha256": "95a2881ef27143555013e6f1b4ced2762b264fbab87432364bb71cf4ff446258"
+        },
+        "control": {
+          "wall": 0.0021757999784313142,
+          "cpu": 0.0,
+          "sha256": "6da0e4cf9a7c014a02e0de47a54efa9acaed6105493133ccfc04dee8a5b42e65"
+        }
+      }
+    },
+    {
+      "level": "4ply",
+      "api": "cube_action",
+      "position_id": "cube-match-anchoring-01",
+      "repeat": 0,
+      "order": [
+        "sibling_memo",
+        "anchor",
+        "control",
+        "anchor_memo"
+      ],
+      "arms": {
+        "sibling_memo": {
+          "wall": 0.13942839996889234,
+          "cpu": 0.484375,
+          "sha256": "d4402d3cdb1f8a4d44e2ea72be30c783cbf375595111916c95ebf20816677f89"
+        },
+        "anchor": {
+          "wall": 0.1301882999832742,
+          "cpu": 0.4375,
+          "sha256": "c9835787209af251dcfa59c7aefa20eb65b96ed9b162d457455ee3089cac9396"
+        },
+        "control": {
+          "wall": 0.1403639999916777,
+          "cpu": 0.515625,
+          "sha256": "d4402d3cdb1f8a4d44e2ea72be30c783cbf375595111916c95ebf20816677f89"
+        },
+        "anchor_memo": {
+          "wall": 0.1509855999611318,
+          "cpu": 0.453125,
+          "sha256": "c9835787209af251dcfa59c7aefa20eb65b96ed9b162d457455ee3089cac9396"
+        }
+      }
+    },
+    {
+      "level": "4ply",
+      "api": "checker_play",
+      "position_id": "checker-money-purerace-01",
+      "repeat": 0,
+      "order": [
+        "sibling_memo",
+        "anchor_memo",
+        "control",
+        "anchor"
+      ],
+      "arms": {
+        "sibling_memo": {
+          "wall": 0.07216480001807213,
+          "cpu": 0.171875,
+          "sha256": "63bc8078b2f51a73c1f2339746f2d563625c60e59d733b3bd59f05b050ec1ee9"
+        },
+        "anchor_memo": {
+          "wall": 0.06544620002387092,
+          "cpu": 0.203125,
+          "sha256": "51861fdc861e08d2064c0af7777f3a0504071572c9754d5f4f02b192990d87de"
+        },
+        "control": {
+          "wall": 0.0605074999621138,
+          "cpu": 0.21875,
+          "sha256": "63bc8078b2f51a73c1f2339746f2d563625c60e59d733b3bd59f05b050ec1ee9"
+        },
+        "anchor": {
+          "wall": 0.05361679999623448,
+          "cpu": 0.171875,
+          "sha256": "51861fdc861e08d2064c0af7777f3a0504071572c9754d5f4f02b192990d87de"
+        }
+      }
+    },
+    {
+      "level": "3ply",
+      "api": "checker_play",
+      "position_id": "checker-match-racing-01",
+      "repeat": 0,
+      "order": [
+        "anchor_memo",
+        "control",
+        "anchor",
+        "sibling_memo"
+      ],
+      "arms": {
+        "anchor_memo": {
+          "wall": 0.0065682000131346285,
+          "cpu": 0.03125,
+          "sha256": "278b694d9ec69eb6319f0ef3e8b24653cea0a373167654ab5015ccdcc38eb476"
+        },
+        "control": {
+          "wall": 0.0066519000101834536,
+          "cpu": 0.0,
+          "sha256": "37e9eaf5731e8f9aabcb0ee214a0ebd431b35f1ebb49a5cb11ee4d7010cca654"
+        },
+        "anchor": {
+          "wall": 0.00618130003567785,
+          "cpu": 0.03125,
+          "sha256": "278b694d9ec69eb6319f0ef3e8b24653cea0a373167654ab5015ccdcc38eb476"
+        },
+        "sibling_memo": {
+          "wall": 0.007423400005791336,
+          "cpu": 0.0,
+          "sha256": "37e9eaf5731e8f9aabcb0ee214a0ebd431b35f1ebb49a5cb11ee4d7010cca654"
+        }
+      }
+    },
+    {
+      "level": "4ply",
+      "api": "cube_action",
+      "position_id": "cube-match-purerace-01",
+      "repeat": 0,
+      "order": [
+        "control",
+        "anchor",
+        "sibling_memo",
+        "anchor_memo"
+      ],
+      "arms": {
+        "control": {
+          "wall": 0.0014252999681048095,
+          "cpu": 0.0,
+          "sha256": "1bbdc1432eefee880558087f6cb15c48c63508c216f1a9ffeb6ed42c718b6ef4"
+        },
+        "anchor": {
+          "wall": 0.001199799997266382,
+          "cpu": 0.046875,
+          "sha256": "1bbdc1432eefee880558087f6cb15c48c63508c216f1a9ffeb6ed42c718b6ef4"
+        },
+        "sibling_memo": {
+          "wall": 0.0010470999986864626,
+          "cpu": 0.0,
+          "sha256": "1bbdc1432eefee880558087f6cb15c48c63508c216f1a9ffeb6ed42c718b6ef4"
+        },
+        "anchor_memo": {
+          "wall": 0.0010349000222049654,
+          "cpu": 0.0,
+          "sha256": "1bbdc1432eefee880558087f6cb15c48c63508c216f1a9ffeb6ed42c718b6ef4"
+        }
+      }
+    },
+    {
+      "level": "4ply",
+      "api": "checker_play",
+      "position_id": "checker-match-priming-01",
+      "repeat": 0,
+      "order": [
+        "anchor",
+        "sibling_memo",
+        "anchor_memo",
+        "control"
+      ],
+      "arms": {
+        "anchor": {
+          "wall": 2.9747495999909006,
+          "cpu": 7.84375,
+          "sha256": "27228c6666aa12319f503b948d3100cf22e9400c461f4f99abdb460e18071a21"
+        },
+        "sibling_memo": {
+          "wall": 3.4048989999573678,
+          "cpu": 8.21875,
+          "sha256": "140ed3d8ed88cb8aa0525fa4f48dc634710afc8bcf8670f915a2afddf95766ad"
+        },
+        "anchor_memo": {
+          "wall": 3.23954020004021,
+          "cpu": 7.6875,
+          "sha256": "27228c6666aa12319f503b948d3100cf22e9400c461f4f99abdb460e18071a21"
+        },
+        "control": {
+          "wall": 3.596308499982115,
+          "cpu": 8.359375,
+          "sha256": "140ed3d8ed88cb8aa0525fa4f48dc634710afc8bcf8670f915a2afddf95766ad"
+        }
+      }
+    },
+    {
+      "level": "3ply",
+      "api": "checker_play",
+      "position_id": "checker-money-purerace-01",
+      "repeat": 0,
+      "order": [
+        "control",
+        "anchor_memo",
+        "sibling_memo",
+        "anchor"
+      ],
+      "arms": {
+        "control": {
+          "wall": 0.013754800020251423,
+          "cpu": 0.046875,
+          "sha256": "b9e27722d8fe6b510fd7c20964c996fa07dabd018c2a296d4d3ee5294f72358a"
+        },
+        "anchor_memo": {
+          "wall": 0.013986600039061159,
+          "cpu": 0.0625,
+          "sha256": "f5bdd74ebecd01ea286ffe9743c45ca886763c0f5340fc54935bcb4c7f0ffd78"
+        },
+        "sibling_memo": {
+          "wall": 0.017064000014215708,
+          "cpu": 0.03125,
+          "sha256": "b9e27722d8fe6b510fd7c20964c996fa07dabd018c2a296d4d3ee5294f72358a"
+        },
+        "anchor": {
+          "wall": 0.012163700012024492,
+          "cpu": 0.0625,
+          "sha256": "f5bdd74ebecd01ea286ffe9743c45ca886763c0f5340fc54935bcb4c7f0ffd78"
+        }
+      }
+    },
+    {
+      "level": "4ply",
+      "api": "post_move_analytics",
+      "position_id": "cube-money-priming-01",
+      "repeat": 0,
+      "order": [
+        "anchor_memo",
+        "sibling_memo",
+        "anchor",
+        "control"
+      ],
+      "arms": {
+        "anchor_memo": {
+          "wall": 0.11553380003897473,
+          "cpu": 0.359375,
+          "sha256": "72ec082151781796fc862dd3ec6a70dd155fffd1e24640e8969a69eec0dcf233"
+        },
+        "sibling_memo": {
+          "wall": 0.14805640000849962,
+          "cpu": 0.453125,
+          "sha256": "29fb37aa0061ff13b4092e661b22f11f7985e54e5133decc931ce863941494d6"
+        },
+        "anchor": {
+          "wall": 0.13756230002036318,
+          "cpu": 0.40625,
+          "sha256": "72ec082151781796fc862dd3ec6a70dd155fffd1e24640e8969a69eec0dcf233"
+        },
+        "control": {
+          "wall": 0.13688669999828562,
+          "cpu": 0.4375,
+          "sha256": "29fb37aa0061ff13b4092e661b22f11f7985e54e5133decc931ce863941494d6"
+        }
+      }
+    },
+    {
+      "level": "4ply",
+      "api": "cube_action",
+      "position_id": "cube-money-purerace-01",
+      "repeat": 0,
+      "order": [
+        "sibling_memo",
+        "anchor",
+        "control",
+        "anchor_memo"
+      ],
+      "arms": {
+        "sibling_memo": {
+          "wall": 0.019587399961892515,
+          "cpu": 0.046875,
+          "sha256": "4a376cac8e011f06d3470936026048244bd01dcfeb1f90eef3665eafd61da775"
+        },
+        "anchor": {
+          "wall": 0.02364939998369664,
+          "cpu": 0.046875,
+          "sha256": "12d22f02bab9407bc159f59a35305574db9cce4c1089e9d6aa4ed7910d299207"
+        },
+        "control": {
+          "wall": 0.022096200031228364,
+          "cpu": 0.078125,
+          "sha256": "4a376cac8e011f06d3470936026048244bd01dcfeb1f90eef3665eafd61da775"
+        },
+        "anchor_memo": {
+          "wall": 0.0230462999898009,
+          "cpu": 0.046875,
+          "sha256": "12d22f02bab9407bc159f59a35305574db9cce4c1089e9d6aa4ed7910d299207"
+        }
+      }
+    },
+    {
+      "level": "3ply",
+      "api": "checker_play",
+      "position_id": "checker-match-attacking-01",
+      "repeat": 0,
+      "order": [
+        "anchor",
+        "control",
+        "anchor_memo",
+        "sibling_memo"
+      ],
+      "arms": {
+        "anchor": {
+          "wall": 0.21299930004170164,
+          "cpu": 0.59375,
+          "sha256": "a8ee9b81169c675892e0e94bfc56b35f87c1a508ed719f3d2900c0772784e408"
+        },
+        "control": {
+          "wall": 0.23938439995981753,
+          "cpu": 0.609375,
+          "sha256": "aea6d8fe516af4a7b6e9400421a970f6a701ce6eddd03b4566cc6b270705c61b"
+        },
+        "anchor_memo": {
+          "wall": 0.23445230000652373,
+          "cpu": 0.609375,
+          "sha256": "a8ee9b81169c675892e0e94bfc56b35f87c1a508ed719f3d2900c0772784e408"
+        },
+        "sibling_memo": {
+          "wall": 0.3313763000187464,
+          "cpu": 0.640625,
+          "sha256": "aea6d8fe516af4a7b6e9400421a970f6a701ce6eddd03b4566cc6b270705c61b"
+        }
+      }
+    },
+    {
+      "level": "4ply",
+      "api": "checker_play",
+      "position_id": "checker-money-attacking-01",
+      "repeat": 0,
+      "order": [
+        "anchor",
+        "control",
+        "sibling_memo",
+        "anchor_memo"
+      ],
+      "arms": {
+        "anchor": {
+          "wall": 2.9455406999913976,
+          "cpu": 7.109375,
+          "sha256": "91eefcefd191b5b6a4ce34d0ffe1788c55bdee3952cfbe28e398e6d5c661a459"
+        },
+        "control": {
+          "wall": 2.9583625000086613,
+          "cpu": 7.9375,
+          "sha256": "4193c472c358ebc037a70dbad6b9dc6be9592596921f23700c9eb442c287bd71"
+        },
+        "sibling_memo": {
+          "wall": 2.6459304999443702,
+          "cpu": 8.140625,
+          "sha256": "4193c472c358ebc037a70dbad6b9dc6be9592596921f23700c9eb442c287bd71"
+        },
+        "anchor_memo": {
+          "wall": 2.846192399971187,
+          "cpu": 7.25,
+          "sha256": "91eefcefd191b5b6a4ce34d0ffe1788c55bdee3952cfbe28e398e6d5c661a459"
+        }
+      }
+    },
+    {
+      "level": "4ply",
+      "api": "post_move_analytics",
+      "position_id": "cube-match-anchoring-01",
+      "repeat": 0,
+      "order": [
+        "control",
+        "sibling_memo",
+        "anchor_memo",
+        "anchor"
+      ],
+      "arms": {
+        "control": {
+          "wall": 0.12660580000374466,
+          "cpu": 0.296875,
+          "sha256": "e846b3fae33021be9bb790b30f2ed2c040c52e0c299c4fe45e4dc32f78274f38"
+        },
+        "sibling_memo": {
+          "wall": 0.10503370000515133,
+          "cpu": 0.328125,
+          "sha256": "e846b3fae33021be9bb790b30f2ed2c040c52e0c299c4fe45e4dc32f78274f38"
+        },
+        "anchor_memo": {
+          "wall": 0.09494150005048141,
+          "cpu": 0.3125,
+          "sha256": "e4f60a2ec223087146f4948a3778f31456b8c67ab7b28f7535568fc0d270cdba"
+        },
+        "anchor": {
+          "wall": 0.11618439998710528,
+          "cpu": 0.3125,
+          "sha256": "e4f60a2ec223087146f4948a3778f31456b8c67ab7b28f7535568fc0d270cdba"
+        }
+      }
+    },
+    {
+      "level": "3ply",
+      "api": "cube_action",
+      "position_id": "cube-match-racing-01",
+      "repeat": 0,
+      "order": [
+        "sibling_memo",
+        "anchor_memo",
+        "anchor",
+        "control"
+      ],
+      "arms": {
+        "sibling_memo": {
+          "wall": 0.007674499996937811,
+          "cpu": 0.046875,
+          "sha256": "84d78765d803b0476998733f5e51d76e545799466dc76fbf4912671382c748c8"
+        },
+        "anchor_memo": {
+          "wall": 0.006377400015480816,
+          "cpu": 0.0,
+          "sha256": "989611d6602bcc00f7b483c2a5da0e3ebb08479d84a2aa7a5e5be697274b005b"
+        },
+        "anchor": {
+          "wall": 0.005661000031977892,
+          "cpu": 0.015625,
+          "sha256": "989611d6602bcc00f7b483c2a5da0e3ebb08479d84a2aa7a5e5be697274b005b"
+        },
+        "control": {
+          "wall": 0.007357699971180409,
+          "cpu": 0.0,
+          "sha256": "84d78765d803b0476998733f5e51d76e545799466dc76fbf4912671382c748c8"
+        }
+      }
+    },
+    {
+      "level": "3ply",
+      "api": "checker_play",
+      "position_id": "checker-money-priming-01",
+      "repeat": 0,
+      "order": [
+        "anchor_memo",
+        "anchor",
+        "control",
+        "sibling_memo"
+      ],
+      "arms": {
+        "anchor_memo": {
+          "wall": 0.09414270002162084,
+          "cpu": 0.359375,
+          "sha256": "7903ac5a07b3db9859ebb3e39c40cabf24f2b0d9112868a3984d3a4da37220cd"
+        },
+        "anchor": {
+          "wall": 0.08969959995010868,
+          "cpu": 0.265625,
+          "sha256": "7903ac5a07b3db9859ebb3e39c40cabf24f2b0d9112868a3984d3a4da37220cd"
+        },
+        "control": {
+          "wall": 0.10043920000316575,
+          "cpu": 0.296875,
+          "sha256": "337abf05ef8ad4dcd96a79f3e86ec83f319ce388cf8bf1fc24973d2fede22992"
+        },
+        "sibling_memo": {
+          "wall": 0.12422230001538992,
+          "cpu": 0.25,
+          "sha256": "337abf05ef8ad4dcd96a79f3e86ec83f319ce388cf8bf1fc24973d2fede22992"
+        }
+      }
+    },
+    {
+      "level": "3ply",
+      "api": "post_move_analytics",
+      "position_id": "cube-money-racing-01",
+      "repeat": 0,
+      "order": [
+        "anchor",
+        "sibling_memo",
+        "control",
+        "anchor_memo"
+      ],
+      "arms": {
+        "anchor": {
+          "wall": 0.0018141999607905746,
+          "cpu": 0.0,
+          "sha256": "e1bfd22dd342b5e457c43a71a0ca2b79bd2903a04dad149823b7202a35783632"
+        },
+        "sibling_memo": {
+          "wall": 0.0016802999889478087,
+          "cpu": 0.0,
+          "sha256": "0b63e5aab737a50346457b09346d250eda5960982da60bf93bd263b48fab4705"
+        },
+        "control": {
+          "wall": 0.0016154000186361372,
+          "cpu": 0.0,
+          "sha256": "0b63e5aab737a50346457b09346d250eda5960982da60bf93bd263b48fab4705"
+        },
+        "anchor_memo": {
+          "wall": 0.0012432000366970897,
+          "cpu": 0.0,
+          "sha256": "e1bfd22dd342b5e457c43a71a0ca2b79bd2903a04dad149823b7202a35783632"
+        }
+      }
+    },
+    {
+      "level": "3ply",
+      "api": "cube_action",
+      "position_id": "cube-match-purerace-01",
+      "repeat": 0,
+      "order": [
+        "sibling_memo",
+        "control",
+        "anchor_memo",
+        "anchor"
+      ],
+      "arms": {
+        "sibling_memo": {
+          "wall": 0.00026080000679939985,
+          "cpu": 0.0,
+          "sha256": "841649d752fca3cde45b3ecc3458a44ea3462d8aa0d567c0465822c35e42c51c"
+        },
+        "control": {
+          "wall": 0.00042509997729212046,
+          "cpu": 0.0,
+          "sha256": "841649d752fca3cde45b3ecc3458a44ea3462d8aa0d567c0465822c35e42c51c"
+        },
+        "anchor_memo": {
+          "wall": 0.0004064000095240772,
+          "cpu": 0.0,
+          "sha256": "841649d752fca3cde45b3ecc3458a44ea3462d8aa0d567c0465822c35e42c51c"
+        },
+        "anchor": {
+          "wall": 0.0004325999761931598,
+          "cpu": 0.0,
+          "sha256": "841649d752fca3cde45b3ecc3458a44ea3462d8aa0d567c0465822c35e42c51c"
+        }
+      }
+    },
+    {
+      "level": "4ply",
+      "api": "post_move_analytics",
+      "position_id": "cube-money-anchoring-01",
+      "repeat": 0,
+      "order": [
+        "control",
+        "anchor_memo",
+        "anchor",
+        "sibling_memo"
+      ],
+      "arms": {
+        "control": {
+          "wall": 0.30299830000149086,
+          "cpu": 0.78125,
+          "sha256": "ab913ab186d630f4521f50e8211249032cbaff6c04f1c1bf92679bcbd538c7ca"
+        },
+        "anchor_memo": {
+          "wall": 0.31082979997154325,
+          "cpu": 0.875,
+          "sha256": "16d0ca3c2e7820b4f9f1d9e99fbf73b59699f4a5ab20263d74a2da09e996b2fb"
+        },
+        "anchor": {
+          "wall": 0.27801549999276176,
+          "cpu": 0.78125,
+          "sha256": "16d0ca3c2e7820b4f9f1d9e99fbf73b59699f4a5ab20263d74a2da09e996b2fb"
+        },
+        "sibling_memo": {
+          "wall": 0.27186219999566674,
+          "cpu": 0.9375,
+          "sha256": "ab913ab186d630f4521f50e8211249032cbaff6c04f1c1bf92679bcbd538c7ca"
+        }
+      }
+    },
+    {
+      "level": "4ply",
+      "api": "cube_action",
+      "position_id": "cube-money-anchoring-01",
+      "repeat": 0,
+      "order": [
+        "anchor_memo",
+        "anchor",
+        "sibling_memo",
+        "control"
+      ],
+      "arms": {
+        "anchor_memo": {
+          "wall": 0.32745059998705983,
+          "cpu": 1.15625,
+          "sha256": "0526b899dacf69a3514e1a2d40ba6a53d83837f874cb564ec6cc48036f8cecd1"
+        },
+        "anchor": {
+          "wall": 0.346235400007572,
+          "cpu": 1.03125,
+          "sha256": "0526b899dacf69a3514e1a2d40ba6a53d83837f874cb564ec6cc48036f8cecd1"
+        },
+        "sibling_memo": {
+          "wall": 0.442722000007052,
+          "cpu": 1.40625,
+          "sha256": "189eec4f2d771d42e884100c5531b9356e26f91b4e2ed5f3924ec24696dcbf07"
+        },
+        "control": {
+          "wall": 0.40443579998100176,
+          "cpu": 1.09375,
+          "sha256": "189eec4f2d771d42e884100c5531b9356e26f91b4e2ed5f3924ec24696dcbf07"
+        }
+      }
+    },
+    {
+      "level": "3ply",
+      "api": "cube_action",
+      "position_id": "cube-money-racing-01",
+      "repeat": 0,
+      "order": [
+        "sibling_memo",
+        "control",
+        "anchor",
+        "anchor_memo"
+      ],
+      "arms": {
+        "sibling_memo": {
+          "wall": 0.0032742000184953213,
+          "cpu": 0.0,
+          "sha256": "66a170619ef929cbdb4629cf5b7f54e322ca6fd28f14d374690b101721c83c83"
+        },
+        "control": {
+          "wall": 0.002937600016593933,
+          "cpu": 0.0,
+          "sha256": "66a170619ef929cbdb4629cf5b7f54e322ca6fd28f14d374690b101721c83c83"
+        },
+        "anchor": {
+          "wall": 0.002763399970717728,
+          "cpu": 0.0,
+          "sha256": "70605ae7cc5eea21c1e10d48909a15b0438f7ac4acddacce846167813b3cb31e"
+        },
+        "anchor_memo": {
+          "wall": 0.0023258000146597624,
+          "cpu": 0.0,
+          "sha256": "70605ae7cc5eea21c1e10d48909a15b0438f7ac4acddacce846167813b3cb31e"
+        }
+      }
+    },
+    {
+      "level": "4ply",
+      "api": "cube_action",
+      "position_id": "cube-match-priming-01",
+      "repeat": 0,
+      "order": [
+        "control",
+        "anchor",
+        "anchor_memo",
+        "sibling_memo"
+      ],
+      "arms": {
+        "control": {
+          "wall": 0.864232899970375,
+          "cpu": 0.796875,
+          "sha256": "21841d4f5de58c2c2d93c0610e322bab36836cfd8fbfc9cc1afa5a15eefbaf96"
+        },
+        "anchor": {
+          "wall": 0.5240190000040457,
+          "cpu": 0.71875,
+          "sha256": "4f77a2fd452276a29b3e94ee81549245d27e547422960f53bfe14877aaff8504"
+        },
+        "anchor_memo": {
+          "wall": 0.5757625999976881,
+          "cpu": 0.65625,
+          "sha256": "4f77a2fd452276a29b3e94ee81549245d27e547422960f53bfe14877aaff8504"
+        },
+        "sibling_memo": {
+          "wall": 0.4445852999924682,
+          "cpu": 0.6875,
+          "sha256": "21841d4f5de58c2c2d93c0610e322bab36836cfd8fbfc9cc1afa5a15eefbaf96"
+        }
+      }
+    },
+    {
+      "level": "4ply",
+      "api": "post_move_analytics",
+      "position_id": "cube-money-attacking-01",
+      "repeat": 0,
+      "order": [
+        "anchor",
+        "anchor_memo",
+        "sibling_memo",
+        "control"
+      ],
+      "arms": {
+        "anchor": {
+          "wall": 0.2707708000089042,
+          "cpu": 0.640625,
+          "sha256": "d082209028386fafa32352db5bb936791549160e159537e61bfa6acfa1aefa14"
+        },
+        "anchor_memo": {
+          "wall": 0.2414291999884881,
+          "cpu": 0.71875,
+          "sha256": "d082209028386fafa32352db5bb936791549160e159537e61bfa6acfa1aefa14"
+        },
+        "sibling_memo": {
+          "wall": 0.25686920003499836,
+          "cpu": 0.828125,
+          "sha256": "d72da3df6999a221fe00fa2362a895afb4a6df8d4b19052593d39a6bd8fdc0ed"
+        },
+        "control": {
+          "wall": 0.359050799976103,
+          "cpu": 0.671875,
+          "sha256": "d72da3df6999a221fe00fa2362a895afb4a6df8d4b19052593d39a6bd8fdc0ed"
+        }
+      }
+    },
+    {
+      "level": "4ply",
+      "api": "cube_action",
+      "position_id": "cube-money-priming-01",
+      "repeat": 0,
+      "order": [
+        "anchor_memo",
+        "sibling_memo",
+        "control",
+        "anchor"
+      ],
+      "arms": {
+        "anchor_memo": {
+          "wall": 0.25462989998050034,
+          "cpu": 0.453125,
+          "sha256": "0de19e1ccab6975b9333ef212ddd792b9ebf77285ab5b6f4ffb56360329c1f91"
+        },
+        "sibling_memo": {
+          "wall": 0.1832725999993272,
+          "cpu": 0.578125,
+          "sha256": "d65ec6a2de0031b42ecfbe3e74df3518a3397b0b0edcfdaf536133b92743722a"
+        },
+        "control": {
+          "wall": 0.17150719999335706,
+          "cpu": 0.625,
+          "sha256": "d65ec6a2de0031b42ecfbe3e74df3518a3397b0b0edcfdaf536133b92743722a"
+        },
+        "anchor": {
+          "wall": 0.16431419999571517,
+          "cpu": 0.578125,
+          "sha256": "0de19e1ccab6975b9333ef212ddd792b9ebf77285ab5b6f4ffb56360329c1f91"
+        }
+      }
+    },
+    {
+      "level": "4ply",
+      "api": "checker_play",
+      "position_id": "checker-money-anchoring-01",
+      "repeat": 0,
+      "order": [
+        "control",
+        "anchor",
+        "sibling_memo",
+        "anchor_memo"
+      ],
+      "arms": {
+        "control": {
+          "wall": 0.22117610002169386,
+          "cpu": 0.671875,
+          "sha256": "2bf13fdf7f068575477681c9704ef9c1b5721716b3fcbed8026e472635aec547"
+        },
+        "anchor": {
+          "wall": 0.20793189998948947,
+          "cpu": 0.609375,
+          "sha256": "7cd94aa3fc3cbee6144165aeb7c86c5fb763c1f626ee5e75930842c3e2db8fb4"
+        },
+        "sibling_memo": {
+          "wall": 0.2652238000300713,
+          "cpu": 0.578125,
+          "sha256": "2bf13fdf7f068575477681c9704ef9c1b5721716b3fcbed8026e472635aec547"
+        },
+        "anchor_memo": {
+          "wall": 0.22424700000556186,
+          "cpu": 0.53125,
+          "sha256": "7cd94aa3fc3cbee6144165aeb7c86c5fb763c1f626ee5e75930842c3e2db8fb4"
+        }
+      }
+    },
+    {
+      "level": "3ply",
+      "api": "post_move_analytics",
+      "position_id": "cube-match-purerace-01",
+      "repeat": 0,
+      "order": [
+        "anchor",
+        "sibling_memo",
+        "anchor_memo",
+        "control"
+      ],
+      "arms": {
+        "anchor": {
+          "wall": 0.000431500026024878,
+          "cpu": 0.0,
+          "sha256": "17b3787b39740e789f96ba5cd279d01e1e06b88ac7ba92a750bdcbd8e9baf218"
+        },
+        "sibling_memo": {
+          "wall": 0.0004971000016666949,
+          "cpu": 0.0,
+          "sha256": "17b3787b39740e789f96ba5cd279d01e1e06b88ac7ba92a750bdcbd8e9baf218"
+        },
+        "anchor_memo": {
+          "wall": 0.0003591999993659556,
+          "cpu": 0.0,
+          "sha256": "17b3787b39740e789f96ba5cd279d01e1e06b88ac7ba92a750bdcbd8e9baf218"
+        },
+        "control": {
+          "wall": 0.00036179996095597744,
+          "cpu": 0.0,
+          "sha256": "17b3787b39740e789f96ba5cd279d01e1e06b88ac7ba92a750bdcbd8e9baf218"
+        }
+      }
+    },
+    {
+      "level": "3ply",
+      "api": "cube_action",
+      "position_id": "cube-match-priming-01",
+      "repeat": 0,
+      "order": [
+        "sibling_memo",
+        "anchor_memo",
+        "control",
+        "anchor"
+      ],
+      "arms": {
+        "sibling_memo": {
+          "wall": 0.004143400001339614,
+          "cpu": 0.0625,
+          "sha256": "d11fdbfff7de19da4f697d291f01e6bc1b065603501ae5f17f6fe1d4d0904b78"
+        },
+        "anchor_memo": {
+          "wall": 0.0028701999690383673,
+          "cpu": 0.0,
+          "sha256": "dbf939a65930542c63fd0ed26769b40ff371001830138cd2574fc31619d543e2"
+        },
+        "control": {
+          "wall": 0.002991099958308041,
+          "cpu": 0.0,
+          "sha256": "d11fdbfff7de19da4f697d291f01e6bc1b065603501ae5f17f6fe1d4d0904b78"
+        },
+        "anchor": {
+          "wall": 0.0027779999654740095,
+          "cpu": 0.0,
+          "sha256": "dbf939a65930542c63fd0ed26769b40ff371001830138cd2574fc31619d543e2"
+        }
+      }
+    },
+    {
+      "level": "3ply",
+      "api": "post_move_analytics",
+      "position_id": "cube-money-priming-01",
+      "repeat": 0,
+      "order": [
+        "anchor_memo",
+        "control",
+        "anchor",
+        "sibling_memo"
+      ],
+      "arms": {
+        "anchor_memo": {
+          "wall": 0.01034310000250116,
+          "cpu": 0.015625,
+          "sha256": "a06f294c9a10df60ceb054f41e91cb0df69af8a5fc71108147d630f7db12a1a3"
+        },
+        "control": {
+          "wall": 0.0070238999905996025,
+          "cpu": 0.0,
+          "sha256": "692c6a3ce9e7d4fde5e0593c43cc5fcd91f433f65f5e646d0e973d41befae4c3"
+        },
+        "anchor": {
+          "wall": 0.007562199956737459,
+          "cpu": 0.046875,
+          "sha256": "a06f294c9a10df60ceb054f41e91cb0df69af8a5fc71108147d630f7db12a1a3"
+        },
+        "sibling_memo": {
+          "wall": 0.006977100041694939,
+          "cpu": 0.0,
+          "sha256": "692c6a3ce9e7d4fde5e0593c43cc5fcd91f433f65f5e646d0e973d41befae4c3"
+        }
+      }
+    },
+    {
+      "level": "3ply",
+      "api": "checker_play",
+      "position_id": "checker-match-purerace-01",
+      "repeat": 0,
+      "order": [
+        "sibling_memo",
+        "anchor",
+        "anchor_memo",
+        "control"
+      ],
+      "arms": {
+        "sibling_memo": {
+          "wall": 0.003334700013510883,
+          "cpu": 0.0,
+          "sha256": "021cadb27a12a511f4c341fd4b655ad2820b4b50755fc10df3721957a1f2cdd4"
+        },
+        "anchor": {
+          "wall": 0.0018325999844819307,
+          "cpu": 0.0,
+          "sha256": "021cadb27a12a511f4c341fd4b655ad2820b4b50755fc10df3721957a1f2cdd4"
+        },
+        "anchor_memo": {
+          "wall": 0.0019253999926149845,
+          "cpu": 0.0,
+          "sha256": "021cadb27a12a511f4c341fd4b655ad2820b4b50755fc10df3721957a1f2cdd4"
+        },
+        "control": {
+          "wall": 0.0018904000171460211,
+          "cpu": 0.0,
+          "sha256": "021cadb27a12a511f4c341fd4b655ad2820b4b50755fc10df3721957a1f2cdd4"
+        }
+      }
+    },
+    {
+      "level": "4ply",
+      "api": "checker_play",
+      "position_id": "checker-match-anchoring-01",
+      "repeat": 0,
+      "order": [
+        "anchor",
+        "anchor_memo",
+        "control",
+        "sibling_memo"
+      ],
+      "arms": {
+        "anchor": {
+          "wall": 2.8497672000085004,
+          "cpu": 6.90625,
+          "sha256": "e0cda6c8c40286fb8edd04aa4b82f05919de08ba947ce293ae866ad11cf9f647"
+        },
+        "anchor_memo": {
+          "wall": 2.4538967999978922,
+          "cpu": 6.671875,
+          "sha256": "e0cda6c8c40286fb8edd04aa4b82f05919de08ba947ce293ae866ad11cf9f647"
+        },
+        "control": {
+          "wall": 2.4553333000512794,
+          "cpu": 6.921875,
+          "sha256": "5a56644b78b6acad437210ec035e6701f03f5fcc5b4ad875f0acf0236c90e9e5"
+        },
+        "sibling_memo": {
+          "wall": 2.028374099987559,
+          "cpu": 7.296875,
+          "sha256": "5a56644b78b6acad437210ec035e6701f03f5fcc5b4ad875f0acf0236c90e9e5"
+        }
+      }
+    },
+    {
+      "level": "3ply",
+      "api": "cube_action",
+      "position_id": "cube-money-attacking-01",
+      "repeat": 0,
+      "order": [
+        "anchor_memo",
+        "control",
+        "sibling_memo",
+        "anchor"
+      ],
+      "arms": {
+        "anchor_memo": {
+          "wall": 0.007502599968574941,
+          "cpu": 0.0625,
+          "sha256": "2e7b42c4c2eb5fa818460412719eea3433f098b5a123758bd87b10579e8cf080"
+        },
+        "control": {
+          "wall": 0.009589199966285378,
+          "cpu": 0.0,
+          "sha256": "5840d4ba28dc807e6d717ee429efbd19a010121a99a4b11154422d144aa41296"
+        },
+        "sibling_memo": {
+          "wall": 0.008056599996052682,
+          "cpu": 0.0625,
+          "sha256": "5840d4ba28dc807e6d717ee429efbd19a010121a99a4b11154422d144aa41296"
+        },
+        "anchor": {
+          "wall": 0.0070180000038817525,
+          "cpu": 0.0,
+          "sha256": "2e7b42c4c2eb5fa818460412719eea3433f098b5a123758bd87b10579e8cf080"
+        }
+      }
+    },
+    {
+      "level": "3ply",
+      "api": "cube_action",
+      "position_id": "cube-match-anchoring-01",
+      "repeat": 0,
+      "order": [
+        "control",
+        "sibling_memo",
+        "anchor",
+        "anchor_memo"
+      ],
+      "arms": {
+        "control": {
+          "wall": 0.007701499969698489,
+          "cpu": 0.046875,
+          "sha256": "f47e1ff1e40f23e0426ddb4ee36516db3c0cd27547a10522ab0265e831b0acb0"
+        },
+        "sibling_memo": {
+          "wall": 0.007803099986631423,
+          "cpu": 0.0,
+          "sha256": "f47e1ff1e40f23e0426ddb4ee36516db3c0cd27547a10522ab0265e831b0acb0"
+        },
+        "anchor": {
+          "wall": 0.006442399986553937,
+          "cpu": 0.0,
+          "sha256": "24dec203eae3ae5a36d3d3c27d21247c144f5c4a73d702b6b59c3adb9c0af99a"
+        },
+        "anchor_memo": {
+          "wall": 0.006863499991595745,
+          "cpu": 0.0,
+          "sha256": "24dec203eae3ae5a36d3d3c27d21247c144f5c4a73d702b6b59c3adb9c0af99a"
+        }
+      }
+    },
+    {
+      "level": "4ply",
+      "api": "post_move_analytics",
+      "position_id": "cube-match-priming-01",
+      "repeat": 0,
+      "order": [
+        "control",
+        "anchor_memo",
+        "anchor",
+        "sibling_memo"
+      ],
+      "arms": {
+        "control": {
+          "wall": 0.17581719998270273,
+          "cpu": 0.640625,
+          "sha256": "d95b2c70cc2cc06cf6d7869fc5478e7923a65e66f711eea1f8688bf52d3ff4ec"
+        },
+        "anchor_memo": {
+          "wall": 0.15553219994762912,
+          "cpu": 0.5625,
+          "sha256": "a14d56b2b43cc5ba72fb5ddeeadf1d76394b8f475ec9783d92ed1f4130f77b52"
+        },
+        "anchor": {
+          "wall": 0.16804409999167547,
+          "cpu": 0.5625,
+          "sha256": "a14d56b2b43cc5ba72fb5ddeeadf1d76394b8f475ec9783d92ed1f4130f77b52"
+        },
+        "sibling_memo": {
+          "wall": 0.17934169998625293,
+          "cpu": 0.625,
+          "sha256": "d95b2c70cc2cc06cf6d7869fc5478e7923a65e66f711eea1f8688bf52d3ff4ec"
+        }
+      }
+    },
+    {
+      "level": "3ply",
+      "api": "cube_action",
+      "position_id": "cube-match-attacking-01",
+      "repeat": 0,
+      "order": [
+        "anchor_memo",
+        "anchor",
+        "sibling_memo",
+        "control"
+      ],
+      "arms": {
+        "anchor_memo": {
+          "wall": 0.004544799972791225,
+          "cpu": 0.0,
+          "sha256": "e96c304648caf20008704c5055400427e6481333f349416c3e802f94ff9e91d8"
+        },
+        "anchor": {
+          "wall": 0.0046242999960668385,
+          "cpu": 0.0625,
+          "sha256": "e96c304648caf20008704c5055400427e6481333f349416c3e802f94ff9e91d8"
+        },
+        "sibling_memo": {
+          "wall": 0.005463300039991736,
+          "cpu": 0.0,
+          "sha256": "f93a260c108f1b92cc20f848759436afa5875d53f5c9363f900a134de2501ce4"
+        },
+        "control": {
+          "wall": 0.00487150001572445,
+          "cpu": 0.0,
+          "sha256": "f93a260c108f1b92cc20f848759436afa5875d53f5c9363f900a134de2501ce4"
+        }
+      }
+    },
+    {
+      "level": "3ply",
+      "api": "post_move_analytics",
+      "position_id": "cube-money-attacking-01",
+      "repeat": 0,
+      "order": [
+        "anchor",
+        "sibling_memo",
+        "control",
+        "anchor_memo"
+      ],
+      "arms": {
+        "anchor": {
+          "wall": 0.005107600009068847,
+          "cpu": 0.0,
+          "sha256": "815d32eae12fb2445d4f49b3cfa59f0b4db76707d310e4d2f60ee493e3407a95"
+        },
+        "sibling_memo": {
+          "wall": 0.005254399962723255,
+          "cpu": 0.0,
+          "sha256": "7335d6013f323b47287f1e6cfac1cde4b5d94a33b1ef02a068adf1343047479a"
+        },
+        "control": {
+          "wall": 0.004765500023495406,
+          "cpu": 0.0,
+          "sha256": "7335d6013f323b47287f1e6cfac1cde4b5d94a33b1ef02a068adf1343047479a"
+        },
+        "anchor_memo": {
+          "wall": 0.004297600011341274,
+          "cpu": 0.0,
+          "sha256": "815d32eae12fb2445d4f49b3cfa59f0b4db76707d310e4d2f60ee493e3407a95"
+        }
+      }
+    },
+    {
+      "level": "3ply",
+      "api": "post_move_analytics",
+      "position_id": "cube-money-anchoring-01",
+      "repeat": 0,
+      "order": [
+        "sibling_memo",
+        "control",
+        "anchor_memo",
+        "anchor"
+      ],
+      "arms": {
+        "sibling_memo": {
+          "wall": 0.004318699997384101,
+          "cpu": 0.0,
+          "sha256": "bd696bc6ebd58e3fc9e91cf4ba3d3f1941cc7437e5f6da4bc9b35c01605ab591"
+        },
+        "control": {
+          "wall": 0.003536400035955012,
+          "cpu": 0.0,
+          "sha256": "bd696bc6ebd58e3fc9e91cf4ba3d3f1941cc7437e5f6da4bc9b35c01605ab591"
+        },
+        "anchor_memo": {
+          "wall": 0.0032821999629959464,
+          "cpu": 0.0625,
+          "sha256": "9279dc17eddfae1b3156164950d1ef6f64ac68a2bed3c4d6ee78f5731cc284d7"
+        },
+        "anchor": {
+          "wall": 0.0034667999716475606,
+          "cpu": 0.0,
+          "sha256": "9279dc17eddfae1b3156164950d1ef6f64ac68a2bed3c4d6ee78f5731cc284d7"
+        }
+      }
+    },
+    {
+      "level": "3ply",
+      "api": "post_move_analytics",
+      "position_id": "cube-match-attacking-01",
+      "repeat": 0,
+      "order": [
+        "anchor_memo",
+        "control",
+        "sibling_memo",
+        "anchor"
+      ],
+      "arms": {
+        "anchor_memo": {
+          "wall": 0.004119199991691858,
+          "cpu": 0.0,
+          "sha256": "919e8edde9b1fdac578a346ae78d8625a6cdcba68443b2da7da62b0906a371be"
+        },
+        "control": {
+          "wall": 0.003991300007328391,
+          "cpu": 0.0625,
+          "sha256": "1a008727f39959f248e636007aeaaf22335956429feef68e376d9648e7310e94"
+        },
+        "sibling_memo": {
+          "wall": 0.004316100035794079,
+          "cpu": 0.0,
+          "sha256": "1a008727f39959f248e636007aeaaf22335956429feef68e376d9648e7310e94"
+        },
+        "anchor": {
+          "wall": 0.003583200043067336,
+          "cpu": 0.0,
+          "sha256": "919e8edde9b1fdac578a346ae78d8625a6cdcba68443b2da7da62b0906a371be"
+        }
+      }
+    },
+    {
+      "level": "3ply",
+      "api": "post_move_analytics",
+      "position_id": "cube-money-purerace-01",
+      "repeat": 0,
+      "order": [
+        "control",
+        "sibling_memo",
+        "anchor",
+        "anchor_memo"
+      ],
+      "arms": {
+        "control": {
+          "wall": 0.0015737999929115176,
+          "cpu": 0.0,
+          "sha256": "5e78234469fa6586443a302fa2f452225a4f737b74367804841a322937f022ea"
+        },
+        "sibling_memo": {
+          "wall": 0.0016258000396192074,
+          "cpu": 0.0,
+          "sha256": "5e78234469fa6586443a302fa2f452225a4f737b74367804841a322937f022ea"
+        },
+        "anchor": {
+          "wall": 0.001068499987013638,
+          "cpu": 0.046875,
+          "sha256": "abc079bca3b95ec500a475b5ba5d5e3f594ece5da0c6eda05c886e86c00fd27c"
+        },
+        "anchor_memo": {
+          "wall": 0.0012051000376231968,
+          "cpu": 0.0,
+          "sha256": "abc079bca3b95ec500a475b5ba5d5e3f594ece5da0c6eda05c886e86c00fd27c"
+        }
+      }
+    },
+    {
+      "level": "4ply",
+      "api": "post_move_analytics",
+      "position_id": "cube-money-racing-01",
+      "repeat": 0,
+      "order": [
+        "sibling_memo",
+        "anchor",
+        "anchor_memo",
+        "control"
+      ],
+      "arms": {
+        "sibling_memo": {
+          "wall": 0.09705109999049455,
+          "cpu": 0.3125,
+          "sha256": "bf8065260e2d286eff6d5c743e84011bb73a1c795008662eee96ce9e724f3a1f"
+        },
+        "anchor": {
+          "wall": 0.08218950004084036,
+          "cpu": 0.203125,
+          "sha256": "b97901445892017b4318c51ffda6aa285279f94484c0467c0c84cad0a1ad515f"
+        },
+        "anchor_memo": {
+          "wall": 0.06713059998583049,
+          "cpu": 0.171875,
+          "sha256": "b97901445892017b4318c51ffda6aa285279f94484c0467c0c84cad0a1ad515f"
+        },
+        "control": {
+          "wall": 0.06990629999199882,
+          "cpu": 0.234375,
+          "sha256": "bf8065260e2d286eff6d5c743e84011bb73a1c795008662eee96ce9e724f3a1f"
+        }
+      }
+    },
+    {
+      "level": "3ply",
+      "api": "cube_action",
+      "position_id": "cube-money-priming-01",
+      "repeat": 0,
+      "order": [
+        "anchor",
+        "anchor_memo",
+        "control",
+        "sibling_memo"
+      ],
+      "arms": {
+        "anchor": {
+          "wall": 0.00867930002277717,
+          "cpu": 0.0625,
+          "sha256": "6cb06c7b3420260b312f03950b721160a17c6c2444c5d3a95214a130ca19a5d6"
+        },
+        "anchor_memo": {
+          "wall": 0.00876810000045225,
+          "cpu": 0.0,
+          "sha256": "6cb06c7b3420260b312f03950b721160a17c6c2444c5d3a95214a130ca19a5d6"
+        },
+        "control": {
+          "wall": 0.010378000035416335,
+          "cpu": 0.03125,
+          "sha256": "78aad4e415886124426838c8e598bb91f9c37b6508ac946ad745062f49a39f7d"
+        },
+        "sibling_memo": {
+          "wall": 0.00908670003991574,
+          "cpu": 0.03125,
+          "sha256": "78aad4e415886124426838c8e598bb91f9c37b6508ac946ad745062f49a39f7d"
+        }
+      }
+    },
+    {
+      "level": "4ply",
+      "api": "post_move_analytics",
+      "position_id": "cube-match-purerace-01",
+      "repeat": 0,
+      "order": [
+        "control",
+        "anchor_memo",
+        "anchor",
+        "sibling_memo"
+      ],
+      "arms": {
+        "control": {
+          "wall": 0.0010012999991886318,
+          "cpu": 0.0,
+          "sha256": "e4ddb72aab41e97ec58d127b6376117781f354a1b2d23e559def780578701525"
+        },
+        "anchor_memo": {
+          "wall": 0.0007245999877341092,
+          "cpu": 0.0,
+          "sha256": "e4ddb72aab41e97ec58d127b6376117781f354a1b2d23e559def780578701525"
+        },
+        "anchor": {
+          "wall": 0.0008802000083960593,
+          "cpu": 0.0,
+          "sha256": "e4ddb72aab41e97ec58d127b6376117781f354a1b2d23e559def780578701525"
+        },
+        "sibling_memo": {
+          "wall": 0.0009187000105157495,
+          "cpu": 0.0,
+          "sha256": "e4ddb72aab41e97ec58d127b6376117781f354a1b2d23e559def780578701525"
+        }
+      }
+    },
+    {
+      "level": "3ply",
+      "api": "checker_play",
+      "position_id": "checker-money-anchoring-01",
+      "repeat": 0,
+      "order": [
+        "anchor_memo",
+        "anchor",
+        "sibling_memo",
+        "control"
+      ],
+      "arms": {
+        "anchor_memo": {
+          "wall": 0.013361000048462301,
+          "cpu": 0.046875,
+          "sha256": "9015d89e65a85f20a7ab0ac7468bb88ccbc6295a668789d96e98d28abec240ba"
+        },
+        "anchor": {
+          "wall": 0.011310300033073872,
+          "cpu": 0.046875,
+          "sha256": "9015d89e65a85f20a7ab0ac7468bb88ccbc6295a668789d96e98d28abec240ba"
+        },
+        "sibling_memo": {
+          "wall": 0.014054100029170513,
+          "cpu": 0.015625,
+          "sha256": "2f63da68c38fc71df42610a31e4d6f746f4ba5f861807eab99327de0e32b38f4"
+        },
+        "control": {
+          "wall": 0.012254100001882762,
+          "cpu": 0.0,
+          "sha256": "2f63da68c38fc71df42610a31e4d6f746f4ba5f861807eab99327de0e32b38f4"
+        }
+      }
+    },
+    {
+      "level": "4ply",
+      "api": "checker_play",
+      "position_id": "checker-match-attacking-01",
+      "repeat": 0,
+      "order": [
+        "anchor",
+        "sibling_memo",
+        "control",
+        "anchor_memo"
+      ],
+      "arms": {
+        "anchor": {
+          "wall": 4.795132800005376,
+          "cpu": 17.046875,
+          "sha256": "a2faadd96f26f288b1afe3638f542c2f36de5a0e60f98016a29f147398c19411"
+        },
+        "sibling_memo": {
+          "wall": 5.044864700001199,
+          "cpu": 18.171875,
+          "sha256": "f42c3fd85c87b43dacc5979afce15131001c159c2593436f73e4fb0a556dffe9"
+        },
+        "control": {
+          "wall": 5.568681300035678,
+          "cpu": 18.25,
+          "sha256": "f42c3fd85c87b43dacc5979afce15131001c159c2593436f73e4fb0a556dffe9"
+        },
+        "anchor_memo": {
+          "wall": 4.451182399992831,
+          "cpu": 16.640625,
+          "sha256": "a2faadd96f26f288b1afe3638f542c2f36de5a0e60f98016a29f147398c19411"
+        }
+      }
+    },
+    {
+      "level": "4ply",
+      "api": "cube_action",
+      "position_id": "cube-money-racing-01",
+      "repeat": 0,
+      "order": [
+        "sibling_memo",
+        "control",
+        "anchor_memo",
+        "anchor"
+      ],
+      "arms": {
+        "sibling_memo": {
+          "wall": 0.0904498000163585,
+          "cpu": 0.296875,
+          "sha256": "99947b950c53c4ac05d490d5067f16697fe0e8e6698ada22825ffdceea1a32c3"
+        },
+        "control": {
+          "wall": 0.08565109997289255,
+          "cpu": 0.3125,
+          "sha256": "99947b950c53c4ac05d490d5067f16697fe0e8e6698ada22825ffdceea1a32c3"
+        },
+        "anchor_memo": {
+          "wall": 0.07841609994648024,
+          "cpu": 0.265625,
+          "sha256": "14e972d3594e504fb60ce508cb9684d6710a6faf9466be10a7ae320bdd6058e6"
+        },
+        "anchor": {
+          "wall": 0.08167639997554943,
+          "cpu": 0.3125,
+          "sha256": "14e972d3594e504fb60ce508cb9684d6710a6faf9466be10a7ae320bdd6058e6"
+        }
+      }
+    },
+    {
+      "level": "3ply",
+      "api": "checker_play",
+      "position_id": "checker-match-anchoring-01",
+      "repeat": 0,
+      "order": [
+        "control",
+        "sibling_memo",
+        "anchor_memo",
+        "anchor"
+      ],
+      "arms": {
+        "control": {
+          "wall": 0.04506259999470785,
+          "cpu": 0.125,
+          "sha256": "f99b27601ccd94bc6e9184746a74f2cb64e31489b26e9a431870f624f602fc03"
+        },
+        "sibling_memo": {
+          "wall": 0.04966990003595129,
+          "cpu": 0.21875,
+          "sha256": "f99b27601ccd94bc6e9184746a74f2cb64e31489b26e9a431870f624f602fc03"
+        },
+        "anchor_memo": {
+          "wall": 0.041839600016828626,
+          "cpu": 0.125,
+          "sha256": "5f457bce13fec8cffabfb0b12949f50e62167c36d48399a909dc0b1d0c72e064"
+        },
+        "anchor": {
+          "wall": 0.041909300023689866,
+          "cpu": 0.15625,
+          "sha256": "5f457bce13fec8cffabfb0b12949f50e62167c36d48399a909dc0b1d0c72e064"
+        }
+      }
+    },
+    {
+      "level": "3ply",
+      "api": "checker_play",
+      "position_id": "checker-money-attacking-01",
+      "repeat": 0,
+      "order": [
+        "sibling_memo",
+        "anchor_memo",
+        "anchor",
+        "control"
+      ],
+      "arms": {
+        "sibling_memo": {
+          "wall": 0.10159530001692474,
+          "cpu": 0.40625,
+          "sha256": "f3276954bc5cdc71d218d151a5d35464107b70e1a9cbd5829ad3cfda6b4ad4c6"
+        },
+        "anchor_memo": {
+          "wall": 0.09200820000842214,
+          "cpu": 0.34375,
+          "sha256": "27a1558c664de57ae4d240a8fd51c39c2fab98e2fcbabb0c29f4be070b0f522c"
+        },
+        "anchor": {
+          "wall": 0.09589410002809018,
+          "cpu": 0.34375,
+          "sha256": "27a1558c664de57ae4d240a8fd51c39c2fab98e2fcbabb0c29f4be070b0f522c"
+        },
+        "control": {
+          "wall": 0.0972858999739401,
+          "cpu": 0.359375,
+          "sha256": "f3276954bc5cdc71d218d151a5d35464107b70e1a9cbd5829ad3cfda6b4ad4c6"
+        }
+      }
+    },
+    {
+      "level": "4ply",
+      "api": "post_move_analytics",
+      "position_id": "cube-money-purerace-01",
+      "repeat": 0,
+      "order": [
+        "anchor_memo",
+        "anchor",
+        "control",
+        "sibling_memo"
+      ],
+      "arms": {
+        "anchor_memo": {
+          "wall": 0.008802699972875416,
+          "cpu": 0.0625,
+          "sha256": "de8d34c32f20afcc30dc5608237b5c8e0cba174a2fb64b6b4408e9d66fc1e49c"
+        },
+        "anchor": {
+          "wall": 0.008767399995122105,
+          "cpu": 0.0,
+          "sha256": "de8d34c32f20afcc30dc5608237b5c8e0cba174a2fb64b6b4408e9d66fc1e49c"
+        },
+        "control": {
+          "wall": 0.008793399960268289,
+          "cpu": 0.0625,
+          "sha256": "de8d34c32f20afcc30dc5608237b5c8e0cba174a2fb64b6b4408e9d66fc1e49c"
+        },
+        "sibling_memo": {
+          "wall": 0.009174300008453429,
+          "cpu": 0.03125,
+          "sha256": "de8d34c32f20afcc30dc5608237b5c8e0cba174a2fb64b6b4408e9d66fc1e49c"
+        }
+      }
+    },
+    {
+      "level": "3ply",
+      "api": "post_move_analytics",
+      "position_id": "cube-match-racing-01",
+      "repeat": 0,
+      "order": [
+        "anchor",
+        "control",
+        "sibling_memo",
+        "anchor_memo"
+      ],
+      "arms": {
+        "anchor": {
+          "wall": 0.004423900041729212,
+          "cpu": 0.0,
+          "sha256": "5f7980a083ee61f659e39772be10a645dcd4216e2ed21ea278ee22556906941a"
+        },
+        "control": {
+          "wall": 0.004396700009237975,
+          "cpu": 0.0,
+          "sha256": "8da8c5713adc8a2b9cf6842de54c13bd5b8b796b32e6ac77b26abd7e4a9f4247"
+        },
+        "sibling_memo": {
+          "wall": 0.005330100015271455,
+          "cpu": 0.03125,
+          "sha256": "8da8c5713adc8a2b9cf6842de54c13bd5b8b796b32e6ac77b26abd7e4a9f4247"
+        },
+        "anchor_memo": {
+          "wall": 0.004548099997919053,
+          "cpu": 0.0,
+          "sha256": "5f7980a083ee61f659e39772be10a645dcd4216e2ed21ea278ee22556906941a"
+        }
+      }
+    },
+    {
+      "level": "3ply",
+      "api": "checker_play",
+      "position_id": "checker-money-racing-01",
+      "repeat": 0,
+      "order": [
+        "anchor",
+        "sibling_memo",
+        "anchor_memo",
+        "control"
+      ],
+      "arms": {
+        "anchor": {
+          "wall": 0.003308699990157038,
+          "cpu": 0.0,
+          "sha256": "85d1a3a386cbcde37f6c7955d26d80148d4812a2e7fb84736eff9066989ff89d"
+        },
+        "sibling_memo": {
+          "wall": 0.0031638999935239553,
+          "cpu": 0.0,
+          "sha256": "08519a3987af15326610cad4985d146f17a5765e6a4fae0a12178c461f4284dd"
+        },
+        "anchor_memo": {
+          "wall": 0.0030122000025585294,
+          "cpu": 0.03125,
+          "sha256": "85d1a3a386cbcde37f6c7955d26d80148d4812a2e7fb84736eff9066989ff89d"
+        },
+        "control": {
+          "wall": 0.0036069999914616346,
+          "cpu": 0.0,
+          "sha256": "08519a3987af15326610cad4985d146f17a5765e6a4fae0a12178c461f4284dd"
+        }
+      }
+    },
+    {
+      "level": "3ply",
+      "api": "post_move_analytics",
+      "position_id": "cube-match-priming-01",
+      "repeat": 0,
+      "order": [
+        "sibling_memo",
+        "anchor_memo",
+        "control",
+        "anchor"
+      ],
+      "arms": {
+        "sibling_memo": {
+          "wall": 0.002156500006094575,
+          "cpu": 0.0,
+          "sha256": "4a1031ad02bee41eba6580c8397be3bdb71b03630d861d87ee96567fc0a6fd57"
+        },
+        "anchor_memo": {
+          "wall": 0.0019210000173188746,
+          "cpu": 0.0,
+          "sha256": "7eb966006daa636aee558144ea9e915ea4f0e3d087f7187ae07c8150ab5b7eb7"
+        },
+        "control": {
+          "wall": 0.0022637000074610114,
+          "cpu": 0.0,
+          "sha256": "4a1031ad02bee41eba6580c8397be3bdb71b03630d861d87ee96567fc0a6fd57"
+        },
+        "anchor": {
+          "wall": 0.001770599978044629,
+          "cpu": 0.0625,
+          "sha256": "7eb966006daa636aee558144ea9e915ea4f0e3d087f7187ae07c8150ab5b7eb7"
+        }
+      }
+    },
+    {
+      "level": "4ply",
+      "api": "post_move_analytics",
+      "position_id": "cube-match-racing-01",
+      "repeat": 0,
+      "order": [
+        "anchor_memo",
+        "control",
+        "anchor",
+        "sibling_memo"
+      ],
+      "arms": {
+        "anchor_memo": {
+          "wall": 0.04997169994749129,
+          "cpu": 0.140625,
+          "sha256": "b946672a3a43002e4796a6e3f1e1c70365d3541ecf75d77cf06b89cd68942915"
+        },
+        "control": {
+          "wall": 0.04780240001855418,
+          "cpu": 0.1875,
+          "sha256": "00953a64e166bb6c61c4162e461c8c7b1de020f5e5883604566775638c449014"
+        },
+        "anchor": {
+          "wall": 0.044520099996589124,
+          "cpu": 0.15625,
+          "sha256": "b946672a3a43002e4796a6e3f1e1c70365d3541ecf75d77cf06b89cd68942915"
+        },
+        "sibling_memo": {
+          "wall": 0.050699799961876124,
+          "cpu": 0.171875,
+          "sha256": "00953a64e166bb6c61c4162e461c8c7b1de020f5e5883604566775638c449014"
+        }
+      }
+    },
+    {
+      "level": "4ply",
+      "api": "checker_play",
+      "position_id": "checker-money-racing-01",
+      "repeat": 0,
+      "order": [
+        "control",
+        "anchor",
+        "sibling_memo",
+        "anchor_memo"
+      ],
+      "arms": {
+        "control": {
+          "wall": 0.3614640000159852,
+          "cpu": 0.71875,
+          "sha256": "e05714b340a171d4c328560eebc42c188f52494e5a4c5b4894127e516251c6c9"
+        },
+        "anchor": {
+          "wall": 0.33661299996310845,
+          "cpu": 0.671875,
+          "sha256": "95bc5b16f4ba1d357acc060f735f3c6b2197368e177fdeb8adedaa6d7155b1ca"
+        },
+        "sibling_memo": {
+          "wall": 0.48966720001772046,
+          "cpu": 0.90625,
+          "sha256": "e05714b340a171d4c328560eebc42c188f52494e5a4c5b4894127e516251c6c9"
+        },
+        "anchor_memo": {
+          "wall": 0.4078655999619514,
+          "cpu": 0.8125,
+          "sha256": "95bc5b16f4ba1d357acc060f735f3c6b2197368e177fdeb8adedaa6d7155b1ca"
+        }
+      }
+    },
+    {
+      "level": "4ply",
+      "api": "checker_play",
+      "position_id": "checker-match-racing-01",
+      "repeat": 0,
+      "order": [
+        "anchor_memo",
+        "anchor",
+        "control",
+        "sibling_memo"
+      ],
+      "arms": {
+        "anchor_memo": {
+          "wall": 0.8477766000432894,
+          "cpu": 1.671875,
+          "sha256": "e6a24f4ab6d1c7161620b5af2802672c712e8de0876529a2fd33b896278e44c9"
+        },
+        "anchor": {
+          "wall": 0.815620300010778,
+          "cpu": 1.625,
+          "sha256": "e6a24f4ab6d1c7161620b5af2802672c712e8de0876529a2fd33b896278e44c9"
+        },
+        "control": {
+          "wall": 0.8358460000017658,
+          "cpu": 1.640625,
+          "sha256": "ae73d1654563e65aaf294b7d9ca8e03bf69fe0e74625c4c130699ecce88c9afe"
+        },
+        "sibling_memo": {
+          "wall": 0.9281726999906823,
+          "cpu": 1.796875,
+          "sha256": "ae73d1654563e65aaf294b7d9ca8e03bf69fe0e74625c4c130699ecce88c9afe"
+        }
+      }
+    },
+    {
+      "level": "4ply",
+      "api": "post_move_analytics",
+      "position_id": "cube-match-attacking-01",
+      "repeat": 0,
+      "order": [
+        "anchor",
+        "control",
+        "sibling_memo",
+        "anchor_memo"
+      ],
+      "arms": {
+        "anchor": {
+          "wall": 0.11859809997258708,
+          "cpu": 0.390625,
+          "sha256": "d54afa1e0a814a7caef0808a0315d5b1a3dc037f6f89cdf3f7935f1c3000625f"
+        },
+        "control": {
+          "wall": 0.13329980004345998,
+          "cpu": 0.40625,
+          "sha256": "4fd0ffcb36e13bbc60f7213d460f4427939c26c021ed1bf0ddaadba4c185b829"
+        },
+        "sibling_memo": {
+          "wall": 0.12846279999939725,
+          "cpu": 0.421875,
+          "sha256": "4fd0ffcb36e13bbc60f7213d460f4427939c26c021ed1bf0ddaadba4c185b829"
+        },
+        "anchor_memo": {
+          "wall": 0.1231743999524042,
+          "cpu": 0.375,
+          "sha256": "d54afa1e0a814a7caef0808a0315d5b1a3dc037f6f89cdf3f7935f1c3000625f"
+        }
+      }
+    },
+    {
+      "level": "4ply",
+      "api": "checker_play",
+      "position_id": "checker-money-priming-01",
+      "repeat": 0,
+      "order": [
+        "control",
+        "sibling_memo",
+        "anchor_memo",
+        "anchor"
+      ],
+      "arms": {
+        "control": {
+          "wall": 3.1639234999893233,
+          "cpu": 8.21875,
+          "sha256": "29da4087433f5ad39c05de2ce4c5d45a58deb0d016f6d2ed1904115f713c07b9"
+        },
+        "sibling_memo": {
+          "wall": 2.874068000004627,
+          "cpu": 8.796875,
+          "sha256": "29da4087433f5ad39c05de2ce4c5d45a58deb0d016f6d2ed1904115f713c07b9"
+        },
+        "anchor_memo": {
+          "wall": 2.4825683999806643,
+          "cpu": 8.328125,
+          "sha256": "3d67444ad8475a1fde27df31678561932ea550cb1254ac0daae1b2c5866a090a"
+        },
+        "anchor": {
+          "wall": 2.2781295999884605,
+          "cpu": 8.03125,
+          "sha256": "3d67444ad8475a1fde27df31678561932ea550cb1254ac0daae1b2c5866a090a"
+        }
+      }
+    },
+    {
+      "level": "4ply",
+      "api": "cube_action",
+      "position_id": "cube-money-attacking-01",
+      "repeat": 0,
+      "order": [
+        "sibling_memo",
+        "anchor_memo",
+        "anchor",
+        "control"
+      ],
+      "arms": {
+        "sibling_memo": {
+          "wall": 0.3221754999831319,
+          "cpu": 1.015625,
+          "sha256": "f73a9aa4ed8db5d962c0232cedd27f84f1791cee44149c0c1752862ceb4a5dc8"
+        },
+        "anchor_memo": {
+          "wall": 0.2623139999923296,
+          "cpu": 0.796875,
+          "sha256": "b80ad88c07650821fa59c48da4c62f41dde3e0b2333ba0aca71e72de0f32857c"
+        },
+        "anchor": {
+          "wall": 0.26544509996892884,
+          "cpu": 0.890625,
+          "sha256": "b80ad88c07650821fa59c48da4c62f41dde3e0b2333ba0aca71e72de0f32857c"
+        },
+        "control": {
+          "wall": 0.26728649996221066,
+          "cpu": 0.953125,
+          "sha256": "f73a9aa4ed8db5d962c0232cedd27f84f1791cee44149c0c1752862ceb4a5dc8"
+        }
+      }
+    }
+  ]
+}

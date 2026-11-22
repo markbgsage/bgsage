@@ -1,0 +1,44 @@
+{
+  "metadata": {
+    "hashes": {
+      "base": "19e8097153b517bfb801e63b49d7544d1b50275115f964da5ae4ecefa348d50c",
+      "fast": "92d31211f25a86f3857da9f4d6e731ba634bcdcde5b897a80938ad24aed11f35"
+    },
+    "mask": 3840,
+    "threads": 4,
+    "levels": [
+      "4ply=3"
+    ],
+    "cases_per_repeat": 10
+  },
+  "levels": {
+    "4ply": {
+      "base": {
+        "calls": 30,
+        "seconds": 42.10530219989596,
+        "speedup_vs_relink": 1.0,
+        "paired_median_speedup": 1.0,
+        "faster_pairs": 0,
+        "exact_vs_relink": 30,
+        "by_repeat": {
+          "0": 9.545988199941348,
+          "1": 17.01114139991114,
+          "2": 15.548172600043472
+        }
+      },
+      "fast": {
+        "calls": 30,
+        "seconds": 41.52857659995789,
+        "speedup_vs_relink": 1.013887439617631,
+        "paired_median_speedup": 1.0633801534489757,
+        "faster_pairs": 23,
+        "exact_vs_relink": 30,
+        "by_repeat": {
+          "0": 9.804156300029717,
+          "1": 15.387844599899836,
+          "2": 16.336575700028334
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,97 @@
+{
+  "metadata": {
+    "hashes": {
+      "base": "92d31211f25a86f3857da9f4d6e731ba634bcdcde5b897a80938ad24aed11f35",
+      "relative": "d258b9b8c7625e5aa7bdd4f5af0edc7897853099fcfd8f2e10ebdcafca81b89e",
+      "lookup": "1cb716cf83254cfa98d1a2f249e69f42d92fce1f53059103c042aa003e0f2e36"
+    },
+    "mask": 3840,
+    "threads": 4,
+    "levels": [
+      "2ply=2",
+      "3ply=3"
+    ],
+    "cases_per_repeat": 300
+  },
+  "levels": {
+    "2ply": {
+      "base": {
+        "calls": 600,
+        "seconds": 1.1243776010232978,
+        "speedup_vs_relink": 1.0,
+        "paired_median_speedup": 1.0,
+        "faster_pairs": 0,
+        "exact_vs_relink": 600,
+        "by_repeat": {
+          "0": 0.5568265002802946,
+          "1": 0.5675511007430032
+        }
+      },
+      "relative": {
+        "calls": 600,
+        "seconds": 1.1195773993385956,
+        "speedup_vs_relink": 1.0042875121340766,
+        "paired_median_speedup": 1.0058979664264052,
+        "faster_pairs": 337,
+        "exact_vs_relink": 600,
+        "by_repeat": {
+          "0": 0.5572266002418473,
+          "1": 0.5623507990967482
+        }
+      },
+      "lookup": {
+        "calls": 600,
+        "seconds": 1.1339317999081686,
+        "speedup_vs_relink": 0.9915742737917355,
+        "paired_median_speedup": 0.9954726456127179,
+        "faster_pairs": 258,
+        "exact_vs_relink": 600,
+        "by_repeat": {
+          "0": 0.5597600998007692,
+          "1": 0.5741717001073994
+        }
+      }
+    },
+    "3ply": {
+      "base": {
+        "calls": 900,
+        "seconds": 22.98388330009766,
+        "speedup_vs_relink": 1.0,
+        "paired_median_speedup": 1.0,
+        "faster_pairs": 0,
+        "exact_vs_relink": 900,
+        "by_repeat": {
+          "0": 7.145539699238725,
+          "1": 8.244322100596037,
+          "2": 7.5940215002628975
+        }
+      },
+      "relative": {
+        "calls": 900,
+        "seconds": 22.82243940018816,
+        "speedup_vs_relink": 1.0070739107717017,
+        "paired_median_speedup": 1.0018255447933533,
+        "faster_pairs": 461,
+        "exact_vs_relink": 900,
+        "by_repeat": {
+          "0": 7.1059734000009485,
+          "1": 8.233179599919822,
+          "2": 7.483286400267389
+        }
+      },
+      "lookup": {
+        "calls": 900,
+        "seconds": 23.076918700535316,
+        "speedup_vs_relink": 0.9959684652164806,
+        "paired_median_speedup": 0.995506187235071,
+        "faster_pairs": 430,
+        "exact_vs_relink": 900,
+        "by_repeat": {
+          "0": 7.2373769002151676,
+          "1": 8.3465506004286,
+          "2": 7.492991199891549
+        }
+      }
+    }
+  }
+}

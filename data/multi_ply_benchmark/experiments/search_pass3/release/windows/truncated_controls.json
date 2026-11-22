@@ -1,0 +1,17 @@
+{
+  "1T": {
+    "path": "logs/search_pass3/windows/baseline/1T/results.jsonl",
+    "sha256": "b81a4c958912091806f1727c9f374ab1a5aad98175b6f009cbf7a9a6a5026e43",
+    "bytes": 1056890
+  },
+  "2T": {
+    "path": "logs/search_pass3/windows/baseline/2T/results.jsonl",
+    "sha256": "09f6eee1e3449d50e035cbac28e1208f78fcd81622c8fc7f7e743facfa547860",
+    "bytes": 1057330
+  },
+  "3T": {
+    "path": "logs/search_pass3/windows/baseline/3T/results.jsonl",
+    "sha256": "a5c3ac7a67832458336006b4dfd95f8dfbbf8ea5fa6363f6243b330f79638b8f",
+    "bytes": 1062696
+  }
+}

@@ -1,0 +1,60 @@
+{
+  "sha256": {
+    "control": "39c443658441df8474ff4ee3892e555afd7e191616f6e4ed54e840bb38acef5f",
+    "bar": "2433ebadd01f527c56ff6bf3740a3b2e5e79fa86cb56602702205650d03b3af3",
+    "combined": "9c0bce05f387ea8f3d99f13181536d87bddd466cad694e5dc7503744228dcb32"
+  },
+  "levels": {
+    "2ply": {
+      "control": {
+        "seconds": 0.5536836219999941,
+        "calls": 240,
+        "exact": 240
+      },
+      "bar": {
+        "seconds": 0.5024719900000605,
+        "calls": 240,
+        "exact": 240
+      },
+      "combined": {
+        "seconds": 0.4684177920006505,
+        "calls": 240,
+        "exact": 240
+      }
+    },
+    "3ply": {
+      "control": {
+        "seconds": 5.3978839549999975,
+        "calls": 240,
+        "exact": 240
+      },
+      "bar": {
+        "seconds": 5.1212856530002,
+        "calls": 240,
+        "exact": 240
+      },
+      "combined": {
+        "seconds": 4.68553276899911,
+        "calls": 240,
+        "exact": 240
+      }
+    },
+    "4ply": {
+      "control": {
+        "seconds": 44.355710607999924,
+        "calls": 120,
+        "exact": 120
+      },
+      "bar": {
+        "seconds": 40.837039794999725,
+        "calls": 120,
+        "exact": 120
+      },
+      "combined": {
+        "seconds": 37.36962581800003,
+        "calls": 120,
+        "exact": 120
+      }
+    }
+  }
+}

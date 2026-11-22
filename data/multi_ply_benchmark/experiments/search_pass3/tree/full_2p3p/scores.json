@@ -1,0 +1,218 @@
+[
+  {
+    "level": "2ply",
+    "api": "checker_play",
+    "arm": "node",
+    "calls": 100,
+    "exact": 14,
+    "decision_changes": 0,
+    "wall": 0.4852441999828443,
+    "control_wall": 0.5175490994006395,
+    "thresholds": {
+      "probability": 0.0025,
+      "equity": 0.005
+    },
+    "fields": {
+      "probability": {
+        "count": 8545,
+        "max_shift": 2.384185791015625e-07,
+        "material_shifts": 0,
+        "references": 1890,
+        "control_abs_error": 8.986647438287472,
+        "arm_abs_error": 8.986646628828092,
+        "materially_farther": 0,
+        "materially_closer": 0
+      },
+      "equity": {
+        "count": 5127,
+        "max_shift": 1.1622905731201172e-06,
+        "material_shifts": 0,
+        "references": 1134,
+        "control_abs_error": 20.471878089549087,
+        "arm_abs_error": 20.471872144191316,
+        "materially_farther": 0,
+        "materially_closer": 0
+      }
+    }
+  },
+  {
+    "level": "2ply",
+    "api": "cube_action",
+    "arm": "node",
+    "calls": 100,
+    "exact": 14,
+    "decision_changes": 0,
+    "wall": 0.16437829984351993,
+    "control_wall": 0.16905240016058087,
+    "thresholds": {
+      "probability": 0.0025,
+      "equity": 0.005
+    },
+    "fields": {
+      "probability": {
+        "count": 500,
+        "max_shift": 1.1920928955078125e-07,
+        "material_shifts": 0,
+        "references": 500,
+        "control_abs_error": 3.3847609256786173,
+        "arm_abs_error": 3.3847604169782217,
+        "materially_farther": 0,
+        "materially_closer": 0
+      },
+      "equity": {
+        "count": 500,
+        "max_shift": 1.430511474609375e-06,
+        "material_shifts": 0,
+        "references": 500,
+        "control_abs_error": 19.669990699738264,
+        "arm_abs_error": 19.66999532468617,
+        "materially_farther": 0,
+        "materially_closer": 0
+      }
+    }
+  },
+  {
+    "level": "2ply",
+    "api": "post_move_analytics",
+    "arm": "node",
+    "calls": 100,
+    "exact": 17,
+    "decision_changes": 0,
+    "wall": 0.1097437001299113,
+    "control_wall": 0.11669030017219484,
+    "thresholds": {
+      "probability": 0.0025,
+      "equity": 0.005
+    },
+    "fields": {
+      "probability": {
+        "count": 500,
+        "max_shift": 1.1920928955078125e-07,
+        "material_shifts": 0,
+        "references": 500,
+        "control_abs_error": 3.350256854253982,
+        "arm_abs_error": 3.350256527358849,
+        "materially_farther": 0,
+        "materially_closer": 0
+      },
+      "equity": {
+        "count": 200,
+        "max_shift": 8.046627044677734e-07,
+        "material_shifts": 0,
+        "references": 200,
+        "control_abs_error": 10.04153040696201,
+        "arm_abs_error": 10.041532247676514,
+        "materially_farther": 0,
+        "materially_closer": 0
+      }
+    }
+  },
+  {
+    "level": "3ply",
+    "api": "checker_play",
+    "arm": "node",
+    "calls": 100,
+    "exact": 11,
+    "decision_changes": 0,
+    "wall": 8.040130999637768,
+    "control_wall": 8.670582300517708,
+    "thresholds": {
+      "probability": 0.0025,
+      "equity": 0.005
+    },
+    "fields": {
+      "probability": {
+        "count": 8545,
+        "max_shift": 1.7229467630386353e-06,
+        "material_shifts": 0,
+        "references": 1890,
+        "control_abs_error": 8.248174641436282,
+        "arm_abs_error": 8.248174343880994,
+        "materially_farther": 0,
+        "materially_closer": 0
+      },
+      "equity": {
+        "count": 5127,
+        "max_shift": 2.3096799850463867e-06,
+        "material_shifts": 0,
+        "references": 1134,
+        "control_abs_error": 17.16894626026621,
+        "arm_abs_error": 17.168953841767433,
+        "materially_farther": 0,
+        "materially_closer": 0
+      }
+    }
+  },
+  {
+    "level": "3ply",
+    "api": "cube_action",
+    "arm": "node",
+    "calls": 100,
+    "exact": 17,
+    "decision_changes": 0,
+    "wall": 0.5775794000946917,
+    "control_wall": 0.6234316999907605,
+    "thresholds": {
+      "probability": 0.0025,
+      "equity": 0.005
+    },
+    "fields": {
+      "probability": {
+        "count": 500,
+        "max_shift": 1.1920928955078125e-07,
+        "material_shifts": 0,
+        "references": 500,
+        "control_abs_error": 3.3386133624190935,
+        "arm_abs_error": 3.3386136547256315,
+        "materially_farther": 0,
+        "materially_closer": 0
+      },
+      "equity": {
+        "count": 500,
+        "max_shift": 1.3709068298339844e-06,
+        "material_shifts": 0,
+        "references": 500,
+        "control_abs_error": 16.74658578261733,
+        "arm_abs_error": 16.74658167734742,
+        "materially_farther": 0,
+        "materially_closer": 0
+      }
+    }
+  },
+  {
+    "level": "3ply",
+    "api": "post_move_analytics",
+    "arm": "node",
+    "calls": 100,
+    "exact": 22,
+    "decision_changes": 0,
+    "wall": 0.4306861003860831,
+    "control_wall": 0.45803339988924563,
+    "thresholds": {
+      "probability": 0.0025,
+      "equity": 0.005
+    },
+    "fields": {
+      "probability": {
+        "count": 500,
+        "max_shift": 1.1920928955078125e-07,
+        "material_shifts": 0,
+        "references": 500,
+        "control_abs_error": 3.2784136041068423,
+        "arm_abs_error": 3.278413975834437,
+        "materially_farther": 0,
+        "materially_closer": 0
+      },
+      "equity": {
+        "count": 200,
+        "max_shift": 7.748603820800781e-07,
+        "material_shifts": 0,
+        "references": 200,
+        "control_abs_error": 10.669692702184875,
+        "arm_abs_error": 10.669693640539833,
+        "materially_farther": 0,
+        "materially_closer": 0
+      }
+    }
+  }
+]

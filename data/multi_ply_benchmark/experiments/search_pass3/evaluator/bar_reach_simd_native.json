@@ -1,0 +1,25 @@
+{
+  "sha256": "33bc06c5903ea055b17df16ed1de931e1c7e8b5fabb3d72f6186f140dc548d34",
+  "measurements": [
+    {
+      "extended_ns": 452.847,
+      "both_shots_ns": 163.894,
+      "both_side_features_ns": 200.043
+    },
+    {
+      "extended_ns": 413.559,
+      "both_shots_ns": 154.991,
+      "both_side_features_ns": 210.531
+    },
+    {
+      "extended_ns": 410.362,
+      "both_shots_ns": 139.066,
+      "both_side_features_ns": 186.348
+    },
+    {
+      "extended_ns": 526.502,
+      "both_shots_ns": 181.684,
+      "both_side_features_ns": 226.892
+    }
+  ]
+}

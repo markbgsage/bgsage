@@ -215,15 +215,20 @@ table covers the root and its 21 children. At 4P it also covers their 441
 children. Each node has a slot for each of the 21 rolls. The live traversal
 allocates the table only when it searches the root. A root transposition
 cache hit skips the allocation. On x64 the allocated table occupies about
-149 KiB at 3P or 3.06 MiB at 4P.
+181 KiB at 3P or 3.72 MiB at 4P.
 
-Each slot holds raw probabilities for a complete, unfiltered list of 2–16
-candidates. Reuse requires the same dice path, full pre-roll board, roll,
+Each slot holds raw probabilities for up to 16 candidates. A complete
+unfiltered list of 2–16 candidates can be copied directly. For a larger
+list filtered to 15 by the live search, a built-in pair evaluator using the
+pre-roll neural base can also save the surviving candidates' original move
+indices. Its unfiltered cubeless reader uses those probabilities and evaluates
+every missing candidate. Reuse requires the same dice path, full pre-roll board, roll,
 evaluator and pinned network. The board and roll reproduce the entire
 ordered batch through deterministic move generation. The live traversal
 finishes before the cubeless traversal reads the table. Each traversal
-scores and selects its own moves. If their paths reach different boards,
-or either side filters the list, the reader evaluates its own candidates.
+scores and selects its own moves. If the boards diverge, the reader filters
+its own list, or a partial batch uses an ineligible evaluator, the reader
+evaluates its own candidates.
 Root bearoffs and terminals, full-depth opponent search, a separate filter
 strategy and the per-roll detail path use their own evaluation routines.
 [Batch identity and reuse](cpp/src/cube_eval.cpp)
@@ -253,15 +258,15 @@ weighted mean to the headline DT equity on the initial cube.
 orders of unlike dice and plays the higher die if only one can be used.
 For doubles it tries four, then three, then two, then one usable die, stopping
 at the first legal length. A terminal win can finish before all dice are used.
-A move sequence updates one board in place. The generator carries a bit mask
-of the player's occupied points and adjusts the board hash on each move,
-including hits and bearoffs. It restores the board before trying the next
-origin. A growing thread-local table deduplicates endpoints using the hash
-and full board equality, preserving their first-seen order.
-For doubles, identical boards after two or three dice have identical remaining
-moves. A generation-stamped table at each of those depths skips duplicate
-prefixes for that attempt. A collision can cause extra work. A prefix is
-skipped only on full equality. [Move generator](cpp/src/moves.cpp)
+A move sequence updates one board in place, carries a mask of occupied
+origins and restores the board after each branch. For doubles, the generator
+emits the earliest legal ordering of each set of checker departures. Once an
+earlier sibling has played a legal origin, later siblings can skip sequences
+that would play that same origin. For unlike dice, the reverse order explores
+second steps from newly available origins. A growing thread-local table
+checks the incremental hash and full board to deduplicate the endpoints.
+The search consumes first-seen order. Callers requiring lexicographic order
+sort the output of the same generator. [Move generator](cpp/src/moves.cpp)
 
 **Filtering and ranking.** A caller-supplied cheap evaluator, normally PubEval,
 can rank rolls with more than 16 endpoints and keep the best 15. When
@@ -312,25 +317,31 @@ can offer different specialists. A strategy with blended networks evaluates
 a blended candidate individually. [Model registry](python/bgsage/weights.py)
 and [routing implementation](cpp/src/neural_net.cpp)
 
-**CPU evaluation.** Within each network group the first candidate saves its
-board, encoded inputs and pre-activation hidden sums. For each sibling, the
-cube tree compares the 24 board points to this base and encodes point features
+**CPU evaluation.** In a standalone tree, a worker encodes the pre-roll board
+and saves its pre-activation hidden sums once for each network it uses at
+that node. All 21 dice rolls have that same starting board. Each worker keeps
+separate scratch space by depth and network and tags it with the node's
+unique identity. A tree using the deep rollout prefilter takes the first
+surviving candidate in each network group as its base. For each candidate
+evaluated by differences, the kernel compares the 24 board points to its base and encodes point features
 only where the checker count changed. It recomputes each side's auxiliary
 features (two per side for race, 26 for contact) and compares them to the
 saved inputs. The evaluator gathers nonzero differences in ascending input
 order and applies their weight columns to a copy of the saved hidden sums.
 AVX2 applies four successive columns per hidden-vector load in that order.
-At 64 changed inputs the sibling gets a full forward pass. The order of the
-batch determines its base and can affect floating-point results.
+At 64 changed inputs the candidate gets a full forward pass.
 [Neural kernel](cpp/src/neural_net.cpp)
 
 Pure race uses 196 Tesauro inputs. Contact uses 244 inputs. The contact encoder
 forms masks of occupied points, made points, enemy blots and blocks. On AVX2
 it extracts both sides' masks in one scan and reverses the opponent's point
-order. The scalar path constructs each side's masks in its own perspective. Shifts
-and intersections enumerate single and double hits for all targets of each roll.
-No-bar positions derive pip loss from the applicable hit targets, while
-bar positions use the entry-aware pip-loss calculation. Escape, containment,
+order. The scalar path constructs each side's masks in its own perspective.
+Off the bar, only blots in front of the rearmost checker can be hit. The AVX2
+kernel evaluates the six doubles and fifteen mixed rolls in three groups of
+lanes. The highest eligible target for each roll determines its pip loss.
+The portable path enumerates the rolls in scalar code. With checkers on the
+bar, both paths account for entry, blocked intermediate points and direct
+hits. Escape, containment,
 mobility, anchor and entry features also use the point masks where applicable.
 The separate `double_hitting_shots` helper has a compile-time table indexed by
 two hit distances. It stores the double and number of steps needed on each leg.
@@ -342,8 +353,10 @@ networks. [Feature encoding](cpp/src/encoding.cpp)
 The default cubeful checker analysis enumerates **every legal endpoint** at
 2P–4P in one native call. The engine shares the loaded evaluator and bearoff
 database across the candidates. For each endpoint it flips the board, owner
-and away scores, then calls
-`cubeful_probs_and_equity_nply` once. Returning to the mover complements
+and away scores. The native batch computes both probabilities and equity in
+one tree traversal per endpoint. Parallel 4P checker searches can converge
+after two turns. A table scoped to this checker decision lets workers reuse
+the complete 2P result for the same board and four cube states. Returning to the mover complements
 the five probabilities and negates the opponent's normalized cubeful equity.
 Each row gets the requested evaluation level. Sorting uses descending cubeful
 equity, descending cubeless equity and then the board as a deterministic final
@@ -486,7 +499,8 @@ publication. Trials can start while workers finish other roll indices.
 | Cubeless `PosCache` | Per thread, 262,144 slots allocated on first insertion, up to eight probes, clears at 75% occupancy. Used by the dedicated hybrid/full-depth recursion. | Board equality and a key salted with the base strategy, ply and full-depth-opponent setting. |
 | Rollout `SharedPosCache` | Up to 2,097,152 slots, eight probes. Shared by participating trial workers. | A matching key and full board. Dedicated cubeless and structurally dead cube-tree computations use distinct key spaces. |
 | Rollout VR move selections | 2,048 slots per position, shared by its trials. Stores the 21 selected indices and their five probabilities. | VR enabled, at least 288 trials and a truncation depth above two. A hit matches the full board, ordered active selection cubes and cube efficiency. |
-| 3P and 4P candidate batches | Per cube-action request, 22 nodes at 3P or 463 at 4P, each with 21 roll slots. Allocated on a live root search. | Matching complete unfiltered batch of 2–16 candidates. Contains probabilities only. [Reuse conditions](#reusing-candidate-evaluations-at-3p-and-4p) |
+| 3P and 4P candidate batches | Per cube-action request, 22 nodes at 3P or 463 at 4P, each with 21 roll slots. Allocated on a live root search. | Complete batches of 2–16 candidates, or an eligible filtered subset with its generator indices. The reader applies its own policy. [Reuse conditions](#reusing-candidate-evaluations-at-3p-and-4p) |
+| 4P checker subtrees | Per parallel checker decision, 64 independently locked shards of at most 128 completed entries each. | At the 2P layer, the full board and cube fingerprint must match. Each entry stores four equities and the five probabilities, with the model and root pin fixed for the request. |
 
 The main cube cache fingerprints each ordered cube state's value, owner, away
 scores, Crawford flag, Jacoby and beaver settings, cap and the exact float bits
@@ -512,7 +526,10 @@ each state's money equity or match MWC directly from the cached probabilities.
 Live-cube branches still require per-state values. [Shared cache](cpp/include/bgbot/multipy.h)
 
 Standalone cube and post-move trees can distribute the 21 top-level rolls when
-the requested thread count is greater than one and the depth is above 2P.
+the requested thread count is greater than one and the depth is at least 2P.
+Linux evaluates a 2P pure-race root on its calling thread. Its race network
+and bearoff lookups make the individual roll jobs short enough that waking
+helpers costs more than the work they save. Windows distributes those rolls.
 With 4–21 requested threads, workers claim the next available roll, starting
 with the six doubles. At other parallel widths, each worker processes a fixed
 stride through the roll list. Each roll writes a separate slot and a fixed-order
@@ -524,8 +541,16 @@ hardware count, configured count and `4 × (plies − 1)` workers for plies abov
 one. [Worker scheduling](cpp/src/multipy.cpp)
 
 Public cubeful checker analysis assigns endpoints to workers as they become
-available and evaluates each tree serially. If there is only one endpoint,
-its tree can use up to 21 workers across the dice rolls. Rollouts parallelize across trials and use serial
+available. A single endpoint can use up to 21 workers across its dice rolls.
+For a 4P call with multiple endpoints and a budget of 8–21 threads, the
+number of endpoint groups is `min(endpoint_count, floor(threads / 2))`.
+Each group can use `floor(threads / groups)` workers for its 21 root rolls,
+including its caller. The caller can finish any unclaimed rolls itself and
+waits only for rolls another worker has claimed. This also permits multiple
+simultaneous checker calls to share the pool. Other multi-endpoint calls
+evaluate each endpoint tree serially.
+
+Rollouts parallelize across trials and use serial
 embedded multi-ply searches, with early cache preparation also able to use
 workers. The Python analyzer accepts `parallel_threads` and obtains its
 automatic setting from `BGBOT_MULTIPLY_THREADS` or the CPU count. Explicit
