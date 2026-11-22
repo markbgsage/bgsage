@@ -1,0 +1,72 @@
+{
+  "hashes": {
+    "control": "4d54d2a940632fecf6dbfec1169e35305e1741c5457b242a7ba9c5f217540c4f",
+    "delta": "2390284f34b48bc8f7c94f0409b0fec6e11482eef527ebfc08af8ef436a4e6d8",
+    "combined": "4b0f087433086e73f188b26ed1505a4121fed4f3c86f6ee6b328c32d0dd8c06e"
+  },
+  "groups": [
+    {
+      "level": "2ply",
+      "arm": "control",
+      "seconds": 0.5677500999299809,
+      "calls": 120,
+      "identical": 120
+    },
+    {
+      "level": "2ply",
+      "arm": "delta",
+      "seconds": 0.5550329001853243,
+      "calls": 120,
+      "identical": 59
+    },
+    {
+      "level": "2ply",
+      "arm": "combined",
+      "seconds": 0.5310090000857599,
+      "calls": 120,
+      "identical": 120
+    },
+    {
+      "level": "3ply",
+      "arm": "control",
+      "seconds": 3.4296813002438284,
+      "calls": 120,
+      "identical": 120
+    },
+    {
+      "level": "3ply",
+      "arm": "delta",
+      "seconds": 3.3505700998357497,
+      "calls": 120,
+      "identical": 42
+    },
+    {
+      "level": "3ply",
+      "arm": "combined",
+      "seconds": 3.1649205998983234,
+      "calls": 120,
+      "identical": 120
+    },
+    {
+      "level": "4ply",
+      "arm": "control",
+      "seconds": 21.229691099957563,
+      "calls": 30,
+      "identical": 30
+    },
+    {
+      "level": "4ply",
+      "arm": "delta",
+      "seconds": 20.861968000011984,
+      "calls": 30,
+      "identical": 8
+    },
+    {
+      "level": "4ply",
+      "arm": "combined",
+      "seconds": 19.72422480006935,
+      "calls": 30,
+      "identical": 30
+    }
+  ]
+}

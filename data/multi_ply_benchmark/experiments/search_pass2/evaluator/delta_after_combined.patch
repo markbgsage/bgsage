@@ -1,0 +1,354 @@
+--- a/cube_eval.cpp
++++ b/cube_eval.cpp
+@@ -294,15 +294,8 @@
+ 
+         for (int k = j + 1; k < n; ++k) {
+             if (done[k] || nn_idx_of[k] != nidx) continue;
+-            if (is_pr) {
+-                auto inp = compute_tesauro_inputs(cands[idxs[k]]);
+-                out[idxs[k]] = nn.forward_from_base(
+-                    inp.data(), saved_base.data(), saved_inputs.data());
+-            } else {
+-                auto inp = compute_extended_contact_inputs(cands[idxs[k]]);
+-                out[idxs[k]] = nn.forward_from_base(
+-                    inp.data(), saved_base.data(), saved_inputs.data());
+-            }
++            out[idxs[k]] = nn.forward_board_from_base(
++                cands[idxs[k]], cands[idxs[j]], saved_base.data(), saved_inputs.data());
+             done[k] = 1;
+         }
+     }
+--- a/encoding.cpp
++++ b/encoding.cpp
+@@ -1749,32 +1749,7 @@
+     out_backrescapes = back_rescue_escapes_fast(player_blocks, opp_back);
+ }
+ 
+-std::array<float, EXTENDED_CONTACT_INPUTS> compute_extended_contact_inputs(const Board& board) {
+-    static_assert(EXTENDED_CONTACT_INPUTS == 244, "Expected 244 inputs");
+-    std::array<float, EXTENDED_CONTACT_INPUTS> inputs;  // all entries assigned below
+-
+-    constexpr int P2_OFFSET = 122;  // Player 2 block starts at index 122
+-
+-    // Point encoding: same as Tesauro but offset differently for player 2
+-    for (int i = 0; i < 24; ++i) {
+-        int n = board[i + 1];
+-
+-        const float* p_feat = point_feature_row(n);
+-        const int p0 = 4 * i;
+-        inputs[p0 + 0] = p_feat[0];
+-        inputs[p0 + 1] = p_feat[1];
+-        inputs[p0 + 2] = p_feat[2];
+-        inputs[p0 + 3] = p_feat[3];
+-
+-        int m = -n;
+-        const float* m_feat = point_feature_row(m);
+-        const int p1 = 4 * i + P2_OFFSET;
+-        inputs[p1 + 0] = m_feat[0];
+-        inputs[p1 + 1] = m_feat[1];
+-        inputs[p1 + 2] = m_feat[2];
+-        inputs[p1 + 3] = m_feat[3];
+-    }
+-
++static void contact_aux(const Board& board, float* p_aux, float* o_aux) {
+     const Board flipped = flip(board);
+ #if defined(__AVX2__)
+     const auto [player, opponent] = both_contact_point_masks(board);
+@@ -1820,64 +1795,133 @@
+         o_backbone_val, o_backg_val, o_backg1_val, o_backrescapes);
+ 
+     // === Player 1 features [96-121] ===
+-    inputs[96]  = board[25] / 2.0f;  // bar
+-    inputs[97]  = player_off >= 5 ? 1.0f : player_off / 5.0f;
+-    inputs[98]  = player_off >= 10 ? 1.0f : (player_off <= 5 ? 0.0f : (player_off - 5) / 5.0f);
+-    inputs[99]  = player_off <= 10 ? 0.0f : (player_off - 10) / 5.0f;
+-    inputs[100] = blocked_entry_probability(player.enemy_blocks);                                          // I_ENTER2
+-    inputs[101] = p_forward == 0 ? 2.0f : p_forward / 6.0f; // I_FORWARD_ANCHOR
+-    inputs[102] = p_shots.single_hits / 36.0f;                                            // I_P1
+-    inputs[103] = p_shots.double_hits / 36.0f;                                        // I_P2
+-    inputs[104] = p_back_esc / 36.0f;                                         // I_BACKESCAPES
+-    inputs[105] = p_max_pt / 24.0f;                                           // I_BACK_CHEQUER
+-    inputs[106] = p_max_anch / 24.0f;                                         // I_BACK_ANCHOR
+-    inputs[107] = p_break_contact / 167.0f;                                   // I_BREAK_CONTACT
+-    inputs[108] = p_free_pip / 100.0f;                                        // I_FREEPIP
+-    inputs[109] = p_shots.pip_loss / (12.0f * 36.0f);                                // I_PIPLOSS
++    p_aux[0]  = board[25] / 2.0f;  // bar
++    p_aux[1]  = player_off >= 5 ? 1.0f : player_off / 5.0f;
++    p_aux[2]  = player_off >= 10 ? 1.0f : (player_off <= 5 ? 0.0f : (player_off - 5) / 5.0f);
++    p_aux[3]  = player_off <= 10 ? 0.0f : (player_off - 10) / 5.0f;
++    p_aux[4] = blocked_entry_probability(player.enemy_blocks);                                          // I_ENTER2
++    p_aux[5] = p_forward == 0 ? 2.0f : p_forward / 6.0f; // I_FORWARD_ANCHOR
++    p_aux[6] = p_shots.single_hits / 36.0f;                                            // I_P1
++    p_aux[7] = p_shots.double_hits / 36.0f;                                        // I_P2
++    p_aux[8] = p_back_esc / 36.0f;                                         // I_BACKESCAPES
++    p_aux[9] = p_max_pt / 24.0f;                                           // I_BACK_CHEQUER
++    p_aux[10] = p_max_anch / 24.0f;                                         // I_BACK_ANCHOR
++    p_aux[11] = p_break_contact / 167.0f;                                   // I_BREAK_CONTACT
++    p_aux[12] = p_free_pip / 100.0f;                                        // I_FREEPIP
++    p_aux[13] = p_shots.pip_loss / (12.0f * 36.0f);                                // I_PIPLOSS
+     // Square the raw count before normalizing. This preserves the original
+     // optimized engine's rounding for the squared containment inputs.
+-    inputs[110] = p_acontain * (1.0f / 36.0f);                                 // I_ACONTAIN
+-    inputs[111] = (p_acontain * p_acontain) * (1.0f / 1296.0f);                // I_ACONTAIN2
+-    inputs[112] = p_contain * (1.0f / 36.0f);                                  // I_CONTAIN
+-    inputs[113] = (p_contain * p_contain) * (1.0f / 1296.0f);                  // I_CONTAIN2
+-    inputs[114] = p_mobility_val / 3600.0f;                                    // I_MOBILITY
+-    inputs[115] = p_moment2_val / 400.0f;                                      // I_MOMENT2
+-    inputs[116] = p_enter / (36.0f * (49.0f / 6.0f));                          // I_ENTER
+-    inputs[117] = p_timing_val / 100.0f;                                       // I_TIMING
+-    inputs[118] = p_backbone_val;                                              // I_BACKBONE
+-    inputs[119] = p_backg_val;                                                 // I_BACKG
+-    inputs[120] = p_backg1_val;                                                // I_BACKG1
+-    inputs[121] = p_backrescapes / 36.0f;                                      // I_BACKRESCAPES
++    p_aux[14] = p_acontain * (1.0f / 36.0f);                                 // I_ACONTAIN
++    p_aux[15] = (p_acontain * p_acontain) * (1.0f / 1296.0f);                // I_ACONTAIN2
++    p_aux[16] = p_contain * (1.0f / 36.0f);                                  // I_CONTAIN
++    p_aux[17] = (p_contain * p_contain) * (1.0f / 1296.0f);                  // I_CONTAIN2
++    p_aux[18] = p_mobility_val / 3600.0f;                                    // I_MOBILITY
++    p_aux[19] = p_moment2_val / 400.0f;                                      // I_MOMENT2
++    p_aux[20] = p_enter / (36.0f * (49.0f / 6.0f));                          // I_ENTER
++    p_aux[21] = p_timing_val / 100.0f;                                       // I_TIMING
++    p_aux[22] = p_backbone_val;                                              // I_BACKBONE
++    p_aux[23] = p_backg_val;                                                 // I_BACKG
++    p_aux[24] = p_backg1_val;                                                // I_BACKG1
++    p_aux[25] = p_backrescapes / 36.0f;                                      // I_BACKRESCAPES
+ 
+     // === Player 2 features [218-243] ===
+-    inputs[P2_OFFSET + 96]  = board[0] / 2.0f;  // bar (index 218)
+-    inputs[P2_OFFSET + 97]  = opp_off >= 5 ? 1.0f : opp_off / 5.0f;
+-    inputs[P2_OFFSET + 98]  = opp_off >= 10 ? 1.0f : (opp_off <= 5 ? 0.0f : (opp_off - 5) / 5.0f);
+-    inputs[P2_OFFSET + 99]  = opp_off <= 10 ? 0.0f : (opp_off - 10) / 5.0f;
+-    inputs[P2_OFFSET + 100] = blocked_entry_probability(opponent.enemy_blocks);
+-    inputs[P2_OFFSET + 101] = o_forward == 0 ? 2.0f : o_forward / 6.0f;
+-    inputs[P2_OFFSET + 102] = o_shots.single_hits / 36.0f;
+-    inputs[P2_OFFSET + 103] = o_shots.double_hits / 36.0f;
+-    inputs[P2_OFFSET + 104] = o_back_esc / 36.0f;
+-    inputs[P2_OFFSET + 105] = o_max_pt / 24.0f;
+-    inputs[P2_OFFSET + 106] = o_max_anch / 24.0f;
+-    inputs[P2_OFFSET + 107] = o_break_contact / 167.0f;
+-    inputs[P2_OFFSET + 108] = o_free_pip / 100.0f;
+-    inputs[P2_OFFSET + 109] = o_shots.pip_loss / (12.0f * 36.0f);
+-    inputs[P2_OFFSET + 110] = o_acontain * (1.0f / 36.0f);
+-    inputs[P2_OFFSET + 111] = (o_acontain * o_acontain) * (1.0f / 1296.0f);
+-    inputs[P2_OFFSET + 112] = o_contain * (1.0f / 36.0f);
+-    inputs[P2_OFFSET + 113] = (o_contain * o_contain) * (1.0f / 1296.0f);
+-    inputs[P2_OFFSET + 114] = o_mobility_val / 3600.0f;
+-    inputs[P2_OFFSET + 115] = o_moment2_val / 400.0f;
+-    inputs[P2_OFFSET + 116] = o_enter / (36.0f * (49.0f / 6.0f));
+-    inputs[P2_OFFSET + 117] = o_timing_val / 100.0f;
+-    inputs[P2_OFFSET + 118] = o_backbone_val;
+-    inputs[P2_OFFSET + 119] = o_backg_val;
+-    inputs[P2_OFFSET + 120] = o_backg1_val;
+-    inputs[P2_OFFSET + 121] = o_backrescapes / 36.0f;
+-
++    o_aux[0]  = board[0] / 2.0f;  // bar (index 218)
++    o_aux[1]  = opp_off >= 5 ? 1.0f : opp_off / 5.0f;
++    o_aux[2]  = opp_off >= 10 ? 1.0f : (opp_off <= 5 ? 0.0f : (opp_off - 5) / 5.0f);
++    o_aux[3]  = opp_off <= 10 ? 0.0f : (opp_off - 10) / 5.0f;
++    o_aux[4] = blocked_entry_probability(opponent.enemy_blocks);
++    o_aux[5] = o_forward == 0 ? 2.0f : o_forward / 6.0f;
++    o_aux[6] = o_shots.single_hits / 36.0f;
++    o_aux[7] = o_shots.double_hits / 36.0f;
++    o_aux[8] = o_back_esc / 36.0f;
++    o_aux[9] = o_max_pt / 24.0f;
++    o_aux[10] = o_max_anch / 24.0f;
++    o_aux[11] = o_break_contact / 167.0f;
++    o_aux[12] = o_free_pip / 100.0f;
++    o_aux[13] = o_shots.pip_loss / (12.0f * 36.0f);
++    o_aux[14] = o_acontain * (1.0f / 36.0f);
++    o_aux[15] = (o_acontain * o_acontain) * (1.0f / 1296.0f);
++    o_aux[16] = o_contain * (1.0f / 36.0f);
++    o_aux[17] = (o_contain * o_contain) * (1.0f / 1296.0f);
++    o_aux[18] = o_mobility_val / 3600.0f;
++    o_aux[19] = o_moment2_val / 400.0f;
++    o_aux[20] = o_enter / (36.0f * (49.0f / 6.0f));
++    o_aux[21] = o_timing_val / 100.0f;
++    o_aux[22] = o_backbone_val;
++    o_aux[23] = o_backg_val;
++    o_aux[24] = o_backg1_val;
++    o_aux[25] = o_backrescapes / 36.0f;
++
++}
++
++std::array<float, EXTENDED_CONTACT_INPUTS> compute_extended_contact_inputs(const Board& board) {
++    static_assert(EXTENDED_CONTACT_INPUTS == 244, "Expected 244 inputs");
++    std::array<float, EXTENDED_CONTACT_INPUTS> inputs;  // all entries assigned below
++
++    constexpr int P2_OFFSET = 122;  // Player 2 block starts at index 122
++
++    // Point encoding: same as Tesauro but offset differently for player 2
++    for (int i = 0; i < 24; ++i) {
++        int n = board[i + 1];
++
++        const float* p_feat = point_feature_row(n);
++        const int p0 = 4 * i;
++        inputs[p0 + 0] = p_feat[0];
++        inputs[p0 + 1] = p_feat[1];
++        inputs[p0 + 2] = p_feat[2];
++        inputs[p0 + 3] = p_feat[3];
++
++        int m = -n;
++        const float* m_feat = point_feature_row(m);
++        const int p1 = 4 * i + P2_OFFSET;
++        inputs[p1 + 0] = m_feat[0];
++        inputs[p1 + 1] = m_feat[1];
++        inputs[p1 + 2] = m_feat[2];
++        inputs[p1 + 3] = m_feat[3];
++    }
++
++    contact_aux(board, inputs.data()+96, inputs.data()+218);
+     return inputs;
++}
++
++
++int board_input_deltas(const Board& board, const Board& base, const float* saved,
++                       bool race, int* indices, float* values) {
++    unsigned changed = 0;
++    for (int i = 0; i < 24; ++i)
++        changed |= static_cast<unsigned>(board[i+1] != base[i+1]) << i;
++    float p_aux[26], o_aux[26];
++    if (race) {
++        p_aux[0] = board[25] / 2.0f;
++        p_aux[1] = player_borne_off(board) / 15.0f;
++        o_aux[0] = board[0] / 2.0f;
++        o_aux[1] = opponent_borne_off(board) / 15.0f;
++    } else {
++        contact_aux(board, p_aux, o_aux);
++    }
++    int count = 0;
++    auto append = [&](int index, float current) {
++        const float delta = current - saved[index];
++        if (delta != 0.0f && count < 64) {
++            indices[count] = index;
++            values[count++] = delta;
++        }
++    };
++    for (int side = 0; side < 2; ++side) {
++        const int offset = side ? (race ? 98 : 122) : 0;
++        for (unsigned bits = changed; bits; bits &= bits-1) {
++            const unsigned first = bits & (0u - bits);
++            const int point = highest_set_point(first);
++            const int n = side ? -board[point] : board[point];
++            const int previous = side ? -base[point] : base[point];
++            if (n <= 0 && previous <= 0) continue;
++            const float* row = point_feature_row(n);
++            for (int k = 0; k < 4; ++k) append(offset+4*(point-1)+k, row[k]);
++        }
++        const float* aux = side ? o_aux : p_aux;
++        for (int k = 0; k < (race ? 2 : 26); ++k) append(offset+96+k, aux[k]);
++    }
++    return count;
+ }
+ 
+ // ======================== Game Plan Classification ========================
+--- a/include/bgbot/encoding.h
++++ b/include/bgbot/encoding.h
+@@ -6,6 +6,8 @@
+ #include <array>
+ 
+ namespace bgbot {
++
++int board_input_deltas(const Board&, const Board&, const float*, bool, int*, float*);
+ 
+ constexpr int TESAURO_INPUTS = 196;
+ constexpr int EXTENDED_CONTACT_INPUTS = 244;
+@@ -175,7 +177,6 @@
+ // Classify the game plan for the player on roll.
+ // Board must be from the player's perspective (player = positive checkers).
+ GamePlan classify_game_plan(const Board& board);
+-// Same classifier for a known contact board with precomputed pip counts.
+ GamePlan classify_contact_game_plan(const Board& board, int player_pips, int opponent_pips);
+ 
+ // Human-readable name for a game plan.
+--- a/include/bgbot/neural_net.h
++++ b/include/bgbot/neural_net.h
+@@ -64,6 +64,9 @@
+     // Both saved_base and saved_inputs are NOT modified.
+     std::array<float, NN_OUTPUTS> forward_from_base(
+         const float* inputs, const float* saved_base, const float* saved_inputs) const;
++
++    std::array<float, NN_OUTPUTS> forward_board_from_base(const Board& board, const Board& base,
++        const float* hidden, const float* inputs) const;
+ 
+     // Ensure transposed hidden weights are up-to-date for forward().
+     // Rebuilt lazily after td_update() invalidates them.
+@@ -132,6 +135,8 @@
+     std::vector<float>& output_weights() { return output_weights_; }
+ 
+ private:
++    std::array<float, NN_OUTPUTS> forward_with_deltas(const float* saved_base, const int* delta_indices,
++        const float* delta_vals, int n_deltas) const;
+     int n_hidden_;
+     int n_inputs_;
+ 
+--- a/neural_net.cpp
++++ b/neural_net.cpp
+@@ -791,25 +791,7 @@
+ std::array<float, NN_OUTPUTS> NeuralNetwork::forward_from_base(
+     const float* inputs, const float* saved_base, const float* saved_inputs) const
+ {
+-    ensure_transposed_weights();
+-
+-    const int nh = n_hidden_;
+     const int ni = n_inputs_;
+-    const int hid_stride = nh + 1;
+-
+-    // Copy saved pre-sigmoid hidden sums, then apply input deltas
+-    float hiddens_stack[512];
+-    std::vector<float> hiddens_heap;
+-    float* hiddens;
+-    if (nh <= 512) {
+-        hiddens = hiddens_stack;
+-    } else {
+-        hiddens_heap.resize(nh);
+-        hiddens = hiddens_heap.data();
+-    }
+-
+-    std::memcpy(hiddens, saved_base, nh * sizeof(float));
+-
+     // Collect changed inputs into a compact list.
+     // In backgammon, a move typically changes 4-12 of 196/244 inputs.
+     int delta_indices[64];
+@@ -847,6 +829,42 @@
+     // The sparse list may have filled before the last changed input. Use
+     // the complete input vector for such widely separated candidates.
+     if (n_deltas == 64) return forward(inputs);
++
++    return forward_with_deltas(saved_base, delta_indices, delta_vals, n_deltas);
++}
++
++std::array<float, NN_OUTPUTS> NeuralNetwork::forward_board_from_base(
++    const Board& board, const Board& base, const float* hidden, const float* inputs) const {
++    const bool race = n_inputs_ == TESAURO_INPUTS;
++    int indices[64];
++    float values[64];
++    const int count = board_input_deltas(board, base, inputs, race, indices, values);
++    if (count == 64) {
++        if (race) return forward(compute_tesauro_inputs(board));
++        return forward(compute_extended_contact_inputs(board).data());
++    }
++    return forward_with_deltas(hidden, indices, values, count);
++}
++
++std::array<float, NN_OUTPUTS> NeuralNetwork::forward_with_deltas(
++    const float* saved_base, const int* delta_indices, const float* delta_vals, int n_deltas) const {
++    ensure_transposed_weights();
++
++    const int nh = n_hidden_;
++    const int hid_stride = nh + 1;
++
++    // Copy saved pre-sigmoid hidden sums, then apply input deltas
++    float hiddens_stack[512];
++    std::vector<float> hiddens_heap;
++    float* hiddens;
++    if (nh <= 512) {
++        hiddens = hiddens_stack;
++    } else {
++        hiddens_heap.resize(nh);
++        hiddens = hiddens_heap.data();
++    }
++
++    std::memcpy(hiddens, saved_base, nh * sizeof(float));
+ 
+     // Apply deltas using transposed weight matrix for contiguous column access.
+     // hidden_weights_T_[col * nh + h] gives the weight for hidden node h, input col.

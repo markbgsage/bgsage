@@ -1,5 +1,18 @@
 # Engine project notes
 
+- **2026-11-22, deterministic CPU search.** Keep the analyzer's loaded
+  evaluator for 1P cube calls and batch all legal checker endpoints in one
+  native call at 2P–4P. All 2,100 checkpoint responses matched on each of
+  Windows and Linux, covering 1P–4P and 1T–3T. The reverse-order Linux
+  3P rerun confirmed the wall-time reduction.
+  Grouped sibling evaluation must use the encoding of the selected network
+  slot even when a prebuilt native network consumes only a prefix. A
+  196-input net in a contact slot exercised this case, with a 0.0226 error
+  before the fallback and at most 0.00000006 afterward. Measure complete
+  public calls when screening move caches. A first-die cache won on the small
+  panel and lost on the full corpus.
+  [CPU study and reproducible checks](../../data/multi_ply_benchmark/experiments/search_pass2/README.md)
+
 - **2026-11-21, truncated-rollout optimization.** At 2T the 21-roll
   variance-reduction mean took 78% of instrumented worker time. At 3T
   the largest costs were the truncation evaluation (32%) and the VR

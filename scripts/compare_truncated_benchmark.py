@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: MPL-2.0
-"""Compare paired truncated benchmark runs and score both against frozen rollout analytics."""
+"""Compare paired public analytics at deterministic or truncated levels against frozen rollouts."""
 import argparse
 from collections import Counter, defaultdict
 import hashlib
@@ -12,10 +12,13 @@ from compare_multi_ply_accuracy import metrics, projected, records, summary
 
 
 def level_name(name):
+    for ply in range(1, 5):
+        if name in (f"{ply}P", f"{ply}ply"):
+            return f"{ply}P"
     for label, preset in TRUNCATED_LEVELS.items():
         if name in (label, preset):
             return label
-    raise ValueError(f"Unknown truncated evaluation level {name!r}")
+    raise ValueError(f"Unknown evaluation level {name!r}")
 
 
 def insert(rows, row):
@@ -42,10 +45,11 @@ def load_runs(paths, wanted):
             seconds = row["elapsed_seconds"]
             if not math.isfinite(seconds) or seconds <= 0:
                 raise ValueError(f"Invalid timing {seconds} at {row['position_id']}")
-            key = "truncated-benchmark-v1:" + row["source"]["key"]
-            seed = int.from_bytes(hashlib.sha256(key.encode()).digest()[:4], "big")
-            if type(row.get("seed")) is not int or row["seed"] != seed:
-                raise ValueError(f"Invalid seed at {row['position_id']} in {path}")
+            if level in TRUNCATED_LEVELS:
+                key = "truncated-benchmark-v1:" + row["source"]["key"]
+                seed = int.from_bytes(hashlib.sha256(key.encode()).digest()[:4], "big")
+                if type(row.get("seed")) is not int or row["seed"] != seed:
+                    raise ValueError(f"Invalid seed at {row['position_id']} in {path}")
             insert(groups[level, row["repeat"]], row)
     if {level for level, _ in groups} != set(wanted):
         raise ValueError(f"Missing level in {paths} (expected {wanted})")

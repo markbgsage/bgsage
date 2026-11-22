@@ -1,0 +1,91 @@
+{
+  "control_commit": "33c4aa1f6c28d12b846e66e745eef6c2692c5052",
+  "architecture": "x86_64",
+  "compiler": "GCC 15.2",
+  "python": "3.14",
+  "normalized_source_hashes": "SHA-256 with CRLF normalized to LF",
+  "binary": {
+    "control": {
+      "filename": "bgbot_cpp.cpython-314-x86_64-linux-gnu.so",
+      "bytes": 3202088,
+      "sha256": "886e78fa00e5026356c84d1128456f951cc9403561e2f0e18f3f4ccb2ba50bab"
+    },
+    "candidate": {
+      "filename": "bgbot_cpp.cpython-314-x86_64-linux-gnu.so",
+      "bytes": 3204352,
+      "sha256": "51fd8a0d8981fbea19622dbc23e991bcb617b21aa9598b780e1d81a63fb3d2cc"
+    },
+    "exact": {
+      "filename": "bgbot_cpp.cpython-314-x86_64-linux-gnu.so",
+      "bytes": 3203864,
+      "sha256": "24e204106a370b9638068f68161738e307e5776d39e9629da46a4e6d8fd4f884"
+    },
+    "guarded": {
+      "filename": "bgbot_cpp.cpython-314-x86_64-linux-gnu.so",
+      "bytes": 3193088,
+      "sha256": "39c443658441df8474ff4ee3892e555afd7e191616f6e4ed54e840bb38acef5f"
+    }
+  },
+  "changed_sources": {
+    "cpp/include/bgbot/encoding.h": {
+      "control": "fc5d59f03c0774dbec607bdb24655b80624427542684ad40e5c5478500b19cc9",
+      "candidate": "c35586225ccf3c6f6a85166c34ad034a112d5a46248615346514380136110895",
+      "exact": "c35586225ccf3c6f6a85166c34ad034a112d5a46248615346514380136110895",
+      "guarded": "c35586225ccf3c6f6a85166c34ad034a112d5a46248615346514380136110895"
+    },
+    "cpp/include/bgbot/multipy.h": {
+      "control": "74029939de89b16379002d29cfec3fdcb6d7703669629c470cbea27f83d41f8f",
+      "candidate": "d2171f2d482cfcf47af7f610bd878f58289cf4531b43088a541b135c639f661f",
+      "exact": "d2171f2d482cfcf47af7f610bd878f58289cf4531b43088a541b135c639f661f",
+      "guarded": "d2171f2d482cfcf47af7f610bd878f58289cf4531b43088a541b135c639f661f"
+    },
+    "cpp/include/bgbot/neural_net.h": {
+      "control": "23e8befb74072fb764077e461a1e01835f75e4dcd7d51408288a959e34bc7b5d",
+      "candidate": "ac74945a25aed343c72f603c8bd6cd9175e1d3c5289b9a13755d2c05defde768",
+      "exact": "ac74945a25aed343c72f603c8bd6cd9175e1d3c5289b9a13755d2c05defde768",
+      "guarded": "ac74945a25aed343c72f603c8bd6cd9175e1d3c5289b9a13755d2c05defde768"
+    },
+    "cpp/pybind/bindings.cpp": {
+      "control": "f1be365e6e02f3475682b212b4c9848d0c0126e72d6a313b5f98515768c7e7ff",
+      "candidate": "f716e075b42610ef383396b51e87ce87edf45b54ac14a8939e06dd8e2aee2261",
+      "exact": "f716e075b42610ef383396b51e87ce87edf45b54ac14a8939e06dd8e2aee2261",
+      "guarded": "f716e075b42610ef383396b51e87ce87edf45b54ac14a8939e06dd8e2aee2261"
+    },
+    "cpp/src/cube_eval.cpp": {
+      "control": "4215f547efcbdc5596e5d2abe5ad5228f74169a8fe7674dc768e4c28d7c39921",
+      "candidate": "5504406e085aff3f36993796754bb8271878640a06f9d06b8c74740c446aea92",
+      "exact": "1aee201a43fc4d5e327d2b6a47fa974d26d3e08251ac2b8799b33f407fdf0301",
+      "guarded": "9be1344c7d9765317ce81bdb6c6cb7e6bbb5341ea826628e0201bd55ff2edce7"
+    },
+    "cpp/src/encoding.cpp": {
+      "control": "b3839eeedec20d23bd4ff29af78f929eaac935b1cdf7b8ab8e9bf135eb7cf2e9",
+      "candidate": "790f6846fb7503f35c0ced6349b26a85bdfe40c0e6efe7a976c2339774368bc7",
+      "exact": "5e89d7bff97f52b0a06891dcb854661142e2dbdf8c559fc30e3c83f40eb3e294",
+      "guarded": "790f6846fb7503f35c0ced6349b26a85bdfe40c0e6efe7a976c2339774368bc7"
+    },
+    "cpp/src/moves.cpp": {
+      "control": "85276a46d81c5ba1f18931259f78acf0ecfef46180b4afb9bf8c99eb866ec9a4",
+      "candidate": "24ba1880e09357bfd98b144356e2b0474e0a635977a5ef5a9f13e47ffb0a720f",
+      "exact": "24ba1880e09357bfd98b144356e2b0474e0a635977a5ef5a9f13e47ffb0a720f",
+      "guarded": "24ba1880e09357bfd98b144356e2b0474e0a635977a5ef5a9f13e47ffb0a720f"
+    },
+    "cpp/src/neural_net.cpp": {
+      "control": "e5f4ddff2eae89a0ef755cd5126d292baeb62f4383ac06f387c16e39adfc13bb",
+      "candidate": "d86a64e7a5613721755bbc168b575e81ef3d29200b7471ac3aa1b5ae574728ce",
+      "exact": "c0b83c6f518b84d831c51e40d0f9bc29bb01342f548ef1b5852ac62e76121a12",
+      "guarded": "d490e9aa300bc537c08f62c1ea5bdb8b9fb1c65897635e26f3e0d14ea3d529e6"
+    },
+    "python/bgsage/analyzer.py": {
+      "control": "1a4f2529dcbba838d9b32bd2d6d5ee187eae770f8166a467688ae1839caa9041",
+      "candidate": "34bde2de89de85ec781657f92854b663b34cfd553272c920663a272182ba5b4b",
+      "exact": "34bde2de89de85ec781657f92854b663b34cfd553272c920663a272182ba5b4b",
+      "guarded": "34bde2de89de85ec781657f92854b663b34cfd553272c920663a272182ba5b4b"
+    }
+  },
+  "validation": [
+    "Stage 11 model validation with 24 network weights in candidate, exact, and corrected packages",
+    "one-sided bearoff database available",
+    "null strategy rejected by TypeError in each candidate extension",
+    "guarded extension linked from objects used for the successful native custom-slot regression"
+  ]
+}

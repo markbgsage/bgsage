@@ -1,0 +1,32 @@
+{
+  "sha256": {
+    "exact": "24e204106a370b9638068f68161738e307e5776d39e9629da46a4e6d8fd4f884",
+    "sparse": "51fd8a0d8981fbea19622dbc23e991bcb617b21aa9598b780e1d81a63fb3d2cc"
+  },
+  "levels": {
+    "3ply": {
+      "exact": {
+        "seconds": 2.9912987779999582,
+        "calls": 180,
+        "exact": 180
+      },
+      "sparse": {
+        "seconds": 2.9358022260001064,
+        "calls": 180,
+        "exact": 180
+      }
+    },
+    "4ply": {
+      "exact": {
+        "seconds": 20.309693496000108,
+        "calls": 60,
+        "exact": 60
+      },
+      "sparse": {
+        "seconds": 20.27426374299978,
+        "calls": 60,
+        "exact": 60
+      }
+    }
+  }
+}

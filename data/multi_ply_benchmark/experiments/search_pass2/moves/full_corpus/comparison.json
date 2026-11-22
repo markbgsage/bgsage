@@ -1,0 +1,94 @@
+{
+  "metadata": {
+    "hashes": {
+      "base": "e3205e4a3dcd20df471ca26d2ae051d5dfb27600aab5d9fefa5e08b0314f52f4",
+      "first": "081fe2f51eaed13e885e2341faa1414938d380a499d5bcb79b0677b47e287464",
+      "hybrid": "540941fa0912e41c76a16cd0dc090e1d1ab6ae75da3f95aaf73c7b8ec538c365"
+    },
+    "mask": 15,
+    "threads": 4,
+    "levels": [
+      "2ply=2",
+      "3ply=2"
+    ],
+    "cases_per_repeat": 300
+  },
+  "levels": {
+    "2ply": {
+      "base": {
+        "calls": 600,
+        "seconds": 2.8818309009075165,
+        "speedup_vs_relink": 1.0,
+        "paired_median_speedup": 1.0,
+        "faster_pairs": 0,
+        "exact_vs_relink": 600,
+        "by_repeat": {
+          "0": 1.5020299007301219,
+          "1": 1.3798010001773946
+        }
+      },
+      "first": {
+        "calls": 600,
+        "seconds": 2.9194974991260096,
+        "speedup_vs_relink": 0.9870982598102005,
+        "paired_median_speedup": 0.9984564845974827,
+        "faster_pairs": 294,
+        "exact_vs_relink": 600,
+        "by_repeat": {
+          "0": 1.4970836998545565,
+          "1": 1.4224137992714532
+        }
+      },
+      "hybrid": {
+        "calls": 600,
+        "seconds": 2.9243614003644325,
+        "speedup_vs_relink": 0.9854564830969196,
+        "paired_median_speedup": 1.0027849831791675,
+        "faster_pairs": 307,
+        "exact_vs_relink": 600,
+        "by_repeat": {
+          "0": 1.5362331995856948,
+          "1": 1.3881282007787377
+        }
+      }
+    },
+    "3ply": {
+      "base": {
+        "calls": 600,
+        "seconds": 21.400424599880353,
+        "speedup_vs_relink": 1.0,
+        "paired_median_speedup": 1.0,
+        "faster_pairs": 0,
+        "exact_vs_relink": 600,
+        "by_repeat": {
+          "0": 10.258329600677826,
+          "1": 11.142094999202527
+        }
+      },
+      "first": {
+        "calls": 600,
+        "seconds": 21.69201229896862,
+        "speedup_vs_relink": 0.9865578308241079,
+        "paired_median_speedup": 0.9983707271723903,
+        "faster_pairs": 294,
+        "exact_vs_relink": 600,
+        "by_repeat": {
+          "0": 10.146774499444291,
+          "1": 11.54523779952433
+        }
+      },
+      "hybrid": {
+        "calls": 600,
+        "seconds": 21.467575099435635,
+        "speedup_vs_relink": 0.9968720035102125,
+        "paired_median_speedup": 1.0012891043803234,
+        "faster_pairs": 302,
+        "exact_vs_relink": 600,
+        "by_repeat": {
+          "0": 10.044206199643668,
+          "1": 11.423368899791967
+        }
+      }
+    }
+  }
+}

@@ -9,6 +9,8 @@ sets to compare the original and optimized builds. The
 the three public truncated-rollout presets on the same positions. The [position rollout
 references](rollout_positions/README.md) reuse the archived full-game checker
 decisions and complete the other positions with 1,296-game public analytics.
+The [second CPU search study](experiments/search_pass2/README.md) measures
+1P through 4P, checks the truncated presets and includes the full responses.
 
 | File | Calls | Positions |
 | --- | --- | ---: |

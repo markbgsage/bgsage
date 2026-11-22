@@ -1,0 +1,315 @@
+{
+  "archives": {
+    "windows": {
+      "sha256": "eec7deaa28b667a9603a4659bfd23fd314d9bcf5edd3839b2b4f3e21417f15a5",
+      "levels": {
+        "1P": {
+          "calls_per_build": 300,
+          "recomputed_vs": {
+            "original": {
+              "exact_complete_responses": 300,
+              "fields": 4724,
+              "materially_farther": 0,
+              "materially_closer": 0
+            },
+            "checkpoint": {
+              "exact_complete_responses": 300,
+              "fields": 4724,
+              "materially_farther": 0,
+              "materially_closer": 0
+            }
+          }
+        },
+        "2P": {
+          "calls_per_build": 300,
+          "recomputed_vs": {
+            "original": {
+              "exact_complete_responses": 300,
+              "fields": 4724,
+              "materially_farther": 0,
+              "materially_closer": 0
+            },
+            "checkpoint": {
+              "exact_complete_responses": 300,
+              "fields": 4724,
+              "materially_farther": 0,
+              "materially_closer": 0
+            }
+          }
+        },
+        "3P": {
+          "calls_per_build": 300,
+          "recomputed_vs": {
+            "original": {
+              "exact_complete_responses": 300,
+              "fields": 4724,
+              "materially_farther": 0,
+              "materially_closer": 0
+            },
+            "checkpoint": {
+              "exact_complete_responses": 300,
+              "fields": 4724,
+              "materially_farther": 0,
+              "materially_closer": 0
+            }
+          }
+        },
+        "4P": {
+          "calls_per_build": 300,
+          "recomputed_vs": {
+            "original": {
+              "exact_complete_responses": 300,
+              "fields": 4724,
+              "materially_farther": 0,
+              "materially_closer": 0
+            },
+            "checkpoint": {
+              "exact_complete_responses": 300,
+              "fields": 4724,
+              "materially_farther": 0,
+              "materially_closer": 0
+            }
+          }
+        },
+        "1T": {
+          "calls_per_build": 300,
+          "recomputed_vs": {
+            "original": {
+              "exact_complete_responses": 299,
+              "fields": 4724,
+              "materially_farther": 0,
+              "materially_closer": 0
+            },
+            "checkpoint": {
+              "exact_complete_responses": 300,
+              "fields": 4724,
+              "materially_farther": 0,
+              "materially_closer": 0
+            }
+          }
+        },
+        "2T": {
+          "calls_per_build": 300,
+          "recomputed_vs": {
+            "original": {
+              "exact_complete_responses": 272,
+              "fields": 4724,
+              "materially_farther": 0,
+              "materially_closer": 3
+            },
+            "checkpoint": {
+              "exact_complete_responses": 300,
+              "fields": 4724,
+              "materially_farther": 0,
+              "materially_closer": 0
+            }
+          }
+        },
+        "3T": {
+          "calls_per_build": 300,
+          "recomputed_vs": {
+            "original": {
+              "exact_complete_responses": 265,
+              "fields": 4724,
+              "materially_farther": 0,
+              "materially_closer": 0
+            },
+            "checkpoint": {
+              "exact_complete_responses": 300,
+              "fields": 4724,
+              "materially_farther": 0,
+              "materially_closer": 0
+            }
+          }
+        }
+      },
+      "candidate_binary": {
+        "path": "build/multi_ply_second_final/bgbot_cpp.cp314-win_amd64.pyd",
+        "sha256": "fd4630f514159877922dfc425de3503694385a82d55d523c6f9964e2bdc3d728",
+        "bytes": 5009920
+      },
+      "analytics_records": 6300
+    },
+    "linux": {
+      "sha256": "92d5ff76ec906ae47645839a6048d4d8accf12ce27637eee03219b5281dd0bfc",
+      "levels": {
+        "1P": {
+          "calls_per_build": 300,
+          "recomputed_vs": {
+            "original": {
+              "exact_complete_responses": 199,
+              "fields": 4724,
+              "materially_farther": 0,
+              "materially_closer": 0
+            },
+            "checkpoint": {
+              "exact_complete_responses": 300,
+              "fields": 4724,
+              "materially_farther": 0,
+              "materially_closer": 0
+            }
+          }
+        },
+        "2P": {
+          "calls_per_build": 300,
+          "recomputed_vs": {
+            "original": {
+              "exact_complete_responses": 104,
+              "fields": 4724,
+              "materially_farther": 0,
+              "materially_closer": 0
+            },
+            "checkpoint": {
+              "exact_complete_responses": 300,
+              "fields": 4724,
+              "materially_farther": 0,
+              "materially_closer": 0
+            }
+          }
+        },
+        "3P": {
+          "calls_per_build": 300,
+          "recomputed_vs": {
+            "original": {
+              "exact_complete_responses": 124,
+              "fields": 4724,
+              "materially_farther": 0,
+              "materially_closer": 0
+            },
+            "checkpoint": {
+              "exact_complete_responses": 300,
+              "fields": 4724,
+              "materially_farther": 0,
+              "materially_closer": 0
+            }
+          }
+        },
+        "4P": {
+          "calls_per_build": 300,
+          "recomputed_vs": {
+            "original": {
+              "exact_complete_responses": 134,
+              "fields": 4724,
+              "materially_farther": 0,
+              "materially_closer": 0
+            },
+            "checkpoint": {
+              "exact_complete_responses": 300,
+              "fields": 4724,
+              "materially_farther": 0,
+              "materially_closer": 0
+            }
+          }
+        }
+      },
+      "candidate_binary": {
+        "path": "build/det_eval2/linux_release/guarded/bgbot_cpp.cpython-314-x86_64-linux-gnu.so",
+        "sha256": "39c443658441df8474ff4ee3892e555afd7e191616f6e4ed54e840bb38acef5f",
+        "bytes": 3193088
+      },
+      "analytics_records": 3600
+    }
+  },
+  "assets": {
+    "bearoff": "907bbe0042dadfa14840a9f470b6b5adac213d5b2c17dc0e41aec27b087e3fe6",
+    "positions": {
+      "checker_play": "1e69cf43b3bb4ae29b4337e8008f5e30c76f7b8b8f6f1bf271e46d75d8beac0b",
+      "cube_action": "31f56488ded1f2d0f3f280db754be4bce39e136b605bd5a7318952c2361830de"
+    },
+    "truth": "23b7bca2272c8ea750020f82c066dd489d3d556e39f0b8b2ec1cf99740051845",
+    "ordered_weight_slots": 24
+  },
+  "markdown": {
+    "checked_documents": 10,
+    "local_file_or_anchor_links": 170,
+    "external_links_excluded": 0,
+    "unresolved": []
+  },
+  "throughput_guard": {
+    "exact_pairs": 12,
+    "total_seconds": {
+      "checker_play": [
+        11.3291662,
+        10.017319399999998
+      ],
+      "cube_action": [
+        3.2196069,
+        2.7846375
+      ],
+      "post_move_analytics": [
+        3.2339854000000003,
+        2.7973701
+      ]
+    },
+    "threads": 4,
+    "games": 36,
+    "sha256": "97dd39fc421164ecf400d668fa9575326a778511b72c588833e4aba810012166"
+  },
+  "additional_qualification": {
+    "linux-truncated": {
+      "sha256": "eff9430b226e825d0182584ab2b8b2b05231b9ef102791b7df295a1208654d04",
+      "levels": {
+        "1T": {
+          "seconds": {
+            "checkpoint": 10.124920608,
+            "candidate": 10.111035927
+          },
+          "identical": 300
+        },
+        "2T": {
+          "seconds": {
+            "checkpoint": 77.579602018,
+            "candidate": 67.917737183
+          },
+          "identical": 300
+        },
+        "3T": {
+          "seconds": {
+            "checkpoint": 259.308328323,
+            "candidate": 237.109175712
+          },
+          "identical": 300
+        }
+      },
+      "zip_crc": "valid"
+    },
+    "linux-repeat": {
+      "sha256": "475c98a0269ca3c37be4224bf5850d285333aca5a5e44eec0b6123989a030f37",
+      "levels": {
+        "1P": {
+          "seconds": {
+            "checkpoint": 10.359073317,
+            "candidate": 0.021262435
+          },
+          "identical": 300
+        },
+        "2P": {
+          "seconds": {
+            "checkpoint": 0.914038266,
+            "candidate": 0.35794814
+          },
+          "identical": 300
+        },
+        "3P": {
+          "seconds": {
+            "checkpoint": 3.120393628,
+            "candidate": 2.470165448
+          },
+          "identical": 300
+        },
+        "4P": {
+          "seconds": {
+            "checkpoint": 53.528017638,
+            "candidate": 50.584906309
+          },
+          "identical": 300
+        }
+      },
+      "zip_crc": "valid"
+    }
+  },
+  "final_report_links": {
+    "documents": 2,
+    "working_local_links": 34
+  }
+}

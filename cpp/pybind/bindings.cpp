@@ -15,6 +15,7 @@
 #include <iostream>
 #include <iomanip>
 #include <thread>
+#include <tuple>
 
 #include "bgbot/types.h"
 #include "bgbot/board.h"
@@ -5742,6 +5743,54 @@ PYBIND11_MODULE(bgbot_cpp, m) {
        py::arg("bearoff_db") = nullptr,
        py::arg("root_board") = std::vector<int>{}, py::arg("max_cube_value") = 0);
 
+    m.def("cubeful_checker_moves_nply",
+          [](const std::vector<int>& board_vec, int die1, int die2,
+             CubeOwner opponent_owner, std::shared_ptr<Strategy> strategy,
+             int n_plies, int n_threads, int cube_value, int opponent_away,
+             int player_away, bool is_crawford, bool jacoby, bool beaver,
+             const BearoffDB* bearoff_db, int max_cube_value) {
+        const Board board = list_to_board(board_vec);
+        auto eval = with_bearoff_db(std::move(strategy), bearoff_db);
+        const CubeInfo ci{cube_value, opponent_owner,
+                          {std::max(opponent_away, 0), std::max(player_away, 0), is_crawford},
+                          -1.0f, jacoby, beaver, max_cube_value};
+        using Move = std::tuple<Board, std::array<float, 5>, float>;
+        std::vector<Move> moves;
+        {
+            py::gil_scoped_release release;
+            std::vector<Board> endpoints;
+            possible_boards(board, die1, die2, endpoints);
+            moves.resize(endpoints.size());
+            std::vector<std::exception_ptr> errors(endpoints.size());
+            const int count = static_cast<int>(endpoints.size());
+            const int workers = std::clamp(n_threads, 1, std::max(count, 1));
+            std::atomic<int> next{0};
+            auto evaluate = [&](int i) {
+                try {
+                    const auto r = cubeful_probs_and_equity_nply(
+                        flip(endpoints[i]), ci, *eval, n_plies, MoveFilters::TINY,
+                        count == 1 ? std::min(n_threads, 21) : 1, nullptr, &board);
+                    moves[i] = {endpoints[i], r.probs, r.equity};
+                } catch (...) {
+                    errors[i] = std::current_exception();
+                }
+            };
+            multipy_parallel_run(workers, [&] {
+                for (int i = next.fetch_add(1, std::memory_order_relaxed); i < count;
+                     i = next.fetch_add(1, std::memory_order_relaxed))
+                    evaluate(i);
+            });
+            for (const auto& error : errors) {
+                if (error) std::rethrow_exception(error);
+            }
+        }
+        return moves;
+    }, "Evaluate all checker endpoints in legal move order, from the opponent's perspective.",
+       py::arg("board"), py::arg("die1"), py::arg("die2"), py::arg("opponent_owner"),
+       py::arg("strategy").none(false), py::arg("n_plies"), py::arg("n_threads"), py::arg("cube_value"),
+       py::arg("opponent_away"), py::arg("player_away"), py::arg("is_crawford"),
+       py::arg("jacoby"), py::arg("beaver"), py::arg("bearoff_db"), py::arg("max_cube_value"));
+
     // --- Unified 1-ply cube decision ---
     m.def("evaluate_cube_decision_unified", [](const std::vector<int>& checkers,
                                                 int cube_value, CubeOwner owner,
@@ -5751,13 +5800,12 @@ PYBIND11_MODULE(bgbot_cpp, m) {
                                                 int away1, int away2, bool is_crawford,
                                                 float cube_x_override, bool jacoby,
                                                 bool beaver, int max_cube_value,
-                                                const BearoffDB* bearoff_db) {
+                                                const BearoffDB* bearoff_db,
+                                                std::shared_ptr<Strategy> loaded_strategy) {
         Board board = list_to_board(checkers);
-        auto base = make_strategy_from_type(strategy_type, weight_paths, hidden_sizes);
-        std::shared_ptr<Strategy> strat = base;
-        if (bearoff_db && bearoff_db->is_loaded()) {
-            strat = std::make_shared<BearoffStrategy>(base, bearoff_db);
-        }
+        if (!loaded_strategy)
+            loaded_strategy = make_strategy_from_type(strategy_type, weight_paths, hidden_sizes);
+        auto strat = with_bearoff_db(std::move(loaded_strategy), bearoff_db);
         Board flipped = flip(board);
         bool race = is_race(board);
         auto post_move_probs = strat->evaluate_probs(flipped, race);
@@ -5795,7 +5843,7 @@ PYBIND11_MODULE(bgbot_cpp, m) {
        py::arg("away1") = 0, py::arg("away2") = 0, py::arg("is_crawford") = false,
        py::arg("cube_x_override") = -1.0f, py::arg("jacoby") = true,
        py::arg("beaver") = true, py::arg("max_cube_value") = 0,
-       py::arg("bearoff_db") = nullptr);
+       py::arg("bearoff_db") = nullptr, py::arg("loaded_strategy") = nullptr);
 
     // --- Unified N-ply cube decision ---
     m.def("cube_decision_nply_unified", [](const std::vector<int>& checkers,

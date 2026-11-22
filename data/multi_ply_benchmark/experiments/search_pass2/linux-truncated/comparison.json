@@ -1,0 +1,2514 @@
+{
+  "inputs": {
+    "baseline": [
+      {
+        "path": "logs/search_pass2/linux/checkpoint/1T/results.jsonl",
+        "sha256": "a500a3a7179c0a2f87d97fbe69e07a0e2005a93dbe39184e626a4dcc4c082440",
+        "bytes": 1057519
+      },
+      {
+        "path": "logs/search_pass2/linux/checkpoint/2T/results.jsonl",
+        "sha256": "32d595af6848217dea4eaa134ac64ed98d1062f7e88db54479a2af34ce7391af",
+        "bytes": 1057854
+      },
+      {
+        "path": "logs/search_pass2/linux/checkpoint/3T/results.jsonl",
+        "sha256": "c26f16abf59a3bfef4342db304f29f12a18736d4c0519b18d780fee69f03aa0f",
+        "bytes": 1063234
+      }
+    ],
+    "candidate": [
+      {
+        "path": "logs/search_pass2/linux/candidate/1T/results.jsonl",
+        "sha256": "16c60b50532a44c3f2f70d8c6d9c6fdf97136dd4ee8f928e75a62c375964d23b",
+        "bytes": 1057526
+      },
+      {
+        "path": "logs/search_pass2/linux/candidate/2T/results.jsonl",
+        "sha256": "c35f0a9d29063f862aa4861c366b2d57d73d80736ef02b65368789457bf2e74e",
+        "bytes": 1057844
+      },
+      {
+        "path": "logs/search_pass2/linux/candidate/3T/results.jsonl",
+        "sha256": "3cd31165a57e738d96a5d86fb8b8b85abeb47c181aba0fdc1dbac7158ad57d09",
+        "bytes": 1063252
+      }
+    ],
+    "truth": {
+      "path": "data/multi_ply_benchmark/rollout_positions/results.jsonl",
+      "sha256": "23b7bca2272c8ea750020f82c066dd489d3d556e39f0b8b2ec1cf99740051845",
+      "bytes": 1127327
+    }
+  },
+  "material_probability": 0.0025,
+  "material_equity": 0.005,
+  "reference_positions_by_origin": {
+    "frozen_public_rollout": 263,
+    "archival_rollout": 37
+  },
+  "levels": {
+    "1T": {
+      "by_api": {
+        "checker_play": {
+          "timing": {
+            "baseline": {
+              "count": 100,
+              "total_seconds": 5.997910479,
+              "mean_seconds": 0.05997910479,
+              "median_seconds": 0.050797689,
+              "p95_seconds": 0.158250147,
+              "min_seconds": 0.00159918,
+              "max_seconds": 0.532925757,
+              "stdev_seconds": 0.066077775127791
+            },
+            "candidate": {
+              "count": 100,
+              "total_seconds": 5.999932425,
+              "mean_seconds": 0.05999932425,
+              "median_seconds": 0.051895931,
+              "p95_seconds": 0.164210745,
+              "min_seconds": 0.001657101,
+              "max_seconds": 0.539281309,
+              "stdev_seconds": 0.06590846256865193
+            },
+            "speedup": 0.9996630052045961,
+            "seconds_saved": -0.0020219460000001632,
+            "candidate_faster_calls": 53
+          },
+          "exact_analytics": 100,
+          "changed_outputs": [],
+          "public_field_changes": {},
+          "numeric_shifts": {
+            "cubeless_equity": {
+              "n": 1709,
+              "max_abs_shift": 0.0,
+              "worst_location": null,
+              "over_material": 0
+            },
+            "die1": {
+              "n": 100,
+              "max_abs_shift": 0,
+              "worst_location": null,
+              "over_material": 0
+            },
+            "die2": {
+              "n": 100,
+              "max_abs_shift": 0,
+              "worst_location": null,
+              "over_material": 0
+            },
+            "equity": {
+              "n": 1709,
+              "max_abs_shift": 0.0,
+              "worst_location": null,
+              "over_material": 0
+            },
+            "equity_diff": {
+              "n": 1709,
+              "max_abs_shift": 0.0,
+              "worst_location": null,
+              "over_material": 0
+            },
+            "prob_std_errors[0]": {
+              "n": 347,
+              "max_abs_shift": 0.0,
+              "worst_location": null,
+              "over_material": 0
+            },
+            "prob_std_errors[1]": {
+              "n": 347,
+              "max_abs_shift": 0.0,
+              "worst_location": null,
+              "over_material": 0
+            },
+            "prob_std_errors[2]": {
+              "n": 347,
+              "max_abs_shift": 0.0,
+              "worst_location": null,
+              "over_material": 0
+            },
+            "prob_std_errors[3]": {
+              "n": 347,
+              "max_abs_shift": 0.0,
+              "worst_location": null,
+              "over_material": 0
+            },
+            "prob_std_errors[4]": {
+              "n": 347,
+              "max_abs_shift": 0.0,
+              "worst_location": null,
+              "over_material": 0
+            },
+            "probs.backgammon_loss": {
+              "n": 1709,
+              "max_abs_shift": 0.0,
+              "worst_location": null,
+              "over_material": 0
+            },
+            "probs.backgammon_win": {
+              "n": 1709,
+              "max_abs_shift": 0.0,
+              "worst_location": null,
+              "over_material": 0
+            },
+            "probs.gammon_loss": {
+              "n": 1709,
+              "max_abs_shift": 0.0,
+              "worst_location": null,
+              "over_material": 0
+            },
+            "probs.gammon_win": {
+              "n": 1709,
+              "max_abs_shift": 0.0,
+              "worst_location": null,
+              "over_material": 0
+            },
+            "probs.win": {
+              "n": 1709,
+              "max_abs_shift": 0.0,
+              "worst_location": null,
+              "over_material": 0
+            },
+            "std_error": {
+              "n": 347,
+              "max_abs_shift": 0.0,
+              "worst_location": null,
+              "over_material": 0
+            }
+          },
+          "rollout_error_by_field": {
+            "cubeless_equity": {
+              "n": 378,
+              "baseline_mae": 0.01447223501708034,
+              "candidate_mae": 0.01447223501708034,
+              "mean_change_in_abs_error": 0.0,
+              "worst_change_in_abs_error": 0.0,
+              "materially_farther": 0,
+              "materially_closer": 0,
+              "best_change_in_abs_error": 0.0,
+              "baseline_mean_value": -0.21814643908673947,
+              "candidate_mean_value": -0.21814643908673947,
+              "rollout_mean_value": -0.2146912597019936,
+              "baseline_max_abs_error": 0.2276939066747824,
+              "baseline_position_weighted_mae": 0.0175096671915587,
+              "candidate_max_abs_error": 0.2276939066747824,
+              "candidate_position_weighted_mae": 0.0175096671915587
+            },
+            "equity": {
+              "n": 378,
+              "baseline_mae": 0.016806757623946532,
+              "candidate_mae": 0.016806757623946532,
+              "mean_change_in_abs_error": 0.0,
+              "worst_change_in_abs_error": 0.0,
+              "materially_farther": 0,
+              "materially_closer": 0,
+              "best_change_in_abs_error": 0.0,
+              "baseline_mean_value": -0.2313505083081687,
+              "candidate_mean_value": -0.2313505083081687,
+              "rollout_mean_value": -0.22721398831260275,
+              "baseline_max_abs_error": 0.11333376169204712,
+              "baseline_position_weighted_mae": 0.020089894838185247,
+              "candidate_max_abs_error": 0.11333376169204712,
+              "candidate_position_weighted_mae": 0.020089894838185247
+            },
+            "equity_diff": {
+              "n": 378,
+              "baseline_mae": 0.009471320087723334,
+              "candidate_mae": 0.009471320087723334,
+              "mean_change_in_abs_error": 0.0,
+              "worst_change_in_abs_error": 0.0,
+              "materially_farther": 0,
+              "materially_closer": 0,
+              "best_change_in_abs_error": 0.0,
+              "baseline_mean_value": -0.04413832134164367,
+              "candidate_mean_value": -0.04413832134164367,
+              "rollout_mean_value": -0.04164319571878527,
+              "baseline_max_abs_error": 0.10348986834287643,
+              "baseline_position_weighted_mae": 0.009868926209950444,
+              "candidate_max_abs_error": 0.10348986834287643,
+              "candidate_position_weighted_mae": 0.009868926209950444
+            },
+            "p.backgammon_loss": {
+              "n": 378,
+              "baseline_mae": 0.0030271677779210387,
+              "candidate_mae": 0.0030271677779210387,
+              "mean_change_in_abs_error": 0.0,
+              "worst_change_in_abs_error": 0.0,
+              "materially_farther": 0,
+              "materially_closer": 0,
+              "best_change_in_abs_error": 0.0,
+              "baseline_mean_value": 0.004894153861788295,
+              "candidate_mean_value": 0.004894153861788295,
+              "rollout_mean_value": 0.007413396021454442,
+              "baseline_max_abs_error": 0.16395635902881622,
+              "baseline_position_weighted_mae": 0.0029817772192687686,
+              "candidate_max_abs_error": 0.16395635902881622,
+              "candidate_position_weighted_mae": 0.0029817772192687686
+            },
+            "p.backgammon_win": {
+              "n": 378,
+              "baseline_mae": 0.0025768296705395545,
+              "candidate_mae": 0.0025768296705395545,
+              "mean_change_in_abs_error": 0.0,
+              "worst_change_in_abs_error": 0.0,
+              "materially_farther": 0,
+              "materially_closer": 0,
+              "best_change_in_abs_error": 0.0,
+              "baseline_mean_value": 0.005360962099542328,
+              "candidate_mean_value": 0.005360962099542328,
+              "rollout_mean_value": 0.007720592035423115,
+              "baseline_max_abs_error": 0.21965724229812622,
+              "baseline_position_weighted_mae": 0.004239703881817372,
+              "candidate_max_abs_error": 0.21965724229812622,
+              "candidate_position_weighted_mae": 0.004239703881817372
+            },
+            "p.gammon_loss": {
+              "n": 378,
+              "baseline_mae": 0.005333887810691377,
+              "candidate_mae": 0.005333887810691377,
+              "mean_change_in_abs_error": 0.0,
+              "worst_change_in_abs_error": 0.0,
+              "materially_farther": 0,
+              "materially_closer": 0,
+              "best_change_in_abs_error": 0.0,
+              "baseline_mean_value": 0.18729090556279343,
+              "candidate_mean_value": 0.18729090556279343,
+              "rollout_mean_value": 0.18984020375541205,
+              "baseline_max_abs_error": 0.08375602960586548,
+              "baseline_position_weighted_mae": 0.00520351382634051,
+              "candidate_max_abs_error": 0.08375602960586548,
+              "candidate_position_weighted_mae": 0.00520351382634051
+            },
+            "p.gammon_win": {
+              "n": 378,
+              "baseline_mae": 0.005725208244855761,
+              "candidate_mae": 0.005725208244855761,
+              "mean_change_in_abs_error": 0.0,
+              "worst_change_in_abs_error": 0.0,
+              "materially_farther": 0,
+              "materially_closer": 0,
+              "best_change_in_abs_error": 0.0,
+              "baseline_mean_value": 0.08513825956236651,
+              "candidate_mean_value": 0.08513825956236651,
+              "rollout_mean_value": 0.09008244754450458,
+              "baseline_max_abs_error": 0.16121046245098114,
+              "baseline_position_weighted_mae": 0.007653430323917123,
+              "candidate_max_abs_error": 0.16121046245098114,
+              "candidate_position_weighted_mae": 0.007653430323917123
+            },
+            "p.win": {
+              "n": 378,
+              "baseline_mae": 0.003928972307651761,
+              "candidate_mae": 0.003928972307651761,
+              "mean_change_in_abs_error": 0.0,
+              "worst_change_in_abs_error": 0.0,
+              "materially_farther": 0,
+              "materially_closer": 0,
+              "best_change_in_abs_error": 0.0,
+              "baseline_mean_value": 0.4418100024181483,
+              "candidate_mean_value": 0.4418100024181483,
+              "rollout_mean_value": 0.44246333831305795,
+              "baseline_max_abs_error": 0.03181403875350952,
+              "baseline_position_weighted_mae": 0.004767245196516227,
+              "candidate_max_abs_error": 0.03181403875350952,
+              "candidate_position_weighted_mae": 0.004767245196516227
+            }
+          },
+          "reference_endpoint_levels": {
+            "Rollout": 378,
+            "1-ply": 896,
+            "2-ply": 435
+          },
+          "material_changes_in_rollout_error": [],
+          "same_best_action": 100,
+          "decision_accuracy": {
+            "baseline": {
+              "decisions": 100,
+              "agree_with_rollout": 92,
+              "scorable_regrets": 100,
+              "unscorable_regrets": 0,
+              "mean_regret_equity": 0.00037256088107824305,
+              "max_regret_equity": 0.009824264794588089,
+              "within_0_005_equity_of_best": 97
+            },
+            "candidate": {
+              "decisions": 100,
+              "agree_with_rollout": 92,
+              "scorable_regrets": 100,
+              "unscorable_regrets": 0,
+              "mean_regret_equity": 0.00037256088107824305,
+              "max_regret_equity": 0.009824264794588089,
+              "within_0_005_equity_of_best": 97
+            }
+          },
+          "same_full_move_order": 100
+        },
+        "cube_action": {
+          "timing": {
+            "baseline": {
+              "count": 100,
+              "total_seconds": 2.066231098,
+              "mean_seconds": 0.02066231098,
+              "median_seconds": 0.024212618999999998,
+              "p95_seconds": 0.035908602,
+              "min_seconds": 0.000588794,
+              "max_seconds": 0.053488909,
+              "stdev_seconds": 0.012158094142641145
+            },
+            "candidate": {
+              "count": 100,
+              "total_seconds": 2.073811076,
+              "mean_seconds": 0.02073811076,
+              "median_seconds": 0.0243397635,
+              "p95_seconds": 0.039419718,
+              "min_seconds": 0.000515881,
+              "max_seconds": 0.050259179,
+              "stdev_seconds": 0.012358899277873769
+            },
+            "speedup": 0.996344904274202,
+            "seconds_saved": -0.00757997800000032,
+            "candidate_faster_calls": 52
+          },
+          "exact_analytics": 100,
+          "changed_outputs": [],
+          "public_field_changes": {},
+          "numeric_shifts": {
+            "cubeless_equity": {
+              "n": 100,
+              "max_abs_shift": 0.0,
+              "worst_location": null,
+              "over_material": 0
+            },
+            "cubeless_se": {
+              "n": 100,
+              "max_abs_shift": 0.0,
+              "worst_location": null,
+              "over_material": 0
+            },
+            "equity_dp": {
+              "n": 100,
+              "max_abs_shift": 0.0,
+              "worst_location": null,
+              "over_material": 0
+            },
+            "equity_dt": {
+              "n": 100,
+              "max_abs_shift": 0.0,
+              "worst_location": null,
+              "over_material": 0
+            },
+            "equity_dt_se": {
+              "n": 100,
+              "max_abs_shift": 0.0,
+              "worst_location": null,
+              "over_material": 0
+            },
+            "equity_nd": {
+              "n": 100,
+              "max_abs_shift": 0.0,
+              "worst_location": null,
+              "over_material": 0
+            },
+            "equity_nd_se": {
+              "n": 100,
+              "max_abs_shift": 0.0,
+              "worst_location": null,
+              "over_material": 0
+            },
+            "optimal_equity": {
+              "n": 100,
+              "max_abs_shift": 0.0,
+              "worst_location": null,
+              "over_material": 0
+            },
+            "probs.backgammon_loss": {
+              "n": 100,
+              "max_abs_shift": 0.0,
+              "worst_location": null,
+              "over_material": 0
+            },
+            "probs.backgammon_win": {
+              "n": 100,
+              "max_abs_shift": 0.0,
+              "worst_location": null,
+              "over_material": 0
+            },
+            "probs.gammon_loss": {
+              "n": 100,
+              "max_abs_shift": 0.0,
+              "worst_location": null,
+              "over_material": 0
+            },
+            "probs.gammon_win": {
+              "n": 100,
+              "max_abs_shift": 0.0,
+              "worst_location": null,
+              "over_material": 0
+            },
+            "probs.win": {
+              "n": 100,
+              "max_abs_shift": 0.0,
+              "worst_location": null,
+              "over_material": 0
+            }
+          },
+          "rollout_error_by_field": {
+            "cubeless_equity": {
+              "n": 100,
+              "baseline_mae": 0.01988842822611332,
+              "candidate_mae": 0.01988842822611332,
+              "mean_change_in_abs_error": 0.0,
+              "worst_change_in_abs_error": 0.0,
+              "materially_farther": 0,
+              "materially_closer": 0,
+              "best_change_in_abs_error": 0.0,
+              "baseline_mean_value": 0.4466752112284303,
+              "candidate_mean_value": 0.4466752112284303,
+              "rollout_mean_value": 0.4536048395559192,
+              "baseline_max_abs_error": 0.23066258430480957,
+              "baseline_position_weighted_mae": 0.01988842822611332,
+              "candidate_max_abs_error": 0.23066258430480957,
+              "candidate_position_weighted_mae": 0.01988842822611332
+            },
+            "equity_dp": {
+              "n": 100,
+              "baseline_mae": 0.0,
+              "candidate_mae": 0.0,
+              "mean_change_in_abs_error": 0.0,
+              "worst_change_in_abs_error": 0.0,
+              "materially_farther": 0,
+              "materially_closer": 0,
+              "best_change_in_abs_error": 0.0,
+              "baseline_mean_value": 0.9999999898672104,
+              "candidate_mean_value": 0.9999999898672104,
+              "rollout_mean_value": 0.9999999898672104,
+              "baseline_max_abs_error": 0.0,
+              "baseline_position_weighted_mae": 0.0,
+              "candidate_max_abs_error": 0.0,
+              "candidate_position_weighted_mae": 0.0
+            },
+            "equity_dt": {
+              "n": 100,
+              "baseline_mae": 0.03470705382525921,
+              "candidate_mae": 0.03470705382525921,
+              "mean_change_in_abs_error": 0.0,
+              "worst_change_in_abs_error": 0.0,
+              "materially_farther": 0,
+              "materially_closer": 0,
+              "best_change_in_abs_error": 0.0,
+              "baseline_mean_value": 0.6122665238380433,
+              "candidate_mean_value": 0.6122665238380433,
+              "rollout_mean_value": 0.6278000463545322,
+              "baseline_max_abs_error": 0.17624217085540295,
+              "baseline_position_weighted_mae": 0.03470705382525921,
+              "candidate_max_abs_error": 0.17624217085540295,
+              "candidate_position_weighted_mae": 0.03470705382525921
+            },
+            "equity_nd": {
+              "n": 100,
+              "baseline_mae": 0.027473847614601254,
+              "candidate_mae": 0.027473847614601254,
+              "mean_change_in_abs_error": 0.0,
+              "worst_change_in_abs_error": 0.0,
+              "materially_farther": 0,
+              "materially_closer": 0,
+              "best_change_in_abs_error": 0.0,
+              "baseline_mean_value": 0.5733517198357732,
+              "candidate_mean_value": 0.5733517198357732,
+              "rollout_mean_value": 0.5940223311446607,
+              "baseline_max_abs_error": 0.10149550437927246,
+              "baseline_position_weighted_mae": 0.027473847614601254,
+              "candidate_max_abs_error": 0.10149550437927246,
+              "candidate_position_weighted_mae": 0.027473847614601254
+            },
+            "optimal_equity": {
+              "n": 100,
+              "baseline_mae": 0.028572378205135463,
+              "candidate_mae": 0.028572378205135463,
+              "mean_change_in_abs_error": 0.0,
+              "worst_change_in_abs_error": 0.0,
+              "materially_farther": 0,
+              "materially_closer": 0,
+              "best_change_in_abs_error": 0.0,
+              "baseline_mean_value": 0.587061882475391,
+              "candidate_mean_value": 0.587061882475391,
+              "rollout_mean_value": 0.6085527404211462,
+              "baseline_max_abs_error": 0.10149550437927246,
+              "baseline_position_weighted_mae": 0.028572378205135463,
+              "candidate_max_abs_error": 0.10149550437927246,
+              "candidate_position_weighted_mae": 0.028572378205135463
+            },
+            "p.backgammon_loss": {
+              "n": 100,
+              "baseline_mae": 0.005082615812327447,
+              "candidate_mae": 0.005082615812327447,
+              "mean_change_in_abs_error": 0.0,
+              "worst_change_in_abs_error": 0.0,
+              "materially_farther": 0,
+              "materially_closer": 0,
+              "best_change_in_abs_error": 0.0,
+              "baseline_mean_value": 0.003394833983855392,
+              "candidate_mean_value": 0.003394833983855392,
+              "rollout_mean_value": 0.008330980421780794,
+              "baseline_max_abs_error": 0.10322529822587967,
+              "baseline_position_weighted_mae": 0.005082615812327447,
+              "candidate_max_abs_error": 0.10322529822587967,
+              "candidate_position_weighted_mae": 0.005082615812327447
+            },
+            "p.backgammon_win": {
+              "n": 100,
+              "baseline_mae": 0.005259169650250612,
+              "candidate_mae": 0.005259169650250612,
+              "mean_change_in_abs_error": 0.0,
+              "worst_change_in_abs_error": 0.0,
+              "materially_farther": 0,
+              "materially_closer": 0,
+              "best_change_in_abs_error": 0.0,
+              "baseline_mean_value": 0.008004791724098936,
+              "candidate_mean_value": 0.008004791724098936,
+              "rollout_mean_value": 0.012242961341976014,
+              "baseline_max_abs_error": 0.2888139635324478,
+              "baseline_position_weighted_mae": 0.005259169650250612,
+              "candidate_max_abs_error": 0.2888139635324478,
+              "candidate_position_weighted_mae": 0.005259169650250612
+            },
+            "p.gammon_loss": {
+              "n": 100,
+              "baseline_mae": 0.005750308107518336,
+              "candidate_mae": 0.005750308107518336,
+              "mean_change_in_abs_error": 0.0,
+              "worst_change_in_abs_error": 0.0,
+              "materially_farther": 0,
+              "materially_closer": 0,
+              "best_change_in_abs_error": 0.0,
+              "baseline_mean_value": 0.06548575803820995,
+              "candidate_mean_value": 0.06548575803820995,
+              "rollout_mean_value": 0.07016309235565167,
+              "baseline_max_abs_error": 0.03865385055541992,
+              "baseline_position_weighted_mae": 0.005750308107518336,
+              "candidate_max_abs_error": 0.03865385055541992,
+              "candidate_position_weighted_mae": 0.005750308107518336
+            },
+            "p.gammon_win": {
+              "n": 100,
+              "baseline_mae": 0.00626773336254776,
+              "candidate_mae": 0.00626773336254776,
+              "mean_change_in_abs_error": 0.0,
+              "worst_change_in_abs_error": 0.0,
+              "materially_farther": 0,
+              "materially_closer": 0,
+              "best_change_in_abs_error": 0.0,
+              "baseline_mean_value": 0.1451056954628484,
+              "candidate_mean_value": 0.1451056954628484,
+              "rollout_mean_value": 0.149390864767761,
+              "baseline_max_abs_error": 0.040599286556243896,
+              "baseline_position_weighted_mae": 0.00626773336254776,
+              "candidate_max_abs_error": 0.040599286556243896,
+              "candidate_position_weighted_mae": 0.00626773336254776
+            },
+            "p.win": {
+              "n": 100,
+              "baseline_mae": 0.0058827829360961915,
+              "candidate_mae": 0.0058827829360961915,
+              "mean_change_in_abs_error": 0.0,
+              "worst_change_in_abs_error": 0.0,
+              "materially_farther": 0,
+              "materially_closer": 0,
+              "best_change_in_abs_error": 0.0,
+              "baseline_mean_value": 0.6812226292490959,
+              "candidate_mean_value": 0.6812226292490959,
+              "rollout_mean_value": 0.6852328130602836,
+              "baseline_max_abs_error": 0.02467447519302368,
+              "baseline_position_weighted_mae": 0.0058827829360961915,
+              "candidate_max_abs_error": 0.02467447519302368,
+              "candidate_position_weighted_mae": 0.0058827829360961915
+            }
+          },
+          "reference_endpoint_levels": {
+            "Rollout": 100
+          },
+          "material_changes_in_rollout_error": [],
+          "same_best_action": 100,
+          "decision_accuracy": {
+            "baseline": {
+              "decisions": 100,
+              "agree_with_rollout": 98,
+              "scorable_regrets": 100,
+              "unscorable_regrets": 0,
+              "mean_regret_equity": 5.108833312988281e-05,
+              "max_regret_equity": 0.004721105098724365,
+              "within_0_005_equity_of_best": 100
+            },
+            "candidate": {
+              "decisions": 100,
+              "agree_with_rollout": 98,
+              "scorable_regrets": 100,
+              "unscorable_regrets": 0,
+              "mean_regret_equity": 5.108833312988281e-05,
+              "max_regret_equity": 0.004721105098724365,
+              "within_0_005_equity_of_best": 100
+            }
+          }
+        },
+        "post_move_analytics": {
+          "timing": {
+            "baseline": {
+              "count": 100,
+              "total_seconds": 2.060779031,
+              "mean_seconds": 0.02060779031,
+              "median_seconds": 0.024647104000000003,
+              "p95_seconds": 0.037483186,
+              "min_seconds": 0.000535197,
+              "max_seconds": 0.04797152,
+              "stdev_seconds": 0.012162146835401145
+            },
+            "candidate": {
+              "count": 100,
+              "total_seconds": 2.037292426,
+              "mean_seconds": 0.02037292426,
+              "median_seconds": 0.024753820500000003,
+              "p95_seconds": 0.036473458,
+              "min_seconds": 0.000453693,
+              "max_seconds": 0.048577491,
+              "stdev_seconds": 0.01205610107942407
+            },
+            "speedup": 1.011528342568923,
+            "seconds_saved": 0.023486604999999994,
+            "candidate_faster_calls": 67
+          },
+          "exact_analytics": 100,
+          "changed_outputs": [],
+          "public_field_changes": {},
+          "numeric_shifts": {
+            "cubeful_equity": {
+              "n": 100,
+              "max_abs_shift": 0.0,
+              "worst_location": null,
+              "over_material": 0
+            },
+            "cubeful_se": {
+              "n": 100,
+              "max_abs_shift": 0.0,
+              "worst_location": null,
+              "over_material": 0
+            },
+            "cubeless_equity": {
+              "n": 100,
+              "max_abs_shift": 0.0,
+              "worst_location": null,
+              "over_material": 0
+            },
+            "cubeless_se": {
+              "n": 100,
+              "max_abs_shift": 0.0,
+              "worst_location": null,
+              "over_material": 0
+            },
+            "probs.backgammon_loss": {
+              "n": 100,
+              "max_abs_shift": 0.0,
+              "worst_location": null,
+              "over_material": 0
+            },
+            "probs.backgammon_win": {
+              "n": 100,
+              "max_abs_shift": 0.0,
+              "worst_location": null,
+              "over_material": 0
+            },
+            "probs.gammon_loss": {
+              "n": 100,
+              "max_abs_shift": 0.0,
+              "worst_location": null,
+              "over_material": 0
+            },
+            "probs.gammon_win": {
+              "n": 100,
+              "max_abs_shift": 0.0,
+              "worst_location": null,
+              "over_material": 0
+            },
+            "probs.win": {
+              "n": 100,
+              "max_abs_shift": 0.0,
+              "worst_location": null,
+              "over_material": 0
+            }
+          },
+          "rollout_error_by_field": {
+            "cubeful_equity": {
+              "n": 100,
+              "baseline_mae": 0.028572378205135463,
+              "candidate_mae": 0.028572378205135463,
+              "mean_change_in_abs_error": 0.0,
+              "worst_change_in_abs_error": 0.0,
+              "materially_farther": 0,
+              "materially_closer": 0,
+              "best_change_in_abs_error": 0.0,
+              "baseline_mean_value": -0.587061882475391,
+              "candidate_mean_value": -0.587061882475391,
+              "rollout_mean_value": -0.6085527404211462,
+              "baseline_max_abs_error": 0.10149550437927246,
+              "baseline_position_weighted_mae": 0.028572378205135463,
+              "candidate_max_abs_error": 0.10149550437927246,
+              "candidate_position_weighted_mae": 0.028572378205135463
+            },
+            "cubeless_equity": {
+              "n": 100,
+              "baseline_mae": 0.01991900898516178,
+              "candidate_mae": 0.01991900898516178,
+              "mean_change_in_abs_error": 0.0,
+              "worst_change_in_abs_error": 0.0,
+              "materially_farther": 0,
+              "materially_closer": 0,
+              "best_change_in_abs_error": 0.0,
+              "baseline_mean_value": -0.4466330111399293,
+              "candidate_mean_value": -0.4466330111399293,
+              "rollout_mean_value": -0.4535673565790057,
+              "baseline_max_abs_error": 0.23066258430480957,
+              "baseline_position_weighted_mae": 0.01991900898516178,
+              "candidate_max_abs_error": 0.23066258430480957,
+              "candidate_position_weighted_mae": 0.01991900898516178
+            },
+            "p.backgammon_loss": {
+              "n": 100,
+              "baseline_mae": 0.005259169650250612,
+              "candidate_mae": 0.005259169650250612,
+              "mean_change_in_abs_error": 0.0,
+              "worst_change_in_abs_error": 0.0,
+              "materially_farther": 0,
+              "materially_closer": 0,
+              "best_change_in_abs_error": 0.0,
+              "baseline_mean_value": 0.008004791724098936,
+              "candidate_mean_value": 0.008004791724098936,
+              "rollout_mean_value": 0.012242961341976014,
+              "baseline_max_abs_error": 0.2888139635324478,
+              "baseline_position_weighted_mae": 0.005259169650250612,
+              "candidate_max_abs_error": 0.2888139635324478,
+              "candidate_position_weighted_mae": 0.005259169650250612
+            },
+            "p.backgammon_win": {
+              "n": 100,
+              "baseline_mae": 0.005082615812327447,
+              "candidate_mae": 0.005082615812327447,
+              "mean_change_in_abs_error": 0.0,
+              "worst_change_in_abs_error": 0.0,
+              "materially_farther": 0,
+              "materially_closer": 0,
+              "best_change_in_abs_error": 0.0,
+              "baseline_mean_value": 0.003394833983855392,
+              "candidate_mean_value": 0.003394833983855392,
+              "rollout_mean_value": 0.008330980421780794,
+              "baseline_max_abs_error": 0.10322529822587967,
+              "baseline_position_weighted_mae": 0.005082615812327447,
+              "candidate_max_abs_error": 0.10322529822587967,
+              "candidate_position_weighted_mae": 0.005082615812327447
+            },
+            "p.gammon_loss": {
+              "n": 100,
+              "baseline_mae": 0.00626773336254776,
+              "candidate_mae": 0.00626773336254776,
+              "mean_change_in_abs_error": 0.0,
+              "worst_change_in_abs_error": 0.0,
+              "materially_farther": 0,
+              "materially_closer": 0,
+              "best_change_in_abs_error": 0.0,
+              "baseline_mean_value": 0.1451056954628484,
+              "candidate_mean_value": 0.1451056954628484,
+              "rollout_mean_value": 0.149390864767761,
+              "baseline_max_abs_error": 0.040599286556243896,
+              "baseline_position_weighted_mae": 0.00626773336254776,
+              "candidate_max_abs_error": 0.040599286556243896,
+              "candidate_position_weighted_mae": 0.00626773336254776
+            },
+            "p.gammon_win": {
+              "n": 100,
+              "baseline_mae": 0.005750308107518336,
+              "candidate_mae": 0.005750308107518336,
+              "mean_change_in_abs_error": 0.0,
+              "worst_change_in_abs_error": 0.0,
+              "materially_farther": 0,
+              "materially_closer": 0,
+              "best_change_in_abs_error": 0.0,
+              "baseline_mean_value": 0.06548575803820995,
+              "candidate_mean_value": 0.06548575803820995,
+              "rollout_mean_value": 0.07016309235565167,
+              "baseline_max_abs_error": 0.03865385055541992,
+              "baseline_position_weighted_mae": 0.005750308107518336,
+              "candidate_max_abs_error": 0.03865385055541992,
+              "candidate_position_weighted_mae": 0.005750308107518336
+            },
+            "p.win": {
+              "n": 100,
+              "baseline_mae": 0.005898073315620422,
+              "candidate_mae": 0.005898073315620422,
+              "mean_change_in_abs_error": 0.0,
+              "worst_change_in_abs_error": 0.0,
+              "materially_farther": 0,
+              "materially_closer": 0,
+              "best_change_in_abs_error": 0.0,
+              "baseline_mean_value": 0.31879847109317777,
+              "candidate_mean_value": 0.31879847109317777,
+              "rollout_mean_value": 0.31478592872619626,
+              "baseline_max_abs_error": 0.02467447519302368,
+              "baseline_position_weighted_mae": 0.005898073315620422,
+              "candidate_max_abs_error": 0.02467447519302368,
+              "candidate_position_weighted_mae": 0.005898073315620422
+            }
+          },
+          "reference_endpoint_levels": {
+            "Rollout": 100
+          },
+          "material_changes_in_rollout_error": []
+        }
+      },
+      "total_call_seconds": {
+        "baseline": 10.124920608,
+        "candidate": 10.111035927
+      },
+      "speedup": 1.0013732204197716
+    },
+    "2T": {
+      "by_api": {
+        "checker_play": {
+          "timing": {
+            "baseline": {
+              "count": 100,
+              "total_seconds": 42.369890921,
+              "mean_seconds": 0.42369890921000003,
+              "median_seconds": 0.3662775605,
+              "p95_seconds": 1.137039679,
+              "min_seconds": 0.005930529,
+              "max_seconds": 1.595651673,
+              "stdev_seconds": 0.37124482416992355
+            },
+            "candidate": {
+              "count": 100,
+              "total_seconds": 37.77569064,
+              "mean_seconds": 0.3777569064,
+              "median_seconds": 0.3454809795,
+              "p95_seconds": 1.13307282,
+              "min_seconds": 0.005334346,
+              "max_seconds": 1.31336767,
+              "stdev_seconds": 0.326714607772875
+            },
+            "speedup": 1.121617903026114,
+            "seconds_saved": 4.594200280999999,
+            "candidate_faster_calls": 75
+          },
+          "exact_analytics": 100,
+          "changed_outputs": [],
+          "public_field_changes": {},
+          "numeric_shifts": {
+            "cubeless_equity": {
+              "n": 1709,
+              "max_abs_shift": 0.0,
+              "worst_location": null,
+              "over_material": 0
+            },
+            "die1": {
+              "n": 100,
+              "max_abs_shift": 0,
+              "worst_location": null,
+              "over_material": 0
+            },
+            "die2": {
+              "n": 100,
+              "max_abs_shift": 0,
+              "worst_location": null,
+              "over_material": 0
+            },
+            "equity": {
+              "n": 1709,
+              "max_abs_shift": 0.0,
+              "worst_location": null,
+              "over_material": 0
+            },
+            "equity_diff": {
+              "n": 1709,
+              "max_abs_shift": 0.0,
+              "worst_location": null,
+              "over_material": 0
+            },
+            "prob_std_errors[0]": {
+              "n": 331,
+              "max_abs_shift": 0.0,
+              "worst_location": null,
+              "over_material": 0
+            },
+            "prob_std_errors[1]": {
+              "n": 331,
+              "max_abs_shift": 0.0,
+              "worst_location": null,
+              "over_material": 0
+            },
+            "prob_std_errors[2]": {
+              "n": 331,
+              "max_abs_shift": 0.0,
+              "worst_location": null,
+              "over_material": 0
+            },
+            "prob_std_errors[3]": {
+              "n": 331,
+              "max_abs_shift": 0.0,
+              "worst_location": null,
+              "over_material": 0
+            },
+            "prob_std_errors[4]": {
+              "n": 331,
+              "max_abs_shift": 0.0,
+              "worst_location": null,
+              "over_material": 0
+            },
+            "probs.backgammon_loss": {
+              "n": 1709,
+              "max_abs_shift": 0.0,
+              "worst_location": null,
+              "over_material": 0
+            },
+            "probs.backgammon_win": {
+              "n": 1709,
+              "max_abs_shift": 0.0,
+              "worst_location": null,
+              "over_material": 0
+            },
+            "probs.gammon_loss": {
+              "n": 1709,
+              "max_abs_shift": 0.0,
+              "worst_location": null,
+              "over_material": 0
+            },
+            "probs.gammon_win": {
+              "n": 1709,
+              "max_abs_shift": 0.0,
+              "worst_location": null,
+              "over_material": 0
+            },
+            "probs.win": {
+              "n": 1709,
+              "max_abs_shift": 0.0,
+              "worst_location": null,
+              "over_material": 0
+            },
+            "std_error": {
+              "n": 331,
+              "max_abs_shift": 0.0,
+              "worst_location": null,
+              "over_material": 0
+            }
+          },
+          "rollout_error_by_field": {
+            "cubeless_equity": {
+              "n": 378,
+              "baseline_mae": 0.012201201234652518,
+              "candidate_mae": 0.012201201234652518,
+              "mean_change_in_abs_error": 0.0,
+              "worst_change_in_abs_error": 0.0,
+              "materially_farther": 0,
+              "materially_closer": 0,
+              "best_change_in_abs_error": 0.0,
+              "baseline_mean_value": -0.2122602560089685,
+              "candidate_mean_value": -0.2122602560089685,
+              "rollout_mean_value": -0.2146912597019936,
+              "baseline_max_abs_error": 0.2277118364969889,
+              "baseline_position_weighted_mae": 0.013396367046429313,
+              "candidate_max_abs_error": 0.2277118364969889,
+              "candidate_position_weighted_mae": 0.013396367046429313
+            },
+            "equity": {
+              "n": 378,
+              "baseline_mae": 0.01183167782843196,
+              "candidate_mae": 0.01183167782843196,
+              "mean_change_in_abs_error": 0.0,
+              "worst_change_in_abs_error": 0.0,
+              "materially_farther": 0,
+              "materially_closer": 0,
+              "best_change_in_abs_error": 0.0,
+              "baseline_mean_value": -0.22471023513689126,
+              "candidate_mean_value": -0.22471023513689126,
+              "rollout_mean_value": -0.22721398831260275,
+              "baseline_max_abs_error": 0.09422215819358826,
+              "baseline_position_weighted_mae": 0.013628673237868023,
+              "candidate_max_abs_error": 0.09422215819358826,
+              "candidate_position_weighted_mae": 0.013628673237868023
+            },
+            "equity_diff": {
+              "n": 378,
+              "baseline_mae": 0.006466802837313981,
+              "candidate_mae": 0.006466802837313981,
+              "mean_change_in_abs_error": 0.0,
+              "worst_change_in_abs_error": 0.0,
+              "materially_farther": 0,
+              "materially_closer": 0,
+              "best_change_in_abs_error": 0.0,
+              "baseline_mean_value": -0.04290717982233714,
+              "candidate_mean_value": -0.04290717982233714,
+              "rollout_mean_value": -0.04164319571878527,
+              "baseline_max_abs_error": 0.06093627214431763,
+              "baseline_position_weighted_mae": 0.006235003843224263,
+              "candidate_max_abs_error": 0.06093627214431763,
+              "candidate_position_weighted_mae": 0.006235003843224263
+            },
+            "p.backgammon_loss": {
+              "n": 378,
+              "baseline_mae": 0.0028049627589467347,
+              "candidate_mae": 0.0028049627589467347,
+              "mean_change_in_abs_error": 0.0,
+              "worst_change_in_abs_error": 0.0,
+              "materially_farther": 0,
+              "materially_closer": 0,
+              "best_change_in_abs_error": 0.0,
+              "baseline_mean_value": 0.004763870037474888,
+              "candidate_mean_value": 0.004763870037474888,
+              "rollout_mean_value": 0.007413396021454442,
+              "baseline_max_abs_error": 0.16707947105169296,
+              "baseline_position_weighted_mae": 0.002745155830932603,
+              "candidate_max_abs_error": 0.16707947105169296,
+              "candidate_position_weighted_mae": 0.002745155830932603
+            },
+            "p.backgammon_win": {
+              "n": 378,
+              "baseline_mae": 0.001734106182934855,
+              "candidate_mae": 0.001734106182934855,
+              "mean_change_in_abs_error": 0.0,
+              "worst_change_in_abs_error": 0.0,
+              "materially_farther": 0,
+              "materially_closer": 0,
+              "best_change_in_abs_error": 0.0,
+              "baseline_mean_value": 0.006281512885010593,
+              "candidate_mean_value": 0.006281512885010593,
+              "rollout_mean_value": 0.007720592035423115,
+              "baseline_max_abs_error": 0.0520317405462265,
+              "baseline_position_weighted_mae": 0.002691746669318824,
+              "candidate_max_abs_error": 0.0520317405462265,
+              "candidate_position_weighted_mae": 0.002691746669318824
+            },
+            "p.gammon_loss": {
+              "n": 378,
+              "baseline_mae": 0.004462598072707331,
+              "candidate_mae": 0.004462598072707331,
+              "mean_change_in_abs_error": 0.0,
+              "worst_change_in_abs_error": 0.0,
+              "materially_farther": 0,
+              "materially_closer": 0,
+              "best_change_in_abs_error": 0.0,
+              "baseline_mean_value": 0.18732403152569393,
+              "candidate_mean_value": 0.18732403152569393,
+              "rollout_mean_value": 0.18984020375541205,
+              "baseline_max_abs_error": 0.06445562839508057,
+              "baseline_position_weighted_mae": 0.004599980576935883,
+              "candidate_max_abs_error": 0.06445562839508057,
+              "candidate_position_weighted_mae": 0.004599980576935883
+            },
+            "p.gammon_win": {
+              "n": 378,
+              "baseline_mae": 0.004561842795875462,
+              "candidate_mae": 0.004561842795875462,
+              "mean_change_in_abs_error": 0.0,
+              "worst_change_in_abs_error": 0.0,
+              "materially_farther": 0,
+              "materially_closer": 0,
+              "best_change_in_abs_error": 0.0,
+              "baseline_mean_value": 0.08637684871255034,
+              "candidate_mean_value": 0.08637684871255034,
+              "rollout_mean_value": 0.09008244754450458,
+              "baseline_max_abs_error": 0.1822635418114563,
+              "baseline_position_weighted_mae": 0.005696673548259621,
+              "candidate_max_abs_error": 0.1822635418114563,
+              "candidate_position_weighted_mae": 0.005696673548259621
+            },
+            "p.win": {
+              "n": 378,
+              "baseline_mae": 0.0032609734833152905,
+              "candidate_mae": 0.0032609734833152905,
+              "mean_change_in_abs_error": 0.0,
+              "worst_change_in_abs_error": 0.0,
+              "materially_farther": 0,
+              "materially_closer": 0,
+              "best_change_in_abs_error": 0.0,
+              "baseline_mean_value": 0.4436535434016101,
+              "candidate_mean_value": 0.4436535434016101,
+              "rollout_mean_value": 0.44246333831305795,
+              "baseline_max_abs_error": 0.022136270999908447,
+              "baseline_position_weighted_mae": 0.0036021906781235186,
+              "candidate_max_abs_error": 0.022136270999908447,
+              "candidate_position_weighted_mae": 0.0036021906781235186
+            }
+          },
+          "reference_endpoint_levels": {
+            "Rollout": 378,
+            "1-ply": 896,
+            "2-ply": 435
+          },
+          "material_changes_in_rollout_error": [],
+          "same_best_action": 100,
+          "decision_accuracy": {
+            "baseline": {
+              "decisions": 100,
+              "agree_with_rollout": 90,
+              "scorable_regrets": 100,
+              "unscorable_regrets": 0,
+              "mean_regret_equity": 0.0003630500328209666,
+              "max_regret_equity": 0.009824264794588089,
+              "within_0_005_equity_of_best": 97
+            },
+            "candidate": {
+              "decisions": 100,
+              "agree_with_rollout": 90,
+              "scorable_regrets": 100,
+              "unscorable_regrets": 0,
+              "mean_regret_equity": 0.0003630500328209666,
+              "max_regret_equity": 0.009824264794588089,
+              "within_0_005_equity_of_best": 97
+            }
+          },
+          "same_full_move_order": 100
+        },
+        "cube_action": {
+          "timing": {
+            "baseline": {
+              "count": 100,
+              "total_seconds": 18.076277137,
+              "mean_seconds": 0.18076277137,
+              "median_seconds": 0.21051016,
+              "p95_seconds": 0.31746121,
+              "min_seconds": 0.000980179,
+              "max_seconds": 0.405976608,
+              "stdev_seconds": 0.11407817118891483
+            },
+            "candidate": {
+              "count": 100,
+              "total_seconds": 15.089595813,
+              "mean_seconds": 0.15089595813,
+              "median_seconds": 0.1744053925,
+              "p95_seconds": 0.27477175,
+              "min_seconds": 0.00095204,
+              "max_seconds": 0.313994447,
+              "stdev_seconds": 0.09432378694479468
+            },
+            "speedup": 1.1979298425890847,
+            "seconds_saved": 2.986681324000001,
+            "candidate_faster_calls": 84
+          },
+          "exact_analytics": 100,
+          "changed_outputs": [],
+          "public_field_changes": {},
+          "numeric_shifts": {
+            "cubeless_equity": {
+              "n": 100,
+              "max_abs_shift": 0.0,
+              "worst_location": null,
+              "over_material": 0
+            },
+            "cubeless_se": {
+              "n": 100,
+              "max_abs_shift": 0.0,
+              "worst_location": null,
+              "over_material": 0
+            },
+            "equity_dp": {
+              "n": 100,
+              "max_abs_shift": 0.0,
+              "worst_location": null,
+              "over_material": 0
+            },
+            "equity_dt": {
+              "n": 100,
+              "max_abs_shift": 0.0,
+              "worst_location": null,
+              "over_material": 0
+            },
+            "equity_dt_se": {
+              "n": 100,
+              "max_abs_shift": 0.0,
+              "worst_location": null,
+              "over_material": 0
+            },
+            "equity_nd": {
+              "n": 100,
+              "max_abs_shift": 0.0,
+              "worst_location": null,
+              "over_material": 0
+            },
+            "equity_nd_se": {
+              "n": 100,
+              "max_abs_shift": 0.0,
+              "worst_location": null,
+              "over_material": 0
+            },
+            "optimal_equity": {
+              "n": 100,
+              "max_abs_shift": 0.0,
+              "worst_location": null,
+              "over_material": 0
+            },
+            "probs.backgammon_loss": {
+              "n": 100,
+              "max_abs_shift": 0.0,
+              "worst_location": null,
+              "over_material": 0
+            },
+            "probs.backgammon_win": {
+              "n": 100,
+              "max_abs_shift": 0.0,
+              "worst_location": null,
+              "over_material": 0
+            },
+            "probs.gammon_loss": {
+              "n": 100,
+              "max_abs_shift": 0.0,
+              "worst_location": null,
+              "over_material": 0
+            },
+            "probs.gammon_win": {
+              "n": 100,
+              "max_abs_shift": 0.0,
+              "worst_location": null,
+              "over_material": 0
+            },
+            "probs.win": {
+              "n": 100,
+              "max_abs_shift": 0.0,
+              "worst_location": null,
+              "over_material": 0
+            }
+          },
+          "rollout_error_by_field": {
+            "cubeless_equity": {
+              "n": 100,
+              "baseline_mae": 0.022814173363149167,
+              "candidate_mae": 0.022814173363149167,
+              "mean_change_in_abs_error": 0.0,
+              "worst_change_in_abs_error": 0.0,
+              "materially_farther": 0,
+              "materially_closer": 0,
+              "best_change_in_abs_error": 0.0,
+              "baseline_mean_value": 0.4400110960751772,
+              "candidate_mean_value": 0.4400110960751772,
+              "rollout_mean_value": 0.4536048395559192,
+              "baseline_max_abs_error": 0.24286115169525146,
+              "baseline_position_weighted_mae": 0.022814173363149167,
+              "candidate_max_abs_error": 0.24286115169525146,
+              "candidate_position_weighted_mae": 0.022814173363149167
+            },
+            "equity_dp": {
+              "n": 100,
+              "baseline_mae": 0.0,
+              "candidate_mae": 0.0,
+              "mean_change_in_abs_error": 0.0,
+              "worst_change_in_abs_error": 0.0,
+              "materially_farther": 0,
+              "materially_closer": 0,
+              "best_change_in_abs_error": 0.0,
+              "baseline_mean_value": 0.9999999898672104,
+              "candidate_mean_value": 0.9999999898672104,
+              "rollout_mean_value": 0.9999999898672104,
+              "baseline_max_abs_error": 0.0,
+              "baseline_position_weighted_mae": 0.0,
+              "candidate_max_abs_error": 0.0,
+              "candidate_position_weighted_mae": 0.0
+            },
+            "equity_dt": {
+              "n": 100,
+              "baseline_mae": 0.040172731261700394,
+              "candidate_mae": 0.040172731261700394,
+              "mean_change_in_abs_error": 0.0,
+              "worst_change_in_abs_error": 0.0,
+              "materially_farther": 0,
+              "materially_closer": 0,
+              "best_change_in_abs_error": 0.0,
+              "baseline_mean_value": 0.5992260601185262,
+              "candidate_mean_value": 0.5992260601185262,
+              "rollout_mean_value": 0.6278000463545322,
+              "baseline_max_abs_error": 0.2032797932624817,
+              "baseline_position_weighted_mae": 0.040172731261700394,
+              "candidate_max_abs_error": 0.2032797932624817,
+              "candidate_position_weighted_mae": 0.040172731261700394
+            },
+            "equity_nd": {
+              "n": 100,
+              "baseline_mae": 0.028877279427833854,
+              "candidate_mae": 0.028877279427833854,
+              "mean_change_in_abs_error": 0.0,
+              "worst_change_in_abs_error": 0.0,
+              "materially_farther": 0,
+              "materially_closer": 0,
+              "best_change_in_abs_error": 0.0,
+              "baseline_mean_value": 0.5687926801433787,
+              "candidate_mean_value": 0.5687926801433787,
+              "rollout_mean_value": 0.5940223311446607,
+              "baseline_max_abs_error": 0.14403021335601807,
+              "baseline_position_weighted_mae": 0.028877279427833854,
+              "candidate_max_abs_error": 0.14403021335601807,
+              "candidate_position_weighted_mae": 0.028877279427833854
+            },
+            "optimal_equity": {
+              "n": 100,
+              "baseline_mae": 0.030908424821682275,
+              "candidate_mae": 0.030908424821682275,
+              "mean_change_in_abs_error": 0.0,
+              "worst_change_in_abs_error": 0.0,
+              "materially_farther": 0,
+              "materially_closer": 0,
+              "best_change_in_abs_error": 0.0,
+              "baseline_mean_value": 0.581150869964622,
+              "candidate_mean_value": 0.581150869964622,
+              "rollout_mean_value": 0.6085527404211462,
+              "baseline_max_abs_error": 0.14403021335601807,
+              "baseline_position_weighted_mae": 0.030908424821682275,
+              "candidate_max_abs_error": 0.14403021335601807,
+              "candidate_position_weighted_mae": 0.030908424821682275
+            },
+            "p.backgammon_loss": {
+              "n": 100,
+              "baseline_mae": 0.004947491962452944,
+              "candidate_mae": 0.004947491962452944,
+              "mean_change_in_abs_error": 0.0,
+              "worst_change_in_abs_error": 0.0,
+              "materially_farther": 0,
+              "materially_closer": 0,
+              "best_change_in_abs_error": 0.0,
+              "baseline_mean_value": 0.003533316679101972,
+              "candidate_mean_value": 0.003533316679101972,
+              "rollout_mean_value": 0.008330980421780794,
+              "baseline_max_abs_error": 0.10339140146970749,
+              "baseline_position_weighted_mae": 0.004947491962452944,
+              "candidate_max_abs_error": 0.10339140146970749,
+              "candidate_position_weighted_mae": 0.004947491962452944
+            },
+            "p.backgammon_win": {
+              "n": 100,
+              "baseline_mae": 0.005281887806580414,
+              "candidate_mae": 0.005281887806580414,
+              "mean_change_in_abs_error": 0.0,
+              "worst_change_in_abs_error": 0.0,
+              "materially_farther": 0,
+              "materially_closer": 0,
+              "best_change_in_abs_error": 0.0,
+              "baseline_mean_value": 0.007544272627577016,
+              "candidate_mean_value": 0.007544272627577016,
+              "rollout_mean_value": 0.012242961341976014,
+              "baseline_max_abs_error": 0.2995741218328476,
+              "baseline_position_weighted_mae": 0.005281887806580414,
+              "candidate_max_abs_error": 0.2995741218328476,
+              "candidate_position_weighted_mae": 0.005281887806580414
+            },
+            "p.gammon_loss": {
+              "n": 100,
+              "baseline_mae": 0.004554141663637452,
+              "candidate_mae": 0.004554141663637452,
+              "mean_change_in_abs_error": 0.0,
+              "worst_change_in_abs_error": 0.0,
+              "materially_farther": 0,
+              "materially_closer": 0,
+              "best_change_in_abs_error": 0.0,
+              "baseline_mean_value": 0.06663992054420305,
+              "candidate_mean_value": 0.06663992054420305,
+              "rollout_mean_value": 0.07016309235565167,
+              "baseline_max_abs_error": 0.03613005578517914,
+              "baseline_position_weighted_mae": 0.004554141663637452,
+              "candidate_max_abs_error": 0.03613005578517914,
+              "candidate_position_weighted_mae": 0.004554141663637452
+            },
+            "p.gammon_win": {
+              "n": 100,
+              "baseline_mae": 0.00634585666292577,
+              "candidate_mae": 0.00634585666292577,
+              "mean_change_in_abs_error": 0.0,
+              "worst_change_in_abs_error": 0.0,
+              "materially_farther": 0,
+              "materially_closer": 0,
+              "best_change_in_abs_error": 0.0,
+              "baseline_mean_value": 0.14425052332689683,
+              "candidate_mean_value": 0.14425052332689683,
+              "rollout_mean_value": 0.149390864767761,
+              "baseline_max_abs_error": 0.04481586813926697,
+              "baseline_position_weighted_mae": 0.00634585666292577,
+              "candidate_max_abs_error": 0.04481586813926697,
+              "candidate_position_weighted_mae": 0.00634585666292577
+            },
+            "p.win": {
+              "n": 100,
+              "baseline_mae": 0.007070097029209137,
+              "candidate_mae": 0.007070097029209137,
+              "mean_change_in_abs_error": 0.0,
+              "worst_change_in_abs_error": 0.0,
+              "materially_farther": 0,
+              "materially_closer": 0,
+              "best_change_in_abs_error": 0.0,
+              "baseline_mean_value": 0.6791947311162949,
+              "candidate_mean_value": 0.6791947311162949,
+              "rollout_mean_value": 0.6852328130602836,
+              "baseline_max_abs_error": 0.03424501419067383,
+              "baseline_position_weighted_mae": 0.007070097029209137,
+              "candidate_max_abs_error": 0.03424501419067383,
+              "candidate_position_weighted_mae": 0.007070097029209137
+            }
+          },
+          "reference_endpoint_levels": {
+            "Rollout": 100
+          },
+          "material_changes_in_rollout_error": [],
+          "same_best_action": 100,
+          "decision_accuracy": {
+            "baseline": {
+              "decisions": 100,
+              "agree_with_rollout": 96,
+              "scorable_regrets": 100,
+              "unscorable_regrets": 0,
+              "mean_regret_equity": 0.00042871296405792234,
+              "max_regret_equity": 0.037762463092803955,
+              "within_0_005_equity_of_best": 99
+            },
+            "candidate": {
+              "decisions": 100,
+              "agree_with_rollout": 96,
+              "scorable_regrets": 100,
+              "unscorable_regrets": 0,
+              "mean_regret_equity": 0.00042871296405792234,
+              "max_regret_equity": 0.037762463092803955,
+              "within_0_005_equity_of_best": 99
+            }
+          }
+        },
+        "post_move_analytics": {
+          "timing": {
+            "baseline": {
+              "count": 100,
+              "total_seconds": 17.13343396,
+              "mean_seconds": 0.1713343396,
+              "median_seconds": 0.198497461,
+              "p95_seconds": 0.316042364,
+              "min_seconds": 0.000879101,
+              "max_seconds": 0.381744156,
+              "stdev_seconds": 0.10842919500809269
+            },
+            "candidate": {
+              "count": 100,
+              "total_seconds": 15.05245073,
+              "mean_seconds": 0.1505245073,
+              "median_seconds": 0.18172233100000001,
+              "p95_seconds": 0.266202342,
+              "min_seconds": 0.000874233,
+              "max_seconds": 0.309078351,
+              "stdev_seconds": 0.09421601249635614
+            },
+            "speedup": 1.1382487986393164,
+            "seconds_saved": 2.080983230000001,
+            "candidate_faster_calls": 84
+          },
+          "exact_analytics": 100,
+          "changed_outputs": [],
+          "public_field_changes": {},
+          "numeric_shifts": {
+            "cubeful_equity": {
+              "n": 100,
+              "max_abs_shift": 0.0,
+              "worst_location": null,
+              "over_material": 0
+            },
+            "cubeful_se": {
+              "n": 100,
+              "max_abs_shift": 0.0,
+              "worst_location": null,
+              "over_material": 0
+            },
+            "cubeless_equity": {
+              "n": 100,
+              "max_abs_shift": 0.0,
+              "worst_location": null,
+              "over_material": 0
+            },
+            "cubeless_se": {
+              "n": 100,
+              "max_abs_shift": 0.0,
+              "worst_location": null,
+              "over_material": 0
+            },
+            "probs.backgammon_loss": {
+              "n": 100,
+              "max_abs_shift": 0.0,
+              "worst_location": null,
+              "over_material": 0
+            },
+            "probs.backgammon_win": {
+              "n": 100,
+              "max_abs_shift": 0.0,
+              "worst_location": null,
+              "over_material": 0
+            },
+            "probs.gammon_loss": {
+              "n": 100,
+              "max_abs_shift": 0.0,
+              "worst_location": null,
+              "over_material": 0
+            },
+            "probs.gammon_win": {
+              "n": 100,
+              "max_abs_shift": 0.0,
+              "worst_location": null,
+              "over_material": 0
+            },
+            "probs.win": {
+              "n": 100,
+              "max_abs_shift": 0.0,
+              "worst_location": null,
+              "over_material": 0
+            }
+          },
+          "rollout_error_by_field": {
+            "cubeful_equity": {
+              "n": 100,
+              "baseline_mae": 0.030908424821682275,
+              "candidate_mae": 0.030908424821682275,
+              "mean_change_in_abs_error": 0.0,
+              "worst_change_in_abs_error": 0.0,
+              "materially_farther": 0,
+              "materially_closer": 0,
+              "best_change_in_abs_error": 0.0,
+              "baseline_mean_value": -0.581150869964622,
+              "candidate_mean_value": -0.581150869964622,
+              "rollout_mean_value": -0.6085527404211462,
+              "baseline_max_abs_error": 0.14403021335601807,
+              "baseline_position_weighted_mae": 0.030908424821682275,
+              "candidate_max_abs_error": 0.14403021335601807,
+              "candidate_position_weighted_mae": 0.030908424821682275
+            },
+            "cubeless_equity": {
+              "n": 100,
+              "baseline_mae": 0.022826964519917965,
+              "candidate_mae": 0.022826964519917965,
+              "mean_change_in_abs_error": 0.0,
+              "worst_change_in_abs_error": 0.0,
+              "materially_farther": 0,
+              "materially_closer": 0,
+              "best_change_in_abs_error": 0.0,
+              "baseline_mean_value": -0.4399861849099398,
+              "candidate_mean_value": -0.4399861849099398,
+              "rollout_mean_value": -0.4535673565790057,
+              "baseline_max_abs_error": 0.24286115169525146,
+              "baseline_position_weighted_mae": 0.022826964519917965,
+              "candidate_max_abs_error": 0.24286115169525146,
+              "candidate_position_weighted_mae": 0.022826964519917965
+            },
+            "p.backgammon_loss": {
+              "n": 100,
+              "baseline_mae": 0.005281887806580414,
+              "candidate_mae": 0.005281887806580414,
+              "mean_change_in_abs_error": 0.0,
+              "worst_change_in_abs_error": 0.0,
+              "materially_farther": 0,
+              "materially_closer": 0,
+              "best_change_in_abs_error": 0.0,
+              "baseline_mean_value": 0.007544272627577016,
+              "candidate_mean_value": 0.007544272627577016,
+              "rollout_mean_value": 0.012242961341976014,
+              "baseline_max_abs_error": 0.2995741218328476,
+              "baseline_position_weighted_mae": 0.005281887806580414,
+              "candidate_max_abs_error": 0.2995741218328476,
+              "candidate_position_weighted_mae": 0.005281887806580414
+            },
+            "p.backgammon_win": {
+              "n": 100,
+              "baseline_mae": 0.004947491962452944,
+              "candidate_mae": 0.004947491962452944,
+              "mean_change_in_abs_error": 0.0,
+              "worst_change_in_abs_error": 0.0,
+              "materially_farther": 0,
+              "materially_closer": 0,
+              "best_change_in_abs_error": 0.0,
+              "baseline_mean_value": 0.003533316679101972,
+              "candidate_mean_value": 0.003533316679101972,
+              "rollout_mean_value": 0.008330980421780794,
+              "baseline_max_abs_error": 0.10339140146970749,
+              "baseline_position_weighted_mae": 0.004947491962452944,
+              "candidate_max_abs_error": 0.10339140146970749,
+              "candidate_position_weighted_mae": 0.004947491962452944
+            },
+            "p.gammon_loss": {
+              "n": 100,
+              "baseline_mae": 0.00634585666292577,
+              "candidate_mae": 0.00634585666292577,
+              "mean_change_in_abs_error": 0.0,
+              "worst_change_in_abs_error": 0.0,
+              "materially_farther": 0,
+              "materially_closer": 0,
+              "best_change_in_abs_error": 0.0,
+              "baseline_mean_value": 0.14425052332689683,
+              "candidate_mean_value": 0.14425052332689683,
+              "rollout_mean_value": 0.149390864767761,
+              "baseline_max_abs_error": 0.04481586813926697,
+              "baseline_position_weighted_mae": 0.00634585666292577,
+              "candidate_max_abs_error": 0.04481586813926697,
+              "candidate_position_weighted_mae": 0.00634585666292577
+            },
+            "p.gammon_win": {
+              "n": 100,
+              "baseline_mae": 0.004554141663637452,
+              "candidate_mae": 0.004554141663637452,
+              "mean_change_in_abs_error": 0.0,
+              "worst_change_in_abs_error": 0.0,
+              "materially_farther": 0,
+              "materially_closer": 0,
+              "best_change_in_abs_error": 0.0,
+              "baseline_mean_value": 0.06663992054420305,
+              "candidate_mean_value": 0.06663992054420305,
+              "rollout_mean_value": 0.07016309235565167,
+              "baseline_max_abs_error": 0.03613005578517914,
+              "baseline_position_weighted_mae": 0.004554141663637452,
+              "candidate_max_abs_error": 0.03613005578517914,
+              "candidate_position_weighted_mae": 0.004554141663637452
+            },
+            "p.win": {
+              "n": 100,
+              "baseline_mae": 0.007076493501663208,
+              "candidate_mae": 0.007076493501663208,
+              "mean_change_in_abs_error": 0.0,
+              "worst_change_in_abs_error": 0.0,
+              "materially_farther": 0,
+              "materially_closer": 0,
+              "best_change_in_abs_error": 0.0,
+              "baseline_mean_value": 0.32081772565841676,
+              "candidate_mean_value": 0.32081772565841676,
+              "rollout_mean_value": 0.31478592872619626,
+              "baseline_max_abs_error": 0.03424501419067383,
+              "baseline_position_weighted_mae": 0.007076493501663208,
+              "candidate_max_abs_error": 0.03424501419067383,
+              "candidate_position_weighted_mae": 0.007076493501663208
+            }
+          },
+          "reference_endpoint_levels": {
+            "Rollout": 100
+          },
+          "material_changes_in_rollout_error": []
+        }
+      },
+      "total_call_seconds": {
+        "baseline": 77.579602018,
+        "candidate": 67.917737183
+      },
+      "speedup": 1.1422583442226104
+    },
+    "3T": {
+      "by_api": {
+        "checker_play": {
+          "timing": {
+            "baseline": {
+              "count": 100,
+              "total_seconds": 143.342212819,
+              "mean_seconds": 1.43342212819,
+              "median_seconds": 1.1902296904999998,
+              "p95_seconds": 4.216417807,
+              "min_seconds": 0.007899002,
+              "max_seconds": 10.80559005,
+              "stdev_seconds": 1.613247420674314
+            },
+            "candidate": {
+              "count": 100,
+              "total_seconds": 132.601255303,
+              "mean_seconds": 1.32601255303,
+              "median_seconds": 1.112505353,
+              "p95_seconds": 3.874763271,
+              "min_seconds": 0.007107258,
+              "max_seconds": 10.489933083,
+              "stdev_seconds": 1.5330637320787297
+            },
+            "speedup": 1.0810019293667803,
+            "seconds_saved": 10.740957516000009,
+            "candidate_faster_calls": 88
+          },
+          "exact_analytics": 100,
+          "changed_outputs": [],
+          "public_field_changes": {},
+          "numeric_shifts": {
+            "cubeless_equity": {
+              "n": 1709,
+              "max_abs_shift": 0.0,
+              "worst_location": null,
+              "over_material": 0
+            },
+            "die1": {
+              "n": 100,
+              "max_abs_shift": 0,
+              "worst_location": null,
+              "over_material": 0
+            },
+            "die2": {
+              "n": 100,
+              "max_abs_shift": 0,
+              "worst_location": null,
+              "over_material": 0
+            },
+            "equity": {
+              "n": 1709,
+              "max_abs_shift": 0.0,
+              "worst_location": null,
+              "over_material": 0
+            },
+            "equity_diff": {
+              "n": 1709,
+              "max_abs_shift": 0.0,
+              "worst_location": null,
+              "over_material": 0
+            },
+            "prob_std_errors[0]": {
+              "n": 382,
+              "max_abs_shift": 0.0,
+              "worst_location": null,
+              "over_material": 0
+            },
+            "prob_std_errors[1]": {
+              "n": 382,
+              "max_abs_shift": 0.0,
+              "worst_location": null,
+              "over_material": 0
+            },
+            "prob_std_errors[2]": {
+              "n": 382,
+              "max_abs_shift": 0.0,
+              "worst_location": null,
+              "over_material": 0
+            },
+            "prob_std_errors[3]": {
+              "n": 382,
+              "max_abs_shift": 0.0,
+              "worst_location": null,
+              "over_material": 0
+            },
+            "prob_std_errors[4]": {
+              "n": 382,
+              "max_abs_shift": 0.0,
+              "worst_location": null,
+              "over_material": 0
+            },
+            "probs.backgammon_loss": {
+              "n": 1709,
+              "max_abs_shift": 0.0,
+              "worst_location": null,
+              "over_material": 0
+            },
+            "probs.backgammon_win": {
+              "n": 1709,
+              "max_abs_shift": 0.0,
+              "worst_location": null,
+              "over_material": 0
+            },
+            "probs.gammon_loss": {
+              "n": 1709,
+              "max_abs_shift": 0.0,
+              "worst_location": null,
+              "over_material": 0
+            },
+            "probs.gammon_win": {
+              "n": 1709,
+              "max_abs_shift": 0.0,
+              "worst_location": null,
+              "over_material": 0
+            },
+            "probs.win": {
+              "n": 1709,
+              "max_abs_shift": 0.0,
+              "worst_location": null,
+              "over_material": 0
+            },
+            "std_error": {
+              "n": 382,
+              "max_abs_shift": 0.0,
+              "worst_location": null,
+              "over_material": 0
+            }
+          },
+          "rollout_error_by_field": {
+            "cubeless_equity": {
+              "n": 378,
+              "baseline_mae": 0.010865064243193086,
+              "candidate_mae": 0.010865064243193086,
+              "mean_change_in_abs_error": 0.0,
+              "worst_change_in_abs_error": 0.0,
+              "materially_farther": 0,
+              "materially_closer": 0,
+              "best_change_in_abs_error": 0.0,
+              "baseline_mean_value": -0.2178206358015015,
+              "candidate_mean_value": -0.2178206358015015,
+              "rollout_mean_value": -0.2146912597019936,
+              "baseline_max_abs_error": 0.22770593563715613,
+              "baseline_position_weighted_mae": 0.012264812622869284,
+              "candidate_max_abs_error": 0.22770593563715613,
+              "candidate_position_weighted_mae": 0.012264812622869284
+            },
+            "equity": {
+              "n": 378,
+              "baseline_mae": 0.010626142284922414,
+              "candidate_mae": 0.010626142284922414,
+              "mean_change_in_abs_error": 0.0,
+              "worst_change_in_abs_error": 0.0,
+              "materially_farther": 0,
+              "materially_closer": 0,
+              "best_change_in_abs_error": 0.0,
+              "baseline_mean_value": -0.23089618350178368,
+              "candidate_mean_value": -0.23089618350178368,
+              "rollout_mean_value": -0.22721398831260275,
+              "baseline_max_abs_error": 0.0993247926235199,
+              "baseline_position_weighted_mae": 0.012422797028126074,
+              "candidate_max_abs_error": 0.0993247926235199,
+              "candidate_position_weighted_mae": 0.012422797028126074
+            },
+            "equity_diff": {
+              "n": 378,
+              "baseline_mae": 0.004924934647457486,
+              "candidate_mae": 0.004924934647457486,
+              "mean_change_in_abs_error": 0.0,
+              "worst_change_in_abs_error": 0.0,
+              "materially_farther": 0,
+              "materially_closer": 0,
+              "best_change_in_abs_error": 0.0,
+              "baseline_mean_value": -0.041447553892371064,
+              "candidate_mean_value": -0.041447553892371064,
+              "rollout_mean_value": -0.04164319571878527,
+              "baseline_max_abs_error": 0.07141071557998657,
+              "baseline_position_weighted_mae": 0.005714079601980466,
+              "candidate_max_abs_error": 0.07141071557998657,
+              "candidate_position_weighted_mae": 0.005714079601980466
+            },
+            "p.backgammon_loss": {
+              "n": 378,
+              "baseline_mae": 0.002658888652102867,
+              "candidate_mae": 0.002658888652102867,
+              "mean_change_in_abs_error": 0.0,
+              "worst_change_in_abs_error": 0.0,
+              "materially_farther": 0,
+              "materially_closer": 0,
+              "best_change_in_abs_error": 0.0,
+              "baseline_mean_value": 0.004943438365816422,
+              "candidate_mean_value": 0.004943438365816422,
+              "rollout_mean_value": 0.007413396021454442,
+              "baseline_max_abs_error": 0.16929222643375397,
+              "baseline_position_weighted_mae": 0.0027343277141253083,
+              "candidate_max_abs_error": 0.16929222643375397,
+              "candidate_position_weighted_mae": 0.0027343277141253083
+            },
+            "p.backgammon_win": {
+              "n": 378,
+              "baseline_mae": 0.0015358160268972886,
+              "candidate_mae": 0.0015358160268972886,
+              "mean_change_in_abs_error": 0.0,
+              "worst_change_in_abs_error": 0.0,
+              "materially_farther": 0,
+              "materially_closer": 0,
+              "best_change_in_abs_error": 0.0,
+              "baseline_mean_value": 0.006668629769708577,
+              "candidate_mean_value": 0.006668629769708577,
+              "rollout_mean_value": 0.007720592035423115,
+              "baseline_max_abs_error": 0.04517590254545212,
+              "baseline_position_weighted_mae": 0.0023115610613152426,
+              "candidate_max_abs_error": 0.04517590254545212,
+              "candidate_position_weighted_mae": 0.0023115610613152426
+            },
+            "p.gammon_loss": {
+              "n": 378,
+              "baseline_mae": 0.004174852554270201,
+              "candidate_mae": 0.004174852554270201,
+              "mean_change_in_abs_error": 0.0,
+              "worst_change_in_abs_error": 0.0,
+              "materially_farther": 0,
+              "materially_closer": 0,
+              "best_change_in_abs_error": 0.0,
+              "baseline_mean_value": 0.1880187442431263,
+              "candidate_mean_value": 0.1880187442431263,
+              "rollout_mean_value": 0.18984020375541205,
+              "baseline_max_abs_error": 0.06878536939620972,
+              "baseline_position_weighted_mae": 0.004302085486046482,
+              "candidate_max_abs_error": 0.06878536939620972,
+              "candidate_position_weighted_mae": 0.004302085486046482
+            },
+            "p.gammon_win": {
+              "n": 378,
+              "baseline_mae": 0.004536315949930901,
+              "candidate_mae": 0.004536315949930901,
+              "mean_change_in_abs_error": 0.0,
+              "worst_change_in_abs_error": 0.0,
+              "materially_farther": 0,
+              "materially_closer": 0,
+              "best_change_in_abs_error": 0.0,
+              "baseline_mean_value": 0.08612568055499611,
+              "candidate_mean_value": 0.08612568055499611,
+              "rollout_mean_value": 0.09008244754450458,
+              "baseline_max_abs_error": 0.18224926370506486,
+              "baseline_position_weighted_mae": 0.0057063574762760685,
+              "candidate_max_abs_error": 0.18224926370506486,
+              "candidate_position_weighted_mae": 0.0057063574762760685
+            },
+            "p.win": {
+              "n": 378,
+              "baseline_mae": 0.0028017489952437665,
+              "candidate_mae": 0.0028017489952437665,
+              "mean_change_in_abs_error": 0.0,
+              "worst_change_in_abs_error": 0.0,
+              "materially_farther": 0,
+              "materially_closer": 0,
+              "best_change_in_abs_error": 0.0,
+              "baseline_mean_value": 0.4412500261528408,
+              "candidate_mean_value": 0.4412500261528408,
+              "rollout_mean_value": 0.44246333831305795,
+              "baseline_max_abs_error": 0.01858466863632202,
+              "baseline_position_weighted_mae": 0.0033455220074961605,
+              "candidate_max_abs_error": 0.01858466863632202,
+              "candidate_position_weighted_mae": 0.0033455220074961605
+            }
+          },
+          "reference_endpoint_levels": {
+            "Rollout": 378,
+            "1-ply": 896,
+            "2-ply": 435
+          },
+          "material_changes_in_rollout_error": [],
+          "same_best_action": 100,
+          "decision_accuracy": {
+            "baseline": {
+              "decisions": 100,
+              "agree_with_rollout": 90,
+              "scorable_regrets": 100,
+              "unscorable_regrets": 0,
+              "mean_regret_equity": 0.0002864411092466777,
+              "max_regret_equity": 0.00649699941277504,
+              "within_0_005_equity_of_best": 98
+            },
+            "candidate": {
+              "decisions": 100,
+              "agree_with_rollout": 90,
+              "scorable_regrets": 100,
+              "unscorable_regrets": 0,
+              "mean_regret_equity": 0.0002864411092466777,
+              "max_regret_equity": 0.00649699941277504,
+              "within_0_005_equity_of_best": 98
+            }
+          },
+          "same_full_move_order": 100
+        },
+        "cube_action": {
+          "timing": {
+            "baseline": {
+              "count": 100,
+              "total_seconds": 58.204077581,
+              "mean_seconds": 0.58204077581,
+              "median_seconds": 0.6260248705,
+              "p95_seconds": 1.155165946,
+              "min_seconds": 0.00098348,
+              "max_seconds": 1.327300095,
+              "stdev_seconds": 0.37133893133578927
+            },
+            "candidate": {
+              "count": 100,
+              "total_seconds": 52.396402816,
+              "mean_seconds": 0.52396402816,
+              "median_seconds": 0.5529670335,
+              "p95_seconds": 1.014744491,
+              "min_seconds": 0.001029543,
+              "max_seconds": 1.318720125,
+              "stdev_seconds": 0.335444107534831
+            },
+            "speedup": 1.110841096962224,
+            "seconds_saved": 5.807674765000002,
+            "candidate_faster_calls": 88
+          },
+          "exact_analytics": 100,
+          "changed_outputs": [],
+          "public_field_changes": {},
+          "numeric_shifts": {
+            "cubeless_equity": {
+              "n": 100,
+              "max_abs_shift": 0.0,
+              "worst_location": null,
+              "over_material": 0
+            },
+            "cubeless_se": {
+              "n": 100,
+              "max_abs_shift": 0.0,
+              "worst_location": null,
+              "over_material": 0
+            },
+            "equity_dp": {
+              "n": 100,
+              "max_abs_shift": 0.0,
+              "worst_location": null,
+              "over_material": 0
+            },
+            "equity_dt": {
+              "n": 100,
+              "max_abs_shift": 0.0,
+              "worst_location": null,
+              "over_material": 0
+            },
+            "equity_dt_se": {
+              "n": 100,
+              "max_abs_shift": 0.0,
+              "worst_location": null,
+              "over_material": 0
+            },
+            "equity_nd": {
+              "n": 100,
+              "max_abs_shift": 0.0,
+              "worst_location": null,
+              "over_material": 0
+            },
+            "equity_nd_se": {
+              "n": 100,
+              "max_abs_shift": 0.0,
+              "worst_location": null,
+              "over_material": 0
+            },
+            "optimal_equity": {
+              "n": 100,
+              "max_abs_shift": 0.0,
+              "worst_location": null,
+              "over_material": 0
+            },
+            "probs.backgammon_loss": {
+              "n": 100,
+              "max_abs_shift": 0.0,
+              "worst_location": null,
+              "over_material": 0
+            },
+            "probs.backgammon_win": {
+              "n": 100,
+              "max_abs_shift": 0.0,
+              "worst_location": null,
+              "over_material": 0
+            },
+            "probs.gammon_loss": {
+              "n": 100,
+              "max_abs_shift": 0.0,
+              "worst_location": null,
+              "over_material": 0
+            },
+            "probs.gammon_win": {
+              "n": 100,
+              "max_abs_shift": 0.0,
+              "worst_location": null,
+              "over_material": 0
+            },
+            "probs.win": {
+              "n": 100,
+              "max_abs_shift": 0.0,
+              "worst_location": null,
+              "over_material": 0
+            }
+          },
+          "rollout_error_by_field": {
+            "cubeless_equity": {
+              "n": 100,
+              "baseline_mae": 0.016466606669127942,
+              "candidate_mae": 0.016466606669127942,
+              "mean_change_in_abs_error": 0.0,
+              "worst_change_in_abs_error": 0.0,
+              "materially_farther": 0,
+              "materially_closer": 0,
+              "best_change_in_abs_error": 0.0,
+              "baseline_mean_value": 0.4499530758708715,
+              "candidate_mean_value": 0.4499530758708715,
+              "rollout_mean_value": 0.4536048395559192,
+              "baseline_max_abs_error": 0.23189353942871094,
+              "baseline_position_weighted_mae": 0.016466606669127942,
+              "candidate_max_abs_error": 0.23189353942871094,
+              "candidate_position_weighted_mae": 0.016466606669127942
+            },
+            "equity_dp": {
+              "n": 100,
+              "baseline_mae": 0.0,
+              "candidate_mae": 0.0,
+              "mean_change_in_abs_error": 0.0,
+              "worst_change_in_abs_error": 0.0,
+              "materially_farther": 0,
+              "materially_closer": 0,
+              "best_change_in_abs_error": 0.0,
+              "baseline_mean_value": 0.9999999898672104,
+              "candidate_mean_value": 0.9999999898672104,
+              "rollout_mean_value": 0.9999999898672104,
+              "baseline_max_abs_error": 0.0,
+              "baseline_position_weighted_mae": 0.0,
+              "candidate_max_abs_error": 0.0,
+              "candidate_position_weighted_mae": 0.0
+            },
+            "equity_dt": {
+              "n": 100,
+              "baseline_mae": 0.024795178659260272,
+              "candidate_mae": 0.024795178659260272,
+              "mean_change_in_abs_error": 0.0,
+              "worst_change_in_abs_error": 0.0,
+              "materially_farther": 0,
+              "materially_closer": 0,
+              "best_change_in_abs_error": 0.0,
+              "baseline_mean_value": 0.6203706555441022,
+              "candidate_mean_value": 0.6203706555441022,
+              "rollout_mean_value": 0.6278000463545322,
+              "baseline_max_abs_error": 0.2085753083229065,
+              "baseline_position_weighted_mae": 0.024795178659260272,
+              "candidate_max_abs_error": 0.2085753083229065,
+              "candidate_position_weighted_mae": 0.024795178659260272
+            },
+            "equity_nd": {
+              "n": 100,
+              "baseline_mae": 0.017596154490020124,
+              "candidate_mae": 0.017596154490020124,
+              "mean_change_in_abs_error": 0.0,
+              "worst_change_in_abs_error": 0.0,
+              "materially_farther": 0,
+              "materially_closer": 0,
+              "best_change_in_abs_error": 0.0,
+              "baseline_mean_value": 0.5841524343960919,
+              "candidate_mean_value": 0.5841524343960919,
+              "rollout_mean_value": 0.5940223311446607,
+              "baseline_max_abs_error": 0.0914461612701416,
+              "baseline_position_weighted_mae": 0.017596154490020124,
+              "candidate_max_abs_error": 0.0914461612701416,
+              "candidate_position_weighted_mae": 0.017596154490020124
+            },
+            "optimal_equity": {
+              "n": 100,
+              "baseline_mae": 0.01884398637106642,
+              "candidate_mae": 0.01884398637106642,
+              "mean_change_in_abs_error": 0.0,
+              "worst_change_in_abs_error": 0.0,
+              "materially_farther": 0,
+              "materially_closer": 0,
+              "best_change_in_abs_error": 0.0,
+              "baseline_mean_value": 0.5978116398327984,
+              "candidate_mean_value": 0.5978116398327984,
+              "rollout_mean_value": 0.6085527404211462,
+              "baseline_max_abs_error": 0.0914461612701416,
+              "baseline_position_weighted_mae": 0.01884398637106642,
+              "candidate_max_abs_error": 0.0914461612701416,
+              "candidate_position_weighted_mae": 0.01884398637106642
+            },
+            "p.backgammon_loss": {
+              "n": 100,
+              "baseline_mae": 0.004902511030067273,
+              "candidate_mae": 0.004902511030067273,
+              "mean_change_in_abs_error": 0.0,
+              "worst_change_in_abs_error": 0.0,
+              "materially_farther": 0,
+              "materially_closer": 0,
+              "best_change_in_abs_error": 0.0,
+              "baseline_mean_value": 0.003518907410390284,
+              "candidate_mean_value": 0.003518907410390284,
+              "rollout_mean_value": 0.008330980421780794,
+              "baseline_max_abs_error": 0.10196904465556145,
+              "baseline_position_weighted_mae": 0.004902511030067273,
+              "candidate_max_abs_error": 0.10196904465556145,
+              "candidate_position_weighted_mae": 0.004902511030067273
+            },
+            "p.backgammon_win": {
+              "n": 100,
+              "baseline_mae": 0.005237278675851087,
+              "candidate_mae": 0.005237278675851087,
+              "mean_change_in_abs_error": 0.0,
+              "worst_change_in_abs_error": 0.0,
+              "materially_farther": 0,
+              "materially_closer": 0,
+              "best_change_in_abs_error": 0.0,
+              "baseline_mean_value": 0.007475916796406637,
+              "candidate_mean_value": 0.007475916796406637,
+              "rollout_mean_value": 0.012242961341976014,
+              "baseline_max_abs_error": 0.3029187172651291,
+              "baseline_position_weighted_mae": 0.005237278675851087,
+              "candidate_max_abs_error": 0.3029187172651291,
+              "candidate_position_weighted_mae": 0.005237278675851087
+            },
+            "p.gammon_loss": {
+              "n": 100,
+              "baseline_mae": 0.0042929578899225974,
+              "candidate_mae": 0.0042929578899225974,
+              "mean_change_in_abs_error": 0.0,
+              "worst_change_in_abs_error": 0.0,
+              "materially_farther": 0,
+              "materially_closer": 0,
+              "best_change_in_abs_error": 0.0,
+              "baseline_mean_value": 0.06612553614635817,
+              "candidate_mean_value": 0.06612553614635817,
+              "rollout_mean_value": 0.07016309235565167,
+              "baseline_max_abs_error": 0.03348354995250702,
+              "baseline_position_weighted_mae": 0.0042929578899225974,
+              "candidate_max_abs_error": 0.03348354995250702,
+              "candidate_position_weighted_mae": 0.0042929578899225974
+            },
+            "p.gammon_win": {
+              "n": 100,
+              "baseline_mae": 0.005384460919814673,
+              "candidate_mae": 0.005384460919814673,
+              "mean_change_in_abs_error": 0.0,
+              "worst_change_in_abs_error": 0.0,
+              "materially_farther": 0,
+              "materially_closer": 0,
+              "best_change_in_abs_error": 0.0,
+              "baseline_mean_value": 0.14523968277950297,
+              "candidate_mean_value": 0.14523968277950297,
+              "rollout_mean_value": 0.149390864767761,
+              "baseline_max_abs_error": 0.06863230466842651,
+              "baseline_position_weighted_mae": 0.005384460919814673,
+              "candidate_max_abs_error": 0.06863230466842651,
+              "candidate_position_weighted_mae": 0.005384460919814673
+            },
+            "p.win": {
+              "n": 100,
+              "baseline_mae": 0.003842504620552063,
+              "candidate_mae": 0.003842504620552063,
+              "mean_change_in_abs_error": 0.0,
+              "worst_change_in_abs_error": 0.0,
+              "materially_farther": 0,
+              "materially_closer": 0,
+              "best_change_in_abs_error": 0.0,
+              "baseline_mean_value": 0.6834409555792809,
+              "candidate_mean_value": 0.6834409555792809,
+              "rollout_mean_value": 0.6852328130602836,
+              "baseline_max_abs_error": 0.02251124382019043,
+              "baseline_position_weighted_mae": 0.003842504620552063,
+              "candidate_max_abs_error": 0.02251124382019043,
+              "candidate_position_weighted_mae": 0.003842504620552063
+            }
+          },
+          "reference_endpoint_levels": {
+            "Rollout": 100
+          },
+          "material_changes_in_rollout_error": [],
+          "same_best_action": 100,
+          "decision_accuracy": {
+            "baseline": {
+              "decisions": 100,
+              "agree_with_rollout": 98,
+              "scorable_regrets": 100,
+              "unscorable_regrets": 0,
+              "mean_regret_equity": 5.108833312988281e-05,
+              "max_regret_equity": 0.004721105098724365,
+              "within_0_005_equity_of_best": 100
+            },
+            "candidate": {
+              "decisions": 100,
+              "agree_with_rollout": 98,
+              "scorable_regrets": 100,
+              "unscorable_regrets": 0,
+              "mean_regret_equity": 5.108833312988281e-05,
+              "max_regret_equity": 0.004721105098724365,
+              "within_0_005_equity_of_best": 100
+            }
+          }
+        },
+        "post_move_analytics": {
+          "timing": {
+            "baseline": {
+              "count": 100,
+              "total_seconds": 57.762037923,
+              "mean_seconds": 0.57762037923,
+              "median_seconds": 0.6342372795,
+              "p95_seconds": 1.082727448,
+              "min_seconds": 0.000936866,
+              "max_seconds": 1.357818699,
+              "stdev_seconds": 0.365519223030777
+            },
+            "candidate": {
+              "count": 100,
+              "total_seconds": 52.111517593,
+              "mean_seconds": 0.52111517593,
+              "median_seconds": 0.5459344735,
+              "p95_seconds": 0.945128588,
+              "min_seconds": 0.000849846,
+              "max_seconds": 1.152859259,
+              "stdev_seconds": 0.33179030297448625
+            },
+            "speedup": 1.1084313140548228,
+            "seconds_saved": 5.650520329999999,
+            "candidate_faster_calls": 94
+          },
+          "exact_analytics": 100,
+          "changed_outputs": [],
+          "public_field_changes": {},
+          "numeric_shifts": {
+            "cubeful_equity": {
+              "n": 100,
+              "max_abs_shift": 0.0,
+              "worst_location": null,
+              "over_material": 0
+            },
+            "cubeful_se": {
+              "n": 100,
+              "max_abs_shift": 0.0,
+              "worst_location": null,
+              "over_material": 0
+            },
+            "cubeless_equity": {
+              "n": 100,
+              "max_abs_shift": 0.0,
+              "worst_location": null,
+              "over_material": 0
+            },
+            "cubeless_se": {
+              "n": 100,
+              "max_abs_shift": 0.0,
+              "worst_location": null,
+              "over_material": 0
+            },
+            "probs.backgammon_loss": {
+              "n": 100,
+              "max_abs_shift": 0.0,
+              "worst_location": null,
+              "over_material": 0
+            },
+            "probs.backgammon_win": {
+              "n": 100,
+              "max_abs_shift": 0.0,
+              "worst_location": null,
+              "over_material": 0
+            },
+            "probs.gammon_loss": {
+              "n": 100,
+              "max_abs_shift": 0.0,
+              "worst_location": null,
+              "over_material": 0
+            },
+            "probs.gammon_win": {
+              "n": 100,
+              "max_abs_shift": 0.0,
+              "worst_location": null,
+              "over_material": 0
+            },
+            "probs.win": {
+              "n": 100,
+              "max_abs_shift": 0.0,
+              "worst_location": null,
+              "over_material": 0
+            }
+          },
+          "rollout_error_by_field": {
+            "cubeful_equity": {
+              "n": 100,
+              "baseline_mae": 0.01884398637106642,
+              "candidate_mae": 0.01884398637106642,
+              "mean_change_in_abs_error": 0.0,
+              "worst_change_in_abs_error": 0.0,
+              "materially_farther": 0,
+              "materially_closer": 0,
+              "best_change_in_abs_error": 0.0,
+              "baseline_mean_value": -0.5978116398327984,
+              "candidate_mean_value": -0.5978116398327984,
+              "rollout_mean_value": -0.6085527404211462,
+              "baseline_max_abs_error": 0.0914461612701416,
+              "baseline_position_weighted_mae": 0.01884398637106642,
+              "candidate_max_abs_error": 0.0914461612701416,
+              "candidate_position_weighted_mae": 0.01884398637106642
+            },
+            "cubeless_equity": {
+              "n": 100,
+              "baseline_mae": 0.01648381095379591,
+              "candidate_mae": 0.01648381095379591,
+              "mean_change_in_abs_error": 0.0,
+              "worst_change_in_abs_error": 0.0,
+              "materially_farther": 0,
+              "materially_closer": 0,
+              "best_change_in_abs_error": 0.0,
+              "baseline_mean_value": -0.4499326016753912,
+              "candidate_mean_value": -0.4499326016753912,
+              "rollout_mean_value": -0.4535673565790057,
+              "baseline_max_abs_error": 0.23189353942871094,
+              "baseline_position_weighted_mae": 0.01648381095379591,
+              "candidate_max_abs_error": 0.23189353942871094,
+              "candidate_position_weighted_mae": 0.01648381095379591
+            },
+            "p.backgammon_loss": {
+              "n": 100,
+              "baseline_mae": 0.005237278675851087,
+              "candidate_mae": 0.005237278675851087,
+              "mean_change_in_abs_error": 0.0,
+              "worst_change_in_abs_error": 0.0,
+              "materially_farther": 0,
+              "materially_closer": 0,
+              "best_change_in_abs_error": 0.0,
+              "baseline_mean_value": 0.007475916796406637,
+              "candidate_mean_value": 0.007475916796406637,
+              "rollout_mean_value": 0.012242961341976014,
+              "baseline_max_abs_error": 0.3029187172651291,
+              "baseline_position_weighted_mae": 0.005237278675851087,
+              "candidate_max_abs_error": 0.3029187172651291,
+              "candidate_position_weighted_mae": 0.005237278675851087
+            },
+            "p.backgammon_win": {
+              "n": 100,
+              "baseline_mae": 0.004902511030067273,
+              "candidate_mae": 0.004902511030067273,
+              "mean_change_in_abs_error": 0.0,
+              "worst_change_in_abs_error": 0.0,
+              "materially_farther": 0,
+              "materially_closer": 0,
+              "best_change_in_abs_error": 0.0,
+              "baseline_mean_value": 0.003518907410390284,
+              "candidate_mean_value": 0.003518907410390284,
+              "rollout_mean_value": 0.008330980421780794,
+              "baseline_max_abs_error": 0.10196904465556145,
+              "baseline_position_weighted_mae": 0.004902511030067273,
+              "candidate_max_abs_error": 0.10196904465556145,
+              "candidate_position_weighted_mae": 0.004902511030067273
+            },
+            "p.gammon_loss": {
+              "n": 100,
+              "baseline_mae": 0.005384460919814673,
+              "candidate_mae": 0.005384460919814673,
+              "mean_change_in_abs_error": 0.0,
+              "worst_change_in_abs_error": 0.0,
+              "materially_farther": 0,
+              "materially_closer": 0,
+              "best_change_in_abs_error": 0.0,
+              "baseline_mean_value": 0.14523968277950297,
+              "candidate_mean_value": 0.14523968277950297,
+              "rollout_mean_value": 0.149390864767761,
+              "baseline_max_abs_error": 0.06863230466842651,
+              "baseline_position_weighted_mae": 0.005384460919814673,
+              "candidate_max_abs_error": 0.06863230466842651,
+              "candidate_position_weighted_mae": 0.005384460919814673
+            },
+            "p.gammon_win": {
+              "n": 100,
+              "baseline_mae": 0.0042929578899225974,
+              "candidate_mae": 0.0042929578899225974,
+              "mean_change_in_abs_error": 0.0,
+              "worst_change_in_abs_error": 0.0,
+              "materially_farther": 0,
+              "materially_closer": 0,
+              "best_change_in_abs_error": 0.0,
+              "baseline_mean_value": 0.06612553614635817,
+              "candidate_mean_value": 0.06612553614635817,
+              "rollout_mean_value": 0.07016309235565167,
+              "baseline_max_abs_error": 0.03348354995250702,
+              "baseline_position_weighted_mae": 0.0042929578899225974,
+              "candidate_max_abs_error": 0.03348354995250702,
+              "candidate_position_weighted_mae": 0.0042929578899225974
+            },
+            "p.win": {
+              "n": 100,
+              "baseline_mae": 0.003851105570793152,
+              "candidate_mae": 0.003851105570793152,
+              "mean_change_in_abs_error": 0.0,
+              "worst_change_in_abs_error": 0.0,
+              "materially_farther": 0,
+              "materially_closer": 0,
+              "best_change_in_abs_error": 0.0,
+              "baseline_mean_value": 0.3165692812204361,
+              "candidate_mean_value": 0.3165692812204361,
+              "rollout_mean_value": 0.31478592872619626,
+              "baseline_max_abs_error": 0.02251124382019043,
+              "baseline_position_weighted_mae": 0.003851105570793152,
+              "candidate_max_abs_error": 0.02251124382019043,
+              "candidate_position_weighted_mae": 0.003851105570793152
+            }
+          },
+          "reference_endpoint_levels": {
+            "Rollout": 100
+          },
+          "material_changes_in_rollout_error": []
+        }
+      },
+      "total_call_seconds": {
+        "baseline": 259.308328323,
+        "candidate": 237.109175712
+      },
+      "speedup": 1.093624181958963
+    }
+  }
+}

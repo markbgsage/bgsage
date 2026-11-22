@@ -9,6 +9,12 @@ namespace bgbot {
 
 constexpr int TESAURO_INPUTS = 196;
 constexpr int EXTENDED_CONTACT_INPUTS = 244;
+constexpr int INPUT_DELTA_LIMIT = 64;
+
+// Compare two boards in the same network's encoding. Writes differences in
+// ascending feature order. A result of INPUT_DELTA_LIMIT requests dense inference.
+int board_input_deltas(const Board& board, const Board& base, const float* saved_inputs,
+                       bool tesauro, int* indices, float* values);
 
 // Compute the 196 Tesauro inputs from a board position.
 // The board is always from player 1's perspective (player on roll).
@@ -175,6 +181,8 @@ enum class GamePlan { PURERACE, RACING, ATTACKING, PRIMING, ANCHORING };
 // Classify the game plan for the player on roll.
 // Board must be from the player's perspective (player = positive checkers).
 GamePlan classify_game_plan(const Board& board);
+// Same classifier for a known contact board with precomputed pip counts.
+GamePlan classify_contact_game_plan(const Board& board, int player_pips, int opponent_pips);
 
 // Human-readable name for a game plan.
 const char* game_plan_name(GamePlan gp);

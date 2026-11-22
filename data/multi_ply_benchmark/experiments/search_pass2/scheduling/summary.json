@@ -1,0 +1,44 @@
+{
+  "sha256": {
+    "native": "6bddb826e7811d708d9486b7f6242dd6582737789b326e17500aef6b12d7edc7",
+    "dynamic": "9b7a6feed8681eea9c8a8ea9273688ba9dc9b63821033ed1a84bedd58e5ede89"
+  },
+  "levels": {
+    "2ply": {
+      "native": {
+        "seconds": 0.4853423999156803,
+        "calls": 100,
+        "exact": 100
+      },
+      "dynamic": {
+        "seconds": 0.47361560008721426,
+        "calls": 100,
+        "exact": 100
+      }
+    },
+    "3ply": {
+      "native": {
+        "seconds": 7.586512300244067,
+        "calls": 100,
+        "exact": 100
+      },
+      "dynamic": {
+        "seconds": 7.343168900406454,
+        "calls": 100,
+        "exact": 100
+      }
+    },
+    "4ply": {
+      "native": {
+        "seconds": 34.09402069996577,
+        "calls": 20,
+        "exact": 20
+      },
+      "dynamic": {
+        "seconds": 33.252801000198815,
+        "calls": 20,
+        "exact": 20
+      }
+    }
+  }
+}

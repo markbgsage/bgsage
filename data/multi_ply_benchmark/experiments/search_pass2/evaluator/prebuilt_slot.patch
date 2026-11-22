@@ -1,0 +1,57 @@
+--- a/cpp/src/cube_eval.cpp
++++ b/cpp/src/cube_eval.cpp
+@@ -37,6 +37,7 @@
+ #include <cstdlib>
+ #include <cstring>
+ #include <limits>
++#include <type_traits>
+ #include <vector>
+ 
+ namespace bgbot {
+@@ -280,6 +281,10 @@
+         if (static_cast<int>(saved_base.size()) < nh) saved_base.resize(nh);
+         if (static_cast<int>(saved_inputs.size()) < ni) saved_inputs.resize(ni);
+         const bool is_pr = (nidx == 0);
++        // Only the constructor taking prebuilt pair nets can supply a network
++        // that consumes a prefix of its slot's standard encoding.
++        const int slot_width = is_pr ? TESAURO_INPUTS : EXTENDED_CONTACT_INPUTS;
++        const bool standard_width = !std::is_same_v<S, GamePlanPairStrategy> || ni == slot_width;
+ 
+         if (is_pr) {
+             auto inp = compute_tesauro_inputs(cands[idxs[j]]);
+@@ -294,8 +299,16 @@
+ 
+         for (int k = j + 1; k < n; ++k) {
+             if (done[k] || nn_idx_of[k] != nidx) continue;
+-            out[idxs[k]] = nn.forward_board_from_base(
+-                cands[idxs[k]], cands[idxs[j]], saved_base.data(), saved_inputs.data());
++            if (standard_width) {
++                out[idxs[k]] = nn.forward_board_from_base(
++                    cands[idxs[k]], cands[idxs[j]], saved_base.data(), saved_inputs.data());
++            } else {
++                const auto from_prefix = [&](const auto& inputs) {
++                    return nn.forward_from_base(inputs.data(), saved_base.data(), saved_inputs.data());
++                };
++                out[idxs[k]] = is_pr ? from_prefix(compute_tesauro_inputs(cands[idxs[k]]))
++                                     : from_prefix(compute_extended_contact_inputs(cands[idxs[k]]));
++            }
+             done[k] = 1;
+         }
+     }
+--- a/cpp/src/neural_net.cpp
++++ b/cpp/src/neural_net.cpp
+@@ -2048,8 +2048,12 @@
+ {
+     // Prebuild transposed weights for thread-safe concurrent evaluation
+     // (forward_from_base builds this lazily and is not synchronized).
+-    for (auto& nn : nns_) {
+-        if (nn) nn->ensure_transposed_weights();
++    for (int i = 0; i < NUM_PAIR_NNS; ++i) {
++        if (!nns_[i]) continue;
++        const int width = i == 0 ? TESAURO_INPUTS : EXTENDED_CONTACT_INPUTS;
++        if (nns_[i]->n_inputs() > width)
++            throw std::invalid_argument("Pair network input width exceeds its slot encoding");
++        nns_[i]->ensure_transposed_weights();
+     }
+ }
+ 

@@ -1,0 +1,226 @@
+diff --git a/cpp/include/bgbot/match_equity.h b/cpp/include/bgbot/match_equity.h
+index aae4173..683801f 100644
+--- a/cpp/include/bgbot/match_equity.h
++++ b/cpp/include/bgbot/match_equity.h
+@@ -56,6 +56,15 @@ float get_met(int away1, int away2, bool is_post_crawford = false);
+ float get_met_after(int away1, int away2, int nPoints,
+                     bool player_wins, bool is_crawford);
+ 
++// Match-winning chances after a single, gammon or backgammon in either direction.
++struct MatchPayoffs {
++    float win, win_gammon, win_backgammon;
++    float lose, lose_gammon, lose_backgammon;
++
++    float weighted(const std::array<float, 5>& probs) const;
++};
++MatchPayoffs match_payoffs(int away1, int away2, int cube_value, bool is_crawford);
++
+ // Cubeless MWC from 5 NN probability outputs and MET.
+ // Decomposes cumulative probs into exclusive probs, weights by 6 outcome MWCs.
+ float cubeless_mwc(const std::array<float, 5>& probs,
+diff --git a/cpp/src/cube.cpp b/cpp/src/cube.cpp
+index af61a98..c7fc9a0 100644
+--- a/cpp/src/cube.cpp
++++ b/cpp/src/cube.cpp
+@@ -285,15 +285,16 @@ void get_match_points(
+ 
+                 float rDP = get_met_after(away_d, away_t, nCubeValue, true, craw);
+ 
++                const auto outcomes = match_payoffs(away_d, away_t, dp, craw);
+                 float rDTW = (1.0f - gW - bgW)
+-                                * get_met_after(away_d, away_t, dp, true, craw)
+-                           + gW * get_met_after(away_d, away_t, 2*dp, true, craw)
+-                           + bgW * get_met_after(away_d, away_t, 3*dp, true, craw);
++                                * outcomes.win
++                           + gW * outcomes.win_gammon
++                           + bgW * outcomes.win_backgammon;
+ 
+                 float rDTL = (1.0f - gL - bgL)
+-                                * get_met_after(away_d, away_t, dp, false, craw)
+-                           + gL * get_met_after(away_d, away_t, 2*dp, false, craw)
+-                           + bgL * get_met_after(away_d, away_t, 3*dp, false, craw);
++                                * outcomes.lose
++                           + gL * outcomes.lose_gammon
++                           + bgL * outcomes.lose_backgammon;
+ 
+                 float denom = rDTL - rDTW;
+                 if (std::abs(denom) < 1e-10f)
+@@ -311,10 +312,11 @@ void get_match_points(
+                 float rRDP = get_met_after(away_d, away_t,
+                                            dcv, false, craw);
+ 
++                const auto outcomes = match_payoffs(away_d, away_t, dcv, craw);
+                 float rDTW = (1.0f - gW - bgW)
+-                                * get_met_after(away_d, away_t, dcv, true, craw)
+-                           + gW * get_met_after(away_d, away_t, 2*dcv, true, craw)
+-                           + bgW * get_met_after(away_d, away_t, 3*dcv, true, craw);
++                                * outcomes.win
++                           + gW * outcomes.win_gammon
++                           + bgW * outcomes.win_backgammon;
+ 
+                 float denom = rRDP - rDTW;
+                 if (std::abs(denom) < 1e-10f)
+@@ -361,26 +363,19 @@ static float cl2cf_match_centered(
+     }
+ 
+     // Dead cube MWC (uses MET-weighted outcome values, not linear approximation)
+-    float mwc_dead = cubeless_mwc(probs, away1, away2, cv, craw);
+-
+-    // MET lookups at current cube value (for no-double outcomes)
+-    float mwc_win_s  = get_met_after(away1, away2, cv, true, craw);
+-    float mwc_win_g  = get_met_after(away1, away2, 2*cv, true, craw);
+-    float mwc_win_b  = get_met_after(away1, away2, 3*cv, true, craw);
+-    float mwc_lose_s = get_met_after(away1, away2, cv, false, craw);
+-    float mwc_lose_g = get_met_after(away1, away2, 2*cv, false, craw);
+-    float mwc_lose_b = get_met_after(away1, away2, 3*cv, false, craw);
++    const auto payoffs = match_payoffs(away1, away2, cv, craw);
++    float mwc_dead = payoffs.weighted(probs);
+ 
+     // D/P MWC (player cashes cv points)
+-    float mwc_cash = mwc_win_s;
++    float mwc_cash = payoffs.win;
+     // Opponent's D/P MWC (player loses cv points) — from player's perspective
+-    float mwc_opp_cash = mwc_lose_s;
++    float mwc_opp_cash = payoffs.lose;
+ 
+     // Weighted MWCs for all win/loss types
+-    float mwc_win_all = (1.0f - rG0 - rBG0) * mwc_win_s
+-                      + rG0 * mwc_win_g + rBG0 * mwc_win_b;
+-    float mwc_lose_all = (1.0f - rG1 - rBG1) * mwc_lose_s
+-                       + rG1 * mwc_lose_g + rBG1 * mwc_lose_b;
++    float mwc_win_all = (1.0f - rG0 - rBG0) * payoffs.win
++                      + rG0 * payoffs.win_gammon + rBG0 * payoffs.win_backgammon;
++    float mwc_lose_all = (1.0f - rG1 - rBG1) * payoffs.lose
++                       + rG1 * payoffs.lose_gammon + rBG1 * payoffs.lose_backgammon;
+ 
+     // Compute live-cube cash points using recursive algorithm (GNUbg GetPoints).
+     float player_cp, opp_cp;
+@@ -460,23 +455,16 @@ static float cl2cf_match_owned(
+     }
+ 
+     // Dead cube MWC (uses MET-weighted outcome values, not linear approximation)
+-    float mwc_dead = cubeless_mwc(probs, away1, away2, cv, craw);
+-
+-    // MET lookups at current cube value
+-    float mwc_win_s  = get_met_after(away1, away2, cv, true, craw);
+-    float mwc_win_g  = get_met_after(away1, away2, 2*cv, true, craw);
+-    float mwc_win_b  = get_met_after(away1, away2, 3*cv, true, craw);
+-    float mwc_lose_s = get_met_after(away1, away2, cv, false, craw);
+-    float mwc_lose_g = get_met_after(away1, away2, 2*cv, false, craw);
+-    float mwc_lose_b = get_met_after(away1, away2, 3*cv, false, craw);
++    const auto payoffs = match_payoffs(away1, away2, cv, craw);
++    float mwc_dead = payoffs.weighted(probs);
+ 
+-    float mwc_cash = mwc_win_s;
++    float mwc_cash = payoffs.win;
+ 
+     // Weighted MWCs
+-    float mwc_win_all = (1.0f - rG0 - rBG0) * mwc_win_s
+-                      + rG0 * mwc_win_g + rBG0 * mwc_win_b;
+-    float mwc_lose_all = (1.0f - rG1 - rBG1) * mwc_lose_s
+-                       + rG1 * mwc_lose_g + rBG1 * mwc_lose_b;
++    float mwc_win_all = (1.0f - rG0 - rBG0) * payoffs.win
++                      + rG0 * payoffs.win_gammon + rBG0 * payoffs.win_backgammon;
++    float mwc_lose_all = (1.0f - rG1 - rBG1) * payoffs.lose
++                       + rG1 * payoffs.lose_gammon + rBG1 * payoffs.lose_backgammon;
+ 
+     // Player's cash point using recursive algorithm (GNUbg GetPoints)
+     float player_cp_val, opp_cp_val;
+@@ -541,23 +529,16 @@ static float cl2cf_match_unavailable(
+     }
+ 
+     // Dead cube MWC (uses MET-weighted outcome values, not linear approximation)
+-    float mwc_dead = cubeless_mwc(probs, away1, away2, cv, craw);
+-
+-    // MET lookups at current cube value
+-    float mwc_win_s  = get_met_after(away1, away2, cv, true, craw);
+-    float mwc_win_g  = get_met_after(away1, away2, 2*cv, true, craw);
+-    float mwc_win_b  = get_met_after(away1, away2, 3*cv, true, craw);
+-    float mwc_lose_s = get_met_after(away1, away2, cv, false, craw);
+-    float mwc_lose_g = get_met_after(away1, away2, 2*cv, false, craw);
+-    float mwc_lose_b = get_met_after(away1, away2, 3*cv, false, craw);
++    const auto payoffs = match_payoffs(away1, away2, cv, craw);
++    float mwc_dead = payoffs.weighted(probs);
+ 
+-    float mwc_opp_cash = mwc_lose_s;
++    float mwc_opp_cash = payoffs.lose;
+ 
+     // Weighted MWCs
+-    float mwc_win_all = (1.0f - rG0 - rBG0) * mwc_win_s
+-                      + rG0 * mwc_win_g + rBG0 * mwc_win_b;
+-    float mwc_lose_all = (1.0f - rG1 - rBG1) * mwc_lose_s
+-                       + rG1 * mwc_lose_g + rBG1 * mwc_lose_b;
++    float mwc_win_all = (1.0f - rG0 - rBG0) * payoffs.win
++                      + rG0 * payoffs.win_gammon + rBG0 * payoffs.win_backgammon;
++    float mwc_lose_all = (1.0f - rG1 - rBG1) * payoffs.lose
++                       + rG1 * payoffs.lose_gammon + rBG1 * payoffs.lose_backgammon;
+ 
+     // Opponent's cash point using recursive algorithm (GNUbg GetPoints)
+     float player_cp_val, opp_cp_val;
+diff --git a/cpp/src/match_equity.cpp b/cpp/src/match_equity.cpp
+index 85d6e6c..c2d8fed 100644
+--- a/cpp/src/match_equity.cpp
++++ b/cpp/src/match_equity.cpp
+@@ -130,8 +130,32 @@ float get_met_after(int away1, int away2, int nPoints,
+     return get_met(new_away1, new_away2, post_crawford);
+ }
+ 
+-float cubeless_mwc(const std::array<float, 5>& probs,
+-                   int away1, int away2, int cube_value, bool is_crawford) {
++MatchPayoffs match_payoffs(int away1, int away2, int cube_value, bool is_crawford) {
++    struct Entry {
++        int away1, away2, cube;
++        bool crawford, valid;
++        MatchPayoffs values;
++    };
++    // A tree visits the same handful of scores at successive cube values.
++    // Keep the full key for collisions and scores outside the standard MET.
++    static thread_local std::array<Entry, 64> cache{};
++    unsigned key = static_cast<unsigned>(away1) * 31 + static_cast<unsigned>(away2) * 7;
++    key = key * 17 + static_cast<unsigned>(cube_value) + is_crawford;
++    auto& e = cache[key % cache.size()];
++    if (!e.valid || e.away1 != away1 || e.away2 != away2 ||
++        e.cube != cube_value || e.crawford != is_crawford) {
++        e = {away1, away2, cube_value, is_crawford, true,
++             {get_met_after(away1, away2, cube_value, true, is_crawford),
++              get_met_after(away1, away2, 2 * cube_value, true, is_crawford),
++              get_met_after(away1, away2, 3 * cube_value, true, is_crawford),
++              get_met_after(away1, away2, cube_value, false, is_crawford),
++              get_met_after(away1, away2, 2 * cube_value, false, is_crawford),
++              get_met_after(away1, away2, 3 * cube_value, false, is_crawford)}};
++    }
++    return e.values;
++}
++
++float MatchPayoffs::weighted(const std::array<float, 5>& probs) const {
+     // Decompose cumulative NN probs into exclusive probs:
+     // P(win) = P(single_win) + P(gammon_win) + P(bg_win)
+     // P(gammon_win) includes P(bg_win), so:
+@@ -144,16 +168,21 @@ float cubeless_mwc(const std::array<float, 5>& probs,
+ 
+     // Weighted sum of 6 outcome MWCs
+     float mwc = 0.0f;
+-    mwc += p_sw * get_met_after(away1, away2, cube_value, true, is_crawford);
+-    mwc += p_gw * get_met_after(away1, away2, 2 * cube_value, true, is_crawford);
+-    mwc += p_bw * get_met_after(away1, away2, 3 * cube_value, true, is_crawford);
+-    mwc += p_sl * get_met_after(away1, away2, cube_value, false, is_crawford);
+-    mwc += p_gl * get_met_after(away1, away2, 2 * cube_value, false, is_crawford);
+-    mwc += p_bl * get_met_after(away1, away2, 3 * cube_value, false, is_crawford);
++    mwc += p_sw * win;
++    mwc += p_gw * win_gammon;
++    mwc += p_bw * win_backgammon;
++    mwc += p_sl * lose;
++    mwc += p_gl * lose_gammon;
++    mwc += p_bl * lose_backgammon;
+ 
+     return mwc;
+ }
+ 
++float cubeless_mwc(const std::array<float, 5>& probs,
++                   int away1, int away2, int cube_value, bool is_crawford) {
++    return match_payoffs(away1, away2, cube_value, is_crawford).weighted(probs);
++}
++
+ float eq2mwc(float equity, int away1, int away2, int cube_value,
+              bool is_crawford) {
+     float mwc_win = get_met_after(away1, away2, cube_value, true, is_crawford);

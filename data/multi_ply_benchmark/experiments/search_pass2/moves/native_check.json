@@ -1,0 +1,44 @@
+{
+  "fixture_sha256": "13855781d3039640c4ecd0a9eb168a2d58fabc3510a9ac64fe8098af442df769",
+  "fixture_boards": 413,
+  "ordered_dice_calls": 14868,
+  "ordered_endpoints": 321292,
+  "evaluations_per_endpoint": [
+    "Tesauro contact",
+    "Tesauro race",
+    "ListNet contact",
+    "ListNet race"
+  ],
+  "arms": {
+    "base": {
+      "ordered_boards_sha256": "7b7a7cccea14e3d90b912dc43cf1c3ee29eca18f0a476fc3478f12809504cb09",
+      "pubeval_sha256": "c37190afa4ebc48000669984e64a449e876648ff5587426c33ccb49ee2aa8da8",
+      "pubeval_binary_differences": 0,
+      "largest_pubeval_difference": 0.0
+    },
+    "sparse": {
+      "ordered_boards_sha256": "7b7a7cccea14e3d90b912dc43cf1c3ee29eca18f0a476fc3478f12809504cb09",
+      "pubeval_sha256": "56021f2b0c1d58c5eb8c991bbe4b4844285c676ad0f0b1e053ee7560b6923953",
+      "pubeval_binary_differences": 745884,
+      "largest_pubeval_difference": 1.4210854715202004e-14
+    },
+    "first": {
+      "ordered_boards_sha256": "7b7a7cccea14e3d90b912dc43cf1c3ee29eca18f0a476fc3478f12809504cb09",
+      "pubeval_sha256": "c37190afa4ebc48000669984e64a449e876648ff5587426c33ccb49ee2aa8da8",
+      "pubeval_binary_differences": 0,
+      "largest_pubeval_difference": 0.0
+    },
+    "inplace": {
+      "ordered_boards_sha256": "7b7a7cccea14e3d90b912dc43cf1c3ee29eca18f0a476fc3478f12809504cb09",
+      "pubeval_sha256": "c37190afa4ebc48000669984e64a449e876648ff5587426c33ccb49ee2aa8da8",
+      "pubeval_binary_differences": 0,
+      "largest_pubeval_difference": 0.0
+    },
+    "hybrid": {
+      "ordered_boards_sha256": "7b7a7cccea14e3d90b912dc43cf1c3ee29eca18f0a476fc3478f12809504cb09",
+      "pubeval_sha256": "c37190afa4ebc48000669984e64a449e876648ff5587426c33ccb49ee2aa8da8",
+      "pubeval_binary_differences": 0,
+      "largest_pubeval_difference": 0.0
+    }
+  }
+}

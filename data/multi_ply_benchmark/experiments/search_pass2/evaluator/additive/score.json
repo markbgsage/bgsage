@@ -1,0 +1,66 @@
+{
+  "all": {
+    "2ply": {
+      "control_seconds": 2.5457358990679495,
+      "seconds": 2.3644045003456995,
+      "calls": 600,
+      "identical": 284,
+      "material_worse": 0,
+      "material_better": 0,
+      "changed_decisions": 0,
+      "speedup": 1.076692206725092
+    },
+    "3ply": {
+      "control_seconds": 17.913833500584587,
+      "seconds": 15.9625758001348,
+      "calls": 600,
+      "identical": 220,
+      "material_worse": 0,
+      "material_better": 0,
+      "changed_decisions": 0,
+      "speedup": 1.122239526056522
+    },
+    "4ply": {
+      "control_seconds": 41.31980300007854,
+      "seconds": 36.765299100079574,
+      "calls": 60,
+      "identical": 16,
+      "material_worse": 0,
+      "material_better": 0,
+      "changed_decisions": 0,
+      "speedup": 1.123880507203302
+    }
+  },
+  "combined": {
+    "2ply": {
+      "control_seconds": 2.5457358990679495,
+      "seconds": 2.3612453000969253,
+      "calls": 600,
+      "identical": 600,
+      "material_worse": 0,
+      "material_better": 0,
+      "changed_decisions": 0,
+      "speedup": 1.0781327543408772
+    },
+    "3ply": {
+      "control_seconds": 17.913833500584587,
+      "seconds": 16.3562725004158,
+      "calls": 600,
+      "identical": 600,
+      "material_worse": 0,
+      "material_better": 0,
+      "changed_decisions": 0,
+      "speedup": 1.0952271368754216
+    },
+    "4ply": {
+      "control_seconds": 41.31980300007854,
+      "seconds": 37.660435500205494,
+      "calls": 60,
+      "identical": 60,
+      "material_worse": 0,
+      "material_better": 0,
+      "changed_decisions": 0,
+      "speedup": 1.0971674238831646
+    }
+  }
+}

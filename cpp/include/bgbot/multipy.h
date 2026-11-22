@@ -260,7 +260,7 @@ public:
                      int parallel_threads = 0);
 
     // Compute a pre-roll cube decision and the independent cubeless probabilities.
-    // The two 3-ply policies can share identical ordered candidate NN evaluations.
+    // At 3/4 ply, the two policies can share identical ordered candidate NN evaluations.
     CubeDecision cube_decision_with_cubeless_probs(
         const Board& board, const CubeInfo& cube, const Strategy* cube_move_filter,
         std::array<float, NUM_OUTPUTS>& pre_roll_probs) const;

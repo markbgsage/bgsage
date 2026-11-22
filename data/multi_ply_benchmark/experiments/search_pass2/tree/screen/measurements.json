@@ -1,0 +1,5561 @@
+{
+  "binaries": {
+    "control": {
+      "path": "build/multi_ply_truncated_final/bgbot_cpp.cp314-win_amd64.pyd",
+      "sha256": "4d54d2a940632fecf6dbfec1169e35305e1741c5457b242a7ba9c5f217540c4f",
+      "bytes": 4993536
+    },
+    "share4": {
+      "path": "build/search_pass2_tree_arms/share4/bgbot_cpp.cp314-win_amd64.pyd",
+      "sha256": "43a54cb59728b9688d9d83da1f4bc1accab191e4206d1eb52f4439dd69004671",
+      "bytes": 4994048
+    },
+    "terminals": {
+      "path": "build/search_pass2_tree_arms/terminals/bgbot_cpp.cp314-win_amd64.pyd",
+      "sha256": "66e4f5116e157885dcc2b27d0d2dc115ae732ab2aea20c76f5bcf30d288446f4",
+      "bytes": 4994048
+    },
+    "dead": {
+      "path": "build/search_pass2_tree_arms/dead/bgbot_cpp.cp314-win_amd64.pyd",
+      "sha256": "e0123582645822bc4af047d6b652a3edb0d44ae036ef47833fec24cf1ee67387",
+      "bytes": 5011968
+    },
+    "dynamic": {
+      "path": "build/search_pass2_tree_arms/dynamic/bgbot_cpp.cp314-win_amd64.pyd",
+      "sha256": "d9c3457ed7e8ab09cab1c326b83f3bd7b60b9afc1d7276f934500dd83b28da6a",
+      "bytes": 4993536
+    },
+    "all": {
+      "path": "build/search_pass2_tree_arms/all/bgbot_cpp.cp314-win_amd64.pyd",
+      "sha256": "c8059d4afe57b4d5ccc29f498518350b6c20ec8a58d9848851c8ffe8f49e0189",
+      "bytes": 5014528
+    }
+  },
+  "threads": 4,
+  "mask": "0xf00",
+  "python_revision": "33c4aa1f6c28d12b846e66e745eef6c2692c5052",
+  "per_stratum": 1,
+  "seed": 887450,
+  "cases": [
+    {
+      "level": "3ply",
+      "api": "post_move_analytics",
+      "position_id": "cube-match-anchoring-01",
+      "repeat": 0,
+      "order": [
+        "control",
+        "dynamic",
+        "dead",
+        "share4",
+        "all",
+        "terminals"
+      ],
+      "arms": {
+        "control": {
+          "wall": 0.011166999989654869,
+          "cpu": 0.046875,
+          "sha256": "23b902f9efb3d62de4371be968bd01af711b0235ebda277326be0097bd17abec"
+        },
+        "dynamic": {
+          "wall": 0.00998160004382953,
+          "cpu": 0.03125,
+          "sha256": "23b902f9efb3d62de4371be968bd01af711b0235ebda277326be0097bd17abec"
+        },
+        "dead": {
+          "wall": 0.010363499983213842,
+          "cpu": 0.046875,
+          "sha256": "23b902f9efb3d62de4371be968bd01af711b0235ebda277326be0097bd17abec"
+        },
+        "share4": {
+          "wall": 0.01094750000629574,
+          "cpu": 0.0,
+          "sha256": "23b902f9efb3d62de4371be968bd01af711b0235ebda277326be0097bd17abec"
+        },
+        "all": {
+          "wall": 0.009632600005716085,
+          "cpu": 0.0,
+          "sha256": "23b902f9efb3d62de4371be968bd01af711b0235ebda277326be0097bd17abec"
+        },
+        "terminals": {
+          "wall": 0.009634700021706522,
+          "cpu": 0.0,
+          "sha256": "23b902f9efb3d62de4371be968bd01af711b0235ebda277326be0097bd17abec"
+        }
+      }
+    },
+    {
+      "level": "3ply",
+      "api": "cube_action",
+      "position_id": "cube-money-anchoring-01",
+      "repeat": 0,
+      "order": [
+        "dynamic",
+        "dead",
+        "share4",
+        "all",
+        "terminals",
+        "control"
+      ],
+      "arms": {
+        "dynamic": {
+          "wall": 0.005760300031397492,
+          "cpu": 0.046875,
+          "sha256": "1dc6d28adf1f6d872b008bf262b304fb24722198a7e63f8e9354344579f8ab33"
+        },
+        "dead": {
+          "wall": 0.007628899998962879,
+          "cpu": 0.0,
+          "sha256": "1dc6d28adf1f6d872b008bf262b304fb24722198a7e63f8e9354344579f8ab33"
+        },
+        "share4": {
+          "wall": 0.005960199981927872,
+          "cpu": 0.0625,
+          "sha256": "1dc6d28adf1f6d872b008bf262b304fb24722198a7e63f8e9354344579f8ab33"
+        },
+        "all": {
+          "wall": 0.005835599964484572,
+          "cpu": 0.0,
+          "sha256": "1dc6d28adf1f6d872b008bf262b304fb24722198a7e63f8e9354344579f8ab33"
+        },
+        "terminals": {
+          "wall": 0.005801599996630102,
+          "cpu": 0.0625,
+          "sha256": "1dc6d28adf1f6d872b008bf262b304fb24722198a7e63f8e9354344579f8ab33"
+        },
+        "control": {
+          "wall": 0.005550500005483627,
+          "cpu": 0.0,
+          "sha256": "1dc6d28adf1f6d872b008bf262b304fb24722198a7e63f8e9354344579f8ab33"
+        }
+      }
+    },
+    {
+      "level": "4ply",
+      "api": "checker_play",
+      "position_id": "checker-match-purerace-01",
+      "repeat": 0,
+      "order": [
+        "dead",
+        "share4",
+        "all",
+        "terminals",
+        "control",
+        "dynamic"
+      ],
+      "arms": {
+        "dead": {
+          "wall": 0.06896500004222617,
+          "cpu": 0.140625,
+          "sha256": "5902a6d06f45586ff57bf3a188fee6fd053697fb2f4fc1ef239d88d3d4e228de"
+        },
+        "share4": {
+          "wall": 0.06343670003116131,
+          "cpu": 0.109375,
+          "sha256": "5902a6d06f45586ff57bf3a188fee6fd053697fb2f4fc1ef239d88d3d4e228de"
+        },
+        "all": {
+          "wall": 0.06018860003678128,
+          "cpu": 0.109375,
+          "sha256": "5902a6d06f45586ff57bf3a188fee6fd053697fb2f4fc1ef239d88d3d4e228de"
+        },
+        "terminals": {
+          "wall": 0.06929970002966002,
+          "cpu": 0.140625,
+          "sha256": "5902a6d06f45586ff57bf3a188fee6fd053697fb2f4fc1ef239d88d3d4e228de"
+        },
+        "control": {
+          "wall": 0.061082799977157265,
+          "cpu": 0.109375,
+          "sha256": "5902a6d06f45586ff57bf3a188fee6fd053697fb2f4fc1ef239d88d3d4e228de"
+        },
+        "dynamic": {
+          "wall": 0.05557369999587536,
+          "cpu": 0.09375,
+          "sha256": "5902a6d06f45586ff57bf3a188fee6fd053697fb2f4fc1ef239d88d3d4e228de"
+        }
+      }
+    },
+    {
+      "level": "3ply",
+      "api": "checker_play",
+      "position_id": "checker-match-priming-01",
+      "repeat": 0,
+      "order": [
+        "share4",
+        "all",
+        "terminals",
+        "control",
+        "dynamic",
+        "dead"
+      ],
+      "arms": {
+        "share4": {
+          "wall": 0.1057021000306122,
+          "cpu": 0.375,
+          "sha256": "1a64d6937e6fbea32a682cb349c7531bc91c0cd6d3af6848a692346a04ffc1fc"
+        },
+        "all": {
+          "wall": 0.1020890999934636,
+          "cpu": 0.375,
+          "sha256": "1a64d6937e6fbea32a682cb349c7531bc91c0cd6d3af6848a692346a04ffc1fc"
+        },
+        "terminals": {
+          "wall": 0.09626009996281937,
+          "cpu": 0.359375,
+          "sha256": "1a64d6937e6fbea32a682cb349c7531bc91c0cd6d3af6848a692346a04ffc1fc"
+        },
+        "control": {
+          "wall": 0.09870430000592023,
+          "cpu": 0.375,
+          "sha256": "1a64d6937e6fbea32a682cb349c7531bc91c0cd6d3af6848a692346a04ffc1fc"
+        },
+        "dynamic": {
+          "wall": 0.09619630000088364,
+          "cpu": 0.34375,
+          "sha256": "1a64d6937e6fbea32a682cb349c7531bc91c0cd6d3af6848a692346a04ffc1fc"
+        },
+        "dead": {
+          "wall": 0.10361729998840019,
+          "cpu": 0.359375,
+          "sha256": "1a64d6937e6fbea32a682cb349c7531bc91c0cd6d3af6848a692346a04ffc1fc"
+        }
+      }
+    },
+    {
+      "level": "4ply",
+      "api": "cube_action",
+      "position_id": "cube-match-racing-01",
+      "repeat": 0,
+      "order": [
+        "all",
+        "terminals",
+        "control",
+        "dynamic",
+        "dead",
+        "share4"
+      ],
+      "arms": {
+        "all": {
+          "wall": 0.07056389999343082,
+          "cpu": 0.234375,
+          "sha256": "38bf9e15e4fcd935ca08c145eea80d2ca8e5da5c74fa9a06d42ea44ccda6d4cd"
+        },
+        "terminals": {
+          "wall": 0.08356759999878705,
+          "cpu": 0.3125,
+          "sha256": "38bf9e15e4fcd935ca08c145eea80d2ca8e5da5c74fa9a06d42ea44ccda6d4cd"
+        },
+        "control": {
+          "wall": 0.08329779998166487,
+          "cpu": 0.3125,
+          "sha256": "38bf9e15e4fcd935ca08c145eea80d2ca8e5da5c74fa9a06d42ea44ccda6d4cd"
+        },
+        "dynamic": {
+          "wall": 0.08273859997279942,
+          "cpu": 0.3125,
+          "sha256": "38bf9e15e4fcd935ca08c145eea80d2ca8e5da5c74fa9a06d42ea44ccda6d4cd"
+        },
+        "dead": {
+          "wall": 0.08732079999754205,
+          "cpu": 0.28125,
+          "sha256": "38bf9e15e4fcd935ca08c145eea80d2ca8e5da5c74fa9a06d42ea44ccda6d4cd"
+        },
+        "share4": {
+          "wall": 0.08289269998203963,
+          "cpu": 0.28125,
+          "sha256": "38bf9e15e4fcd935ca08c145eea80d2ca8e5da5c74fa9a06d42ea44ccda6d4cd"
+        }
+      }
+    },
+    {
+      "level": "4ply",
+      "api": "cube_action",
+      "position_id": "cube-match-attacking-01",
+      "repeat": 0,
+      "order": [
+        "terminals",
+        "control",
+        "dynamic",
+        "dead",
+        "share4",
+        "all"
+      ],
+      "arms": {
+        "terminals": {
+          "wall": 0.19739729998400435,
+          "cpu": 0.734375,
+          "sha256": "ad2e299249b8334905c4f59dd0d21d10a65af42fa9d1c319e059e1dbd7664bd4"
+        },
+        "control": {
+          "wall": 0.19515840004896745,
+          "cpu": 0.671875,
+          "sha256": "ad2e299249b8334905c4f59dd0d21d10a65af42fa9d1c319e059e1dbd7664bd4"
+        },
+        "dynamic": {
+          "wall": 0.19685099995695055,
+          "cpu": 0.765625,
+          "sha256": "ad2e299249b8334905c4f59dd0d21d10a65af42fa9d1c319e059e1dbd7664bd4"
+        },
+        "dead": {
+          "wall": 0.19530560000566766,
+          "cpu": 0.65625,
+          "sha256": "ad2e299249b8334905c4f59dd0d21d10a65af42fa9d1c319e059e1dbd7664bd4"
+        },
+        "share4": {
+          "wall": 0.18058610003208742,
+          "cpu": 0.640625,
+          "sha256": "ad2e299249b8334905c4f59dd0d21d10a65af42fa9d1c319e059e1dbd7664bd4"
+        },
+        "all": {
+          "wall": 0.17753370001446456,
+          "cpu": 0.65625,
+          "sha256": "ad2e299249b8334905c4f59dd0d21d10a65af42fa9d1c319e059e1dbd7664bd4"
+        }
+      }
+    },
+    {
+      "level": "3ply",
+      "api": "cube_action",
+      "position_id": "cube-money-purerace-01",
+      "repeat": 0,
+      "order": [
+        "terminals",
+        "dynamic",
+        "dead",
+        "all",
+        "share4",
+        "control"
+      ],
+      "arms": {
+        "terminals": {
+          "wall": 0.0027240999625064433,
+          "cpu": 0.0625,
+          "sha256": "6da0e4cf9a7c014a02e0de47a54efa9acaed6105493133ccfc04dee8a5b42e65"
+        },
+        "dynamic": {
+          "wall": 0.0028286000015214086,
+          "cpu": 0.0,
+          "sha256": "6da0e4cf9a7c014a02e0de47a54efa9acaed6105493133ccfc04dee8a5b42e65"
+        },
+        "dead": {
+          "wall": 0.003692300000693649,
+          "cpu": 0.0,
+          "sha256": "6da0e4cf9a7c014a02e0de47a54efa9acaed6105493133ccfc04dee8a5b42e65"
+        },
+        "all": {
+          "wall": 0.0026394000160507858,
+          "cpu": 0.0,
+          "sha256": "6da0e4cf9a7c014a02e0de47a54efa9acaed6105493133ccfc04dee8a5b42e65"
+        },
+        "share4": {
+          "wall": 0.0024637000169605017,
+          "cpu": 0.0,
+          "sha256": "6da0e4cf9a7c014a02e0de47a54efa9acaed6105493133ccfc04dee8a5b42e65"
+        },
+        "control": {
+          "wall": 0.002286000002641231,
+          "cpu": 0.0625,
+          "sha256": "6da0e4cf9a7c014a02e0de47a54efa9acaed6105493133ccfc04dee8a5b42e65"
+        }
+      }
+    },
+    {
+      "level": "4ply",
+      "api": "cube_action",
+      "position_id": "cube-match-anchoring-01",
+      "repeat": 0,
+      "order": [
+        "dynamic",
+        "dead",
+        "all",
+        "share4",
+        "control",
+        "terminals"
+      ],
+      "arms": {
+        "dynamic": {
+          "wall": 0.1734691000310704,
+          "cpu": 0.578125,
+          "sha256": "d4402d3cdb1f8a4d44e2ea72be30c783cbf375595111916c95ebf20816677f89"
+        },
+        "dead": {
+          "wall": 0.1608542000176385,
+          "cpu": 0.5625,
+          "sha256": "d4402d3cdb1f8a4d44e2ea72be30c783cbf375595111916c95ebf20816677f89"
+        },
+        "all": {
+          "wall": 0.14199309999821708,
+          "cpu": 0.421875,
+          "sha256": "d4402d3cdb1f8a4d44e2ea72be30c783cbf375595111916c95ebf20816677f89"
+        },
+        "share4": {
+          "wall": 0.1500149000203237,
+          "cpu": 0.515625,
+          "sha256": "d4402d3cdb1f8a4d44e2ea72be30c783cbf375595111916c95ebf20816677f89"
+        },
+        "control": {
+          "wall": 0.16880519996630028,
+          "cpu": 0.53125,
+          "sha256": "d4402d3cdb1f8a4d44e2ea72be30c783cbf375595111916c95ebf20816677f89"
+        },
+        "terminals": {
+          "wall": 0.15613149997079745,
+          "cpu": 0.578125,
+          "sha256": "d4402d3cdb1f8a4d44e2ea72be30c783cbf375595111916c95ebf20816677f89"
+        }
+      }
+    },
+    {
+      "level": "4ply",
+      "api": "checker_play",
+      "position_id": "checker-money-purerace-01",
+      "repeat": 0,
+      "order": [
+        "dead",
+        "all",
+        "share4",
+        "control",
+        "terminals",
+        "dynamic"
+      ],
+      "arms": {
+        "dead": {
+          "wall": 0.06571469997288659,
+          "cpu": 0.234375,
+          "sha256": "63bc8078b2f51a73c1f2339746f2d563625c60e59d733b3bd59f05b050ec1ee9"
+        },
+        "all": {
+          "wall": 0.06472679995931685,
+          "cpu": 0.234375,
+          "sha256": "63bc8078b2f51a73c1f2339746f2d563625c60e59d733b3bd59f05b050ec1ee9"
+        },
+        "share4": {
+          "wall": 0.06622460001381114,
+          "cpu": 0.234375,
+          "sha256": "63bc8078b2f51a73c1f2339746f2d563625c60e59d733b3bd59f05b050ec1ee9"
+        },
+        "control": {
+          "wall": 0.07030859997030348,
+          "cpu": 0.1875,
+          "sha256": "63bc8078b2f51a73c1f2339746f2d563625c60e59d733b3bd59f05b050ec1ee9"
+        },
+        "terminals": {
+          "wall": 0.06826620001811534,
+          "cpu": 0.234375,
+          "sha256": "63bc8078b2f51a73c1f2339746f2d563625c60e59d733b3bd59f05b050ec1ee9"
+        },
+        "dynamic": {
+          "wall": 0.07037109998054802,
+          "cpu": 0.234375,
+          "sha256": "63bc8078b2f51a73c1f2339746f2d563625c60e59d733b3bd59f05b050ec1ee9"
+        }
+      }
+    },
+    {
+      "level": "3ply",
+      "api": "checker_play",
+      "position_id": "checker-match-racing-01",
+      "repeat": 0,
+      "order": [
+        "all",
+        "share4",
+        "control",
+        "terminals",
+        "dynamic",
+        "dead"
+      ],
+      "arms": {
+        "all": {
+          "wall": 0.01190029998542741,
+          "cpu": 0.015625,
+          "sha256": "37e9eaf5731e8f9aabcb0ee214a0ebd431b35f1ebb49a5cb11ee4d7010cca654"
+        },
+        "share4": {
+          "wall": 0.010950699972454458,
+          "cpu": 0.03125,
+          "sha256": "37e9eaf5731e8f9aabcb0ee214a0ebd431b35f1ebb49a5cb11ee4d7010cca654"
+        },
+        "control": {
+          "wall": 0.008311400015372783,
+          "cpu": 0.0,
+          "sha256": "37e9eaf5731e8f9aabcb0ee214a0ebd431b35f1ebb49a5cb11ee4d7010cca654"
+        },
+        "terminals": {
+          "wall": 0.010005599993746728,
+          "cpu": 0.015625,
+          "sha256": "37e9eaf5731e8f9aabcb0ee214a0ebd431b35f1ebb49a5cb11ee4d7010cca654"
+        },
+        "dynamic": {
+          "wall": 0.009480100008659065,
+          "cpu": 0.015625,
+          "sha256": "37e9eaf5731e8f9aabcb0ee214a0ebd431b35f1ebb49a5cb11ee4d7010cca654"
+        },
+        "dead": {
+          "wall": 0.009511500014923513,
+          "cpu": 0.0,
+          "sha256": "37e9eaf5731e8f9aabcb0ee214a0ebd431b35f1ebb49a5cb11ee4d7010cca654"
+        }
+      }
+    },
+    {
+      "level": "4ply",
+      "api": "cube_action",
+      "position_id": "cube-match-purerace-01",
+      "repeat": 0,
+      "order": [
+        "share4",
+        "control",
+        "terminals",
+        "dynamic",
+        "dead",
+        "all"
+      ],
+      "arms": {
+        "share4": {
+          "wall": 0.0013908999972045422,
+          "cpu": 0.0,
+          "sha256": "1bbdc1432eefee880558087f6cb15c48c63508c216f1a9ffeb6ed42c718b6ef4"
+        },
+        "control": {
+          "wall": 0.0010908999829553068,
+          "cpu": 0.0,
+          "sha256": "1bbdc1432eefee880558087f6cb15c48c63508c216f1a9ffeb6ed42c718b6ef4"
+        },
+        "terminals": {
+          "wall": 0.0009600999765098095,
+          "cpu": 0.0,
+          "sha256": "1bbdc1432eefee880558087f6cb15c48c63508c216f1a9ffeb6ed42c718b6ef4"
+        },
+        "dynamic": {
+          "wall": 0.0009292999748140574,
+          "cpu": 0.0,
+          "sha256": "1bbdc1432eefee880558087f6cb15c48c63508c216f1a9ffeb6ed42c718b6ef4"
+        },
+        "dead": {
+          "wall": 0.0008549000485800207,
+          "cpu": 0.0,
+          "sha256": "1bbdc1432eefee880558087f6cb15c48c63508c216f1a9ffeb6ed42c718b6ef4"
+        },
+        "all": {
+          "wall": 0.0008148000342771411,
+          "cpu": 0.0,
+          "sha256": "1bbdc1432eefee880558087f6cb15c48c63508c216f1a9ffeb6ed42c718b6ef4"
+        }
+      }
+    },
+    {
+      "level": "4ply",
+      "api": "checker_play",
+      "position_id": "checker-match-priming-01",
+      "repeat": 0,
+      "order": [
+        "control",
+        "terminals",
+        "dynamic",
+        "dead",
+        "all",
+        "share4"
+      ],
+      "arms": {
+        "control": {
+          "wall": 2.3250236000167206,
+          "cpu": 8.453125,
+          "sha256": "140ed3d8ed88cb8aa0525fa4f48dc634710afc8bcf8670f915a2afddf95766ad"
+        },
+        "terminals": {
+          "wall": 2.764924000017345,
+          "cpu": 9.078125,
+          "sha256": "140ed3d8ed88cb8aa0525fa4f48dc634710afc8bcf8670f915a2afddf95766ad"
+        },
+        "dynamic": {
+          "wall": 2.818393699999433,
+          "cpu": 8.953125,
+          "sha256": "140ed3d8ed88cb8aa0525fa4f48dc634710afc8bcf8670f915a2afddf95766ad"
+        },
+        "dead": {
+          "wall": 2.7370710000395775,
+          "cpu": 9.046875,
+          "sha256": "140ed3d8ed88cb8aa0525fa4f48dc634710afc8bcf8670f915a2afddf95766ad"
+        },
+        "all": {
+          "wall": 2.847517100046389,
+          "cpu": 9.21875,
+          "sha256": "140ed3d8ed88cb8aa0525fa4f48dc634710afc8bcf8670f915a2afddf95766ad"
+        },
+        "share4": {
+          "wall": 2.819214400020428,
+          "cpu": 8.90625,
+          "sha256": "140ed3d8ed88cb8aa0525fa4f48dc634710afc8bcf8670f915a2afddf95766ad"
+        }
+      }
+    },
+    {
+      "level": "3ply",
+      "api": "checker_play",
+      "position_id": "checker-money-purerace-01",
+      "repeat": 0,
+      "order": [
+        "share4",
+        "control",
+        "dead",
+        "dynamic",
+        "all",
+        "terminals"
+      ],
+      "arms": {
+        "share4": {
+          "wall": 0.03312239999650046,
+          "cpu": 0.0625,
+          "sha256": "b9e27722d8fe6b510fd7c20964c996fa07dabd018c2a296d4d3ee5294f72358a"
+        },
+        "control": {
+          "wall": 0.027293800027109683,
+          "cpu": 0.0625,
+          "sha256": "b9e27722d8fe6b510fd7c20964c996fa07dabd018c2a296d4d3ee5294f72358a"
+        },
+        "dead": {
+          "wall": 0.02812380000250414,
+          "cpu": 0.078125,
+          "sha256": "b9e27722d8fe6b510fd7c20964c996fa07dabd018c2a296d4d3ee5294f72358a"
+        },
+        "dynamic": {
+          "wall": 0.02716389996930957,
+          "cpu": 0.0625,
+          "sha256": "b9e27722d8fe6b510fd7c20964c996fa07dabd018c2a296d4d3ee5294f72358a"
+        },
+        "all": {
+          "wall": 0.024543499981518835,
+          "cpu": 0.078125,
+          "sha256": "b9e27722d8fe6b510fd7c20964c996fa07dabd018c2a296d4d3ee5294f72358a"
+        },
+        "terminals": {
+          "wall": 0.023649799986742437,
+          "cpu": 0.046875,
+          "sha256": "b9e27722d8fe6b510fd7c20964c996fa07dabd018c2a296d4d3ee5294f72358a"
+        }
+      }
+    },
+    {
+      "level": "4ply",
+      "api": "post_move_analytics",
+      "position_id": "cube-money-priming-01",
+      "repeat": 0,
+      "order": [
+        "control",
+        "dead",
+        "dynamic",
+        "all",
+        "terminals",
+        "share4"
+      ],
+      "arms": {
+        "control": {
+          "wall": 0.14101610000943765,
+          "cpu": 0.453125,
+          "sha256": "29fb37aa0061ff13b4092e661b22f11f7985e54e5133decc931ce863941494d6"
+        },
+        "dead": {
+          "wall": 0.13550309999845922,
+          "cpu": 0.390625,
+          "sha256": "29fb37aa0061ff13b4092e661b22f11f7985e54e5133decc931ce863941494d6"
+        },
+        "dynamic": {
+          "wall": 0.12553790002129972,
+          "cpu": 0.484375,
+          "sha256": "29fb37aa0061ff13b4092e661b22f11f7985e54e5133decc931ce863941494d6"
+        },
+        "all": {
+          "wall": 0.12838900001952425,
+          "cpu": 0.421875,
+          "sha256": "29fb37aa0061ff13b4092e661b22f11f7985e54e5133decc931ce863941494d6"
+        },
+        "terminals": {
+          "wall": 0.15038860001368448,
+          "cpu": 0.484375,
+          "sha256": "29fb37aa0061ff13b4092e661b22f11f7985e54e5133decc931ce863941494d6"
+        },
+        "share4": {
+          "wall": 0.16253229998983443,
+          "cpu": 0.4375,
+          "sha256": "29fb37aa0061ff13b4092e661b22f11f7985e54e5133decc931ce863941494d6"
+        }
+      }
+    },
+    {
+      "level": "4ply",
+      "api": "cube_action",
+      "position_id": "cube-money-purerace-01",
+      "repeat": 0,
+      "order": [
+        "dead",
+        "dynamic",
+        "all",
+        "terminals",
+        "share4",
+        "control"
+      ],
+      "arms": {
+        "dead": {
+          "wall": 0.032113100052811205,
+          "cpu": 0.09375,
+          "sha256": "4a376cac8e011f06d3470936026048244bd01dcfeb1f90eef3665eafd61da775"
+        },
+        "dynamic": {
+          "wall": 0.03226960002211854,
+          "cpu": 0.078125,
+          "sha256": "4a376cac8e011f06d3470936026048244bd01dcfeb1f90eef3665eafd61da775"
+        },
+        "all": {
+          "wall": 0.020041999989189208,
+          "cpu": 0.0625,
+          "sha256": "4a376cac8e011f06d3470936026048244bd01dcfeb1f90eef3665eafd61da775"
+        },
+        "terminals": {
+          "wall": 0.02361989999189973,
+          "cpu": 0.125,
+          "sha256": "4a376cac8e011f06d3470936026048244bd01dcfeb1f90eef3665eafd61da775"
+        },
+        "share4": {
+          "wall": 0.0306408999604173,
+          "cpu": 0.0625,
+          "sha256": "4a376cac8e011f06d3470936026048244bd01dcfeb1f90eef3665eafd61da775"
+        },
+        "control": {
+          "wall": 0.026829299982637167,
+          "cpu": 0.0625,
+          "sha256": "4a376cac8e011f06d3470936026048244bd01dcfeb1f90eef3665eafd61da775"
+        }
+      }
+    },
+    {
+      "level": "3ply",
+      "api": "checker_play",
+      "position_id": "checker-match-attacking-01",
+      "repeat": 0,
+      "order": [
+        "dynamic",
+        "all",
+        "terminals",
+        "share4",
+        "control",
+        "dead"
+      ],
+      "arms": {
+        "dynamic": {
+          "wall": 0.22016379999695346,
+          "cpu": 0.703125,
+          "sha256": "aea6d8fe516af4a7b6e9400421a970f6a701ce6eddd03b4566cc6b270705c61b"
+        },
+        "all": {
+          "wall": 0.19450219999998808,
+          "cpu": 0.671875,
+          "sha256": "aea6d8fe516af4a7b6e9400421a970f6a701ce6eddd03b4566cc6b270705c61b"
+        },
+        "terminals": {
+          "wall": 0.20516050001606345,
+          "cpu": 0.734375,
+          "sha256": "aea6d8fe516af4a7b6e9400421a970f6a701ce6eddd03b4566cc6b270705c61b"
+        },
+        "share4": {
+          "wall": 0.200997699983418,
+          "cpu": 0.6875,
+          "sha256": "aea6d8fe516af4a7b6e9400421a970f6a701ce6eddd03b4566cc6b270705c61b"
+        },
+        "control": {
+          "wall": 0.24819040001602843,
+          "cpu": 0.6875,
+          "sha256": "aea6d8fe516af4a7b6e9400421a970f6a701ce6eddd03b4566cc6b270705c61b"
+        },
+        "dead": {
+          "wall": 0.23318759998073801,
+          "cpu": 0.59375,
+          "sha256": "aea6d8fe516af4a7b6e9400421a970f6a701ce6eddd03b4566cc6b270705c61b"
+        }
+      }
+    },
+    {
+      "level": "4ply",
+      "api": "checker_play",
+      "position_id": "checker-money-attacking-01",
+      "repeat": 0,
+      "order": [
+        "all",
+        "terminals",
+        "share4",
+        "control",
+        "dead",
+        "dynamic"
+      ],
+      "arms": {
+        "all": {
+          "wall": 2.6610453999601305,
+          "cpu": 8.265625,
+          "sha256": "4193c472c358ebc037a70dbad6b9dc6be9592596921f23700c9eb442c287bd71"
+        },
+        "terminals": {
+          "wall": 2.379087100038305,
+          "cpu": 8.671875,
+          "sha256": "4193c472c358ebc037a70dbad6b9dc6be9592596921f23700c9eb442c287bd71"
+        },
+        "share4": {
+          "wall": 2.379535300016869,
+          "cpu": 8.765625,
+          "sha256": "4193c472c358ebc037a70dbad6b9dc6be9592596921f23700c9eb442c287bd71"
+        },
+        "control": {
+          "wall": 2.4326625999528915,
+          "cpu": 8.625,
+          "sha256": "4193c472c358ebc037a70dbad6b9dc6be9592596921f23700c9eb442c287bd71"
+        },
+        "dead": {
+          "wall": 2.437952700012829,
+          "cpu": 8.625,
+          "sha256": "4193c472c358ebc037a70dbad6b9dc6be9592596921f23700c9eb442c287bd71"
+        },
+        "dynamic": {
+          "wall": 2.246360999997705,
+          "cpu": 8.453125,
+          "sha256": "4193c472c358ebc037a70dbad6b9dc6be9592596921f23700c9eb442c287bd71"
+        }
+      }
+    },
+    {
+      "level": "4ply",
+      "api": "post_move_analytics",
+      "position_id": "cube-match-anchoring-01",
+      "repeat": 0,
+      "order": [
+        "terminals",
+        "share4",
+        "control",
+        "dead",
+        "dynamic",
+        "all"
+      ],
+      "arms": {
+        "terminals": {
+          "wall": 0.10005189996445552,
+          "cpu": 0.390625,
+          "sha256": "e846b3fae33021be9bb790b30f2ed2c040c52e0c299c4fe45e4dc32f78274f38"
+        },
+        "share4": {
+          "wall": 0.1022942999843508,
+          "cpu": 0.34375,
+          "sha256": "e846b3fae33021be9bb790b30f2ed2c040c52e0c299c4fe45e4dc32f78274f38"
+        },
+        "control": {
+          "wall": 0.10338509996654466,
+          "cpu": 0.390625,
+          "sha256": "e846b3fae33021be9bb790b30f2ed2c040c52e0c299c4fe45e4dc32f78274f38"
+        },
+        "dead": {
+          "wall": 0.10218909999821335,
+          "cpu": 0.34375,
+          "sha256": "e846b3fae33021be9bb790b30f2ed2c040c52e0c299c4fe45e4dc32f78274f38"
+        },
+        "dynamic": {
+          "wall": 0.10575089999474585,
+          "cpu": 0.34375,
+          "sha256": "e846b3fae33021be9bb790b30f2ed2c040c52e0c299c4fe45e4dc32f78274f38"
+        },
+        "all": {
+          "wall": 0.10643729998264462,
+          "cpu": 0.40625,
+          "sha256": "e846b3fae33021be9bb790b30f2ed2c040c52e0c299c4fe45e4dc32f78274f38"
+        }
+      }
+    },
+    {
+      "level": "3ply",
+      "api": "cube_action",
+      "position_id": "cube-match-racing-01",
+      "repeat": 0,
+      "order": [
+        "share4",
+        "control",
+        "terminals",
+        "dead",
+        "dynamic",
+        "all"
+      ],
+      "arms": {
+        "share4": {
+          "wall": 0.006647600035648793,
+          "cpu": 0.046875,
+          "sha256": "84d78765d803b0476998733f5e51d76e545799466dc76fbf4912671382c748c8"
+        },
+        "control": {
+          "wall": 0.00566259998595342,
+          "cpu": 0.0,
+          "sha256": "84d78765d803b0476998733f5e51d76e545799466dc76fbf4912671382c748c8"
+        },
+        "terminals": {
+          "wall": 0.006057200022041798,
+          "cpu": 0.046875,
+          "sha256": "84d78765d803b0476998733f5e51d76e545799466dc76fbf4912671382c748c8"
+        },
+        "dead": {
+          "wall": 0.005859700031578541,
+          "cpu": 0.0,
+          "sha256": "84d78765d803b0476998733f5e51d76e545799466dc76fbf4912671382c748c8"
+        },
+        "dynamic": {
+          "wall": 0.006488499988336116,
+          "cpu": 0.0,
+          "sha256": "84d78765d803b0476998733f5e51d76e545799466dc76fbf4912671382c748c8"
+        },
+        "all": {
+          "wall": 0.006891800032462925,
+          "cpu": 0.0625,
+          "sha256": "84d78765d803b0476998733f5e51d76e545799466dc76fbf4912671382c748c8"
+        }
+      }
+    },
+    {
+      "level": "3ply",
+      "api": "checker_play",
+      "position_id": "checker-money-priming-01",
+      "repeat": 0,
+      "order": [
+        "control",
+        "terminals",
+        "dead",
+        "dynamic",
+        "all",
+        "share4"
+      ],
+      "arms": {
+        "control": {
+          "wall": 0.10589300002902746,
+          "cpu": 0.4375,
+          "sha256": "337abf05ef8ad4dcd96a79f3e86ec83f319ce388cf8bf1fc24973d2fede22992"
+        },
+        "terminals": {
+          "wall": 0.10972070001298562,
+          "cpu": 0.390625,
+          "sha256": "337abf05ef8ad4dcd96a79f3e86ec83f319ce388cf8bf1fc24973d2fede22992"
+        },
+        "dead": {
+          "wall": 0.10981410002568737,
+          "cpu": 0.390625,
+          "sha256": "337abf05ef8ad4dcd96a79f3e86ec83f319ce388cf8bf1fc24973d2fede22992"
+        },
+        "dynamic": {
+          "wall": 0.1101506000268273,
+          "cpu": 0.375,
+          "sha256": "337abf05ef8ad4dcd96a79f3e86ec83f319ce388cf8bf1fc24973d2fede22992"
+        },
+        "all": {
+          "wall": 0.10974340001121163,
+          "cpu": 0.34375,
+          "sha256": "337abf05ef8ad4dcd96a79f3e86ec83f319ce388cf8bf1fc24973d2fede22992"
+        },
+        "share4": {
+          "wall": 0.1058927999692969,
+          "cpu": 0.359375,
+          "sha256": "337abf05ef8ad4dcd96a79f3e86ec83f319ce388cf8bf1fc24973d2fede22992"
+        }
+      }
+    },
+    {
+      "level": "3ply",
+      "api": "post_move_analytics",
+      "position_id": "cube-money-racing-01",
+      "repeat": 0,
+      "order": [
+        "terminals",
+        "dead",
+        "dynamic",
+        "all",
+        "share4",
+        "control"
+      ],
+      "arms": {
+        "terminals": {
+          "wall": 0.0018227000255137682,
+          "cpu": 0.0,
+          "sha256": "0b63e5aab737a50346457b09346d250eda5960982da60bf93bd263b48fab4705"
+        },
+        "dead": {
+          "wall": 0.002332200005184859,
+          "cpu": 0.0,
+          "sha256": "0b63e5aab737a50346457b09346d250eda5960982da60bf93bd263b48fab4705"
+        },
+        "dynamic": {
+          "wall": 0.00212020002072677,
+          "cpu": 0.0,
+          "sha256": "0b63e5aab737a50346457b09346d250eda5960982da60bf93bd263b48fab4705"
+        },
+        "all": {
+          "wall": 0.0017659000004641712,
+          "cpu": 0.015625,
+          "sha256": "0b63e5aab737a50346457b09346d250eda5960982da60bf93bd263b48fab4705"
+        },
+        "share4": {
+          "wall": 0.0018308000289835036,
+          "cpu": 0.0,
+          "sha256": "0b63e5aab737a50346457b09346d250eda5960982da60bf93bd263b48fab4705"
+        },
+        "control": {
+          "wall": 0.001857199997175485,
+          "cpu": 0.0,
+          "sha256": "0b63e5aab737a50346457b09346d250eda5960982da60bf93bd263b48fab4705"
+        }
+      }
+    },
+    {
+      "level": "3ply",
+      "api": "cube_action",
+      "position_id": "cube-match-purerace-01",
+      "repeat": 0,
+      "order": [
+        "dead",
+        "dynamic",
+        "all",
+        "share4",
+        "control",
+        "terminals"
+      ],
+      "arms": {
+        "dead": {
+          "wall": 0.00043189997086301446,
+          "cpu": 0.0,
+          "sha256": "841649d752fca3cde45b3ecc3458a44ea3462d8aa0d567c0465822c35e42c51c"
+        },
+        "dynamic": {
+          "wall": 0.00037290004547685385,
+          "cpu": 0.0,
+          "sha256": "841649d752fca3cde45b3ecc3458a44ea3462d8aa0d567c0465822c35e42c51c"
+        },
+        "all": {
+          "wall": 0.0003328000311739743,
+          "cpu": 0.0,
+          "sha256": "841649d752fca3cde45b3ecc3458a44ea3462d8aa0d567c0465822c35e42c51c"
+        },
+        "share4": {
+          "wall": 0.0002647999790497124,
+          "cpu": 0.0,
+          "sha256": "841649d752fca3cde45b3ecc3458a44ea3462d8aa0d567c0465822c35e42c51c"
+        },
+        "control": {
+          "wall": 0.00035799999022856355,
+          "cpu": 0.0,
+          "sha256": "841649d752fca3cde45b3ecc3458a44ea3462d8aa0d567c0465822c35e42c51c"
+        },
+        "terminals": {
+          "wall": 0.0004206000012345612,
+          "cpu": 0.0,
+          "sha256": "841649d752fca3cde45b3ecc3458a44ea3462d8aa0d567c0465822c35e42c51c"
+        }
+      }
+    },
+    {
+      "level": "4ply",
+      "api": "post_move_analytics",
+      "position_id": "cube-money-anchoring-01",
+      "repeat": 0,
+      "order": [
+        "dynamic",
+        "all",
+        "share4",
+        "control",
+        "terminals",
+        "dead"
+      ],
+      "arms": {
+        "dynamic": {
+          "wall": 0.2984085000352934,
+          "cpu": 1.015625,
+          "sha256": "ab913ab186d630f4521f50e8211249032cbaff6c04f1c1bf92679bcbd538c7ca"
+        },
+        "all": {
+          "wall": 0.31327590002911165,
+          "cpu": 1.046875,
+          "sha256": "ab913ab186d630f4521f50e8211249032cbaff6c04f1c1bf92679bcbd538c7ca"
+        },
+        "share4": {
+          "wall": 0.30331459996523336,
+          "cpu": 1.0625,
+          "sha256": "ab913ab186d630f4521f50e8211249032cbaff6c04f1c1bf92679bcbd538c7ca"
+        },
+        "control": {
+          "wall": 0.32445889996597543,
+          "cpu": 1.046875,
+          "sha256": "ab913ab186d630f4521f50e8211249032cbaff6c04f1c1bf92679bcbd538c7ca"
+        },
+        "terminals": {
+          "wall": 0.30214169999817386,
+          "cpu": 1.03125,
+          "sha256": "ab913ab186d630f4521f50e8211249032cbaff6c04f1c1bf92679bcbd538c7ca"
+        },
+        "dead": {
+          "wall": 0.3223465000046417,
+          "cpu": 1.015625,
+          "sha256": "ab913ab186d630f4521f50e8211249032cbaff6c04f1c1bf92679bcbd538c7ca"
+        }
+      }
+    },
+    {
+      "level": "4ply",
+      "api": "cube_action",
+      "position_id": "cube-money-anchoring-01",
+      "repeat": 0,
+      "order": [
+        "all",
+        "share4",
+        "control",
+        "terminals",
+        "dead",
+        "dynamic"
+      ],
+      "arms": {
+        "all": {
+          "wall": 0.3745076000341214,
+          "cpu": 1.421875,
+          "sha256": "189eec4f2d771d42e884100c5531b9356e26f91b4e2ed5f3924ec24696dcbf07"
+        },
+        "share4": {
+          "wall": 0.400426400010474,
+          "cpu": 1.296875,
+          "sha256": "189eec4f2d771d42e884100c5531b9356e26f91b4e2ed5f3924ec24696dcbf07"
+        },
+        "control": {
+          "wall": 0.41128659999230877,
+          "cpu": 1.515625,
+          "sha256": "189eec4f2d771d42e884100c5531b9356e26f91b4e2ed5f3924ec24696dcbf07"
+        },
+        "terminals": {
+          "wall": 0.39595490001374856,
+          "cpu": 1.390625,
+          "sha256": "189eec4f2d771d42e884100c5531b9356e26f91b4e2ed5f3924ec24696dcbf07"
+        },
+        "dead": {
+          "wall": 0.4018363000359386,
+          "cpu": 1.34375,
+          "sha256": "189eec4f2d771d42e884100c5531b9356e26f91b4e2ed5f3924ec24696dcbf07"
+        },
+        "dynamic": {
+          "wall": 0.3602850000024773,
+          "cpu": 1.375,
+          "sha256": "189eec4f2d771d42e884100c5531b9356e26f91b4e2ed5f3924ec24696dcbf07"
+        }
+      }
+    },
+    {
+      "level": "3ply",
+      "api": "cube_action",
+      "position_id": "cube-money-racing-01",
+      "repeat": 0,
+      "order": [
+        "all",
+        "control",
+        "terminals",
+        "dynamic",
+        "share4",
+        "dead"
+      ],
+      "arms": {
+        "all": {
+          "wall": 0.002241100009996444,
+          "cpu": 0.0,
+          "sha256": "66a170619ef929cbdb4629cf5b7f54e322ca6fd28f14d374690b101721c83c83"
+        },
+        "control": {
+          "wall": 0.0027809999883174896,
+          "cpu": 0.0,
+          "sha256": "66a170619ef929cbdb4629cf5b7f54e322ca6fd28f14d374690b101721c83c83"
+        },
+        "terminals": {
+          "wall": 0.0028111999854445457,
+          "cpu": 0.03125,
+          "sha256": "66a170619ef929cbdb4629cf5b7f54e322ca6fd28f14d374690b101721c83c83"
+        },
+        "dynamic": {
+          "wall": 0.0022740999702364206,
+          "cpu": 0.0,
+          "sha256": "66a170619ef929cbdb4629cf5b7f54e322ca6fd28f14d374690b101721c83c83"
+        },
+        "share4": {
+          "wall": 0.0025822999887168407,
+          "cpu": 0.0,
+          "sha256": "66a170619ef929cbdb4629cf5b7f54e322ca6fd28f14d374690b101721c83c83"
+        },
+        "dead": {
+          "wall": 0.0030329000437632203,
+          "cpu": 0.0,
+          "sha256": "66a170619ef929cbdb4629cf5b7f54e322ca6fd28f14d374690b101721c83c83"
+        }
+      }
+    },
+    {
+      "level": "4ply",
+      "api": "cube_action",
+      "position_id": "cube-match-priming-01",
+      "repeat": 0,
+      "order": [
+        "control",
+        "terminals",
+        "dynamic",
+        "share4",
+        "dead",
+        "all"
+      ],
+      "arms": {
+        "control": {
+          "wall": 0.29264999995939434,
+          "cpu": 0.859375,
+          "sha256": "21841d4f5de58c2c2d93c0610e322bab36836cfd8fbfc9cc1afa5a15eefbaf96"
+        },
+        "terminals": {
+          "wall": 0.2537614000029862,
+          "cpu": 0.875,
+          "sha256": "21841d4f5de58c2c2d93c0610e322bab36836cfd8fbfc9cc1afa5a15eefbaf96"
+        },
+        "dynamic": {
+          "wall": 0.24857340002199635,
+          "cpu": 0.84375,
+          "sha256": "21841d4f5de58c2c2d93c0610e322bab36836cfd8fbfc9cc1afa5a15eefbaf96"
+        },
+        "share4": {
+          "wall": 0.25060649996157736,
+          "cpu": 0.78125,
+          "sha256": "21841d4f5de58c2c2d93c0610e322bab36836cfd8fbfc9cc1afa5a15eefbaf96"
+        },
+        "dead": {
+          "wall": 0.24480300000868738,
+          "cpu": 0.859375,
+          "sha256": "21841d4f5de58c2c2d93c0610e322bab36836cfd8fbfc9cc1afa5a15eefbaf96"
+        },
+        "all": {
+          "wall": 0.2348792999982834,
+          "cpu": 0.8125,
+          "sha256": "21841d4f5de58c2c2d93c0610e322bab36836cfd8fbfc9cc1afa5a15eefbaf96"
+        }
+      }
+    },
+    {
+      "level": "4ply",
+      "api": "post_move_analytics",
+      "position_id": "cube-money-attacking-01",
+      "repeat": 0,
+      "order": [
+        "terminals",
+        "dynamic",
+        "share4",
+        "dead",
+        "all",
+        "control"
+      ],
+      "arms": {
+        "terminals": {
+          "wall": 0.22222370002418756,
+          "cpu": 0.734375,
+          "sha256": "d72da3df6999a221fe00fa2362a895afb4a6df8d4b19052593d39a6bd8fdc0ed"
+        },
+        "dynamic": {
+          "wall": 0.22371709998697042,
+          "cpu": 0.765625,
+          "sha256": "d72da3df6999a221fe00fa2362a895afb4a6df8d4b19052593d39a6bd8fdc0ed"
+        },
+        "share4": {
+          "wall": 0.2270653000450693,
+          "cpu": 0.796875,
+          "sha256": "d72da3df6999a221fe00fa2362a895afb4a6df8d4b19052593d39a6bd8fdc0ed"
+        },
+        "dead": {
+          "wall": 0.22208690003026277,
+          "cpu": 0.828125,
+          "sha256": "d72da3df6999a221fe00fa2362a895afb4a6df8d4b19052593d39a6bd8fdc0ed"
+        },
+        "all": {
+          "wall": 0.22184999997261912,
+          "cpu": 0.84375,
+          "sha256": "d72da3df6999a221fe00fa2362a895afb4a6df8d4b19052593d39a6bd8fdc0ed"
+        },
+        "control": {
+          "wall": 0.22136790002696216,
+          "cpu": 0.734375,
+          "sha256": "d72da3df6999a221fe00fa2362a895afb4a6df8d4b19052593d39a6bd8fdc0ed"
+        }
+      }
+    },
+    {
+      "level": "4ply",
+      "api": "cube_action",
+      "position_id": "cube-money-priming-01",
+      "repeat": 0,
+      "order": [
+        "dynamic",
+        "share4",
+        "dead",
+        "all",
+        "control",
+        "terminals"
+      ],
+      "arms": {
+        "dynamic": {
+          "wall": 0.1887609999976121,
+          "cpu": 0.703125,
+          "sha256": "d65ec6a2de0031b42ecfbe3e74df3518a3397b0b0edcfdaf536133b92743722a"
+        },
+        "share4": {
+          "wall": 0.16334500000812113,
+          "cpu": 0.625,
+          "sha256": "d65ec6a2de0031b42ecfbe3e74df3518a3397b0b0edcfdaf536133b92743722a"
+        },
+        "dead": {
+          "wall": 0.18101319996640086,
+          "cpu": 0.65625,
+          "sha256": "d65ec6a2de0031b42ecfbe3e74df3518a3397b0b0edcfdaf536133b92743722a"
+        },
+        "all": {
+          "wall": 0.17707069998141378,
+          "cpu": 0.640625,
+          "sha256": "d65ec6a2de0031b42ecfbe3e74df3518a3397b0b0edcfdaf536133b92743722a"
+        },
+        "control": {
+          "wall": 0.18880459998035803,
+          "cpu": 0.6875,
+          "sha256": "d65ec6a2de0031b42ecfbe3e74df3518a3397b0b0edcfdaf536133b92743722a"
+        },
+        "terminals": {
+          "wall": 0.21144009998533875,
+          "cpu": 0.671875,
+          "sha256": "d65ec6a2de0031b42ecfbe3e74df3518a3397b0b0edcfdaf536133b92743722a"
+        }
+      }
+    },
+    {
+      "level": "4ply",
+      "api": "checker_play",
+      "position_id": "checker-money-anchoring-01",
+      "repeat": 0,
+      "order": [
+        "share4",
+        "dead",
+        "all",
+        "control",
+        "terminals",
+        "dynamic"
+      ],
+      "arms": {
+        "share4": {
+          "wall": 0.22935219999635592,
+          "cpu": 0.6875,
+          "sha256": "2bf13fdf7f068575477681c9704ef9c1b5721716b3fcbed8026e472635aec547"
+        },
+        "dead": {
+          "wall": 0.22244169999612495,
+          "cpu": 0.671875,
+          "sha256": "2bf13fdf7f068575477681c9704ef9c1b5721716b3fcbed8026e472635aec547"
+        },
+        "all": {
+          "wall": 0.20929650001926348,
+          "cpu": 0.671875,
+          "sha256": "2bf13fdf7f068575477681c9704ef9c1b5721716b3fcbed8026e472635aec547"
+        },
+        "control": {
+          "wall": 0.19493220001459122,
+          "cpu": 0.625,
+          "sha256": "2bf13fdf7f068575477681c9704ef9c1b5721716b3fcbed8026e472635aec547"
+        },
+        "terminals": {
+          "wall": 0.19661769998492673,
+          "cpu": 0.640625,
+          "sha256": "2bf13fdf7f068575477681c9704ef9c1b5721716b3fcbed8026e472635aec547"
+        },
+        "dynamic": {
+          "wall": 0.1915018999716267,
+          "cpu": 0.59375,
+          "sha256": "2bf13fdf7f068575477681c9704ef9c1b5721716b3fcbed8026e472635aec547"
+        }
+      }
+    },
+    {
+      "level": "3ply",
+      "api": "post_move_analytics",
+      "position_id": "cube-match-purerace-01",
+      "repeat": 0,
+      "order": [
+        "dead",
+        "all",
+        "control",
+        "terminals",
+        "dynamic",
+        "share4"
+      ],
+      "arms": {
+        "dead": {
+          "wall": 0.0002604000037536025,
+          "cpu": 0.0,
+          "sha256": "17b3787b39740e789f96ba5cd279d01e1e06b88ac7ba92a750bdcbd8e9baf218"
+        },
+        "all": {
+          "wall": 0.0002665999927558005,
+          "cpu": 0.0,
+          "sha256": "17b3787b39740e789f96ba5cd279d01e1e06b88ac7ba92a750bdcbd8e9baf218"
+        },
+        "control": {
+          "wall": 0.0002513999934308231,
+          "cpu": 0.0,
+          "sha256": "17b3787b39740e789f96ba5cd279d01e1e06b88ac7ba92a750bdcbd8e9baf218"
+        },
+        "terminals": {
+          "wall": 0.0002462000120431185,
+          "cpu": 0.0,
+          "sha256": "17b3787b39740e789f96ba5cd279d01e1e06b88ac7ba92a750bdcbd8e9baf218"
+        },
+        "dynamic": {
+          "wall": 0.0003404999733902514,
+          "cpu": 0.0,
+          "sha256": "17b3787b39740e789f96ba5cd279d01e1e06b88ac7ba92a750bdcbd8e9baf218"
+        },
+        "share4": {
+          "wall": 0.0002969999914057553,
+          "cpu": 0.0,
+          "sha256": "17b3787b39740e789f96ba5cd279d01e1e06b88ac7ba92a750bdcbd8e9baf218"
+        }
+      }
+    },
+    {
+      "level": "3ply",
+      "api": "cube_action",
+      "position_id": "cube-match-priming-01",
+      "repeat": 0,
+      "order": [
+        "terminals",
+        "dead",
+        "dynamic",
+        "share4",
+        "all",
+        "control"
+      ],
+      "arms": {
+        "terminals": {
+          "wall": 0.00301649997709319,
+          "cpu": 0.0625,
+          "sha256": "d11fdbfff7de19da4f697d291f01e6bc1b065603501ae5f17f6fe1d4d0904b78"
+        },
+        "dead": {
+          "wall": 0.003046400030143559,
+          "cpu": 0.0,
+          "sha256": "d11fdbfff7de19da4f697d291f01e6bc1b065603501ae5f17f6fe1d4d0904b78"
+        },
+        "dynamic": {
+          "wall": 0.002646800014190376,
+          "cpu": 0.0,
+          "sha256": "d11fdbfff7de19da4f697d291f01e6bc1b065603501ae5f17f6fe1d4d0904b78"
+        },
+        "share4": {
+          "wall": 0.003003499994520098,
+          "cpu": 0.0,
+          "sha256": "d11fdbfff7de19da4f697d291f01e6bc1b065603501ae5f17f6fe1d4d0904b78"
+        },
+        "all": {
+          "wall": 0.0026703000185079873,
+          "cpu": 0.0,
+          "sha256": "d11fdbfff7de19da4f697d291f01e6bc1b065603501ae5f17f6fe1d4d0904b78"
+        },
+        "control": {
+          "wall": 0.003061799972783774,
+          "cpu": 0.03125,
+          "sha256": "d11fdbfff7de19da4f697d291f01e6bc1b065603501ae5f17f6fe1d4d0904b78"
+        }
+      }
+    },
+    {
+      "level": "3ply",
+      "api": "post_move_analytics",
+      "position_id": "cube-money-priming-01",
+      "repeat": 0,
+      "order": [
+        "dead",
+        "dynamic",
+        "share4",
+        "all",
+        "control",
+        "terminals"
+      ],
+      "arms": {
+        "dead": {
+          "wall": 0.006507800018880516,
+          "cpu": 0.0,
+          "sha256": "692c6a3ce9e7d4fde5e0593c43cc5fcd91f433f65f5e646d0e973d41befae4c3"
+        },
+        "dynamic": {
+          "wall": 0.006385499960742891,
+          "cpu": 0.0,
+          "sha256": "692c6a3ce9e7d4fde5e0593c43cc5fcd91f433f65f5e646d0e973d41befae4c3"
+        },
+        "share4": {
+          "wall": 0.006338500010315329,
+          "cpu": 0.0625,
+          "sha256": "692c6a3ce9e7d4fde5e0593c43cc5fcd91f433f65f5e646d0e973d41befae4c3"
+        },
+        "all": {
+          "wall": 0.006297100044321269,
+          "cpu": 0.0,
+          "sha256": "692c6a3ce9e7d4fde5e0593c43cc5fcd91f433f65f5e646d0e973d41befae4c3"
+        },
+        "control": {
+          "wall": 0.006380299979355186,
+          "cpu": 0.0625,
+          "sha256": "692c6a3ce9e7d4fde5e0593c43cc5fcd91f433f65f5e646d0e973d41befae4c3"
+        },
+        "terminals": {
+          "wall": 0.0062473000143654644,
+          "cpu": 0.0,
+          "sha256": "692c6a3ce9e7d4fde5e0593c43cc5fcd91f433f65f5e646d0e973d41befae4c3"
+        }
+      }
+    },
+    {
+      "level": "3ply",
+      "api": "checker_play",
+      "position_id": "checker-match-purerace-01",
+      "repeat": 0,
+      "order": [
+        "dynamic",
+        "share4",
+        "all",
+        "control",
+        "terminals",
+        "dead"
+      ],
+      "arms": {
+        "dynamic": {
+          "wall": 0.004790999984834343,
+          "cpu": 0.015625,
+          "sha256": "021cadb27a12a511f4c341fd4b655ad2820b4b50755fc10df3721957a1f2cdd4"
+        },
+        "share4": {
+          "wall": 0.005075699998997152,
+          "cpu": 0.0,
+          "sha256": "021cadb27a12a511f4c341fd4b655ad2820b4b50755fc10df3721957a1f2cdd4"
+        },
+        "all": {
+          "wall": 0.004763700009789318,
+          "cpu": 0.0,
+          "sha256": "021cadb27a12a511f4c341fd4b655ad2820b4b50755fc10df3721957a1f2cdd4"
+        },
+        "control": {
+          "wall": 0.004840000008698553,
+          "cpu": 0.03125,
+          "sha256": "021cadb27a12a511f4c341fd4b655ad2820b4b50755fc10df3721957a1f2cdd4"
+        },
+        "terminals": {
+          "wall": 0.004881399974692613,
+          "cpu": 0.0,
+          "sha256": "021cadb27a12a511f4c341fd4b655ad2820b4b50755fc10df3721957a1f2cdd4"
+        },
+        "dead": {
+          "wall": 0.004780400020536035,
+          "cpu": 0.0,
+          "sha256": "021cadb27a12a511f4c341fd4b655ad2820b4b50755fc10df3721957a1f2cdd4"
+        }
+      }
+    },
+    {
+      "level": "4ply",
+      "api": "checker_play",
+      "position_id": "checker-match-anchoring-01",
+      "repeat": 0,
+      "order": [
+        "share4",
+        "all",
+        "control",
+        "terminals",
+        "dead",
+        "dynamic"
+      ],
+      "arms": {
+        "share4": {
+          "wall": 2.2034564999630675,
+          "cpu": 7.828125,
+          "sha256": "5a56644b78b6acad437210ec035e6701f03f5fcc5b4ad875f0acf0236c90e9e5"
+        },
+        "all": {
+          "wall": 2.334703000029549,
+          "cpu": 8.046875,
+          "sha256": "5a56644b78b6acad437210ec035e6701f03f5fcc5b4ad875f0acf0236c90e9e5"
+        },
+        "control": {
+          "wall": 2.288099700002931,
+          "cpu": 7.875,
+          "sha256": "5a56644b78b6acad437210ec035e6701f03f5fcc5b4ad875f0acf0236c90e9e5"
+        },
+        "terminals": {
+          "wall": 2.1431077999877743,
+          "cpu": 7.890625,
+          "sha256": "5a56644b78b6acad437210ec035e6701f03f5fcc5b4ad875f0acf0236c90e9e5"
+        },
+        "dead": {
+          "wall": 2.2620257000089623,
+          "cpu": 7.9375,
+          "sha256": "5a56644b78b6acad437210ec035e6701f03f5fcc5b4ad875f0acf0236c90e9e5"
+        },
+        "dynamic": {
+          "wall": 2.203838299959898,
+          "cpu": 7.859375,
+          "sha256": "5a56644b78b6acad437210ec035e6701f03f5fcc5b4ad875f0acf0236c90e9e5"
+        }
+      }
+    },
+    {
+      "level": "3ply",
+      "api": "cube_action",
+      "position_id": "cube-money-attacking-01",
+      "repeat": 0,
+      "order": [
+        "all",
+        "control",
+        "terminals",
+        "dead",
+        "dynamic",
+        "share4"
+      ],
+      "arms": {
+        "all": {
+          "wall": 0.00771480001276359,
+          "cpu": 0.0,
+          "sha256": "5840d4ba28dc807e6d717ee429efbd19a010121a99a4b11154422d144aa41296"
+        },
+        "control": {
+          "wall": 0.00809409999055788,
+          "cpu": 0.03125,
+          "sha256": "5840d4ba28dc807e6d717ee429efbd19a010121a99a4b11154422d144aa41296"
+        },
+        "terminals": {
+          "wall": 0.009105300006922334,
+          "cpu": 0.0,
+          "sha256": "5840d4ba28dc807e6d717ee429efbd19a010121a99a4b11154422d144aa41296"
+        },
+        "dead": {
+          "wall": 0.00760070001706481,
+          "cpu": 0.0625,
+          "sha256": "5840d4ba28dc807e6d717ee429efbd19a010121a99a4b11154422d144aa41296"
+        },
+        "dynamic": {
+          "wall": 0.007436000043526292,
+          "cpu": 0.0,
+          "sha256": "5840d4ba28dc807e6d717ee429efbd19a010121a99a4b11154422d144aa41296"
+        },
+        "share4": {
+          "wall": 0.007707500015385449,
+          "cpu": 0.0625,
+          "sha256": "5840d4ba28dc807e6d717ee429efbd19a010121a99a4b11154422d144aa41296"
+        }
+      }
+    },
+    {
+      "level": "3ply",
+      "api": "cube_action",
+      "position_id": "cube-match-anchoring-01",
+      "repeat": 0,
+      "order": [
+        "control",
+        "terminals",
+        "dead",
+        "dynamic",
+        "share4",
+        "all"
+      ],
+      "arms": {
+        "control": {
+          "wall": 0.008974900003522635,
+          "cpu": 0.0,
+          "sha256": "f47e1ff1e40f23e0426ddb4ee36516db3c0cd27547a10522ab0265e831b0acb0"
+        },
+        "terminals": {
+          "wall": 0.007951600011438131,
+          "cpu": 0.0625,
+          "sha256": "f47e1ff1e40f23e0426ddb4ee36516db3c0cd27547a10522ab0265e831b0acb0"
+        },
+        "dead": {
+          "wall": 0.007864599989261478,
+          "cpu": 0.0,
+          "sha256": "f47e1ff1e40f23e0426ddb4ee36516db3c0cd27547a10522ab0265e831b0acb0"
+        },
+        "dynamic": {
+          "wall": 0.0074575000326149166,
+          "cpu": 0.0625,
+          "sha256": "f47e1ff1e40f23e0426ddb4ee36516db3c0cd27547a10522ab0265e831b0acb0"
+        },
+        "share4": {
+          "wall": 0.008015800034627318,
+          "cpu": 0.0,
+          "sha256": "f47e1ff1e40f23e0426ddb4ee36516db3c0cd27547a10522ab0265e831b0acb0"
+        },
+        "all": {
+          "wall": 0.007484500005375594,
+          "cpu": 0.0625,
+          "sha256": "f47e1ff1e40f23e0426ddb4ee36516db3c0cd27547a10522ab0265e831b0acb0"
+        }
+      }
+    },
+    {
+      "level": "4ply",
+      "api": "post_move_analytics",
+      "position_id": "cube-match-priming-01",
+      "repeat": 0,
+      "order": [
+        "control",
+        "dynamic",
+        "dead",
+        "share4",
+        "terminals",
+        "all"
+      ],
+      "arms": {
+        "control": {
+          "wall": 0.2233428999898024,
+          "cpu": 0.75,
+          "sha256": "d95b2c70cc2cc06cf6d7869fc5478e7923a65e66f711eea1f8688bf52d3ff4ec"
+        },
+        "dynamic": {
+          "wall": 0.19589669996639714,
+          "cpu": 0.796875,
+          "sha256": "d95b2c70cc2cc06cf6d7869fc5478e7923a65e66f711eea1f8688bf52d3ff4ec"
+        },
+        "dead": {
+          "wall": 0.23113249999005347,
+          "cpu": 0.796875,
+          "sha256": "d95b2c70cc2cc06cf6d7869fc5478e7923a65e66f711eea1f8688bf52d3ff4ec"
+        },
+        "share4": {
+          "wall": 0.21821969997836277,
+          "cpu": 0.703125,
+          "sha256": "d95b2c70cc2cc06cf6d7869fc5478e7923a65e66f711eea1f8688bf52d3ff4ec"
+        },
+        "terminals": {
+          "wall": 0.23645799997029826,
+          "cpu": 0.75,
+          "sha256": "d95b2c70cc2cc06cf6d7869fc5478e7923a65e66f711eea1f8688bf52d3ff4ec"
+        },
+        "all": {
+          "wall": 0.20430509996367618,
+          "cpu": 0.6875,
+          "sha256": "d95b2c70cc2cc06cf6d7869fc5478e7923a65e66f711eea1f8688bf52d3ff4ec"
+        }
+      }
+    },
+    {
+      "level": "3ply",
+      "api": "cube_action",
+      "position_id": "cube-match-attacking-01",
+      "repeat": 0,
+      "order": [
+        "dynamic",
+        "dead",
+        "share4",
+        "terminals",
+        "all",
+        "control"
+      ],
+      "arms": {
+        "dynamic": {
+          "wall": 0.00646280002547428,
+          "cpu": 0.0,
+          "sha256": "f93a260c108f1b92cc20f848759436afa5875d53f5c9363f900a134de2501ce4"
+        },
+        "dead": {
+          "wall": 0.005955800006631762,
+          "cpu": 0.0625,
+          "sha256": "f93a260c108f1b92cc20f848759436afa5875d53f5c9363f900a134de2501ce4"
+        },
+        "share4": {
+          "wall": 0.006126099964603782,
+          "cpu": 0.0,
+          "sha256": "f93a260c108f1b92cc20f848759436afa5875d53f5c9363f900a134de2501ce4"
+        },
+        "terminals": {
+          "wall": 0.006081499974243343,
+          "cpu": 0.03125,
+          "sha256": "f93a260c108f1b92cc20f848759436afa5875d53f5c9363f900a134de2501ce4"
+        },
+        "all": {
+          "wall": 0.005742699955590069,
+          "cpu": 0.0,
+          "sha256": "f93a260c108f1b92cc20f848759436afa5875d53f5c9363f900a134de2501ce4"
+        },
+        "control": {
+          "wall": 0.006736099952831864,
+          "cpu": 0.046875,
+          "sha256": "f93a260c108f1b92cc20f848759436afa5875d53f5c9363f900a134de2501ce4"
+        }
+      }
+    },
+    {
+      "level": "3ply",
+      "api": "post_move_analytics",
+      "position_id": "cube-money-attacking-01",
+      "repeat": 0,
+      "order": [
+        "dead",
+        "share4",
+        "terminals",
+        "all",
+        "control",
+        "dynamic"
+      ],
+      "arms": {
+        "dead": {
+          "wall": 0.0058323999983258545,
+          "cpu": 0.0,
+          "sha256": "7335d6013f323b47287f1e6cfac1cde4b5d94a33b1ef02a068adf1343047479a"
+        },
+        "share4": {
+          "wall": 0.005616999987978488,
+          "cpu": 0.0,
+          "sha256": "7335d6013f323b47287f1e6cfac1cde4b5d94a33b1ef02a068adf1343047479a"
+        },
+        "terminals": {
+          "wall": 0.005678399989847094,
+          "cpu": 0.0625,
+          "sha256": "7335d6013f323b47287f1e6cfac1cde4b5d94a33b1ef02a068adf1343047479a"
+        },
+        "all": {
+          "wall": 0.005687500000931323,
+          "cpu": 0.0,
+          "sha256": "7335d6013f323b47287f1e6cfac1cde4b5d94a33b1ef02a068adf1343047479a"
+        },
+        "control": {
+          "wall": 0.006122099992353469,
+          "cpu": 0.03125,
+          "sha256": "7335d6013f323b47287f1e6cfac1cde4b5d94a33b1ef02a068adf1343047479a"
+        },
+        "dynamic": {
+          "wall": 0.005640999996103346,
+          "cpu": 0.0,
+          "sha256": "7335d6013f323b47287f1e6cfac1cde4b5d94a33b1ef02a068adf1343047479a"
+        }
+      }
+    },
+    {
+      "level": "3ply",
+      "api": "post_move_analytics",
+      "position_id": "cube-money-anchoring-01",
+      "repeat": 0,
+      "order": [
+        "share4",
+        "terminals",
+        "all",
+        "control",
+        "dynamic",
+        "dead"
+      ],
+      "arms": {
+        "share4": {
+          "wall": 0.00418549997266382,
+          "cpu": 0.0,
+          "sha256": "bd696bc6ebd58e3fc9e91cf4ba3d3f1941cc7437e5f6da4bc9b35c01605ab591"
+        },
+        "terminals": {
+          "wall": 0.005408699973486364,
+          "cpu": 0.046875,
+          "sha256": "bd696bc6ebd58e3fc9e91cf4ba3d3f1941cc7437e5f6da4bc9b35c01605ab591"
+        },
+        "all": {
+          "wall": 0.003762400010600686,
+          "cpu": 0.0,
+          "sha256": "bd696bc6ebd58e3fc9e91cf4ba3d3f1941cc7437e5f6da4bc9b35c01605ab591"
+        },
+        "control": {
+          "wall": 0.004039600025862455,
+          "cpu": 0.0,
+          "sha256": "bd696bc6ebd58e3fc9e91cf4ba3d3f1941cc7437e5f6da4bc9b35c01605ab591"
+        },
+        "dynamic": {
+          "wall": 0.0038008999545127153,
+          "cpu": 0.0,
+          "sha256": "bd696bc6ebd58e3fc9e91cf4ba3d3f1941cc7437e5f6da4bc9b35c01605ab591"
+        },
+        "dead": {
+          "wall": 0.004692700051236898,
+          "cpu": 0.0,
+          "sha256": "bd696bc6ebd58e3fc9e91cf4ba3d3f1941cc7437e5f6da4bc9b35c01605ab591"
+        }
+      }
+    },
+    {
+      "level": "3ply",
+      "api": "post_move_analytics",
+      "position_id": "cube-match-attacking-01",
+      "repeat": 0,
+      "order": [
+        "terminals",
+        "all",
+        "control",
+        "dynamic",
+        "dead",
+        "share4"
+      ],
+      "arms": {
+        "terminals": {
+          "wall": 0.004218499991111457,
+          "cpu": 0.0,
+          "sha256": "1a008727f39959f248e636007aeaaf22335956429feef68e376d9648e7310e94"
+        },
+        "all": {
+          "wall": 0.0041188999894075096,
+          "cpu": 0.0,
+          "sha256": "1a008727f39959f248e636007aeaaf22335956429feef68e376d9648e7310e94"
+        },
+        "control": {
+          "wall": 0.0047617999953217804,
+          "cpu": 0.0,
+          "sha256": "1a008727f39959f248e636007aeaaf22335956429feef68e376d9648e7310e94"
+        },
+        "dynamic": {
+          "wall": 0.003999600012321025,
+          "cpu": 0.0,
+          "sha256": "1a008727f39959f248e636007aeaaf22335956429feef68e376d9648e7310e94"
+        },
+        "dead": {
+          "wall": 0.004245900025125593,
+          "cpu": 0.0,
+          "sha256": "1a008727f39959f248e636007aeaaf22335956429feef68e376d9648e7310e94"
+        },
+        "share4": {
+          "wall": 0.0043400999857112765,
+          "cpu": 0.0625,
+          "sha256": "1a008727f39959f248e636007aeaaf22335956429feef68e376d9648e7310e94"
+        }
+      }
+    },
+    {
+      "level": "3ply",
+      "api": "post_move_analytics",
+      "position_id": "cube-money-purerace-01",
+      "repeat": 0,
+      "order": [
+        "all",
+        "control",
+        "dynamic",
+        "dead",
+        "share4",
+        "terminals"
+      ],
+      "arms": {
+        "all": {
+          "wall": 0.0016246000304818153,
+          "cpu": 0.0,
+          "sha256": "5e78234469fa6586443a302fa2f452225a4f737b74367804841a322937f022ea"
+        },
+        "control": {
+          "wall": 0.0016114000463858247,
+          "cpu": 0.0,
+          "sha256": "5e78234469fa6586443a302fa2f452225a4f737b74367804841a322937f022ea"
+        },
+        "dynamic": {
+          "wall": 0.0015024000313133001,
+          "cpu": 0.0,
+          "sha256": "5e78234469fa6586443a302fa2f452225a4f737b74367804841a322937f022ea"
+        },
+        "dead": {
+          "wall": 0.0014949999749660492,
+          "cpu": 0.0,
+          "sha256": "5e78234469fa6586443a302fa2f452225a4f737b74367804841a322937f022ea"
+        },
+        "share4": {
+          "wall": 0.0015406999737024307,
+          "cpu": 0.0,
+          "sha256": "5e78234469fa6586443a302fa2f452225a4f737b74367804841a322937f022ea"
+        },
+        "terminals": {
+          "wall": 0.0014708000235259533,
+          "cpu": 0.0,
+          "sha256": "5e78234469fa6586443a302fa2f452225a4f737b74367804841a322937f022ea"
+        }
+      }
+    },
+    {
+      "level": "4ply",
+      "api": "post_move_analytics",
+      "position_id": "cube-money-racing-01",
+      "repeat": 0,
+      "order": [
+        "dead",
+        "control",
+        "share4",
+        "dynamic",
+        "all",
+        "terminals"
+      ],
+      "arms": {
+        "dead": {
+          "wall": 0.0764987000147812,
+          "cpu": 0.25,
+          "sha256": "bf8065260e2d286eff6d5c743e84011bb73a1c795008662eee96ce9e724f3a1f"
+        },
+        "control": {
+          "wall": 0.07882809999864548,
+          "cpu": 0.3125,
+          "sha256": "bf8065260e2d286eff6d5c743e84011bb73a1c795008662eee96ce9e724f3a1f"
+        },
+        "share4": {
+          "wall": 0.07817849999992177,
+          "cpu": 0.203125,
+          "sha256": "bf8065260e2d286eff6d5c743e84011bb73a1c795008662eee96ce9e724f3a1f"
+        },
+        "dynamic": {
+          "wall": 0.0781622999929823,
+          "cpu": 0.265625,
+          "sha256": "bf8065260e2d286eff6d5c743e84011bb73a1c795008662eee96ce9e724f3a1f"
+        },
+        "all": {
+          "wall": 0.07177640002919361,
+          "cpu": 0.25,
+          "sha256": "bf8065260e2d286eff6d5c743e84011bb73a1c795008662eee96ce9e724f3a1f"
+        },
+        "terminals": {
+          "wall": 0.0764684000168927,
+          "cpu": 0.3125,
+          "sha256": "bf8065260e2d286eff6d5c743e84011bb73a1c795008662eee96ce9e724f3a1f"
+        }
+      }
+    },
+    {
+      "level": "3ply",
+      "api": "cube_action",
+      "position_id": "cube-money-priming-01",
+      "repeat": 0,
+      "order": [
+        "control",
+        "share4",
+        "dynamic",
+        "all",
+        "terminals",
+        "dead"
+      ],
+      "arms": {
+        "control": {
+          "wall": 0.010662899992894381,
+          "cpu": 0.046875,
+          "sha256": "78aad4e415886124426838c8e598bb91f9c37b6508ac946ad745062f49a39f7d"
+        },
+        "share4": {
+          "wall": 0.009735099971294403,
+          "cpu": 0.046875,
+          "sha256": "78aad4e415886124426838c8e598bb91f9c37b6508ac946ad745062f49a39f7d"
+        },
+        "dynamic": {
+          "wall": 0.01053730002604425,
+          "cpu": 0.0,
+          "sha256": "78aad4e415886124426838c8e598bb91f9c37b6508ac946ad745062f49a39f7d"
+        },
+        "all": {
+          "wall": 0.009460799978114665,
+          "cpu": 0.015625,
+          "sha256": "78aad4e415886124426838c8e598bb91f9c37b6508ac946ad745062f49a39f7d"
+        },
+        "terminals": {
+          "wall": 0.009884499944746494,
+          "cpu": 0.046875,
+          "sha256": "78aad4e415886124426838c8e598bb91f9c37b6508ac946ad745062f49a39f7d"
+        },
+        "dead": {
+          "wall": 0.010409100039396435,
+          "cpu": 0.0,
+          "sha256": "78aad4e415886124426838c8e598bb91f9c37b6508ac946ad745062f49a39f7d"
+        }
+      }
+    },
+    {
+      "level": "4ply",
+      "api": "post_move_analytics",
+      "position_id": "cube-match-purerace-01",
+      "repeat": 0,
+      "order": [
+        "share4",
+        "dynamic",
+        "all",
+        "terminals",
+        "dead",
+        "control"
+      ],
+      "arms": {
+        "share4": {
+          "wall": 0.0009254999458789825,
+          "cpu": 0.0,
+          "sha256": "e4ddb72aab41e97ec58d127b6376117781f354a1b2d23e559def780578701525"
+        },
+        "dynamic": {
+          "wall": 0.0008045000140555203,
+          "cpu": 0.0,
+          "sha256": "e4ddb72aab41e97ec58d127b6376117781f354a1b2d23e559def780578701525"
+        },
+        "all": {
+          "wall": 0.0008035000064410269,
+          "cpu": 0.0,
+          "sha256": "e4ddb72aab41e97ec58d127b6376117781f354a1b2d23e559def780578701525"
+        },
+        "terminals": {
+          "wall": 0.0007828000234439969,
+          "cpu": 0.0,
+          "sha256": "e4ddb72aab41e97ec58d127b6376117781f354a1b2d23e559def780578701525"
+        },
+        "dead": {
+          "wall": 0.0007892000139690936,
+          "cpu": 0.0,
+          "sha256": "e4ddb72aab41e97ec58d127b6376117781f354a1b2d23e559def780578701525"
+        },
+        "control": {
+          "wall": 0.0008208000217564404,
+          "cpu": 0.0,
+          "sha256": "e4ddb72aab41e97ec58d127b6376117781f354a1b2d23e559def780578701525"
+        }
+      }
+    },
+    {
+      "level": "3ply",
+      "api": "checker_play",
+      "position_id": "checker-money-anchoring-01",
+      "repeat": 0,
+      "order": [
+        "dynamic",
+        "all",
+        "terminals",
+        "dead",
+        "control",
+        "share4"
+      ],
+      "arms": {
+        "dynamic": {
+          "wall": 0.018431600008625537,
+          "cpu": 0.0625,
+          "sha256": "2f63da68c38fc71df42610a31e4d6f746f4ba5f861807eab99327de0e32b38f4"
+        },
+        "all": {
+          "wall": 0.019980100041721016,
+          "cpu": 0.0625,
+          "sha256": "2f63da68c38fc71df42610a31e4d6f746f4ba5f861807eab99327de0e32b38f4"
+        },
+        "terminals": {
+          "wall": 0.02008320001186803,
+          "cpu": 0.046875,
+          "sha256": "2f63da68c38fc71df42610a31e4d6f746f4ba5f861807eab99327de0e32b38f4"
+        },
+        "dead": {
+          "wall": 0.02070110000204295,
+          "cpu": 0.046875,
+          "sha256": "2f63da68c38fc71df42610a31e4d6f746f4ba5f861807eab99327de0e32b38f4"
+        },
+        "control": {
+          "wall": 0.01798810000764206,
+          "cpu": 0.0625,
+          "sha256": "2f63da68c38fc71df42610a31e4d6f746f4ba5f861807eab99327de0e32b38f4"
+        },
+        "share4": {
+          "wall": 0.01940439996542409,
+          "cpu": 0.046875,
+          "sha256": "2f63da68c38fc71df42610a31e4d6f746f4ba5f861807eab99327de0e32b38f4"
+        }
+      }
+    },
+    {
+      "level": "4ply",
+      "api": "checker_play",
+      "position_id": "checker-match-attacking-01",
+      "repeat": 0,
+      "order": [
+        "all",
+        "terminals",
+        "dead",
+        "control",
+        "share4",
+        "dynamic"
+      ],
+      "arms": {
+        "all": {
+          "wall": 5.547649900021497,
+          "cpu": 20.28125,
+          "sha256": "f42c3fd85c87b43dacc5979afce15131001c159c2593436f73e4fb0a556dffe9"
+        },
+        "terminals": {
+          "wall": 5.757152400037739,
+          "cpu": 20.515625,
+          "sha256": "f42c3fd85c87b43dacc5979afce15131001c159c2593436f73e4fb0a556dffe9"
+        },
+        "dead": {
+          "wall": 5.767631699971389,
+          "cpu": 20.578125,
+          "sha256": "f42c3fd85c87b43dacc5979afce15131001c159c2593436f73e4fb0a556dffe9"
+        },
+        "control": {
+          "wall": 5.056191900046542,
+          "cpu": 19.1875,
+          "sha256": "f42c3fd85c87b43dacc5979afce15131001c159c2593436f73e4fb0a556dffe9"
+        },
+        "share4": {
+          "wall": 4.925297200039495,
+          "cpu": 18.8125,
+          "sha256": "f42c3fd85c87b43dacc5979afce15131001c159c2593436f73e4fb0a556dffe9"
+        },
+        "dynamic": {
+          "wall": 5.086500200035516,
+          "cpu": 19.25,
+          "sha256": "f42c3fd85c87b43dacc5979afce15131001c159c2593436f73e4fb0a556dffe9"
+        }
+      }
+    },
+    {
+      "level": "4ply",
+      "api": "cube_action",
+      "position_id": "cube-money-racing-01",
+      "repeat": 0,
+      "order": [
+        "terminals",
+        "dead",
+        "control",
+        "share4",
+        "dynamic",
+        "all"
+      ],
+      "arms": {
+        "terminals": {
+          "wall": 0.13621619995683432,
+          "cpu": 0.484375,
+          "sha256": "99947b950c53c4ac05d490d5067f16697fe0e8e6698ada22825ffdceea1a32c3"
+        },
+        "dead": {
+          "wall": 0.12016770004993305,
+          "cpu": 0.4375,
+          "sha256": "99947b950c53c4ac05d490d5067f16697fe0e8e6698ada22825ffdceea1a32c3"
+        },
+        "control": {
+          "wall": 0.12085390003630891,
+          "cpu": 0.453125,
+          "sha256": "99947b950c53c4ac05d490d5067f16697fe0e8e6698ada22825ffdceea1a32c3"
+        },
+        "share4": {
+          "wall": 0.09790269995573908,
+          "cpu": 0.359375,
+          "sha256": "99947b950c53c4ac05d490d5067f16697fe0e8e6698ada22825ffdceea1a32c3"
+        },
+        "dynamic": {
+          "wall": 0.11880170000949875,
+          "cpu": 0.375,
+          "sha256": "99947b950c53c4ac05d490d5067f16697fe0e8e6698ada22825ffdceea1a32c3"
+        },
+        "all": {
+          "wall": 0.09472439996898174,
+          "cpu": 0.359375,
+          "sha256": "99947b950c53c4ac05d490d5067f16697fe0e8e6698ada22825ffdceea1a32c3"
+        }
+      }
+    },
+    {
+      "level": "3ply",
+      "api": "checker_play",
+      "position_id": "checker-match-anchoring-01",
+      "repeat": 0,
+      "order": [
+        "all",
+        "dead",
+        "control",
+        "dynamic",
+        "share4",
+        "terminals"
+      ],
+      "arms": {
+        "all": {
+          "wall": 0.05801179999252781,
+          "cpu": 0.21875,
+          "sha256": "f99b27601ccd94bc6e9184746a74f2cb64e31489b26e9a431870f624f602fc03"
+        },
+        "dead": {
+          "wall": 0.05722529999911785,
+          "cpu": 0.21875,
+          "sha256": "f99b27601ccd94bc6e9184746a74f2cb64e31489b26e9a431870f624f602fc03"
+        },
+        "control": {
+          "wall": 0.05648039997322485,
+          "cpu": 0.1875,
+          "sha256": "f99b27601ccd94bc6e9184746a74f2cb64e31489b26e9a431870f624f602fc03"
+        },
+        "dynamic": {
+          "wall": 0.05927129997871816,
+          "cpu": 0.203125,
+          "sha256": "f99b27601ccd94bc6e9184746a74f2cb64e31489b26e9a431870f624f602fc03"
+        },
+        "share4": {
+          "wall": 0.057360799983143806,
+          "cpu": 0.21875,
+          "sha256": "f99b27601ccd94bc6e9184746a74f2cb64e31489b26e9a431870f624f602fc03"
+        },
+        "terminals": {
+          "wall": 0.0581757000181824,
+          "cpu": 0.203125,
+          "sha256": "f99b27601ccd94bc6e9184746a74f2cb64e31489b26e9a431870f624f602fc03"
+        }
+      }
+    },
+    {
+      "level": "3ply",
+      "api": "checker_play",
+      "position_id": "checker-money-attacking-01",
+      "repeat": 0,
+      "order": [
+        "dead",
+        "control",
+        "dynamic",
+        "share4",
+        "terminals",
+        "all"
+      ],
+      "arms": {
+        "dead": {
+          "wall": 0.12113119999412447,
+          "cpu": 0.4375,
+          "sha256": "f3276954bc5cdc71d218d151a5d35464107b70e1a9cbd5829ad3cfda6b4ad4c6"
+        },
+        "control": {
+          "wall": 0.11413469997933134,
+          "cpu": 0.421875,
+          "sha256": "f3276954bc5cdc71d218d151a5d35464107b70e1a9cbd5829ad3cfda6b4ad4c6"
+        },
+        "dynamic": {
+          "wall": 0.1158770999754779,
+          "cpu": 0.421875,
+          "sha256": "f3276954bc5cdc71d218d151a5d35464107b70e1a9cbd5829ad3cfda6b4ad4c6"
+        },
+        "share4": {
+          "wall": 0.11237599997548386,
+          "cpu": 0.421875,
+          "sha256": "f3276954bc5cdc71d218d151a5d35464107b70e1a9cbd5829ad3cfda6b4ad4c6"
+        },
+        "terminals": {
+          "wall": 0.10706789995310828,
+          "cpu": 0.421875,
+          "sha256": "f3276954bc5cdc71d218d151a5d35464107b70e1a9cbd5829ad3cfda6b4ad4c6"
+        },
+        "all": {
+          "wall": 0.108469300030265,
+          "cpu": 0.390625,
+          "sha256": "f3276954bc5cdc71d218d151a5d35464107b70e1a9cbd5829ad3cfda6b4ad4c6"
+        }
+      }
+    },
+    {
+      "level": "4ply",
+      "api": "post_move_analytics",
+      "position_id": "cube-money-purerace-01",
+      "repeat": 0,
+      "order": [
+        "control",
+        "dynamic",
+        "share4",
+        "terminals",
+        "all",
+        "dead"
+      ],
+      "arms": {
+        "control": {
+          "wall": 0.010053300007712096,
+          "cpu": 0.0,
+          "sha256": "de8d34c32f20afcc30dc5608237b5c8e0cba174a2fb64b6b4408e9d66fc1e49c"
+        },
+        "dynamic": {
+          "wall": 0.009085899975616485,
+          "cpu": 0.0,
+          "sha256": "de8d34c32f20afcc30dc5608237b5c8e0cba174a2fb64b6b4408e9d66fc1e49c"
+        },
+        "share4": {
+          "wall": 0.009266499953810126,
+          "cpu": 0.0625,
+          "sha256": "de8d34c32f20afcc30dc5608237b5c8e0cba174a2fb64b6b4408e9d66fc1e49c"
+        },
+        "terminals": {
+          "wall": 0.009721299982629716,
+          "cpu": 0.0,
+          "sha256": "de8d34c32f20afcc30dc5608237b5c8e0cba174a2fb64b6b4408e9d66fc1e49c"
+        },
+        "all": {
+          "wall": 0.009242500003892928,
+          "cpu": 0.0625,
+          "sha256": "de8d34c32f20afcc30dc5608237b5c8e0cba174a2fb64b6b4408e9d66fc1e49c"
+        },
+        "dead": {
+          "wall": 0.009142499999143183,
+          "cpu": 0.046875,
+          "sha256": "de8d34c32f20afcc30dc5608237b5c8e0cba174a2fb64b6b4408e9d66fc1e49c"
+        }
+      }
+    },
+    {
+      "level": "3ply",
+      "api": "post_move_analytics",
+      "position_id": "cube-match-racing-01",
+      "repeat": 0,
+      "order": [
+        "dynamic",
+        "share4",
+        "terminals",
+        "all",
+        "dead",
+        "control"
+      ],
+      "arms": {
+        "dynamic": {
+          "wall": 0.004755100002512336,
+          "cpu": 0.0,
+          "sha256": "8da8c5713adc8a2b9cf6842de54c13bd5b8b796b32e6ac77b26abd7e4a9f4247"
+        },
+        "share4": {
+          "wall": 0.004877700004726648,
+          "cpu": 0.0,
+          "sha256": "8da8c5713adc8a2b9cf6842de54c13bd5b8b796b32e6ac77b26abd7e4a9f4247"
+        },
+        "terminals": {
+          "wall": 0.004843399976380169,
+          "cpu": 0.0625,
+          "sha256": "8da8c5713adc8a2b9cf6842de54c13bd5b8b796b32e6ac77b26abd7e4a9f4247"
+        },
+        "all": {
+          "wall": 0.005185800022445619,
+          "cpu": 0.0,
+          "sha256": "8da8c5713adc8a2b9cf6842de54c13bd5b8b796b32e6ac77b26abd7e4a9f4247"
+        },
+        "dead": {
+          "wall": 0.004795200016815215,
+          "cpu": 0.0,
+          "sha256": "8da8c5713adc8a2b9cf6842de54c13bd5b8b796b32e6ac77b26abd7e4a9f4247"
+        },
+        "control": {
+          "wall": 0.00453820003895089,
+          "cpu": 0.0625,
+          "sha256": "8da8c5713adc8a2b9cf6842de54c13bd5b8b796b32e6ac77b26abd7e4a9f4247"
+        }
+      }
+    },
+    {
+      "level": "3ply",
+      "api": "checker_play",
+      "position_id": "checker-money-racing-01",
+      "repeat": 0,
+      "order": [
+        "share4",
+        "terminals",
+        "all",
+        "dead",
+        "control",
+        "dynamic"
+      ],
+      "arms": {
+        "share4": {
+          "wall": 0.006286899966653436,
+          "cpu": 0.0,
+          "sha256": "08519a3987af15326610cad4985d146f17a5765e6a4fae0a12178c461f4284dd"
+        },
+        "terminals": {
+          "wall": 0.006165600032545626,
+          "cpu": 0.03125,
+          "sha256": "08519a3987af15326610cad4985d146f17a5765e6a4fae0a12178c461f4284dd"
+        },
+        "all": {
+          "wall": 0.0065824000048451126,
+          "cpu": 0.0,
+          "sha256": "08519a3987af15326610cad4985d146f17a5765e6a4fae0a12178c461f4284dd"
+        },
+        "dead": {
+          "wall": 0.006602000037673861,
+          "cpu": 0.0,
+          "sha256": "08519a3987af15326610cad4985d146f17a5765e6a4fae0a12178c461f4284dd"
+        },
+        "control": {
+          "wall": 0.007180500018876046,
+          "cpu": 0.015625,
+          "sha256": "08519a3987af15326610cad4985d146f17a5765e6a4fae0a12178c461f4284dd"
+        },
+        "dynamic": {
+          "wall": 0.006751400011125952,
+          "cpu": 0.0,
+          "sha256": "08519a3987af15326610cad4985d146f17a5765e6a4fae0a12178c461f4284dd"
+        }
+      }
+    },
+    {
+      "level": "3ply",
+      "api": "post_move_analytics",
+      "position_id": "cube-match-priming-01",
+      "repeat": 0,
+      "order": [
+        "terminals",
+        "all",
+        "dead",
+        "control",
+        "dynamic",
+        "share4"
+      ],
+      "arms": {
+        "terminals": {
+          "wall": 0.002128699969034642,
+          "cpu": 0.0625,
+          "sha256": "4a1031ad02bee41eba6580c8397be3bdb71b03630d861d87ee96567fc0a6fd57"
+        },
+        "all": {
+          "wall": 0.0019093999871984124,
+          "cpu": 0.0,
+          "sha256": "4a1031ad02bee41eba6580c8397be3bdb71b03630d861d87ee96567fc0a6fd57"
+        },
+        "dead": {
+          "wall": 0.002139299991540611,
+          "cpu": 0.0,
+          "sha256": "4a1031ad02bee41eba6580c8397be3bdb71b03630d861d87ee96567fc0a6fd57"
+        },
+        "control": {
+          "wall": 0.0021172999986447394,
+          "cpu": 0.0,
+          "sha256": "4a1031ad02bee41eba6580c8397be3bdb71b03630d861d87ee96567fc0a6fd57"
+        },
+        "dynamic": {
+          "wall": 0.0021345000131987035,
+          "cpu": 0.0,
+          "sha256": "4a1031ad02bee41eba6580c8397be3bdb71b03630d861d87ee96567fc0a6fd57"
+        },
+        "share4": {
+          "wall": 0.002622599946334958,
+          "cpu": 0.0,
+          "sha256": "4a1031ad02bee41eba6580c8397be3bdb71b03630d861d87ee96567fc0a6fd57"
+        }
+      }
+    },
+    {
+      "level": "4ply",
+      "api": "post_move_analytics",
+      "position_id": "cube-match-racing-01",
+      "repeat": 0,
+      "order": [
+        "control",
+        "dead",
+        "all",
+        "dynamic",
+        "share4",
+        "terminals"
+      ],
+      "arms": {
+        "control": {
+          "wall": 0.05257610004628077,
+          "cpu": 0.203125,
+          "sha256": "00953a64e166bb6c61c4162e461c8c7b1de020f5e5883604566775638c449014"
+        },
+        "dead": {
+          "wall": 0.05289649998303503,
+          "cpu": 0.171875,
+          "sha256": "00953a64e166bb6c61c4162e461c8c7b1de020f5e5883604566775638c449014"
+        },
+        "all": {
+          "wall": 0.055804100004024804,
+          "cpu": 0.21875,
+          "sha256": "00953a64e166bb6c61c4162e461c8c7b1de020f5e5883604566775638c449014"
+        },
+        "dynamic": {
+          "wall": 0.05156170000554994,
+          "cpu": 0.1875,
+          "sha256": "00953a64e166bb6c61c4162e461c8c7b1de020f5e5883604566775638c449014"
+        },
+        "share4": {
+          "wall": 0.056110700010322034,
+          "cpu": 0.1875,
+          "sha256": "00953a64e166bb6c61c4162e461c8c7b1de020f5e5883604566775638c449014"
+        },
+        "terminals": {
+          "wall": 0.05598579999059439,
+          "cpu": 0.1875,
+          "sha256": "00953a64e166bb6c61c4162e461c8c7b1de020f5e5883604566775638c449014"
+        }
+      }
+    },
+    {
+      "level": "4ply",
+      "api": "checker_play",
+      "position_id": "checker-money-racing-01",
+      "repeat": 0,
+      "order": [
+        "dead",
+        "all",
+        "dynamic",
+        "share4",
+        "terminals",
+        "control"
+      ],
+      "arms": {
+        "dead": {
+          "wall": 0.4388359999866225,
+          "cpu": 0.875,
+          "sha256": "e05714b340a171d4c328560eebc42c188f52494e5a4c5b4894127e516251c6c9"
+        },
+        "all": {
+          "wall": 0.36590869998326525,
+          "cpu": 0.71875,
+          "sha256": "e05714b340a171d4c328560eebc42c188f52494e5a4c5b4894127e516251c6c9"
+        },
+        "dynamic": {
+          "wall": 0.5169166999985464,
+          "cpu": 1.03125,
+          "sha256": "e05714b340a171d4c328560eebc42c188f52494e5a4c5b4894127e516251c6c9"
+        },
+        "share4": {
+          "wall": 0.4750299000297673,
+          "cpu": 0.9375,
+          "sha256": "e05714b340a171d4c328560eebc42c188f52494e5a4c5b4894127e516251c6c9"
+        },
+        "terminals": {
+          "wall": 0.38035920000402257,
+          "cpu": 0.75,
+          "sha256": "e05714b340a171d4c328560eebc42c188f52494e5a4c5b4894127e516251c6c9"
+        },
+        "control": {
+          "wall": 0.45081350003601983,
+          "cpu": 0.890625,
+          "sha256": "e05714b340a171d4c328560eebc42c188f52494e5a4c5b4894127e516251c6c9"
+        }
+      }
+    },
+    {
+      "level": "4ply",
+      "api": "checker_play",
+      "position_id": "checker-match-racing-01",
+      "repeat": 0,
+      "order": [
+        "all",
+        "dynamic",
+        "share4",
+        "terminals",
+        "control",
+        "dead"
+      ],
+      "arms": {
+        "all": {
+          "wall": 0.8630221000057645,
+          "cpu": 1.6875,
+          "sha256": "ae73d1654563e65aaf294b7d9ca8e03bf69fe0e74625c4c130699ecce88c9afe"
+        },
+        "dynamic": {
+          "wall": 0.8459718999802135,
+          "cpu": 1.6875,
+          "sha256": "ae73d1654563e65aaf294b7d9ca8e03bf69fe0e74625c4c130699ecce88c9afe"
+        },
+        "share4": {
+          "wall": 0.9965230000088923,
+          "cpu": 2.0,
+          "sha256": "ae73d1654563e65aaf294b7d9ca8e03bf69fe0e74625c4c130699ecce88c9afe"
+        },
+        "terminals": {
+          "wall": 0.9091850999975577,
+          "cpu": 1.796875,
+          "sha256": "ae73d1654563e65aaf294b7d9ca8e03bf69fe0e74625c4c130699ecce88c9afe"
+        },
+        "control": {
+          "wall": 1.0823492999770679,
+          "cpu": 2.09375,
+          "sha256": "ae73d1654563e65aaf294b7d9ca8e03bf69fe0e74625c4c130699ecce88c9afe"
+        },
+        "dead": {
+          "wall": 1.018706300004851,
+          "cpu": 2.03125,
+          "sha256": "ae73d1654563e65aaf294b7d9ca8e03bf69fe0e74625c4c130699ecce88c9afe"
+        }
+      }
+    },
+    {
+      "level": "4ply",
+      "api": "post_move_analytics",
+      "position_id": "cube-match-attacking-01",
+      "repeat": 0,
+      "order": [
+        "dynamic",
+        "share4",
+        "terminals",
+        "control",
+        "dead",
+        "all"
+      ],
+      "arms": {
+        "dynamic": {
+          "wall": 0.13650399999460205,
+          "cpu": 0.484375,
+          "sha256": "4fd0ffcb36e13bbc60f7213d460f4427939c26c021ed1bf0ddaadba4c185b829"
+        },
+        "share4": {
+          "wall": 0.1346289999783039,
+          "cpu": 0.46875,
+          "sha256": "4fd0ffcb36e13bbc60f7213d460f4427939c26c021ed1bf0ddaadba4c185b829"
+        },
+        "terminals": {
+          "wall": 0.1256647999980487,
+          "cpu": 0.484375,
+          "sha256": "4fd0ffcb36e13bbc60f7213d460f4427939c26c021ed1bf0ddaadba4c185b829"
+        },
+        "control": {
+          "wall": 0.12103069998556748,
+          "cpu": 0.46875,
+          "sha256": "4fd0ffcb36e13bbc60f7213d460f4427939c26c021ed1bf0ddaadba4c185b829"
+        },
+        "dead": {
+          "wall": 0.12334410002222285,
+          "cpu": 0.46875,
+          "sha256": "4fd0ffcb36e13bbc60f7213d460f4427939c26c021ed1bf0ddaadba4c185b829"
+        },
+        "all": {
+          "wall": 0.12566110002808273,
+          "cpu": 0.46875,
+          "sha256": "4fd0ffcb36e13bbc60f7213d460f4427939c26c021ed1bf0ddaadba4c185b829"
+        }
+      }
+    },
+    {
+      "level": "4ply",
+      "api": "checker_play",
+      "position_id": "checker-money-priming-01",
+      "repeat": 0,
+      "order": [
+        "share4",
+        "terminals",
+        "control",
+        "dead",
+        "all",
+        "dynamic"
+      ],
+      "arms": {
+        "share4": {
+          "wall": 2.661638399993535,
+          "cpu": 10.078125,
+          "sha256": "29da4087433f5ad39c05de2ce4c5d45a58deb0d016f6d2ed1904115f713c07b9"
+        },
+        "terminals": {
+          "wall": 2.757533499971032,
+          "cpu": 10.078125,
+          "sha256": "29da4087433f5ad39c05de2ce4c5d45a58deb0d016f6d2ed1904115f713c07b9"
+        },
+        "control": {
+          "wall": 2.89622049999889,
+          "cpu": 10.109375,
+          "sha256": "29da4087433f5ad39c05de2ce4c5d45a58deb0d016f6d2ed1904115f713c07b9"
+        },
+        "dead": {
+          "wall": 2.8260307000018656,
+          "cpu": 10.203125,
+          "sha256": "29da4087433f5ad39c05de2ce4c5d45a58deb0d016f6d2ed1904115f713c07b9"
+        },
+        "all": {
+          "wall": 2.678702700010035,
+          "cpu": 10.296875,
+          "sha256": "29da4087433f5ad39c05de2ce4c5d45a58deb0d016f6d2ed1904115f713c07b9"
+        },
+        "dynamic": {
+          "wall": 2.7994606999563985,
+          "cpu": 10.28125,
+          "sha256": "29da4087433f5ad39c05de2ce4c5d45a58deb0d016f6d2ed1904115f713c07b9"
+        }
+      }
+    },
+    {
+      "level": "4ply",
+      "api": "cube_action",
+      "position_id": "cube-money-attacking-01",
+      "repeat": 0,
+      "order": [
+        "terminals",
+        "control",
+        "dead",
+        "all",
+        "dynamic",
+        "share4"
+      ],
+      "arms": {
+        "terminals": {
+          "wall": 0.3296583999763243,
+          "cpu": 1.234375,
+          "sha256": "f73a9aa4ed8db5d962c0232cedd27f84f1791cee44149c0c1752862ceb4a5dc8"
+        },
+        "control": {
+          "wall": 0.3505340999690816,
+          "cpu": 1.21875,
+          "sha256": "f73a9aa4ed8db5d962c0232cedd27f84f1791cee44149c0c1752862ceb4a5dc8"
+        },
+        "dead": {
+          "wall": 0.3375813000020571,
+          "cpu": 1.09375,
+          "sha256": "f73a9aa4ed8db5d962c0232cedd27f84f1791cee44149c0c1752862ceb4a5dc8"
+        },
+        "all": {
+          "wall": 0.33794529997976497,
+          "cpu": 1.109375,
+          "sha256": "f73a9aa4ed8db5d962c0232cedd27f84f1791cee44149c0c1752862ceb4a5dc8"
+        },
+        "dynamic": {
+          "wall": 0.35731650004163384,
+          "cpu": 1.203125,
+          "sha256": "f73a9aa4ed8db5d962c0232cedd27f84f1791cee44149c0c1752862ceb4a5dc8"
+        },
+        "share4": {
+          "wall": 0.3264900000067428,
+          "cpu": 1.171875,
+          "sha256": "f73a9aa4ed8db5d962c0232cedd27f84f1791cee44149c0c1752862ceb4a5dc8"
+        }
+      }
+    },
+    {
+      "level": "3ply",
+      "api": "checker_play",
+      "position_id": "checker-money-anchoring-01",
+      "repeat": 1,
+      "order": [
+        "dynamic",
+        "dead",
+        "share4",
+        "all",
+        "control",
+        "terminals"
+      ],
+      "arms": {
+        "dynamic": {
+          "wall": 0.019729899999219924,
+          "cpu": 0.046875,
+          "sha256": "2f63da68c38fc71df42610a31e4d6f746f4ba5f861807eab99327de0e32b38f4"
+        },
+        "dead": {
+          "wall": 0.018245299987029284,
+          "cpu": 0.0625,
+          "sha256": "2f63da68c38fc71df42610a31e4d6f746f4ba5f861807eab99327de0e32b38f4"
+        },
+        "share4": {
+          "wall": 0.019990600005257875,
+          "cpu": 0.0625,
+          "sha256": "2f63da68c38fc71df42610a31e4d6f746f4ba5f861807eab99327de0e32b38f4"
+        },
+        "all": {
+          "wall": 0.029892400023527443,
+          "cpu": 0.0625,
+          "sha256": "2f63da68c38fc71df42610a31e4d6f746f4ba5f861807eab99327de0e32b38f4"
+        },
+        "control": {
+          "wall": 0.019637599994894117,
+          "cpu": 0.0625,
+          "sha256": "2f63da68c38fc71df42610a31e4d6f746f4ba5f861807eab99327de0e32b38f4"
+        },
+        "terminals": {
+          "wall": 0.020260000019334257,
+          "cpu": 0.046875,
+          "sha256": "2f63da68c38fc71df42610a31e4d6f746f4ba5f861807eab99327de0e32b38f4"
+        }
+      }
+    },
+    {
+      "level": "4ply",
+      "api": "cube_action",
+      "position_id": "cube-money-anchoring-01",
+      "repeat": 1,
+      "order": [
+        "dead",
+        "share4",
+        "all",
+        "control",
+        "terminals",
+        "dynamic"
+      ],
+      "arms": {
+        "dead": {
+          "wall": 0.43863360001705587,
+          "cpu": 1.3125,
+          "sha256": "189eec4f2d771d42e884100c5531b9356e26f91b4e2ed5f3924ec24696dcbf07"
+        },
+        "share4": {
+          "wall": 0.4323976000305265,
+          "cpu": 1.265625,
+          "sha256": "189eec4f2d771d42e884100c5531b9356e26f91b4e2ed5f3924ec24696dcbf07"
+        },
+        "all": {
+          "wall": 0.3638321000034921,
+          "cpu": 1.296875,
+          "sha256": "189eec4f2d771d42e884100c5531b9356e26f91b4e2ed5f3924ec24696dcbf07"
+        },
+        "control": {
+          "wall": 0.42908040003385395,
+          "cpu": 1.359375,
+          "sha256": "189eec4f2d771d42e884100c5531b9356e26f91b4e2ed5f3924ec24696dcbf07"
+        },
+        "terminals": {
+          "wall": 0.3849259000271559,
+          "cpu": 1.359375,
+          "sha256": "189eec4f2d771d42e884100c5531b9356e26f91b4e2ed5f3924ec24696dcbf07"
+        },
+        "dynamic": {
+          "wall": 0.3740166000206955,
+          "cpu": 1.375,
+          "sha256": "189eec4f2d771d42e884100c5531b9356e26f91b4e2ed5f3924ec24696dcbf07"
+        }
+      }
+    },
+    {
+      "level": "3ply",
+      "api": "cube_action",
+      "position_id": "cube-money-anchoring-01",
+      "repeat": 1,
+      "order": [
+        "share4",
+        "all",
+        "control",
+        "terminals",
+        "dynamic",
+        "dead"
+      ],
+      "arms": {
+        "share4": {
+          "wall": 0.007857599994167686,
+          "cpu": 0.015625,
+          "sha256": "1dc6d28adf1f6d872b008bf262b304fb24722198a7e63f8e9354344579f8ab33"
+        },
+        "all": {
+          "wall": 0.00523879996035248,
+          "cpu": 0.0,
+          "sha256": "1dc6d28adf1f6d872b008bf262b304fb24722198a7e63f8e9354344579f8ab33"
+        },
+        "control": {
+          "wall": 0.00563309999415651,
+          "cpu": 0.0625,
+          "sha256": "1dc6d28adf1f6d872b008bf262b304fb24722198a7e63f8e9354344579f8ab33"
+        },
+        "terminals": {
+          "wall": 0.006430199951864779,
+          "cpu": 0.0,
+          "sha256": "1dc6d28adf1f6d872b008bf262b304fb24722198a7e63f8e9354344579f8ab33"
+        },
+        "dynamic": {
+          "wall": 0.005236299999523908,
+          "cpu": 0.0625,
+          "sha256": "1dc6d28adf1f6d872b008bf262b304fb24722198a7e63f8e9354344579f8ab33"
+        },
+        "dead": {
+          "wall": 0.005925300007220358,
+          "cpu": 0.0,
+          "sha256": "1dc6d28adf1f6d872b008bf262b304fb24722198a7e63f8e9354344579f8ab33"
+        }
+      }
+    },
+    {
+      "level": "3ply",
+      "api": "post_move_analytics",
+      "position_id": "cube-match-racing-01",
+      "repeat": 1,
+      "order": [
+        "all",
+        "control",
+        "terminals",
+        "dynamic",
+        "dead",
+        "share4"
+      ],
+      "arms": {
+        "all": {
+          "wall": 0.005103500036057085,
+          "cpu": 0.0,
+          "sha256": "8da8c5713adc8a2b9cf6842de54c13bd5b8b796b32e6ac77b26abd7e4a9f4247"
+        },
+        "control": {
+          "wall": 0.0046292999759316444,
+          "cpu": 0.0625,
+          "sha256": "8da8c5713adc8a2b9cf6842de54c13bd5b8b796b32e6ac77b26abd7e4a9f4247"
+        },
+        "terminals": {
+          "wall": 0.004700499994214624,
+          "cpu": 0.0,
+          "sha256": "8da8c5713adc8a2b9cf6842de54c13bd5b8b796b32e6ac77b26abd7e4a9f4247"
+        },
+        "dynamic": {
+          "wall": 0.005350599996745586,
+          "cpu": 0.0,
+          "sha256": "8da8c5713adc8a2b9cf6842de54c13bd5b8b796b32e6ac77b26abd7e4a9f4247"
+        },
+        "dead": {
+          "wall": 0.004675099975429475,
+          "cpu": 0.0625,
+          "sha256": "8da8c5713adc8a2b9cf6842de54c13bd5b8b796b32e6ac77b26abd7e4a9f4247"
+        },
+        "share4": {
+          "wall": 0.004825200012419373,
+          "cpu": 0.0,
+          "sha256": "8da8c5713adc8a2b9cf6842de54c13bd5b8b796b32e6ac77b26abd7e4a9f4247"
+        }
+      }
+    },
+    {
+      "level": "4ply",
+      "api": "post_move_analytics",
+      "position_id": "cube-match-attacking-01",
+      "repeat": 1,
+      "order": [
+        "control",
+        "terminals",
+        "dynamic",
+        "dead",
+        "share4",
+        "all"
+      ],
+      "arms": {
+        "control": {
+          "wall": 0.12934099999256432,
+          "cpu": 0.46875,
+          "sha256": "4fd0ffcb36e13bbc60f7213d460f4427939c26c021ed1bf0ddaadba4c185b829"
+        },
+        "terminals": {
+          "wall": 0.12277040001936257,
+          "cpu": 0.46875,
+          "sha256": "4fd0ffcb36e13bbc60f7213d460f4427939c26c021ed1bf0ddaadba4c185b829"
+        },
+        "dynamic": {
+          "wall": 0.13567889999831095,
+          "cpu": 0.5,
+          "sha256": "4fd0ffcb36e13bbc60f7213d460f4427939c26c021ed1bf0ddaadba4c185b829"
+        },
+        "dead": {
+          "wall": 0.13683650002349168,
+          "cpu": 0.484375,
+          "sha256": "4fd0ffcb36e13bbc60f7213d460f4427939c26c021ed1bf0ddaadba4c185b829"
+        },
+        "share4": {
+          "wall": 0.12253120000241324,
+          "cpu": 0.4375,
+          "sha256": "4fd0ffcb36e13bbc60f7213d460f4427939c26c021ed1bf0ddaadba4c185b829"
+        },
+        "all": {
+          "wall": 0.1235296999802813,
+          "cpu": 0.421875,
+          "sha256": "4fd0ffcb36e13bbc60f7213d460f4427939c26c021ed1bf0ddaadba4c185b829"
+        }
+      }
+    },
+    {
+      "level": "3ply",
+      "api": "cube_action",
+      "position_id": "cube-match-priming-01",
+      "repeat": 1,
+      "order": [
+        "terminals",
+        "dynamic",
+        "dead",
+        "share4",
+        "all",
+        "control"
+      ],
+      "arms": {
+        "terminals": {
+          "wall": 0.004157499992288649,
+          "cpu": 0.0,
+          "sha256": "d11fdbfff7de19da4f697d291f01e6bc1b065603501ae5f17f6fe1d4d0904b78"
+        },
+        "dynamic": {
+          "wall": 0.002988099993672222,
+          "cpu": 0.0,
+          "sha256": "d11fdbfff7de19da4f697d291f01e6bc1b065603501ae5f17f6fe1d4d0904b78"
+        },
+        "dead": {
+          "wall": 0.004323599976487458,
+          "cpu": 0.0,
+          "sha256": "d11fdbfff7de19da4f697d291f01e6bc1b065603501ae5f17f6fe1d4d0904b78"
+        },
+        "share4": {
+          "wall": 0.0038372999988496304,
+          "cpu": 0.015625,
+          "sha256": "d11fdbfff7de19da4f697d291f01e6bc1b065603501ae5f17f6fe1d4d0904b78"
+        },
+        "all": {
+          "wall": 0.002876400016248226,
+          "cpu": 0.0,
+          "sha256": "d11fdbfff7de19da4f697d291f01e6bc1b065603501ae5f17f6fe1d4d0904b78"
+        },
+        "control": {
+          "wall": 0.0032015000469982624,
+          "cpu": 0.0,
+          "sha256": "d11fdbfff7de19da4f697d291f01e6bc1b065603501ae5f17f6fe1d4d0904b78"
+        }
+      }
+    },
+    {
+      "level": "3ply",
+      "api": "checker_play",
+      "position_id": "checker-money-racing-01",
+      "repeat": 1,
+      "order": [
+        "dead",
+        "control",
+        "share4",
+        "all",
+        "terminals",
+        "dynamic"
+      ],
+      "arms": {
+        "dead": {
+          "wall": 0.00807019998319447,
+          "cpu": 0.03125,
+          "sha256": "08519a3987af15326610cad4985d146f17a5765e6a4fae0a12178c461f4284dd"
+        },
+        "control": {
+          "wall": 0.00694280001334846,
+          "cpu": 0.0,
+          "sha256": "08519a3987af15326610cad4985d146f17a5765e6a4fae0a12178c461f4284dd"
+        },
+        "share4": {
+          "wall": 0.008048999996390194,
+          "cpu": 0.03125,
+          "sha256": "08519a3987af15326610cad4985d146f17a5765e6a4fae0a12178c461f4284dd"
+        },
+        "all": {
+          "wall": 0.007291899994015694,
+          "cpu": 0.0,
+          "sha256": "08519a3987af15326610cad4985d146f17a5765e6a4fae0a12178c461f4284dd"
+        },
+        "terminals": {
+          "wall": 0.007320100034121424,
+          "cpu": 0.03125,
+          "sha256": "08519a3987af15326610cad4985d146f17a5765e6a4fae0a12178c461f4284dd"
+        },
+        "dynamic": {
+          "wall": 0.006326999980956316,
+          "cpu": 0.0,
+          "sha256": "08519a3987af15326610cad4985d146f17a5765e6a4fae0a12178c461f4284dd"
+        }
+      }
+    },
+    {
+      "level": "4ply",
+      "api": "cube_action",
+      "position_id": "cube-match-anchoring-01",
+      "repeat": 1,
+      "order": [
+        "control",
+        "share4",
+        "all",
+        "terminals",
+        "dynamic",
+        "dead"
+      ],
+      "arms": {
+        "control": {
+          "wall": 0.1623319999780506,
+          "cpu": 0.578125,
+          "sha256": "d4402d3cdb1f8a4d44e2ea72be30c783cbf375595111916c95ebf20816677f89"
+        },
+        "share4": {
+          "wall": 0.1493688999908045,
+          "cpu": 0.484375,
+          "sha256": "d4402d3cdb1f8a4d44e2ea72be30c783cbf375595111916c95ebf20816677f89"
+        },
+        "all": {
+          "wall": 0.14119840000057593,
+          "cpu": 0.5,
+          "sha256": "d4402d3cdb1f8a4d44e2ea72be30c783cbf375595111916c95ebf20816677f89"
+        },
+        "terminals": {
+          "wall": 0.14944050001213327,
+          "cpu": 0.546875,
+          "sha256": "d4402d3cdb1f8a4d44e2ea72be30c783cbf375595111916c95ebf20816677f89"
+        },
+        "dynamic": {
+          "wall": 0.15475719998357818,
+          "cpu": 0.578125,
+          "sha256": "d4402d3cdb1f8a4d44e2ea72be30c783cbf375595111916c95ebf20816677f89"
+        },
+        "dead": {
+          "wall": 0.16385900002205744,
+          "cpu": 0.59375,
+          "sha256": "d4402d3cdb1f8a4d44e2ea72be30c783cbf375595111916c95ebf20816677f89"
+        }
+      }
+    },
+    {
+      "level": "4ply",
+      "api": "cube_action",
+      "position_id": "cube-match-racing-01",
+      "repeat": 1,
+      "order": [
+        "share4",
+        "all",
+        "terminals",
+        "dynamic",
+        "dead",
+        "control"
+      ],
+      "arms": {
+        "share4": {
+          "wall": 0.0980503000319004,
+          "cpu": 0.265625,
+          "sha256": "38bf9e15e4fcd935ca08c145eea80d2ca8e5da5c74fa9a06d42ea44ccda6d4cd"
+        },
+        "all": {
+          "wall": 0.08024360000854358,
+          "cpu": 0.296875,
+          "sha256": "38bf9e15e4fcd935ca08c145eea80d2ca8e5da5c74fa9a06d42ea44ccda6d4cd"
+        },
+        "terminals": {
+          "wall": 0.09228599997004494,
+          "cpu": 0.296875,
+          "sha256": "38bf9e15e4fcd935ca08c145eea80d2ca8e5da5c74fa9a06d42ea44ccda6d4cd"
+        },
+        "dynamic": {
+          "wall": 0.08541350002633408,
+          "cpu": 0.28125,
+          "sha256": "38bf9e15e4fcd935ca08c145eea80d2ca8e5da5c74fa9a06d42ea44ccda6d4cd"
+        },
+        "dead": {
+          "wall": 0.08802349999314174,
+          "cpu": 0.3125,
+          "sha256": "38bf9e15e4fcd935ca08c145eea80d2ca8e5da5c74fa9a06d42ea44ccda6d4cd"
+        },
+        "control": {
+          "wall": 0.09410200000274926,
+          "cpu": 0.3125,
+          "sha256": "38bf9e15e4fcd935ca08c145eea80d2ca8e5da5c74fa9a06d42ea44ccda6d4cd"
+        }
+      }
+    },
+    {
+      "level": "4ply",
+      "api": "cube_action",
+      "position_id": "cube-match-purerace-01",
+      "repeat": 1,
+      "order": [
+        "all",
+        "terminals",
+        "dynamic",
+        "dead",
+        "control",
+        "share4"
+      ],
+      "arms": {
+        "all": {
+          "wall": 0.0009195000166073442,
+          "cpu": 0.0,
+          "sha256": "1bbdc1432eefee880558087f6cb15c48c63508c216f1a9ffeb6ed42c718b6ef4"
+        },
+        "terminals": {
+          "wall": 0.001101000001654029,
+          "cpu": 0.0,
+          "sha256": "1bbdc1432eefee880558087f6cb15c48c63508c216f1a9ffeb6ed42c718b6ef4"
+        },
+        "dynamic": {
+          "wall": 0.0009054999682120979,
+          "cpu": 0.0,
+          "sha256": "1bbdc1432eefee880558087f6cb15c48c63508c216f1a9ffeb6ed42c718b6ef4"
+        },
+        "dead": {
+          "wall": 0.0012803999707102776,
+          "cpu": 0.046875,
+          "sha256": "1bbdc1432eefee880558087f6cb15c48c63508c216f1a9ffeb6ed42c718b6ef4"
+        },
+        "control": {
+          "wall": 0.0010161999962292612,
+          "cpu": 0.0,
+          "sha256": "1bbdc1432eefee880558087f6cb15c48c63508c216f1a9ffeb6ed42c718b6ef4"
+        },
+        "share4": {
+          "wall": 0.0010593000333756208,
+          "cpu": 0.0,
+          "sha256": "1bbdc1432eefee880558087f6cb15c48c63508c216f1a9ffeb6ed42c718b6ef4"
+        }
+      }
+    },
+    {
+      "level": "3ply",
+      "api": "cube_action",
+      "position_id": "cube-match-attacking-01",
+      "repeat": 1,
+      "order": [
+        "terminals",
+        "dynamic",
+        "dead",
+        "control",
+        "share4",
+        "all"
+      ],
+      "arms": {
+        "terminals": {
+          "wall": 0.00577530002919957,
+          "cpu": 0.0,
+          "sha256": "f93a260c108f1b92cc20f848759436afa5875d53f5c9363f900a134de2501ce4"
+        },
+        "dynamic": {
+          "wall": 0.005653599975630641,
+          "cpu": 0.0625,
+          "sha256": "f93a260c108f1b92cc20f848759436afa5875d53f5c9363f900a134de2501ce4"
+        },
+        "dead": {
+          "wall": 0.00583749997895211,
+          "cpu": 0.0,
+          "sha256": "f93a260c108f1b92cc20f848759436afa5875d53f5c9363f900a134de2501ce4"
+        },
+        "control": {
+          "wall": 0.005777899990789592,
+          "cpu": 0.0,
+          "sha256": "f93a260c108f1b92cc20f848759436afa5875d53f5c9363f900a134de2501ce4"
+        },
+        "share4": {
+          "wall": 0.005603600002359599,
+          "cpu": 0.0625,
+          "sha256": "f93a260c108f1b92cc20f848759436afa5875d53f5c9363f900a134de2501ce4"
+        },
+        "all": {
+          "wall": 0.005383100011385977,
+          "cpu": 0.0,
+          "sha256": "f93a260c108f1b92cc20f848759436afa5875d53f5c9363f900a134de2501ce4"
+        }
+      }
+    },
+    {
+      "level": "4ply",
+      "api": "checker_play",
+      "position_id": "checker-money-anchoring-01",
+      "repeat": 1,
+      "order": [
+        "dynamic",
+        "dead",
+        "control",
+        "share4",
+        "all",
+        "terminals"
+      ],
+      "arms": {
+        "dynamic": {
+          "wall": 0.20519839995540679,
+          "cpu": 0.6875,
+          "sha256": "2bf13fdf7f068575477681c9704ef9c1b5721716b3fcbed8026e472635aec547"
+        },
+        "dead": {
+          "wall": 0.21138170000631362,
+          "cpu": 0.671875,
+          "sha256": "2bf13fdf7f068575477681c9704ef9c1b5721716b3fcbed8026e472635aec547"
+        },
+        "control": {
+          "wall": 0.21805639995727688,
+          "cpu": 0.65625,
+          "sha256": "2bf13fdf7f068575477681c9704ef9c1b5721716b3fcbed8026e472635aec547"
+        },
+        "share4": {
+          "wall": 0.23288949998095632,
+          "cpu": 0.703125,
+          "sha256": "2bf13fdf7f068575477681c9704ef9c1b5721716b3fcbed8026e472635aec547"
+        },
+        "all": {
+          "wall": 0.239364699984435,
+          "cpu": 0.65625,
+          "sha256": "2bf13fdf7f068575477681c9704ef9c1b5721716b3fcbed8026e472635aec547"
+        },
+        "terminals": {
+          "wall": 0.23965350002981722,
+          "cpu": 0.703125,
+          "sha256": "2bf13fdf7f068575477681c9704ef9c1b5721716b3fcbed8026e472635aec547"
+        }
+      }
+    },
+    {
+      "level": "4ply",
+      "api": "post_move_analytics",
+      "position_id": "cube-money-purerace-01",
+      "repeat": 1,
+      "order": [
+        "all",
+        "share4",
+        "control",
+        "terminals",
+        "dynamic",
+        "dead"
+      ],
+      "arms": {
+        "all": {
+          "wall": 0.010628600022755563,
+          "cpu": 0.0,
+          "sha256": "de8d34c32f20afcc30dc5608237b5c8e0cba174a2fb64b6b4408e9d66fc1e49c"
+        },
+        "share4": {
+          "wall": 0.01534629997331649,
+          "cpu": 0.046875,
+          "sha256": "de8d34c32f20afcc30dc5608237b5c8e0cba174a2fb64b6b4408e9d66fc1e49c"
+        },
+        "control": {
+          "wall": 0.01732770004309714,
+          "cpu": 0.046875,
+          "sha256": "de8d34c32f20afcc30dc5608237b5c8e0cba174a2fb64b6b4408e9d66fc1e49c"
+        },
+        "terminals": {
+          "wall": 0.009996799984946847,
+          "cpu": 0.0,
+          "sha256": "de8d34c32f20afcc30dc5608237b5c8e0cba174a2fb64b6b4408e9d66fc1e49c"
+        },
+        "dynamic": {
+          "wall": 0.009940600022673607,
+          "cpu": 0.0625,
+          "sha256": "de8d34c32f20afcc30dc5608237b5c8e0cba174a2fb64b6b4408e9d66fc1e49c"
+        },
+        "dead": {
+          "wall": 0.010304299998097122,
+          "cpu": 0.0,
+          "sha256": "de8d34c32f20afcc30dc5608237b5c8e0cba174a2fb64b6b4408e9d66fc1e49c"
+        }
+      }
+    },
+    {
+      "level": "3ply",
+      "api": "post_move_analytics",
+      "position_id": "cube-match-anchoring-01",
+      "repeat": 1,
+      "order": [
+        "share4",
+        "control",
+        "terminals",
+        "dynamic",
+        "dead",
+        "all"
+      ],
+      "arms": {
+        "share4": {
+          "wall": 0.006313899997621775,
+          "cpu": 0.0,
+          "sha256": "23b902f9efb3d62de4371be968bd01af711b0235ebda277326be0097bd17abec"
+        },
+        "control": {
+          "wall": 0.006268199998885393,
+          "cpu": 0.0,
+          "sha256": "23b902f9efb3d62de4371be968bd01af711b0235ebda277326be0097bd17abec"
+        },
+        "terminals": {
+          "wall": 0.006338900013361126,
+          "cpu": 0.015625,
+          "sha256": "23b902f9efb3d62de4371be968bd01af711b0235ebda277326be0097bd17abec"
+        },
+        "dynamic": {
+          "wall": 0.005539100035093725,
+          "cpu": 0.0,
+          "sha256": "23b902f9efb3d62de4371be968bd01af711b0235ebda277326be0097bd17abec"
+        },
+        "dead": {
+          "wall": 0.006341899977996945,
+          "cpu": 0.046875,
+          "sha256": "23b902f9efb3d62de4371be968bd01af711b0235ebda277326be0097bd17abec"
+        },
+        "all": {
+          "wall": 0.007346099999267608,
+          "cpu": 0.0,
+          "sha256": "23b902f9efb3d62de4371be968bd01af711b0235ebda277326be0097bd17abec"
+        }
+      }
+    },
+    {
+      "level": "3ply",
+      "api": "cube_action",
+      "position_id": "cube-match-purerace-01",
+      "repeat": 1,
+      "order": [
+        "control",
+        "terminals",
+        "dynamic",
+        "dead",
+        "all",
+        "share4"
+      ],
+      "arms": {
+        "control": {
+          "wall": 0.00042580004082992673,
+          "cpu": 0.0,
+          "sha256": "841649d752fca3cde45b3ecc3458a44ea3462d8aa0d567c0465822c35e42c51c"
+        },
+        "terminals": {
+          "wall": 0.0006482000462710857,
+          "cpu": 0.0,
+          "sha256": "841649d752fca3cde45b3ecc3458a44ea3462d8aa0d567c0465822c35e42c51c"
+        },
+        "dynamic": {
+          "wall": 0.0003457000129856169,
+          "cpu": 0.0,
+          "sha256": "841649d752fca3cde45b3ecc3458a44ea3462d8aa0d567c0465822c35e42c51c"
+        },
+        "dead": {
+          "wall": 0.0003871000371873379,
+          "cpu": 0.015625,
+          "sha256": "841649d752fca3cde45b3ecc3458a44ea3462d8aa0d567c0465822c35e42c51c"
+        },
+        "all": {
+          "wall": 0.00036530004581436515,
+          "cpu": 0.0,
+          "sha256": "841649d752fca3cde45b3ecc3458a44ea3462d8aa0d567c0465822c35e42c51c"
+        },
+        "share4": {
+          "wall": 0.0004476999747566879,
+          "cpu": 0.0,
+          "sha256": "841649d752fca3cde45b3ecc3458a44ea3462d8aa0d567c0465822c35e42c51c"
+        }
+      }
+    },
+    {
+      "level": "3ply",
+      "api": "post_move_analytics",
+      "position_id": "cube-match-attacking-01",
+      "repeat": 1,
+      "order": [
+        "terminals",
+        "dynamic",
+        "dead",
+        "all",
+        "share4",
+        "control"
+      ],
+      "arms": {
+        "terminals": {
+          "wall": 0.006928200018592179,
+          "cpu": 0.0,
+          "sha256": "1a008727f39959f248e636007aeaaf22335956429feef68e376d9648e7310e94"
+        },
+        "dynamic": {
+          "wall": 0.004655900003854185,
+          "cpu": 0.015625,
+          "sha256": "1a008727f39959f248e636007aeaaf22335956429feef68e376d9648e7310e94"
+        },
+        "dead": {
+          "wall": 0.0053387999651022255,
+          "cpu": 0.0,
+          "sha256": "1a008727f39959f248e636007aeaaf22335956429feef68e376d9648e7310e94"
+        },
+        "all": {
+          "wall": 0.004315700032748282,
+          "cpu": 0.0,
+          "sha256": "1a008727f39959f248e636007aeaaf22335956429feef68e376d9648e7310e94"
+        },
+        "share4": {
+          "wall": 0.004623000044375658,
+          "cpu": 0.0,
+          "sha256": "1a008727f39959f248e636007aeaaf22335956429feef68e376d9648e7310e94"
+        },
+        "control": {
+          "wall": 0.007582700054626912,
+          "cpu": 0.0,
+          "sha256": "1a008727f39959f248e636007aeaaf22335956429feef68e376d9648e7310e94"
+        }
+      }
+    },
+    {
+      "level": "3ply",
+      "api": "post_move_analytics",
+      "position_id": "cube-money-racing-01",
+      "repeat": 1,
+      "order": [
+        "dynamic",
+        "dead",
+        "all",
+        "share4",
+        "control",
+        "terminals"
+      ],
+      "arms": {
+        "dynamic": {
+          "wall": 0.0019535000319592655,
+          "cpu": 0.0,
+          "sha256": "0b63e5aab737a50346457b09346d250eda5960982da60bf93bd263b48fab4705"
+        },
+        "dead": {
+          "wall": 0.0018563000485301018,
+          "cpu": 0.0,
+          "sha256": "0b63e5aab737a50346457b09346d250eda5960982da60bf93bd263b48fab4705"
+        },
+        "all": {
+          "wall": 0.0017443000106140971,
+          "cpu": 0.0625,
+          "sha256": "0b63e5aab737a50346457b09346d250eda5960982da60bf93bd263b48fab4705"
+        },
+        "share4": {
+          "wall": 0.001811099995393306,
+          "cpu": 0.0,
+          "sha256": "0b63e5aab737a50346457b09346d250eda5960982da60bf93bd263b48fab4705"
+        },
+        "control": {
+          "wall": 0.002269499993417412,
+          "cpu": 0.0,
+          "sha256": "0b63e5aab737a50346457b09346d250eda5960982da60bf93bd263b48fab4705"
+        },
+        "terminals": {
+          "wall": 0.0018081999733112752,
+          "cpu": 0.0,
+          "sha256": "0b63e5aab737a50346457b09346d250eda5960982da60bf93bd263b48fab4705"
+        }
+      }
+    },
+    {
+      "level": "4ply",
+      "api": "checker_play",
+      "position_id": "checker-money-racing-01",
+      "repeat": 1,
+      "order": [
+        "dead",
+        "all",
+        "share4",
+        "control",
+        "terminals",
+        "dynamic"
+      ],
+      "arms": {
+        "dead": {
+          "wall": 0.5549328000051901,
+          "cpu": 1.09375,
+          "sha256": "e05714b340a171d4c328560eebc42c188f52494e5a4c5b4894127e516251c6c9"
+        },
+        "all": {
+          "wall": 0.5999069000245072,
+          "cpu": 1.09375,
+          "sha256": "e05714b340a171d4c328560eebc42c188f52494e5a4c5b4894127e516251c6c9"
+        },
+        "share4": {
+          "wall": 0.5483069999609143,
+          "cpu": 1.078125,
+          "sha256": "e05714b340a171d4c328560eebc42c188f52494e5a4c5b4894127e516251c6c9"
+        },
+        "control": {
+          "wall": 0.5053424999932759,
+          "cpu": 1.015625,
+          "sha256": "e05714b340a171d4c328560eebc42c188f52494e5a4c5b4894127e516251c6c9"
+        },
+        "terminals": {
+          "wall": 0.4098231999669224,
+          "cpu": 0.796875,
+          "sha256": "e05714b340a171d4c328560eebc42c188f52494e5a4c5b4894127e516251c6c9"
+        },
+        "dynamic": {
+          "wall": 0.5219529999885708,
+          "cpu": 1.0,
+          "sha256": "e05714b340a171d4c328560eebc42c188f52494e5a4c5b4894127e516251c6c9"
+        }
+      }
+    },
+    {
+      "level": "3ply",
+      "api": "post_move_analytics",
+      "position_id": "cube-money-priming-01",
+      "repeat": 1,
+      "order": [
+        "dynamic",
+        "terminals",
+        "all",
+        "dead",
+        "share4",
+        "control"
+      ],
+      "arms": {
+        "dynamic": {
+          "wall": 0.00713390001328662,
+          "cpu": 0.0625,
+          "sha256": "692c6a3ce9e7d4fde5e0593c43cc5fcd91f433f65f5e646d0e973d41befae4c3"
+        },
+        "terminals": {
+          "wall": 0.006728100008331239,
+          "cpu": 0.0,
+          "sha256": "692c6a3ce9e7d4fde5e0593c43cc5fcd91f433f65f5e646d0e973d41befae4c3"
+        },
+        "all": {
+          "wall": 0.00671019998844713,
+          "cpu": 0.046875,
+          "sha256": "692c6a3ce9e7d4fde5e0593c43cc5fcd91f433f65f5e646d0e973d41befae4c3"
+        },
+        "dead": {
+          "wall": 0.0066716999863274395,
+          "cpu": 0.0,
+          "sha256": "692c6a3ce9e7d4fde5e0593c43cc5fcd91f433f65f5e646d0e973d41befae4c3"
+        },
+        "share4": {
+          "wall": 0.0066436000051908195,
+          "cpu": 0.0625,
+          "sha256": "692c6a3ce9e7d4fde5e0593c43cc5fcd91f433f65f5e646d0e973d41befae4c3"
+        },
+        "control": {
+          "wall": 0.00661240000044927,
+          "cpu": 0.0,
+          "sha256": "692c6a3ce9e7d4fde5e0593c43cc5fcd91f433f65f5e646d0e973d41befae4c3"
+        }
+      }
+    },
+    {
+      "level": "4ply",
+      "api": "post_move_analytics",
+      "position_id": "cube-money-anchoring-01",
+      "repeat": 1,
+      "order": [
+        "terminals",
+        "all",
+        "dead",
+        "share4",
+        "control",
+        "dynamic"
+      ],
+      "arms": {
+        "terminals": {
+          "wall": 0.3152257999754511,
+          "cpu": 1.03125,
+          "sha256": "ab913ab186d630f4521f50e8211249032cbaff6c04f1c1bf92679bcbd538c7ca"
+        },
+        "all": {
+          "wall": 0.28490669996244833,
+          "cpu": 1.09375,
+          "sha256": "ab913ab186d630f4521f50e8211249032cbaff6c04f1c1bf92679bcbd538c7ca"
+        },
+        "dead": {
+          "wall": 0.318406899983529,
+          "cpu": 1.03125,
+          "sha256": "ab913ab186d630f4521f50e8211249032cbaff6c04f1c1bf92679bcbd538c7ca"
+        },
+        "share4": {
+          "wall": 0.31161520001478493,
+          "cpu": 1.0,
+          "sha256": "ab913ab186d630f4521f50e8211249032cbaff6c04f1c1bf92679bcbd538c7ca"
+        },
+        "control": {
+          "wall": 0.3117498999927193,
+          "cpu": 1.015625,
+          "sha256": "ab913ab186d630f4521f50e8211249032cbaff6c04f1c1bf92679bcbd538c7ca"
+        },
+        "dynamic": {
+          "wall": 0.2796463000122458,
+          "cpu": 1.046875,
+          "sha256": "ab913ab186d630f4521f50e8211249032cbaff6c04f1c1bf92679bcbd538c7ca"
+        }
+      }
+    },
+    {
+      "level": "4ply",
+      "api": "post_move_analytics",
+      "position_id": "cube-money-attacking-01",
+      "repeat": 1,
+      "order": [
+        "all",
+        "dead",
+        "share4",
+        "control",
+        "dynamic",
+        "terminals"
+      ],
+      "arms": {
+        "all": {
+          "wall": 0.2205625000060536,
+          "cpu": 0.78125,
+          "sha256": "d72da3df6999a221fe00fa2362a895afb4a6df8d4b19052593d39a6bd8fdc0ed"
+        },
+        "dead": {
+          "wall": 0.2207792000262998,
+          "cpu": 0.8125,
+          "sha256": "d72da3df6999a221fe00fa2362a895afb4a6df8d4b19052593d39a6bd8fdc0ed"
+        },
+        "share4": {
+          "wall": 0.21664240001700819,
+          "cpu": 0.8125,
+          "sha256": "d72da3df6999a221fe00fa2362a895afb4a6df8d4b19052593d39a6bd8fdc0ed"
+        },
+        "control": {
+          "wall": 0.22107020003022626,
+          "cpu": 0.765625,
+          "sha256": "d72da3df6999a221fe00fa2362a895afb4a6df8d4b19052593d39a6bd8fdc0ed"
+        },
+        "dynamic": {
+          "wall": 0.23675350000848994,
+          "cpu": 0.84375,
+          "sha256": "d72da3df6999a221fe00fa2362a895afb4a6df8d4b19052593d39a6bd8fdc0ed"
+        },
+        "terminals": {
+          "wall": 0.23202409996883944,
+          "cpu": 0.8125,
+          "sha256": "d72da3df6999a221fe00fa2362a895afb4a6df8d4b19052593d39a6bd8fdc0ed"
+        }
+      }
+    },
+    {
+      "level": "4ply",
+      "api": "post_move_analytics",
+      "position_id": "cube-match-anchoring-01",
+      "repeat": 1,
+      "order": [
+        "dead",
+        "share4",
+        "control",
+        "dynamic",
+        "terminals",
+        "all"
+      ],
+      "arms": {
+        "dead": {
+          "wall": 0.10499839996919036,
+          "cpu": 0.3125,
+          "sha256": "e846b3fae33021be9bb790b30f2ed2c040c52e0c299c4fe45e4dc32f78274f38"
+        },
+        "share4": {
+          "wall": 0.11450190003961325,
+          "cpu": 0.4375,
+          "sha256": "e846b3fae33021be9bb790b30f2ed2c040c52e0c299c4fe45e4dc32f78274f38"
+        },
+        "control": {
+          "wall": 0.11164849996566772,
+          "cpu": 0.359375,
+          "sha256": "e846b3fae33021be9bb790b30f2ed2c040c52e0c299c4fe45e4dc32f78274f38"
+        },
+        "dynamic": {
+          "wall": 0.11319920001551509,
+          "cpu": 0.375,
+          "sha256": "e846b3fae33021be9bb790b30f2ed2c040c52e0c299c4fe45e4dc32f78274f38"
+        },
+        "terminals": {
+          "wall": 0.11163100000703707,
+          "cpu": 0.34375,
+          "sha256": "e846b3fae33021be9bb790b30f2ed2c040c52e0c299c4fe45e4dc32f78274f38"
+        },
+        "all": {
+          "wall": 0.12268430000403896,
+          "cpu": 0.390625,
+          "sha256": "e846b3fae33021be9bb790b30f2ed2c040c52e0c299c4fe45e4dc32f78274f38"
+        }
+      }
+    },
+    {
+      "level": "4ply",
+      "api": "cube_action",
+      "position_id": "cube-match-priming-01",
+      "repeat": 1,
+      "order": [
+        "share4",
+        "control",
+        "dynamic",
+        "terminals",
+        "all",
+        "dead"
+      ],
+      "arms": {
+        "share4": {
+          "wall": 0.24680319998878986,
+          "cpu": 0.8125,
+          "sha256": "21841d4f5de58c2c2d93c0610e322bab36836cfd8fbfc9cc1afa5a15eefbaf96"
+        },
+        "control": {
+          "wall": 0.2612778000184335,
+          "cpu": 0.875,
+          "sha256": "21841d4f5de58c2c2d93c0610e322bab36836cfd8fbfc9cc1afa5a15eefbaf96"
+        },
+        "dynamic": {
+          "wall": 0.24661130004096776,
+          "cpu": 0.90625,
+          "sha256": "21841d4f5de58c2c2d93c0610e322bab36836cfd8fbfc9cc1afa5a15eefbaf96"
+        },
+        "terminals": {
+          "wall": 0.2645484000095166,
+          "cpu": 0.921875,
+          "sha256": "21841d4f5de58c2c2d93c0610e322bab36836cfd8fbfc9cc1afa5a15eefbaf96"
+        },
+        "all": {
+          "wall": 0.25115319999167696,
+          "cpu": 0.78125,
+          "sha256": "21841d4f5de58c2c2d93c0610e322bab36836cfd8fbfc9cc1afa5a15eefbaf96"
+        },
+        "dead": {
+          "wall": 0.24565409997012466,
+          "cpu": 0.8125,
+          "sha256": "21841d4f5de58c2c2d93c0610e322bab36836cfd8fbfc9cc1afa5a15eefbaf96"
+        }
+      }
+    },
+    {
+      "level": "4ply",
+      "api": "checker_play",
+      "position_id": "checker-money-priming-01",
+      "repeat": 1,
+      "order": [
+        "control",
+        "dynamic",
+        "terminals",
+        "all",
+        "dead",
+        "share4"
+      ],
+      "arms": {
+        "control": {
+          "wall": 2.5802167000365444,
+          "cpu": 9.828125,
+          "sha256": "29da4087433f5ad39c05de2ce4c5d45a58deb0d016f6d2ed1904115f713c07b9"
+        },
+        "dynamic": {
+          "wall": 2.567201500001829,
+          "cpu": 9.8125,
+          "sha256": "29da4087433f5ad39c05de2ce4c5d45a58deb0d016f6d2ed1904115f713c07b9"
+        },
+        "terminals": {
+          "wall": 2.571170400013216,
+          "cpu": 9.6875,
+          "sha256": "29da4087433f5ad39c05de2ce4c5d45a58deb0d016f6d2ed1904115f713c07b9"
+        },
+        "all": {
+          "wall": 2.40392279997468,
+          "cpu": 9.3125,
+          "sha256": "29da4087433f5ad39c05de2ce4c5d45a58deb0d016f6d2ed1904115f713c07b9"
+        },
+        "dead": {
+          "wall": 2.278962600044906,
+          "cpu": 8.796875,
+          "sha256": "29da4087433f5ad39c05de2ce4c5d45a58deb0d016f6d2ed1904115f713c07b9"
+        },
+        "share4": {
+          "wall": 2.2627691000234336,
+          "cpu": 8.84375,
+          "sha256": "29da4087433f5ad39c05de2ce4c5d45a58deb0d016f6d2ed1904115f713c07b9"
+        }
+      }
+    },
+    {
+      "level": "3ply",
+      "api": "checker_play",
+      "position_id": "checker-money-priming-01",
+      "repeat": 1,
+      "order": [
+        "dead",
+        "terminals",
+        "control",
+        "all",
+        "share4",
+        "dynamic"
+      ],
+      "arms": {
+        "dead": {
+          "wall": 0.08935640001436695,
+          "cpu": 0.3125,
+          "sha256": "337abf05ef8ad4dcd96a79f3e86ec83f319ce388cf8bf1fc24973d2fede22992"
+        },
+        "terminals": {
+          "wall": 0.08956849999958649,
+          "cpu": 0.375,
+          "sha256": "337abf05ef8ad4dcd96a79f3e86ec83f319ce388cf8bf1fc24973d2fede22992"
+        },
+        "control": {
+          "wall": 0.08822089998284355,
+          "cpu": 0.34375,
+          "sha256": "337abf05ef8ad4dcd96a79f3e86ec83f319ce388cf8bf1fc24973d2fede22992"
+        },
+        "all": {
+          "wall": 0.0900516000110656,
+          "cpu": 0.3125,
+          "sha256": "337abf05ef8ad4dcd96a79f3e86ec83f319ce388cf8bf1fc24973d2fede22992"
+        },
+        "share4": {
+          "wall": 0.08913249999750406,
+          "cpu": 0.296875,
+          "sha256": "337abf05ef8ad4dcd96a79f3e86ec83f319ce388cf8bf1fc24973d2fede22992"
+        },
+        "dynamic": {
+          "wall": 0.08906850003404543,
+          "cpu": 0.359375,
+          "sha256": "337abf05ef8ad4dcd96a79f3e86ec83f319ce388cf8bf1fc24973d2fede22992"
+        }
+      }
+    },
+    {
+      "level": "4ply",
+      "api": "cube_action",
+      "position_id": "cube-money-racing-01",
+      "repeat": 1,
+      "order": [
+        "terminals",
+        "control",
+        "all",
+        "share4",
+        "dynamic",
+        "dead"
+      ],
+      "arms": {
+        "terminals": {
+          "wall": 0.11232879996532574,
+          "cpu": 0.4375,
+          "sha256": "99947b950c53c4ac05d490d5067f16697fe0e8e6698ada22825ffdceea1a32c3"
+        },
+        "control": {
+          "wall": 0.11280920001445338,
+          "cpu": 0.4375,
+          "sha256": "99947b950c53c4ac05d490d5067f16697fe0e8e6698ada22825ffdceea1a32c3"
+        },
+        "all": {
+          "wall": 0.08885800000280142,
+          "cpu": 0.3125,
+          "sha256": "99947b950c53c4ac05d490d5067f16697fe0e8e6698ada22825ffdceea1a32c3"
+        },
+        "share4": {
+          "wall": 0.09533570002531633,
+          "cpu": 0.375,
+          "sha256": "99947b950c53c4ac05d490d5067f16697fe0e8e6698ada22825ffdceea1a32c3"
+        },
+        "dynamic": {
+          "wall": 0.1137993999873288,
+          "cpu": 0.4375,
+          "sha256": "99947b950c53c4ac05d490d5067f16697fe0e8e6698ada22825ffdceea1a32c3"
+        },
+        "dead": {
+          "wall": 0.11312180000822991,
+          "cpu": 0.375,
+          "sha256": "99947b950c53c4ac05d490d5067f16697fe0e8e6698ada22825ffdceea1a32c3"
+        }
+      }
+    },
+    {
+      "level": "3ply",
+      "api": "cube_action",
+      "position_id": "cube-money-priming-01",
+      "repeat": 1,
+      "order": [
+        "control",
+        "all",
+        "share4",
+        "dynamic",
+        "dead",
+        "terminals"
+      ],
+      "arms": {
+        "control": {
+          "wall": 0.009346700040623546,
+          "cpu": 0.0625,
+          "sha256": "78aad4e415886124426838c8e598bb91f9c37b6508ac946ad745062f49a39f7d"
+        },
+        "all": {
+          "wall": 0.008331399993039668,
+          "cpu": 0.0,
+          "sha256": "78aad4e415886124426838c8e598bb91f9c37b6508ac946ad745062f49a39f7d"
+        },
+        "share4": {
+          "wall": 0.008487200015224516,
+          "cpu": 0.0625,
+          "sha256": "78aad4e415886124426838c8e598bb91f9c37b6508ac946ad745062f49a39f7d"
+        },
+        "dynamic": {
+          "wall": 0.008333900012075901,
+          "cpu": 0.0,
+          "sha256": "78aad4e415886124426838c8e598bb91f9c37b6508ac946ad745062f49a39f7d"
+        },
+        "dead": {
+          "wall": 0.008510900021065027,
+          "cpu": 0.0625,
+          "sha256": "78aad4e415886124426838c8e598bb91f9c37b6508ac946ad745062f49a39f7d"
+        },
+        "terminals": {
+          "wall": 0.008554600004572421,
+          "cpu": 0.0,
+          "sha256": "78aad4e415886124426838c8e598bb91f9c37b6508ac946ad745062f49a39f7d"
+        }
+      }
+    },
+    {
+      "level": "4ply",
+      "api": "cube_action",
+      "position_id": "cube-match-attacking-01",
+      "repeat": 1,
+      "order": [
+        "all",
+        "share4",
+        "dynamic",
+        "dead",
+        "terminals",
+        "control"
+      ],
+      "arms": {
+        "all": {
+          "wall": 0.159860200015828,
+          "cpu": 0.59375,
+          "sha256": "ad2e299249b8334905c4f59dd0d21d10a65af42fa9d1c319e059e1dbd7664bd4"
+        },
+        "share4": {
+          "wall": 0.16325829998822883,
+          "cpu": 0.609375,
+          "sha256": "ad2e299249b8334905c4f59dd0d21d10a65af42fa9d1c319e059e1dbd7664bd4"
+        },
+        "dynamic": {
+          "wall": 0.18280299997422844,
+          "cpu": 0.671875,
+          "sha256": "ad2e299249b8334905c4f59dd0d21d10a65af42fa9d1c319e059e1dbd7664bd4"
+        },
+        "dead": {
+          "wall": 0.19072750001214445,
+          "cpu": 0.625,
+          "sha256": "ad2e299249b8334905c4f59dd0d21d10a65af42fa9d1c319e059e1dbd7664bd4"
+        },
+        "terminals": {
+          "wall": 0.1814625000115484,
+          "cpu": 0.65625,
+          "sha256": "ad2e299249b8334905c4f59dd0d21d10a65af42fa9d1c319e059e1dbd7664bd4"
+        },
+        "control": {
+          "wall": 0.19207980000646785,
+          "cpu": 0.671875,
+          "sha256": "ad2e299249b8334905c4f59dd0d21d10a65af42fa9d1c319e059e1dbd7664bd4"
+        }
+      }
+    },
+    {
+      "level": "3ply",
+      "api": "checker_play",
+      "position_id": "checker-match-priming-01",
+      "repeat": 1,
+      "order": [
+        "share4",
+        "dynamic",
+        "dead",
+        "terminals",
+        "control",
+        "all"
+      ],
+      "arms": {
+        "share4": {
+          "wall": 0.10103049996541813,
+          "cpu": 0.375,
+          "sha256": "1a64d6937e6fbea32a682cb349c7531bc91c0cd6d3af6848a692346a04ffc1fc"
+        },
+        "dynamic": {
+          "wall": 0.09614129998954013,
+          "cpu": 0.359375,
+          "sha256": "1a64d6937e6fbea32a682cb349c7531bc91c0cd6d3af6848a692346a04ffc1fc"
+        },
+        "dead": {
+          "wall": 0.09751479997066781,
+          "cpu": 0.359375,
+          "sha256": "1a64d6937e6fbea32a682cb349c7531bc91c0cd6d3af6848a692346a04ffc1fc"
+        },
+        "terminals": {
+          "wall": 0.10786689998349175,
+          "cpu": 0.390625,
+          "sha256": "1a64d6937e6fbea32a682cb349c7531bc91c0cd6d3af6848a692346a04ffc1fc"
+        },
+        "control": {
+          "wall": 0.1074452999746427,
+          "cpu": 0.390625,
+          "sha256": "1a64d6937e6fbea32a682cb349c7531bc91c0cd6d3af6848a692346a04ffc1fc"
+        },
+        "all": {
+          "wall": 0.10273709998000413,
+          "cpu": 0.390625,
+          "sha256": "1a64d6937e6fbea32a682cb349c7531bc91c0cd6d3af6848a692346a04ffc1fc"
+        }
+      }
+    },
+    {
+      "level": "4ply",
+      "api": "cube_action",
+      "position_id": "cube-money-attacking-01",
+      "repeat": 1,
+      "order": [
+        "dynamic",
+        "dead",
+        "terminals",
+        "control",
+        "all",
+        "share4"
+      ],
+      "arms": {
+        "dynamic": {
+          "wall": 0.2814215000253171,
+          "cpu": 1.015625,
+          "sha256": "f73a9aa4ed8db5d962c0232cedd27f84f1791cee44149c0c1752862ceb4a5dc8"
+        },
+        "dead": {
+          "wall": 0.29369010002119467,
+          "cpu": 1.078125,
+          "sha256": "f73a9aa4ed8db5d962c0232cedd27f84f1791cee44149c0c1752862ceb4a5dc8"
+        },
+        "terminals": {
+          "wall": 0.2839881000109017,
+          "cpu": 1.0,
+          "sha256": "f73a9aa4ed8db5d962c0232cedd27f84f1791cee44149c0c1752862ceb4a5dc8"
+        },
+        "control": {
+          "wall": 0.2854061999823898,
+          "cpu": 1.015625,
+          "sha256": "f73a9aa4ed8db5d962c0232cedd27f84f1791cee44149c0c1752862ceb4a5dc8"
+        },
+        "all": {
+          "wall": 0.266854899993632,
+          "cpu": 1.0,
+          "sha256": "f73a9aa4ed8db5d962c0232cedd27f84f1791cee44149c0c1752862ceb4a5dc8"
+        },
+        "share4": {
+          "wall": 0.2670698000001721,
+          "cpu": 1.03125,
+          "sha256": "f73a9aa4ed8db5d962c0232cedd27f84f1791cee44149c0c1752862ceb4a5dc8"
+        }
+      }
+    },
+    {
+      "level": "3ply",
+      "api": "checker_play",
+      "position_id": "checker-match-racing-01",
+      "repeat": 1,
+      "order": [
+        "dead",
+        "control",
+        "share4",
+        "all",
+        "terminals",
+        "dynamic"
+      ],
+      "arms": {
+        "dead": {
+          "wall": 0.008512600034009665,
+          "cpu": 0.015625,
+          "sha256": "37e9eaf5731e8f9aabcb0ee214a0ebd431b35f1ebb49a5cb11ee4d7010cca654"
+        },
+        "control": {
+          "wall": 0.009433700004592538,
+          "cpu": 0.03125,
+          "sha256": "37e9eaf5731e8f9aabcb0ee214a0ebd431b35f1ebb49a5cb11ee4d7010cca654"
+        },
+        "share4": {
+          "wall": 0.007814600015990436,
+          "cpu": 0.0,
+          "sha256": "37e9eaf5731e8f9aabcb0ee214a0ebd431b35f1ebb49a5cb11ee4d7010cca654"
+        },
+        "all": {
+          "wall": 0.009874000039417297,
+          "cpu": 0.03125,
+          "sha256": "37e9eaf5731e8f9aabcb0ee214a0ebd431b35f1ebb49a5cb11ee4d7010cca654"
+        },
+        "terminals": {
+          "wall": 0.009582699974998832,
+          "cpu": 0.015625,
+          "sha256": "37e9eaf5731e8f9aabcb0ee214a0ebd431b35f1ebb49a5cb11ee4d7010cca654"
+        },
+        "dynamic": {
+          "wall": 0.007847499975468963,
+          "cpu": 0.0,
+          "sha256": "37e9eaf5731e8f9aabcb0ee214a0ebd431b35f1ebb49a5cb11ee4d7010cca654"
+        }
+      }
+    },
+    {
+      "level": "4ply",
+      "api": "cube_action",
+      "position_id": "cube-money-purerace-01",
+      "repeat": 1,
+      "order": [
+        "control",
+        "share4",
+        "all",
+        "terminals",
+        "dynamic",
+        "dead"
+      ],
+      "arms": {
+        "control": {
+          "wall": 0.017686599981971085,
+          "cpu": 0.0625,
+          "sha256": "4a376cac8e011f06d3470936026048244bd01dcfeb1f90eef3665eafd61da775"
+        },
+        "share4": {
+          "wall": 0.018178199999965727,
+          "cpu": 0.09375,
+          "sha256": "4a376cac8e011f06d3470936026048244bd01dcfeb1f90eef3665eafd61da775"
+        },
+        "all": {
+          "wall": 0.014630099991336465,
+          "cpu": 0.0,
+          "sha256": "4a376cac8e011f06d3470936026048244bd01dcfeb1f90eef3665eafd61da775"
+        },
+        "terminals": {
+          "wall": 0.016992799995932728,
+          "cpu": 0.0625,
+          "sha256": "4a376cac8e011f06d3470936026048244bd01dcfeb1f90eef3665eafd61da775"
+        },
+        "dynamic": {
+          "wall": 0.01804440002888441,
+          "cpu": 0.0625,
+          "sha256": "4a376cac8e011f06d3470936026048244bd01dcfeb1f90eef3665eafd61da775"
+        },
+        "dead": {
+          "wall": 0.016743200016207993,
+          "cpu": 0.0625,
+          "sha256": "4a376cac8e011f06d3470936026048244bd01dcfeb1f90eef3665eafd61da775"
+        }
+      }
+    },
+    {
+      "level": "4ply",
+      "api": "post_move_analytics",
+      "position_id": "cube-money-racing-01",
+      "repeat": 1,
+      "order": [
+        "share4",
+        "all",
+        "terminals",
+        "dynamic",
+        "dead",
+        "control"
+      ],
+      "arms": {
+        "share4": {
+          "wall": 0.06880279997130856,
+          "cpu": 0.234375,
+          "sha256": "bf8065260e2d286eff6d5c743e84011bb73a1c795008662eee96ce9e724f3a1f"
+        },
+        "all": {
+          "wall": 0.06727700005285442,
+          "cpu": 0.265625,
+          "sha256": "bf8065260e2d286eff6d5c743e84011bb73a1c795008662eee96ce9e724f3a1f"
+        },
+        "terminals": {
+          "wall": 0.06877980002900586,
+          "cpu": 0.25,
+          "sha256": "bf8065260e2d286eff6d5c743e84011bb73a1c795008662eee96ce9e724f3a1f"
+        },
+        "dynamic": {
+          "wall": 0.06858780002221465,
+          "cpu": 0.25,
+          "sha256": "bf8065260e2d286eff6d5c743e84011bb73a1c795008662eee96ce9e724f3a1f"
+        },
+        "dead": {
+          "wall": 0.06839400000171736,
+          "cpu": 0.21875,
+          "sha256": "bf8065260e2d286eff6d5c743e84011bb73a1c795008662eee96ce9e724f3a1f"
+        },
+        "control": {
+          "wall": 0.06876900000497699,
+          "cpu": 0.25,
+          "sha256": "bf8065260e2d286eff6d5c743e84011bb73a1c795008662eee96ce9e724f3a1f"
+        }
+      }
+    },
+    {
+      "level": "4ply",
+      "api": "cube_action",
+      "position_id": "cube-money-priming-01",
+      "repeat": 1,
+      "order": [
+        "all",
+        "terminals",
+        "dynamic",
+        "dead",
+        "control",
+        "share4"
+      ],
+      "arms": {
+        "all": {
+          "wall": 0.1671481000375934,
+          "cpu": 0.609375,
+          "sha256": "d65ec6a2de0031b42ecfbe3e74df3518a3397b0b0edcfdaf536133b92743722a"
+        },
+        "terminals": {
+          "wall": 0.15953050000825897,
+          "cpu": 0.609375,
+          "sha256": "d65ec6a2de0031b42ecfbe3e74df3518a3397b0b0edcfdaf536133b92743722a"
+        },
+        "dynamic": {
+          "wall": 0.16347739996854216,
+          "cpu": 0.640625,
+          "sha256": "d65ec6a2de0031b42ecfbe3e74df3518a3397b0b0edcfdaf536133b92743722a"
+        },
+        "dead": {
+          "wall": 0.15753209998365492,
+          "cpu": 0.59375,
+          "sha256": "d65ec6a2de0031b42ecfbe3e74df3518a3397b0b0edcfdaf536133b92743722a"
+        },
+        "control": {
+          "wall": 0.15930110000772402,
+          "cpu": 0.5625,
+          "sha256": "d65ec6a2de0031b42ecfbe3e74df3518a3397b0b0edcfdaf536133b92743722a"
+        },
+        "share4": {
+          "wall": 0.14872479997575283,
+          "cpu": 0.578125,
+          "sha256": "d65ec6a2de0031b42ecfbe3e74df3518a3397b0b0edcfdaf536133b92743722a"
+        }
+      }
+    },
+    {
+      "level": "3ply",
+      "api": "cube_action",
+      "position_id": "cube-money-attacking-01",
+      "repeat": 1,
+      "order": [
+        "terminals",
+        "dynamic",
+        "dead",
+        "control",
+        "share4",
+        "all"
+      ],
+      "arms": {
+        "terminals": {
+          "wall": 0.007905000005848706,
+          "cpu": 0.0,
+          "sha256": "5840d4ba28dc807e6d717ee429efbd19a010121a99a4b11154422d144aa41296"
+        },
+        "dynamic": {
+          "wall": 0.006911400007084012,
+          "cpu": 0.0625,
+          "sha256": "5840d4ba28dc807e6d717ee429efbd19a010121a99a4b11154422d144aa41296"
+        },
+        "dead": {
+          "wall": 0.006975900032557547,
+          "cpu": 0.0,
+          "sha256": "5840d4ba28dc807e6d717ee429efbd19a010121a99a4b11154422d144aa41296"
+        },
+        "control": {
+          "wall": 0.006970599992200732,
+          "cpu": 0.0625,
+          "sha256": "5840d4ba28dc807e6d717ee429efbd19a010121a99a4b11154422d144aa41296"
+        },
+        "share4": {
+          "wall": 0.006981000013183802,
+          "cpu": 0.0,
+          "sha256": "5840d4ba28dc807e6d717ee429efbd19a010121a99a4b11154422d144aa41296"
+        },
+        "all": {
+          "wall": 0.006779099989216775,
+          "cpu": 0.0625,
+          "sha256": "5840d4ba28dc807e6d717ee429efbd19a010121a99a4b11154422d144aa41296"
+        }
+      }
+    },
+    {
+      "level": "3ply",
+      "api": "cube_action",
+      "position_id": "cube-match-racing-01",
+      "repeat": 1,
+      "order": [
+        "dynamic",
+        "dead",
+        "control",
+        "share4",
+        "all",
+        "terminals"
+      ],
+      "arms": {
+        "dynamic": {
+          "wall": 0.005756300000939518,
+          "cpu": 0.0,
+          "sha256": "84d78765d803b0476998733f5e51d76e545799466dc76fbf4912671382c748c8"
+        },
+        "dead": {
+          "wall": 0.004963200015481561,
+          "cpu": 0.0,
+          "sha256": "84d78765d803b0476998733f5e51d76e545799466dc76fbf4912671382c748c8"
+        },
+        "control": {
+          "wall": 0.005026599974371493,
+          "cpu": 0.015625,
+          "sha256": "84d78765d803b0476998733f5e51d76e545799466dc76fbf4912671382c748c8"
+        },
+        "share4": {
+          "wall": 0.00496930000372231,
+          "cpu": 0.0,
+          "sha256": "84d78765d803b0476998733f5e51d76e545799466dc76fbf4912671382c748c8"
+        },
+        "all": {
+          "wall": 0.005526099994312972,
+          "cpu": 0.0,
+          "sha256": "84d78765d803b0476998733f5e51d76e545799466dc76fbf4912671382c748c8"
+        },
+        "terminals": {
+          "wall": 0.005018899973947555,
+          "cpu": 0.0,
+          "sha256": "84d78765d803b0476998733f5e51d76e545799466dc76fbf4912671382c748c8"
+        }
+      }
+    },
+    {
+      "level": "4ply",
+      "api": "checker_play",
+      "position_id": "checker-match-racing-01",
+      "repeat": 1,
+      "order": [
+        "terminals",
+        "dynamic",
+        "share4",
+        "control",
+        "all",
+        "dead"
+      ],
+      "arms": {
+        "terminals": {
+          "wall": 0.7082586999749765,
+          "cpu": 1.40625,
+          "sha256": "ae73d1654563e65aaf294b7d9ca8e03bf69fe0e74625c4c130699ecce88c9afe"
+        },
+        "dynamic": {
+          "wall": 0.7985710999928415,
+          "cpu": 1.59375,
+          "sha256": "ae73d1654563e65aaf294b7d9ca8e03bf69fe0e74625c4c130699ecce88c9afe"
+        },
+        "share4": {
+          "wall": 0.8611910999752581,
+          "cpu": 1.71875,
+          "sha256": "ae73d1654563e65aaf294b7d9ca8e03bf69fe0e74625c4c130699ecce88c9afe"
+        },
+        "control": {
+          "wall": 0.7915105000138283,
+          "cpu": 1.5625,
+          "sha256": "ae73d1654563e65aaf294b7d9ca8e03bf69fe0e74625c4c130699ecce88c9afe"
+        },
+        "all": {
+          "wall": 0.8054288999992423,
+          "cpu": 1.625,
+          "sha256": "ae73d1654563e65aaf294b7d9ca8e03bf69fe0e74625c4c130699ecce88c9afe"
+        },
+        "dead": {
+          "wall": 0.7243459000019357,
+          "cpu": 1.4375,
+          "sha256": "ae73d1654563e65aaf294b7d9ca8e03bf69fe0e74625c4c130699ecce88c9afe"
+        }
+      }
+    },
+    {
+      "level": "4ply",
+      "api": "checker_play",
+      "position_id": "checker-money-attacking-01",
+      "repeat": 1,
+      "order": [
+        "dynamic",
+        "share4",
+        "control",
+        "all",
+        "dead",
+        "terminals"
+      ],
+      "arms": {
+        "dynamic": {
+          "wall": 1.9965386999538168,
+          "cpu": 7.484375,
+          "sha256": "4193c472c358ebc037a70dbad6b9dc6be9592596921f23700c9eb442c287bd71"
+        },
+        "share4": {
+          "wall": 1.9514857000322081,
+          "cpu": 7.5,
+          "sha256": "4193c472c358ebc037a70dbad6b9dc6be9592596921f23700c9eb442c287bd71"
+        },
+        "control": {
+          "wall": 1.9528413999942131,
+          "cpu": 7.421875,
+          "sha256": "4193c472c358ebc037a70dbad6b9dc6be9592596921f23700c9eb442c287bd71"
+        },
+        "all": {
+          "wall": 1.9610263000358827,
+          "cpu": 7.46875,
+          "sha256": "4193c472c358ebc037a70dbad6b9dc6be9592596921f23700c9eb442c287bd71"
+        },
+        "dead": {
+          "wall": 1.9410375999868847,
+          "cpu": 7.328125,
+          "sha256": "4193c472c358ebc037a70dbad6b9dc6be9592596921f23700c9eb442c287bd71"
+        },
+        "terminals": {
+          "wall": 1.8973941000294872,
+          "cpu": 7.359375,
+          "sha256": "4193c472c358ebc037a70dbad6b9dc6be9592596921f23700c9eb442c287bd71"
+        }
+      }
+    },
+    {
+      "level": "4ply",
+      "api": "checker_play",
+      "position_id": "checker-match-anchoring-01",
+      "repeat": 1,
+      "order": [
+        "share4",
+        "control",
+        "all",
+        "dead",
+        "terminals",
+        "dynamic"
+      ],
+      "arms": {
+        "share4": {
+          "wall": 1.8289967000018805,
+          "cpu": 6.8125,
+          "sha256": "5a56644b78b6acad437210ec035e6701f03f5fcc5b4ad875f0acf0236c90e9e5"
+        },
+        "control": {
+          "wall": 1.838732800038997,
+          "cpu": 6.78125,
+          "sha256": "5a56644b78b6acad437210ec035e6701f03f5fcc5b4ad875f0acf0236c90e9e5"
+        },
+        "all": {
+          "wall": 1.8192289000144228,
+          "cpu": 6.859375,
+          "sha256": "5a56644b78b6acad437210ec035e6701f03f5fcc5b4ad875f0acf0236c90e9e5"
+        },
+        "dead": {
+          "wall": 1.8201102999737486,
+          "cpu": 6.84375,
+          "sha256": "5a56644b78b6acad437210ec035e6701f03f5fcc5b4ad875f0acf0236c90e9e5"
+        },
+        "terminals": {
+          "wall": 1.8945507999742404,
+          "cpu": 6.828125,
+          "sha256": "5a56644b78b6acad437210ec035e6701f03f5fcc5b4ad875f0acf0236c90e9e5"
+        },
+        "dynamic": {
+          "wall": 1.8226414999808185,
+          "cpu": 6.8125,
+          "sha256": "5a56644b78b6acad437210ec035e6701f03f5fcc5b4ad875f0acf0236c90e9e5"
+        }
+      }
+    },
+    {
+      "level": "3ply",
+      "api": "cube_action",
+      "position_id": "cube-money-racing-01",
+      "repeat": 1,
+      "order": [
+        "control",
+        "all",
+        "dead",
+        "terminals",
+        "dynamic",
+        "share4"
+      ],
+      "arms": {
+        "control": {
+          "wall": 0.0022678000386804342,
+          "cpu": 0.015625,
+          "sha256": "66a170619ef929cbdb4629cf5b7f54e322ca6fd28f14d374690b101721c83c83"
+        },
+        "all": {
+          "wall": 0.0018686000257730484,
+          "cpu": 0.0,
+          "sha256": "66a170619ef929cbdb4629cf5b7f54e322ca6fd28f14d374690b101721c83c83"
+        },
+        "dead": {
+          "wall": 0.002017799997702241,
+          "cpu": 0.0,
+          "sha256": "66a170619ef929cbdb4629cf5b7f54e322ca6fd28f14d374690b101721c83c83"
+        },
+        "terminals": {
+          "wall": 0.0020533999777399004,
+          "cpu": 0.0,
+          "sha256": "66a170619ef929cbdb4629cf5b7f54e322ca6fd28f14d374690b101721c83c83"
+        },
+        "dynamic": {
+          "wall": 0.001900400035083294,
+          "cpu": 0.0,
+          "sha256": "66a170619ef929cbdb4629cf5b7f54e322ca6fd28f14d374690b101721c83c83"
+        },
+        "share4": {
+          "wall": 0.002085499989334494,
+          "cpu": 0.0,
+          "sha256": "66a170619ef929cbdb4629cf5b7f54e322ca6fd28f14d374690b101721c83c83"
+        }
+      }
+    },
+    {
+      "level": "4ply",
+      "api": "checker_play",
+      "position_id": "checker-match-priming-01",
+      "repeat": 1,
+      "order": [
+        "all",
+        "dead",
+        "terminals",
+        "dynamic",
+        "share4",
+        "control"
+      ],
+      "arms": {
+        "all": {
+          "wall": 1.9888071999885142,
+          "cpu": 7.640625,
+          "sha256": "140ed3d8ed88cb8aa0525fa4f48dc634710afc8bcf8670f915a2afddf95766ad"
+        },
+        "dead": {
+          "wall": 2.035139799991157,
+          "cpu": 7.828125,
+          "sha256": "140ed3d8ed88cb8aa0525fa4f48dc634710afc8bcf8670f915a2afddf95766ad"
+        },
+        "terminals": {
+          "wall": 2.0023375999880955,
+          "cpu": 7.703125,
+          "sha256": "140ed3d8ed88cb8aa0525fa4f48dc634710afc8bcf8670f915a2afddf95766ad"
+        },
+        "dynamic": {
+          "wall": 2.0359626000281423,
+          "cpu": 7.921875,
+          "sha256": "140ed3d8ed88cb8aa0525fa4f48dc634710afc8bcf8670f915a2afddf95766ad"
+        },
+        "share4": {
+          "wall": 2.021284200018272,
+          "cpu": 7.828125,
+          "sha256": "140ed3d8ed88cb8aa0525fa4f48dc634710afc8bcf8670f915a2afddf95766ad"
+        },
+        "control": {
+          "wall": 2.0118061000248417,
+          "cpu": 7.8125,
+          "sha256": "140ed3d8ed88cb8aa0525fa4f48dc634710afc8bcf8670f915a2afddf95766ad"
+        }
+      }
+    },
+    {
+      "level": "3ply",
+      "api": "checker_play",
+      "position_id": "checker-match-anchoring-01",
+      "repeat": 1,
+      "order": [
+        "dead",
+        "terminals",
+        "dynamic",
+        "share4",
+        "control",
+        "all"
+      ],
+      "arms": {
+        "dead": {
+          "wall": 0.05165520001901314,
+          "cpu": 0.1875,
+          "sha256": "f99b27601ccd94bc6e9184746a74f2cb64e31489b26e9a431870f624f602fc03"
+        },
+        "terminals": {
+          "wall": 0.051336799981072545,
+          "cpu": 0.171875,
+          "sha256": "f99b27601ccd94bc6e9184746a74f2cb64e31489b26e9a431870f624f602fc03"
+        },
+        "dynamic": {
+          "wall": 0.05222920002415776,
+          "cpu": 0.15625,
+          "sha256": "f99b27601ccd94bc6e9184746a74f2cb64e31489b26e9a431870f624f602fc03"
+        },
+        "share4": {
+          "wall": 0.05250690004322678,
+          "cpu": 0.1875,
+          "sha256": "f99b27601ccd94bc6e9184746a74f2cb64e31489b26e9a431870f624f602fc03"
+        },
+        "control": {
+          "wall": 0.05235130002256483,
+          "cpu": 0.1875,
+          "sha256": "f99b27601ccd94bc6e9184746a74f2cb64e31489b26e9a431870f624f602fc03"
+        },
+        "all": {
+          "wall": 0.051606399996671826,
+          "cpu": 0.1875,
+          "sha256": "f99b27601ccd94bc6e9184746a74f2cb64e31489b26e9a431870f624f602fc03"
+        }
+      }
+    },
+    {
+      "level": "3ply",
+      "api": "checker_play",
+      "position_id": "checker-match-attacking-01",
+      "repeat": 1,
+      "order": [
+        "control",
+        "dynamic",
+        "terminals",
+        "all",
+        "dead",
+        "share4"
+      ],
+      "arms": {
+        "control": {
+          "wall": 0.15104659995995462,
+          "cpu": 0.609375,
+          "sha256": "aea6d8fe516af4a7b6e9400421a970f6a701ce6eddd03b4566cc6b270705c61b"
+        },
+        "dynamic": {
+          "wall": 0.14855489996261895,
+          "cpu": 0.5625,
+          "sha256": "aea6d8fe516af4a7b6e9400421a970f6a701ce6eddd03b4566cc6b270705c61b"
+        },
+        "terminals": {
+          "wall": 0.15453310002340004,
+          "cpu": 0.53125,
+          "sha256": "aea6d8fe516af4a7b6e9400421a970f6a701ce6eddd03b4566cc6b270705c61b"
+        },
+        "all": {
+          "wall": 0.15150709997396916,
+          "cpu": 0.59375,
+          "sha256": "aea6d8fe516af4a7b6e9400421a970f6a701ce6eddd03b4566cc6b270705c61b"
+        },
+        "dead": {
+          "wall": 0.14914130000397563,
+          "cpu": 0.609375,
+          "sha256": "aea6d8fe516af4a7b6e9400421a970f6a701ce6eddd03b4566cc6b270705c61b"
+        },
+        "share4": {
+          "wall": 0.15077290002955124,
+          "cpu": 0.5625,
+          "sha256": "aea6d8fe516af4a7b6e9400421a970f6a701ce6eddd03b4566cc6b270705c61b"
+        }
+      }
+    },
+    {
+      "level": "4ply",
+      "api": "post_move_analytics",
+      "position_id": "cube-money-priming-01",
+      "repeat": 1,
+      "order": [
+        "dynamic",
+        "terminals",
+        "all",
+        "dead",
+        "share4",
+        "control"
+      ],
+      "arms": {
+        "dynamic": {
+          "wall": 0.10619790002238005,
+          "cpu": 0.375,
+          "sha256": "29fb37aa0061ff13b4092e661b22f11f7985e54e5133decc931ce863941494d6"
+        },
+        "terminals": {
+          "wall": 0.10260569996898994,
+          "cpu": 0.421875,
+          "sha256": "29fb37aa0061ff13b4092e661b22f11f7985e54e5133decc931ce863941494d6"
+        },
+        "all": {
+          "wall": 0.10885409999173135,
+          "cpu": 0.375,
+          "sha256": "29fb37aa0061ff13b4092e661b22f11f7985e54e5133decc931ce863941494d6"
+        },
+        "dead": {
+          "wall": 0.10332789999665692,
+          "cpu": 0.390625,
+          "sha256": "29fb37aa0061ff13b4092e661b22f11f7985e54e5133decc931ce863941494d6"
+        },
+        "share4": {
+          "wall": 0.10356489999685436,
+          "cpu": 0.359375,
+          "sha256": "29fb37aa0061ff13b4092e661b22f11f7985e54e5133decc931ce863941494d6"
+        },
+        "control": {
+          "wall": 0.10292029997799546,
+          "cpu": 0.40625,
+          "sha256": "29fb37aa0061ff13b4092e661b22f11f7985e54e5133decc931ce863941494d6"
+        }
+      }
+    },
+    {
+      "level": "3ply",
+      "api": "post_move_analytics",
+      "position_id": "cube-money-attacking-01",
+      "repeat": 1,
+      "order": [
+        "terminals",
+        "all",
+        "dead",
+        "share4",
+        "control",
+        "dynamic"
+      ],
+      "arms": {
+        "terminals": {
+          "wall": 0.005384100019000471,
+          "cpu": 0.0,
+          "sha256": "7335d6013f323b47287f1e6cfac1cde4b5d94a33b1ef02a068adf1343047479a"
+        },
+        "all": {
+          "wall": 0.005017100018449128,
+          "cpu": 0.0625,
+          "sha256": "7335d6013f323b47287f1e6cfac1cde4b5d94a33b1ef02a068adf1343047479a"
+        },
+        "dead": {
+          "wall": 0.005015700007788837,
+          "cpu": 0.0,
+          "sha256": "7335d6013f323b47287f1e6cfac1cde4b5d94a33b1ef02a068adf1343047479a"
+        },
+        "share4": {
+          "wall": 0.005069300008472055,
+          "cpu": 0.0,
+          "sha256": "7335d6013f323b47287f1e6cfac1cde4b5d94a33b1ef02a068adf1343047479a"
+        },
+        "control": {
+          "wall": 0.0050534000038169324,
+          "cpu": 0.0625,
+          "sha256": "7335d6013f323b47287f1e6cfac1cde4b5d94a33b1ef02a068adf1343047479a"
+        },
+        "dynamic": {
+          "wall": 0.004968799999915063,
+          "cpu": 0.0,
+          "sha256": "7335d6013f323b47287f1e6cfac1cde4b5d94a33b1ef02a068adf1343047479a"
+        }
+      }
+    },
+    {
+      "level": "3ply",
+      "api": "checker_play",
+      "position_id": "checker-money-purerace-01",
+      "repeat": 1,
+      "order": [
+        "all",
+        "dead",
+        "share4",
+        "control",
+        "dynamic",
+        "terminals"
+      ],
+      "arms": {
+        "all": {
+          "wall": 0.01917220000177622,
+          "cpu": 0.0625,
+          "sha256": "b9e27722d8fe6b510fd7c20964c996fa07dabd018c2a296d4d3ee5294f72358a"
+        },
+        "dead": {
+          "wall": 0.01846390002174303,
+          "cpu": 0.046875,
+          "sha256": "b9e27722d8fe6b510fd7c20964c996fa07dabd018c2a296d4d3ee5294f72358a"
+        },
+        "share4": {
+          "wall": 0.01746189995901659,
+          "cpu": 0.0625,
+          "sha256": "b9e27722d8fe6b510fd7c20964c996fa07dabd018c2a296d4d3ee5294f72358a"
+        },
+        "control": {
+          "wall": 0.0179391999845393,
+          "cpu": 0.0625,
+          "sha256": "b9e27722d8fe6b510fd7c20964c996fa07dabd018c2a296d4d3ee5294f72358a"
+        },
+        "dynamic": {
+          "wall": 0.017909300047904253,
+          "cpu": 0.0625,
+          "sha256": "b9e27722d8fe6b510fd7c20964c996fa07dabd018c2a296d4d3ee5294f72358a"
+        },
+        "terminals": {
+          "wall": 0.017697500006761402,
+          "cpu": 0.03125,
+          "sha256": "b9e27722d8fe6b510fd7c20964c996fa07dabd018c2a296d4d3ee5294f72358a"
+        }
+      }
+    },
+    {
+      "level": "3ply",
+      "api": "post_move_analytics",
+      "position_id": "cube-match-purerace-01",
+      "repeat": 1,
+      "order": [
+        "dead",
+        "share4",
+        "control",
+        "dynamic",
+        "terminals",
+        "all"
+      ],
+      "arms": {
+        "dead": {
+          "wall": 0.00028520001797005534,
+          "cpu": 0.0,
+          "sha256": "17b3787b39740e789f96ba5cd279d01e1e06b88ac7ba92a750bdcbd8e9baf218"
+        },
+        "share4": {
+          "wall": 0.00035200000274926424,
+          "cpu": 0.046875,
+          "sha256": "17b3787b39740e789f96ba5cd279d01e1e06b88ac7ba92a750bdcbd8e9baf218"
+        },
+        "control": {
+          "wall": 0.00025669997557997704,
+          "cpu": 0.0,
+          "sha256": "17b3787b39740e789f96ba5cd279d01e1e06b88ac7ba92a750bdcbd8e9baf218"
+        },
+        "dynamic": {
+          "wall": 0.0002742999931797385,
+          "cpu": 0.0,
+          "sha256": "17b3787b39740e789f96ba5cd279d01e1e06b88ac7ba92a750bdcbd8e9baf218"
+        },
+        "terminals": {
+          "wall": 0.0002115000388585031,
+          "cpu": 0.0,
+          "sha256": "17b3787b39740e789f96ba5cd279d01e1e06b88ac7ba92a750bdcbd8e9baf218"
+        },
+        "all": {
+          "wall": 0.0002665999927558005,
+          "cpu": 0.0,
+          "sha256": "17b3787b39740e789f96ba5cd279d01e1e06b88ac7ba92a750bdcbd8e9baf218"
+        }
+      }
+    },
+    {
+      "level": "3ply",
+      "api": "checker_play",
+      "position_id": "checker-match-purerace-01",
+      "repeat": 1,
+      "order": [
+        "share4",
+        "control",
+        "dynamic",
+        "terminals",
+        "all",
+        "dead"
+      ],
+      "arms": {
+        "share4": {
+          "wall": 0.004593299992848188,
+          "cpu": 0.0,
+          "sha256": "021cadb27a12a511f4c341fd4b655ad2820b4b50755fc10df3721957a1f2cdd4"
+        },
+        "control": {
+          "wall": 0.004315600031986833,
+          "cpu": 0.0,
+          "sha256": "021cadb27a12a511f4c341fd4b655ad2820b4b50755fc10df3721957a1f2cdd4"
+        },
+        "dynamic": {
+          "wall": 0.0040683000115677714,
+          "cpu": 0.015625,
+          "sha256": "021cadb27a12a511f4c341fd4b655ad2820b4b50755fc10df3721957a1f2cdd4"
+        },
+        "terminals": {
+          "wall": 0.0039923000149428844,
+          "cpu": 0.0,
+          "sha256": "021cadb27a12a511f4c341fd4b655ad2820b4b50755fc10df3721957a1f2cdd4"
+        },
+        "all": {
+          "wall": 0.0044525000266730785,
+          "cpu": 0.0,
+          "sha256": "021cadb27a12a511f4c341fd4b655ad2820b4b50755fc10df3721957a1f2cdd4"
+        },
+        "dead": {
+          "wall": 0.004189800005406141,
+          "cpu": 0.0,
+          "sha256": "021cadb27a12a511f4c341fd4b655ad2820b4b50755fc10df3721957a1f2cdd4"
+        }
+      }
+    },
+    {
+      "level": "3ply",
+      "api": "cube_action",
+      "position_id": "cube-match-anchoring-01",
+      "repeat": 1,
+      "order": [
+        "dynamic",
+        "terminals",
+        "control",
+        "all",
+        "share4",
+        "dead"
+      ],
+      "arms": {
+        "dynamic": {
+          "wall": 0.007289300032425672,
+          "cpu": 0.0,
+          "sha256": "f47e1ff1e40f23e0426ddb4ee36516db3c0cd27547a10522ab0265e831b0acb0"
+        },
+        "terminals": {
+          "wall": 0.007271300011780113,
+          "cpu": 0.0,
+          "sha256": "f47e1ff1e40f23e0426ddb4ee36516db3c0cd27547a10522ab0265e831b0acb0"
+        },
+        "control": {
+          "wall": 0.007259199977852404,
+          "cpu": 0.0,
+          "sha256": "f47e1ff1e40f23e0426ddb4ee36516db3c0cd27547a10522ab0265e831b0acb0"
+        },
+        "all": {
+          "wall": 0.0067474000388756394,
+          "cpu": 0.0,
+          "sha256": "f47e1ff1e40f23e0426ddb4ee36516db3c0cd27547a10522ab0265e831b0acb0"
+        },
+        "share4": {
+          "wall": 0.00714269996387884,
+          "cpu": 0.0625,
+          "sha256": "f47e1ff1e40f23e0426ddb4ee36516db3c0cd27547a10522ab0265e831b0acb0"
+        },
+        "dead": {
+          "wall": 0.007041600008960813,
+          "cpu": 0.0,
+          "sha256": "f47e1ff1e40f23e0426ddb4ee36516db3c0cd27547a10522ab0265e831b0acb0"
+        }
+      }
+    },
+    {
+      "level": "3ply",
+      "api": "post_move_analytics",
+      "position_id": "cube-money-anchoring-01",
+      "repeat": 1,
+      "order": [
+        "terminals",
+        "control",
+        "all",
+        "share4",
+        "dead",
+        "dynamic"
+      ],
+      "arms": {
+        "terminals": {
+          "wall": 0.0038007000111974776,
+          "cpu": 0.015625,
+          "sha256": "bd696bc6ebd58e3fc9e91cf4ba3d3f1941cc7437e5f6da4bc9b35c01605ab591"
+        },
+        "control": {
+          "wall": 0.003838700009509921,
+          "cpu": 0.0,
+          "sha256": "bd696bc6ebd58e3fc9e91cf4ba3d3f1941cc7437e5f6da4bc9b35c01605ab591"
+        },
+        "all": {
+          "wall": 0.0041025999817065895,
+          "cpu": 0.0,
+          "sha256": "bd696bc6ebd58e3fc9e91cf4ba3d3f1941cc7437e5f6da4bc9b35c01605ab591"
+        },
+        "share4": {
+          "wall": 0.003963999974075705,
+          "cpu": 0.0625,
+          "sha256": "bd696bc6ebd58e3fc9e91cf4ba3d3f1941cc7437e5f6da4bc9b35c01605ab591"
+        },
+        "dead": {
+          "wall": 0.0038638999685645103,
+          "cpu": 0.0,
+          "sha256": "bd696bc6ebd58e3fc9e91cf4ba3d3f1941cc7437e5f6da4bc9b35c01605ab591"
+        },
+        "dynamic": {
+          "wall": 0.003341300005558878,
+          "cpu": 0.0,
+          "sha256": "bd696bc6ebd58e3fc9e91cf4ba3d3f1941cc7437e5f6da4bc9b35c01605ab591"
+        }
+      }
+    },
+    {
+      "level": "4ply",
+      "api": "checker_play",
+      "position_id": "checker-match-purerace-01",
+      "repeat": 1,
+      "order": [
+        "control",
+        "all",
+        "share4",
+        "dead",
+        "dynamic",
+        "terminals"
+      ],
+      "arms": {
+        "control": {
+          "wall": 0.0727756000123918,
+          "cpu": 0.140625,
+          "sha256": "5902a6d06f45586ff57bf3a188fee6fd053697fb2f4fc1ef239d88d3d4e228de"
+        },
+        "all": {
+          "wall": 0.05119239998748526,
+          "cpu": 0.078125,
+          "sha256": "5902a6d06f45586ff57bf3a188fee6fd053697fb2f4fc1ef239d88d3d4e228de"
+        },
+        "share4": {
+          "wall": 0.04968080000253394,
+          "cpu": 0.09375,
+          "sha256": "5902a6d06f45586ff57bf3a188fee6fd053697fb2f4fc1ef239d88d3d4e228de"
+        },
+        "dead": {
+          "wall": 0.050016799999866635,
+          "cpu": 0.109375,
+          "sha256": "5902a6d06f45586ff57bf3a188fee6fd053697fb2f4fc1ef239d88d3d4e228de"
+        },
+        "dynamic": {
+          "wall": 0.057369999994989485,
+          "cpu": 0.078125,
+          "sha256": "5902a6d06f45586ff57bf3a188fee6fd053697fb2f4fc1ef239d88d3d4e228de"
+        },
+        "terminals": {
+          "wall": 0.07344349997583777,
+          "cpu": 0.125,
+          "sha256": "5902a6d06f45586ff57bf3a188fee6fd053697fb2f4fc1ef239d88d3d4e228de"
+        }
+      }
+    },
+    {
+      "level": "3ply",
+      "api": "post_move_analytics",
+      "position_id": "cube-money-purerace-01",
+      "repeat": 1,
+      "order": [
+        "all",
+        "share4",
+        "dead",
+        "dynamic",
+        "terminals",
+        "control"
+      ],
+      "arms": {
+        "all": {
+          "wall": 0.0013161000097170472,
+          "cpu": 0.0,
+          "sha256": "5e78234469fa6586443a302fa2f452225a4f737b74367804841a322937f022ea"
+        },
+        "share4": {
+          "wall": 0.0012937000137753785,
+          "cpu": 0.0,
+          "sha256": "5e78234469fa6586443a302fa2f452225a4f737b74367804841a322937f022ea"
+        },
+        "dead": {
+          "wall": 0.0012854999513365328,
+          "cpu": 0.0,
+          "sha256": "5e78234469fa6586443a302fa2f452225a4f737b74367804841a322937f022ea"
+        },
+        "dynamic": {
+          "wall": 0.0011719000176526606,
+          "cpu": 0.0,
+          "sha256": "5e78234469fa6586443a302fa2f452225a4f737b74367804841a322937f022ea"
+        },
+        "terminals": {
+          "wall": 0.0012778000091202557,
+          "cpu": 0.0,
+          "sha256": "5e78234469fa6586443a302fa2f452225a4f737b74367804841a322937f022ea"
+        },
+        "control": {
+          "wall": 0.0012868999619968235,
+          "cpu": 0.0,
+          "sha256": "5e78234469fa6586443a302fa2f452225a4f737b74367804841a322937f022ea"
+        }
+      }
+    },
+    {
+      "level": "4ply",
+      "api": "checker_play",
+      "position_id": "checker-money-purerace-01",
+      "repeat": 1,
+      "order": [
+        "share4",
+        "dead",
+        "dynamic",
+        "terminals",
+        "control",
+        "all"
+      ],
+      "arms": {
+        "share4": {
+          "wall": 0.057036800018977374,
+          "cpu": 0.21875,
+          "sha256": "63bc8078b2f51a73c1f2339746f2d563625c60e59d733b3bd59f05b050ec1ee9"
+        },
+        "dead": {
+          "wall": 0.055803800001740456,
+          "cpu": 0.1875,
+          "sha256": "63bc8078b2f51a73c1f2339746f2d563625c60e59d733b3bd59f05b050ec1ee9"
+        },
+        "dynamic": {
+          "wall": 0.05655160004971549,
+          "cpu": 0.25,
+          "sha256": "63bc8078b2f51a73c1f2339746f2d563625c60e59d733b3bd59f05b050ec1ee9"
+        },
+        "terminals": {
+          "wall": 0.05656280001858249,
+          "cpu": 0.171875,
+          "sha256": "63bc8078b2f51a73c1f2339746f2d563625c60e59d733b3bd59f05b050ec1ee9"
+        },
+        "control": {
+          "wall": 0.05560189997777343,
+          "cpu": 0.1875,
+          "sha256": "63bc8078b2f51a73c1f2339746f2d563625c60e59d733b3bd59f05b050ec1ee9"
+        },
+        "all": {
+          "wall": 0.057487000012770295,
+          "cpu": 0.234375,
+          "sha256": "63bc8078b2f51a73c1f2339746f2d563625c60e59d733b3bd59f05b050ec1ee9"
+        }
+      }
+    },
+    {
+      "level": "3ply",
+      "api": "checker_play",
+      "position_id": "checker-money-attacking-01",
+      "repeat": 1,
+      "order": [
+        "dead",
+        "dynamic",
+        "terminals",
+        "control",
+        "all",
+        "share4"
+      ],
+      "arms": {
+        "dead": {
+          "wall": 0.10146580002037808,
+          "cpu": 0.390625,
+          "sha256": "f3276954bc5cdc71d218d151a5d35464107b70e1a9cbd5829ad3cfda6b4ad4c6"
+        },
+        "dynamic": {
+          "wall": 0.10306349996244535,
+          "cpu": 0.359375,
+          "sha256": "f3276954bc5cdc71d218d151a5d35464107b70e1a9cbd5829ad3cfda6b4ad4c6"
+        },
+        "terminals": {
+          "wall": 0.10432869999203831,
+          "cpu": 0.390625,
+          "sha256": "f3276954bc5cdc71d218d151a5d35464107b70e1a9cbd5829ad3cfda6b4ad4c6"
+        },
+        "control": {
+          "wall": 0.09993159997975454,
+          "cpu": 0.375,
+          "sha256": "f3276954bc5cdc71d218d151a5d35464107b70e1a9cbd5829ad3cfda6b4ad4c6"
+        },
+        "all": {
+          "wall": 0.09979430004023015,
+          "cpu": 0.390625,
+          "sha256": "f3276954bc5cdc71d218d151a5d35464107b70e1a9cbd5829ad3cfda6b4ad4c6"
+        },
+        "share4": {
+          "wall": 0.10252489999402314,
+          "cpu": 0.359375,
+          "sha256": "f3276954bc5cdc71d218d151a5d35464107b70e1a9cbd5829ad3cfda6b4ad4c6"
+        }
+      }
+    },
+    {
+      "level": "3ply",
+      "api": "cube_action",
+      "position_id": "cube-money-purerace-01",
+      "repeat": 1,
+      "order": [
+        "terminals",
+        "all",
+        "share4",
+        "dynamic",
+        "dead",
+        "control"
+      ],
+      "arms": {
+        "terminals": {
+          "wall": 0.0023039999650791287,
+          "cpu": 0.0,
+          "sha256": "6da0e4cf9a7c014a02e0de47a54efa9acaed6105493133ccfc04dee8a5b42e65"
+        },
+        "all": {
+          "wall": 0.0020359999616630375,
+          "cpu": 0.0,
+          "sha256": "6da0e4cf9a7c014a02e0de47a54efa9acaed6105493133ccfc04dee8a5b42e65"
+        },
+        "share4": {
+          "wall": 0.0020626999903470278,
+          "cpu": 0.0,
+          "sha256": "6da0e4cf9a7c014a02e0de47a54efa9acaed6105493133ccfc04dee8a5b42e65"
+        },
+        "dynamic": {
+          "wall": 0.001993900048546493,
+          "cpu": 0.0,
+          "sha256": "6da0e4cf9a7c014a02e0de47a54efa9acaed6105493133ccfc04dee8a5b42e65"
+        },
+        "dead": {
+          "wall": 0.0019406999927014112,
+          "cpu": 0.0,
+          "sha256": "6da0e4cf9a7c014a02e0de47a54efa9acaed6105493133ccfc04dee8a5b42e65"
+        },
+        "control": {
+          "wall": 0.0020478999940678477,
+          "cpu": 0.0,
+          "sha256": "6da0e4cf9a7c014a02e0de47a54efa9acaed6105493133ccfc04dee8a5b42e65"
+        }
+      }
+    },
+    {
+      "level": "4ply",
+      "api": "post_move_analytics",
+      "position_id": "cube-match-priming-01",
+      "repeat": 1,
+      "order": [
+        "all",
+        "share4",
+        "dynamic",
+        "dead",
+        "control",
+        "terminals"
+      ],
+      "arms": {
+        "all": {
+          "wall": 0.1651974000269547,
+          "cpu": 0.6875,
+          "sha256": "d95b2c70cc2cc06cf6d7869fc5478e7923a65e66f711eea1f8688bf52d3ff4ec"
+        },
+        "share4": {
+          "wall": 0.20015270001022145,
+          "cpu": 0.6875,
+          "sha256": "d95b2c70cc2cc06cf6d7869fc5478e7923a65e66f711eea1f8688bf52d3ff4ec"
+        },
+        "dynamic": {
+          "wall": 0.1768770000198856,
+          "cpu": 0.640625,
+          "sha256": "d95b2c70cc2cc06cf6d7869fc5478e7923a65e66f711eea1f8688bf52d3ff4ec"
+        },
+        "dead": {
+          "wall": 0.1834283000207506,
+          "cpu": 0.671875,
+          "sha256": "d95b2c70cc2cc06cf6d7869fc5478e7923a65e66f711eea1f8688bf52d3ff4ec"
+        },
+        "control": {
+          "wall": 0.18737810000311583,
+          "cpu": 0.65625,
+          "sha256": "d95b2c70cc2cc06cf6d7869fc5478e7923a65e66f711eea1f8688bf52d3ff4ec"
+        },
+        "terminals": {
+          "wall": 0.19626460003200918,
+          "cpu": 0.703125,
+          "sha256": "d95b2c70cc2cc06cf6d7869fc5478e7923a65e66f711eea1f8688bf52d3ff4ec"
+        }
+      }
+    },
+    {
+      "level": "4ply",
+      "api": "checker_play",
+      "position_id": "checker-match-attacking-01",
+      "repeat": 1,
+      "order": [
+        "share4",
+        "dynamic",
+        "dead",
+        "control",
+        "terminals",
+        "all"
+      ],
+      "arms": {
+        "share4": {
+          "wall": 4.5669628999894485,
+          "cpu": 17.625,
+          "sha256": "f42c3fd85c87b43dacc5979afce15131001c159c2593436f73e4fb0a556dffe9"
+        },
+        "dynamic": {
+          "wall": 4.769005700014532,
+          "cpu": 18.140625,
+          "sha256": "f42c3fd85c87b43dacc5979afce15131001c159c2593436f73e4fb0a556dffe9"
+        },
+        "dead": {
+          "wall": 4.756566600000951,
+          "cpu": 18.0,
+          "sha256": "f42c3fd85c87b43dacc5979afce15131001c159c2593436f73e4fb0a556dffe9"
+        },
+        "control": {
+          "wall": 4.721552999981213,
+          "cpu": 18.03125,
+          "sha256": "f42c3fd85c87b43dacc5979afce15131001c159c2593436f73e4fb0a556dffe9"
+        },
+        "terminals": {
+          "wall": 4.7936024000518955,
+          "cpu": 18.359375,
+          "sha256": "f42c3fd85c87b43dacc5979afce15131001c159c2593436f73e4fb0a556dffe9"
+        },
+        "all": {
+          "wall": 4.9039913000306115,
+          "cpu": 18.703125,
+          "sha256": "f42c3fd85c87b43dacc5979afce15131001c159c2593436f73e4fb0a556dffe9"
+        }
+      }
+    },
+    {
+      "level": "3ply",
+      "api": "post_move_analytics",
+      "position_id": "cube-match-priming-01",
+      "repeat": 1,
+      "order": [
+        "dynamic",
+        "dead",
+        "control",
+        "terminals",
+        "all",
+        "share4"
+      ],
+      "arms": {
+        "dynamic": {
+          "wall": 0.002110100002028048,
+          "cpu": 0.0,
+          "sha256": "4a1031ad02bee41eba6580c8397be3bdb71b03630d861d87ee96567fc0a6fd57"
+        },
+        "dead": {
+          "wall": 0.00208459998248145,
+          "cpu": 0.0,
+          "sha256": "4a1031ad02bee41eba6580c8397be3bdb71b03630d861d87ee96567fc0a6fd57"
+        },
+        "control": {
+          "wall": 0.0020942999981343746,
+          "cpu": 0.0,
+          "sha256": "4a1031ad02bee41eba6580c8397be3bdb71b03630d861d87ee96567fc0a6fd57"
+        },
+        "terminals": {
+          "wall": 0.0022596000344492495,
+          "cpu": 0.03125,
+          "sha256": "4a1031ad02bee41eba6580c8397be3bdb71b03630d861d87ee96567fc0a6fd57"
+        },
+        "all": {
+          "wall": 0.002138500043656677,
+          "cpu": 0.0,
+          "sha256": "4a1031ad02bee41eba6580c8397be3bdb71b03630d861d87ee96567fc0a6fd57"
+        },
+        "share4": {
+          "wall": 0.002348999958485365,
+          "cpu": 0.0,
+          "sha256": "4a1031ad02bee41eba6580c8397be3bdb71b03630d861d87ee96567fc0a6fd57"
+        }
+      }
+    },
+    {
+      "level": "4ply",
+      "api": "post_move_analytics",
+      "position_id": "cube-match-racing-01",
+      "repeat": 1,
+      "order": [
+        "dead",
+        "control",
+        "terminals",
+        "all",
+        "share4",
+        "dynamic"
+      ],
+      "arms": {
+        "dead": {
+          "wall": 0.05769929999951273,
+          "cpu": 0.203125,
+          "sha256": "00953a64e166bb6c61c4162e461c8c7b1de020f5e5883604566775638c449014"
+        },
+        "control": {
+          "wall": 0.05694579996634275,
+          "cpu": 0.171875,
+          "sha256": "00953a64e166bb6c61c4162e461c8c7b1de020f5e5883604566775638c449014"
+        },
+        "terminals": {
+          "wall": 0.05476560001261532,
+          "cpu": 0.21875,
+          "sha256": "00953a64e166bb6c61c4162e461c8c7b1de020f5e5883604566775638c449014"
+        },
+        "all": {
+          "wall": 0.05644010001560673,
+          "cpu": 0.171875,
+          "sha256": "00953a64e166bb6c61c4162e461c8c7b1de020f5e5883604566775638c449014"
+        },
+        "share4": {
+          "wall": 0.05859939998481423,
+          "cpu": 0.171875,
+          "sha256": "00953a64e166bb6c61c4162e461c8c7b1de020f5e5883604566775638c449014"
+        },
+        "dynamic": {
+          "wall": 0.05396889999974519,
+          "cpu": 0.234375,
+          "sha256": "00953a64e166bb6c61c4162e461c8c7b1de020f5e5883604566775638c449014"
+        }
+      }
+    },
+    {
+      "level": "4ply",
+      "api": "post_move_analytics",
+      "position_id": "cube-match-purerace-01",
+      "repeat": 1,
+      "order": [
+        "control",
+        "terminals",
+        "all",
+        "share4",
+        "dynamic",
+        "dead"
+      ],
+      "arms": {
+        "control": {
+          "wall": 0.0012449000496417284,
+          "cpu": 0.0,
+          "sha256": "e4ddb72aab41e97ec58d127b6376117781f354a1b2d23e559def780578701525"
+        },
+        "terminals": {
+          "wall": 0.0011240000021643937,
+          "cpu": 0.0,
+          "sha256": "e4ddb72aab41e97ec58d127b6376117781f354a1b2d23e559def780578701525"
+        },
+        "all": {
+          "wall": 0.0007559999939985573,
+          "cpu": 0.0,
+          "sha256": "e4ddb72aab41e97ec58d127b6376117781f354a1b2d23e559def780578701525"
+        },
+        "share4": {
+          "wall": 0.0008855999913066626,
+          "cpu": 0.0,
+          "sha256": "e4ddb72aab41e97ec58d127b6376117781f354a1b2d23e559def780578701525"
+        },
+        "dynamic": {
+          "wall": 0.0007667000172659755,
+          "cpu": 0.0,
+          "sha256": "e4ddb72aab41e97ec58d127b6376117781f354a1b2d23e559def780578701525"
+        },
+        "dead": {
+          "wall": 0.0007840999751351774,
+          "cpu": 0.0,
+          "sha256": "e4ddb72aab41e97ec58d127b6376117781f354a1b2d23e559def780578701525"
+        }
+      }
+    }
+  ]
+}

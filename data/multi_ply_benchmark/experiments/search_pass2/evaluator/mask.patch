@@ -1,0 +1,81 @@
+--- a/encoding.cpp
++++ b/encoding.cpp
+@@ -1,6 +1,9 @@
+ // SPDX-License-Identifier: MPL-2.0
+ // Copyright (C) 2026 Mark Higgins
+ #include "bgbot/encoding.h"
++#if defined(__AVX2__)
++#include <immintrin.h>
++#endif
+ #include "bgbot/board.h"
+ #include <algorithm>
+ #include <cmath>
+@@ -1483,6 +1486,55 @@
+     return masks;
+ }
+ 
++// Each bit describes one of the 24 points, with the ace point at bit zero.
++#if defined(__AVX2__)
++static unsigned reverse_points(unsigned bits) {
++    static constexpr auto reversed_byte = [] {
++        std::array<unsigned, 256> table{};
++        for (unsigned i = 1; i < table.size(); ++i)
++            table[i] = (table[i >> 1] >> 1) | ((i & 1u) << 7);
++        return table;
++    }();
++    return (reversed_byte[bits & 255] << 16) |
++           (reversed_byte[(bits >> 8) & 255] << 8) | reversed_byte[bits >> 16];
++}
++
++static std::pair<ContactPointMasks, ContactPointMasks> both_contact_point_masks(const Board& board) {
++    unsigned player_points = 0, player_made = 0, enemy_points = 0, enemy_made = 0;
++    unsigned player_twos = 0, enemy_twos = 0;
++    const auto mask = [](__m256i v) { return static_cast<unsigned>(_mm256_movemask_ps(_mm256_castsi256_ps(v))); };
++    const auto zero = _mm256_setzero_si256();
++    for (int i = 0; i < 24; i += 8) {
++        const auto points = _mm256_loadu_si256(reinterpret_cast<const __m256i*>(board.data() + i + 1));
++        player_points |= mask(_mm256_cmpgt_epi32(points, zero)) << i;
++        player_made |= mask(_mm256_cmpgt_epi32(points, _mm256_set1_epi32(1))) << i;
++        enemy_points |= mask(_mm256_cmpgt_epi32(zero, points)) << i;
++        enemy_made |= mask(_mm256_cmpgt_epi32(_mm256_set1_epi32(-1), points)) << i;
++        if (i == 0) player_twos = mask(_mm256_cmpeq_epi32(points, _mm256_set1_epi32(2))) & 63;
++        if (i == 16) enemy_twos = (mask(_mm256_cmpeq_epi32(points, _mm256_set1_epi32(-2))) & 252) << 16;
++    }
++    ContactPointMasks player{}, opponent{};
++    const auto three_home_points = [](unsigned occupied) {
++        unsigned home = occupied & 63;
++        home &= home - 1;
++        return (home & (home - 1)) != 0;
++    };
++    player.occupied = player_points;
++    player.made = player_made;
++    player.enemy_blots = enemy_points ^ enemy_made;
++    player.enemy_blocks = enemy_made;
++    player.pip_loss_sources = player_points & ~player_twos;
++    player.pip_loss_targets = three_home_points(player_points) ? player.enemy_blots : player.enemy_blots & ~3u;
++    opponent.occupied = reverse_points(enemy_points);
++    opponent.made = reverse_points(enemy_made);
++    opponent.enemy_blots = reverse_points(player_points ^ player_made);
++    opponent.enemy_blocks = reverse_points(player_made);
++    opponent.pip_loss_sources = reverse_points(enemy_points & ~enemy_twos);
++    opponent.pip_loss_targets = three_home_points(opponent.occupied) ? opponent.enemy_blots : opponent.enemy_blots & ~3u;
++    return {player, opponent};
++}
++#endif
++
+ // One-based point number, with zero denoting the empty mask.
+ static int highest_set_point(unsigned mask) {
+     if (mask == 0) return 0;
+@@ -1724,8 +1776,12 @@
+     }
+ 
+     const Board flipped = flip(board);
++#if defined(__AVX2__)
++    const auto [player, opponent] = both_contact_point_masks(board);
++#else
+     const auto player = contact_point_masks(board);
+     const auto opponent = contact_point_masks(flipped);
++#endif
+     const int p_opp_back = highest_set_point(player.enemy_blots | player.enemy_blocks);
+     const int o_opp_back = highest_set_point(opponent.enemy_blots | opponent.enemy_blocks);
+ 

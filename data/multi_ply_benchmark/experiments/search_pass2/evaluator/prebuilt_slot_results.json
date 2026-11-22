@@ -1,0 +1,12 @@
+{
+  "original": {
+    "returncode": 1,
+    "stdout": "196/196 max_abs_error=0.0226002\n196/183 exception=Board inference requires Tesauro or extended contact inputs\n167/244 exception=Board inference requires Tesauro or extended contact inputs\n196/244 max_abs_error=5.96046e-08\n196/244 max_abs_error=0\nOversized network accepted\nOversized network accepted\n",
+    "stderr": ""
+  },
+  "guarded": {
+    "returncode": 0,
+    "stdout": "196/196 max_abs_error=5.96046e-08\n196/183 max_abs_error=0\n167/244 max_abs_error=0\n196/244 max_abs_error=5.96046e-08\n196/244 max_abs_error=0\n197/244 rejected\n196/245 rejected\n",
+    "stderr": ""
+  }
+}

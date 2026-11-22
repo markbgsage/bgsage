@@ -37,6 +37,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <limits>
+#include <type_traits>
 #include <vector>
 
 namespace bgbot {
@@ -280,6 +281,10 @@ void eval_groups_pair(const S& s, const std::vector<Board>& cands,
         if (static_cast<int>(saved_base.size()) < nh) saved_base.resize(nh);
         if (static_cast<int>(saved_inputs.size()) < ni) saved_inputs.resize(ni);
         const bool is_pr = (nidx == 0);
+        // Only the constructor taking prebuilt pair nets can supply a network
+        // that consumes a prefix of its slot's standard encoding.
+        const int slot_width = is_pr ? TESAURO_INPUTS : EXTENDED_CONTACT_INPUTS;
+        const bool standard_width = !std::is_same_v<S, GamePlanPairStrategy> || ni == slot_width;
 
         if (is_pr) {
             auto inp = compute_tesauro_inputs(cands[idxs[j]]);
@@ -294,14 +299,15 @@ void eval_groups_pair(const S& s, const std::vector<Board>& cands,
 
         for (int k = j + 1; k < n; ++k) {
             if (done[k] || nn_idx_of[k] != nidx) continue;
-            if (is_pr) {
-                auto inp = compute_tesauro_inputs(cands[idxs[k]]);
-                out[idxs[k]] = nn.forward_from_base(
-                    inp.data(), saved_base.data(), saved_inputs.data());
+            if (standard_width) {
+                out[idxs[k]] = nn.forward_board_from_base(
+                    cands[idxs[k]], cands[idxs[j]], saved_base.data(), saved_inputs.data());
             } else {
-                auto inp = compute_extended_contact_inputs(cands[idxs[k]]);
-                out[idxs[k]] = nn.forward_from_base(
-                    inp.data(), saved_base.data(), saved_inputs.data());
+                const auto from_prefix = [&](const auto& inputs) {
+                    return nn.forward_from_base(inputs.data(), saved_base.data(), saved_inputs.data());
+                };
+                out[idxs[k]] = is_pr ? from_prefix(compute_tesauro_inputs(cands[idxs[k]]))
+                                     : from_prefix(compute_extended_contact_inputs(cands[idxs[k]]));
             }
             done[k] = 1;
         }
@@ -478,11 +484,11 @@ constexpr std::array<DiceRoll21, 21> ALL_ROLLS_21 = {{
     {5,6,2}
 }};
 
-// Local to one pair of 3-ply searches. There are only two move-generation
-// levels: the root and one child for each of its 21 rolls. Parallel workers
-// each own a distinct roll slot; the first traversal joins before any read.
+// Candidate probabilities shared by the live and dead searches in a cube
+// call. Each path has a single writer, and the live search joins before the
+// dead search reads. A skipped or divergent path falls back to evaluation.
 struct CandidateBatchCache {
-    static constexpr int ROOT = 21;
+    static constexpr int ROOT = 0;
     static constexpr int MAX_CANDIDATES = 16;
     using Probs = std::array<float, NUM_OUTPUTS>;
 
@@ -496,10 +502,17 @@ struct CandidateBatchCache {
         const Strategy* model = nullptr;
         int pin = -1;
     };
-    std::array<Node, ROOT + 1> nodes;
+    explicit CandidateBatchCache(int plies)
+        : node_count(plies == 4 ? 1 + 21 + 21 * 21 : 1 + 21) {}
+    const int node_count;
+    std::vector<Node> nodes;
     bool reading = false;
 
     Node* match_node(int path, const Board& board, const EvalCtx& ctx) {
+        // A live root already in the tree cache needs no candidate storage.
+        // Allocate on the calling thread before any parallel roll dispatch.
+        if (!reading && path == ROOT) nodes.resize(node_count);
+        if (nodes.empty()) return nullptr;
         Node& node = nodes[path];
         if (reading) {
             if (node.model != ctx.strategy || node.pin != ctx.pinned_nn || node.board != board)
@@ -715,6 +728,7 @@ void cubeful_eval_recursive(
         thread_local std::vector<int> live_idx;
 
         const auto& roll = ALL_ROLLS_21[r];
+        const int child_path = ShareBatches ? 21 * roll_path + r + 1 : 0;
         const float w = static_cast<float>(roll.weight);
         float arCfLocal[EVAL_MAX_CCI * 2];
 
@@ -736,7 +750,7 @@ void cubeful_eval_recursive(
                                      arCfLocal, &probsTmp);
             } else {
                 cubeful_eval_recursive<ShareBatches>(opp_board, aci, expanded_cci, ctx, plies - 1,
-                               false, arCfLocal, &probsTmp, child_parallel, r);
+                               false, arCfLocal, &probsTmp, child_parallel, child_path);
             }
             for (int i = 0; i < expanded_cci; i++) rollCf[i] = w * arCfLocal[i];
             for (int k = 0; k < NUM_OUTPUTS; k++)
@@ -861,22 +875,28 @@ void cubeful_eval_recursive(
                                  chosen_post_probs, arCfLocal, &probsTmp);
         } else {
             cubeful_eval_recursive<ShareBatches>(opp_pre_roll, aci, expanded_cci, ctx, plies - 1,
-                           false, arCfLocal, &probsTmp, child_parallel, r);
+                           false, arCfLocal, &probsTmp, child_parallel, child_path);
         }
         for (int i = 0; i < expanded_cci; i++) rollCf[i] = w * arCfLocal[i];
         for (int k = 0; k < NUM_OUTPUTS; k++)
             rollProbs[k] = w * probsTmp[k];
     };
 
-    // Execute the 21 rolls (serial inside rollout trials; parallel at the
-    // top tree levels of standalone N-ply analytics calls: enabled when
-    // the entry passed n_threads > 1 and n_plies > 2, children only while
-    // n_plies > 2, children only while plies-1 > 2). Accumulation happens in
-    // fixed roll order either way, so thread count never changes the result.
+    // Roll work varies substantially. At ordinary parallel widths, workers
+    // claim rolls starting with the expensive doubles and reduce in fixed
+    // dice order. Keep the existing chunk dispatch for small or nested jobs.
     std::array<std::array<float, NUM_OUTPUTS>, 21> roll_probs{};
     float roll_cf[21][EVAL_MAX_CCI * 2];
 
-    if (allow_parallel && ctx.n_threads > 1) {
+    if (allow_parallel && ctx.n_threads >= 4 && ctx.n_threads <= 21) {
+        std::atomic<int> next_roll{0};
+        multipy_parallel_run(ctx.n_threads, [&] {
+            for (int r = next_roll.fetch_add(1, std::memory_order_relaxed); r < 21;
+                 r = next_roll.fetch_add(1, std::memory_order_relaxed)) {
+                eval_roll(r, roll_cf[r], roll_probs[r]);
+            }
+        });
+    } else if (allow_parallel && ctx.n_threads > 1) {
         multipy_parallel_for(21, std::min(ctx.n_threads, 21), [&](int r) {
             eval_roll(r, roll_cf[r], roll_probs[r]);
         });
@@ -1271,7 +1291,7 @@ CubeDecision MultiPlyStrategy::cube_decision_with_cubeless_probs(
     std::array<float, NUM_OUTPUTS>& pre_roll_probs) const
 {
     const Board flipped = flip(board);
-    if (n_plies_ != 3 || full_depth_opponent_ || filter_strat_ ||
+    if ((n_plies_ != 3 && n_plies_ != 4) || full_depth_opponent_ || filter_strat_ ||
         (bearoff_db_ && bearoff_db_->is_bearoff(flipped)) ||
         check_game_over(flipped) != GameResult::NOT_OVER) {
         auto decision = cube_decision_nply(board, cube, *base_, n_plies_, move_filter_,
@@ -1280,15 +1300,15 @@ CubeDecision MultiPlyStrategy::cube_decision_with_cubeless_probs(
         return decision;
     }
 
-    auto batches = std::make_unique<CandidateBatchCache>();
+    CandidateBatchCache batches(n_plies_);
     CubeDecision decision{};
     cube_decision_nply_multi_impl<true>(board, &cube, 1, *base_, n_plies_, &decision,
-        move_filter_, parallel_threads_, cube_move_filter, false, batches.get());
+        move_filter_, parallel_threads_, cube_move_filter, false, &batches);
 
-    batches->reading = true;
+    batches.reading = true;
     const auto post_probs = cubeless_post_probs<true>(
         flipped, flipped, n_plies_, parallel_thread_count(n_plies_), false,
-        *base_, bearoff_db_, move_prefilter_.get(), batches.get());
+        *base_, bearoff_db_, move_prefilter_.get(), &batches);
     pre_roll_probs = invert_probs(post_probs);
     return decision;
 }

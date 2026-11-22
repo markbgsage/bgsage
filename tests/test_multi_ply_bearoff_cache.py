@@ -65,6 +65,43 @@ def test_warm_cache_distinguishes_nn_and_database(model):
     assert evaluate(None) == expected_nn
 
 
+def test_one_ply_cube_uses_analyzer_model_and_bearoff(model):
+    weights, raw, db = model
+    args = (BOARD, 2, bgbot_cpp.CubeOwner.PLAYER, weights.strategy_type)
+    context = dict(away1=3, away2=5)
+    expected = bgbot_cpp.evaluate_cube_decision_unified(
+        *args, weights.weight_paths_list, weights.hidden_sizes_list, bearoff_db=db, **context)
+    # Empty paths ensure a preloaded analyzer never reopens the weights.
+    wrapped = bgbot_cpp.BearoffStrategy(raw, db)
+    for strategy, database in ((raw, db), (wrapped, db), (wrapped, None)):
+        assert bgbot_cpp.evaluate_cube_decision_unified(
+            *args, [], [], loaded_strategy=strategy, bearoff_db=database, **context) == expected
+
+
+def test_checker_batch_matches_individual_opponent_trees(model):
+    _, strategy, db = model
+    owner = bgbot_cpp.CubeOwner.OPPONENT
+    for dice in ((3, 1), (6, 6)):
+        moves = bgbot_cpp.possible_moves(BOARD, *dice)
+        expected = []
+        for endpoint in moves:
+            single = bgbot_cpp.cubeful_probs_and_equity_nply(
+                bgbot_cpp.flip_board(endpoint), owner, strategy, 3, cube_value=2,
+                away1=5, away2=3, bearoff_db=db, root_board=BOARD, max_cube_value=4)
+            expected.append((endpoint, single["probs"], single["equity"]))
+        for threads in (1, 4):
+            assert bgbot_cpp.cubeful_checker_moves_nply(
+                BOARD, *dice, owner, strategy, 3, threads, 2, 5, 3, False, True, True, db, 4
+            ) == expected
+
+
+def test_checker_batch_requires_strategy():
+    with pytest.raises(TypeError):
+        bgbot_cpp.cubeful_checker_moves_nply(
+            BOARD, 2, 1, bgbot_cpp.CubeOwner.CENTERED, None, 2, 4, 1,
+            0, 0, False, True, True, None, 0)
+
+
 def test_loaded_model_distinguishes_automatic_and_explicit_cube_efficiency(model):
     weights, raw, _ = model
     contact = [

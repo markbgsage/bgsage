@@ -1,0 +1,44 @@
+{
+  "sha256": {
+    "published": "4d54d2a940632fecf6dbfec1169e35305e1741c5457b242a7ba9c5f217540c4f",
+    "native": "6bddb826e7811d708d9486b7f6242dd6582737789b326e17500aef6b12d7edc7"
+  },
+  "levels": {
+    "2ply": {
+      "published": {
+        "seconds": 1.0714202999370173,
+        "calls": 100,
+        "exact": 100
+      },
+      "native": {
+        "seconds": 0.5170811000862159,
+        "calls": 100,
+        "exact": 100
+      }
+    },
+    "3ply": {
+      "published": {
+        "seconds": 7.844011499895714,
+        "calls": 100,
+        "exact": 100
+      },
+      "native": {
+        "seconds": 7.564012200105935,
+        "calls": 100,
+        "exact": 100
+      }
+    },
+    "4ply": {
+      "published": {
+        "seconds": 37.34878210001625,
+        "calls": 20,
+        "exact": 20
+      },
+      "native": {
+        "seconds": 37.047715799941216,
+        "calls": 20,
+        "exact": 20
+      }
+    }
+  }
+}

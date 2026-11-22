@@ -1,0 +1,69 @@
+{
+  "metadata": {
+    "hashes": {
+      "base": "e3205e4a3dcd20df471ca26d2ae051d5dfb27600aab5d9fefa5e08b0314f52f4",
+      "inplace": "f45f4aff5f68a305a1127f25d0b11aa2acb7ae9b77f11c237becfb72848b87fb"
+    },
+    "mask": 15,
+    "threads": 4,
+    "levels": [
+      "2ply=2",
+      "3ply=2"
+    ],
+    "cases_per_repeat": 300
+  },
+  "levels": {
+    "2ply": {
+      "base": {
+        "calls": 600,
+        "seconds": 2.642835499427747,
+        "speedup_vs_relink": 1.0,
+        "paired_median_speedup": 1.0,
+        "faster_pairs": 0,
+        "exact_vs_relink": 600,
+        "by_repeat": {
+          "0": 1.2731952994363382,
+          "1": 1.3696401999914087
+        }
+      },
+      "inplace": {
+        "calls": 600,
+        "seconds": 2.6215020004310645,
+        "speedup_vs_relink": 1.0081378915572732,
+        "paired_median_speedup": 1.0030461172292315,
+        "faster_pairs": 320,
+        "exact_vs_relink": 600,
+        "by_repeat": {
+          "0": 1.2471431999001652,
+          "1": 1.3743588005308993
+        }
+      }
+    },
+    "3ply": {
+      "base": {
+        "calls": 600,
+        "seconds": 16.85299550014315,
+        "speedup_vs_relink": 1.0,
+        "paired_median_speedup": 1.0,
+        "faster_pairs": 0,
+        "exact_vs_relink": 600,
+        "by_repeat": {
+          "0": 8.560280700156,
+          "1": 8.292714799987152
+        }
+      },
+      "inplace": {
+        "calls": 600,
+        "seconds": 16.539468400529586,
+        "speedup_vs_relink": 1.0189562984747156,
+        "paired_median_speedup": 1.0146907010072428,
+        "faster_pairs": 376,
+        "exact_vs_relink": 600,
+        "by_repeat": {
+          "0": 8.293215600482654,
+          "1": 8.246252800046932
+        }
+      }
+    }
+  }
+}

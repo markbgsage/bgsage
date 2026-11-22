@@ -1,0 +1,20 @@
+{
+  "feature_boards": 65504,
+  "network_configurations": [19, 20, 21, 22, 23, 24],
+  "classifications_per_arm": 393024,
+  "windows_parity_arms": ["control", "route", "mask", "delta", "combined"],
+  "parity_reports_identical": true,
+  "native_delta_probe": {
+    "encodings": 133808,
+    "at_sparse_limit": 4932,
+    "nn_outputs": 669040,
+    "max_nn_shift": 0,
+    "sibling_corpus_sha256": "5a13da54f7fb4db7a661bece3f6d0af4b8e112c81b40f086e64e8fadbc10ecce",
+    "feature_corpus_sha256": "674d1524eb05bc0603272c87a137c17779252ec729c22e0fc8d4a6921aae5110"
+  },
+  "existing_tests": {
+    "arm": "combined",
+    "modules": ["test_backgame_category.py", "test_extended_inputs.py", "test_extended_inputs_v2.py"],
+    "passed": 106
+  }
+}

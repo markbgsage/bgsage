@@ -791,10 +791,68 @@ std::array<float, NN_OUTPUTS> NeuralNetwork::forward_save_base(
 std::array<float, NN_OUTPUTS> NeuralNetwork::forward_from_base(
     const float* inputs, const float* saved_base, const float* saved_inputs) const
 {
+    const int ni = n_inputs_;
+    // Collect changed inputs into a compact list.
+    // In backgammon, a move typically changes 4-12 of 196/244 inputs.
+    int delta_indices[INPUT_DELTA_LIMIT];
+    float delta_vals[INPUT_DELTA_LIMIT];
+    int n_deltas = 0;
+
+    int i = 0;
+#if defined(BGBOT_USE_AVX2)
+    for (; i + 7 < ni && n_deltas < INPUT_DELTA_LIMIT; i += 8) {
+        const __m256 current = _mm256_loadu_ps(inputs + i);
+        const __m256 previous = _mm256_loadu_ps(saved_inputs + i);
+        const __m256 delta = _mm256_sub_ps(current, previous);
+        unsigned mask = _mm256_movemask_ps(_mm256_cmp_ps(delta, _mm256_setzero_ps(), _CMP_NEQ_UQ));
+        while (mask && n_deltas < INPUT_DELTA_LIMIT) {
+#if defined(_MSC_VER)
+            unsigned long lane;
+            _BitScanForward(&lane, mask);
+#else
+            const int lane = __builtin_ctz(mask);
+#endif
+            delta_indices[n_deltas] = i + lane;
+            delta_vals[n_deltas++] = inputs[i + lane] - saved_inputs[i + lane];
+            mask &= mask - 1;
+        }
+    }
+#endif
+    for (; i < ni && n_deltas < INPUT_DELTA_LIMIT; ++i) {
+        const float d = inputs[i] - saved_inputs[i];
+        if (d != 0.0f) {
+            delta_indices[n_deltas] = i;
+            delta_vals[n_deltas++] = d;
+        }
+    }
+
+    // The sparse list may have filled before the last changed input. Use
+    // the complete input vector for such widely separated candidates.
+    if (n_deltas == INPUT_DELTA_LIMIT) return forward(inputs);
+
+    return forward_with_deltas(saved_base, delta_indices, delta_vals, n_deltas);
+}
+
+std::array<float, NN_OUTPUTS> NeuralNetwork::forward_board_from_base(
+    const Board& board, const Board& base, const float* saved_hidden, const float* saved_inputs) const {
+    const bool tesauro = n_inputs_ == TESAURO_INPUTS;
+    if (!tesauro && n_inputs_ != EXTENDED_CONTACT_INPUTS)
+        throw std::invalid_argument("Board inference requires Tesauro or extended contact inputs");
+    int indices[INPUT_DELTA_LIMIT];
+    float values[INPUT_DELTA_LIMIT];
+    const int count = board_input_deltas(board, base, saved_inputs, tesauro, indices, values);
+    if (count == INPUT_DELTA_LIMIT) {
+        if (tesauro) return forward(compute_tesauro_inputs(board));
+        return forward(compute_extended_contact_inputs(board).data());
+    }
+    return forward_with_deltas(saved_hidden, indices, values, count);
+}
+
+std::array<float, NN_OUTPUTS> NeuralNetwork::forward_with_deltas(
+    const float* saved_base, const int* delta_indices, const float* delta_vals, int n_deltas) const {
     ensure_transposed_weights();
 
     const int nh = n_hidden_;
-    const int ni = n_inputs_;
     const int hid_stride = nh + 1;
 
     // Copy saved pre-sigmoid hidden sums, then apply input deltas
@@ -809,44 +867,6 @@ std::array<float, NN_OUTPUTS> NeuralNetwork::forward_from_base(
     }
 
     std::memcpy(hiddens, saved_base, nh * sizeof(float));
-
-    // Collect changed inputs into a compact list.
-    // In backgammon, a move typically changes 4-12 of 196/244 inputs.
-    int delta_indices[64];
-    float delta_vals[64];
-    int n_deltas = 0;
-
-    int i = 0;
-#if defined(BGBOT_USE_AVX2)
-    for (; i + 7 < ni && n_deltas < 64; i += 8) {
-        const __m256 current = _mm256_loadu_ps(inputs + i);
-        const __m256 previous = _mm256_loadu_ps(saved_inputs + i);
-        const __m256 delta = _mm256_sub_ps(current, previous);
-        unsigned mask = _mm256_movemask_ps(_mm256_cmp_ps(delta, _mm256_setzero_ps(), _CMP_NEQ_UQ));
-        while (mask && n_deltas < 64) {
-#if defined(_MSC_VER)
-            unsigned long lane;
-            _BitScanForward(&lane, mask);
-#else
-            const int lane = __builtin_ctz(mask);
-#endif
-            delta_indices[n_deltas] = i + lane;
-            delta_vals[n_deltas++] = inputs[i + lane] - saved_inputs[i + lane];
-            mask &= mask - 1;
-        }
-    }
-#endif
-    for (; i < ni && n_deltas < 64; ++i) {
-        const float d = inputs[i] - saved_inputs[i];
-        if (d != 0.0f) {
-            delta_indices[n_deltas] = i;
-            delta_vals[n_deltas++] = d;
-        }
-    }
-
-    // The sparse list may have filled before the last changed input. Use
-    // the complete input vector for such widely separated candidates.
-    if (n_deltas == 64) return forward(inputs);
 
     // Apply deltas using transposed weight matrix for contiguous column access.
     // hidden_weights_T_[col * nh + h] gives the weight for hidden node h, input col.
@@ -2028,8 +2048,12 @@ GamePlanPairStrategy::GamePlanPairStrategy(
 {
     // Prebuild transposed weights for thread-safe concurrent evaluation
     // (forward_from_base builds this lazily and is not synchronized).
-    for (auto& nn : nns_) {
-        if (nn) nn->ensure_transposed_weights();
+    for (int i = 0; i < NUM_PAIR_NNS; ++i) {
+        if (!nns_[i]) continue;
+        const int width = i == 0 ? TESAURO_INPUTS : EXTENDED_CONTACT_INPUTS;
+        if (nns_[i]->n_inputs() > width)
+            throw std::invalid_argument("Pair network input width exceeds its slot encoding");
+        nns_[i]->ensure_transposed_weights();
     }
 }
 
@@ -2458,10 +2482,10 @@ inline BackgameCategory category_from_anchor_mask(int mask) {
 // `opponent_gp` are the precomputed plans, with the opponent's PURERACE
 // already coerced to RACING as select_nn_idx does.
 BackgameCategory backgame_category_given_plans(
-    const Board& board, GamePlan player_gp, GamePlan opponent_gp)
+    const Board& board, GamePlan player_gp, GamePlan opponent_gp,
+    int player_pips, int opp_pips)
 {
     if (player_gp == GamePlan::ANCHORING && opponent_gp == GamePlan::RACING) {
-        auto [player_pips, opp_pips] = pip_counts(board);
         if (player_pips > opp_pips) {
             int mask = 0;
             for (int pt = 19; pt <= 24; ++pt)
@@ -2470,7 +2494,6 @@ BackgameCategory backgame_category_given_plans(
         }
     }
     if (player_gp == GamePlan::RACING && opponent_gp == GamePlan::ANCHORING) {
-        auto [player_pips, opp_pips] = pip_counts(board);
         if (opp_pips > player_pips) {
             int mask = 0;
             for (int pt = 1; pt <= 6; ++pt)
@@ -2483,11 +2506,11 @@ BackgameCategory backgame_category_given_plans(
 }  // namespace
 
 BackgameCategory backgame_category(const Board& board) {
-    GamePlan player_gp = classify_game_plan(board);
-    if (player_gp == GamePlan::PURERACE) return BackgameCategory::NONE;
-    GamePlan opponent_gp = classify_game_plan(flip(board));
-    if (opponent_gp == GamePlan::PURERACE) opponent_gp = GamePlan::RACING;
-    return backgame_category_given_plans(board, player_gp, opponent_gp);
+    if (is_race(board)) return BackgameCategory::NONE;
+    const auto [p1, p2] = pip_counts(board);
+    const auto player_gp = classify_contact_game_plan(board, p1, p2);
+    const auto opponent_gp = classify_contact_game_plan(flip(board), p2, p1);
+    return backgame_category_given_plans(board, player_gp, opponent_gp, p1, p2);
 }
 
 namespace {
@@ -2535,16 +2558,13 @@ namespace {
 // _massive_p1_holder): behind in pips with >= MASSIVE_ALT_ANCHORS anchors in
 // the opponent's home board, or >= MASSIVE_MIN_ANCHORS anchors and
 // >= MASSIVE_BACK_MIN checkers back (opponent's home board + bar).
-bool p1_massive_holder(const Board& b) {
+bool p1_has_massive_structure(const Board& b) {
     int anchors = 0, back = b[25];
     for (int i = 19; i <= 24; ++i) {
         if (b[i] >= 2) ++anchors;
         if (b[i] > 0) back += b[i];
     }
-    if (anchors < MASSIVE_MIN_ANCHORS) return false;
-    if (anchors < MASSIVE_ALT_ANCHORS && back < MASSIVE_BACK_MIN) return false;
-    auto [p1_pips, p2_pips] = pip_counts(b);
-    return p1_pips > p2_pips;
+    return anchors >= MASSIVE_MIN_ANCHORS && (anchors >= MASSIVE_ALT_ANCHORS || back >= MASSIVE_BACK_MIN);
 }
 }  // namespace
 
@@ -2552,14 +2572,15 @@ bool massive_category(const Board& board) {
     // Disjoint from the two more specific regions: a late containment game
     // and a snake both read as "many checkers back" but are their own games.
     if (containment_category(board) || snake_category(board)) return false;
-    return p1_massive_holder(board) || p1_massive_holder(flip(board));
+    const auto [p1, p2] = pip_counts(board);
+    return (p1 > p2 && p1_has_massive_structure(board)) ||
+           (p2 > p1 && p1_has_massive_structure(flip(board)));
 }
 
-BackgamePhase backgame_phase(const Board& board) {
+static BackgamePhase backgame_phase(const Board& board, int p1_pips, int p2_pips) {
     int a1 = 0, a2 = 0;
     for (int pt = 19; pt <= 24; ++pt) if (board[pt] >= 2) ++a1;
     for (int pt = 1; pt <= 6; ++pt) if (board[pt] <= -2) ++a2;
-    auto [p1_pips, p2_pips] = pip_counts(board);
 
     // Which side is the holder B: two or more anchors and behind on pips.
     // A single-anchor fallback was tried and rejected (2026-09-02): it routed
@@ -2600,6 +2621,11 @@ BackgamePhase backgame_phase(const Board& board) {
                           : BackgamePhase::LATE_CONTAINMENT;
     if (r_home >= 10 || r_off >= 1) return BackgamePhase::BEAR_IN;
     return BackgamePhase::WAITING;
+}
+
+BackgamePhase backgame_phase(const Board& board) {
+    const auto [p1, p2] = pip_counts(board);
+    return backgame_phase(board, p1, p2);
 }
 
 BackgameAwarePairStrategy::BackgameAwarePairStrategy(
@@ -2669,49 +2695,35 @@ int BackgameAwarePairStrategy::root_pin_for(const Board& root) const {
 }
 
 int BackgameAwarePairStrategy::select_nn_idx(const Board& board) const {
-    GamePlan player_gp = classify_game_plan(board);
-    if (player_gp == GamePlan::PURERACE) return 0;
-    GamePlan opponent_gp = classify_game_plan(flip(board));
-    if (opponent_gp == GamePlan::PURERACE) {
-        opponent_gp = GamePlan::RACING;
-    }
+    if (is_race(board)) return 0;
+    const Board opponent = flip(board);
+    if (snake_ && (p1_holds_snake(board) || p1_holds_snake(opponent))) return 22;
+    if (phase_containment_ && (p2_is_escaper(board) || p2_is_escaper(opponent))) return 21;
+    const auto [player_pips, opp_pips] = pip_counts(board);
+    if (massive_ && ((player_pips > opp_pips && p1_has_massive_structure(board)) ||
+                     (opp_pips > player_pips && p1_has_massive_structure(opponent)))) return 23;
+    const GamePlan player_gp = classify_contact_game_plan(board, player_pips, opp_pips);
+    const GamePlan opponent_gp = classify_contact_game_plan(opponent, opp_pips, player_pips);
 
     // Stage 11 (20 NNs): the same detection as below, but the backgame NN is
     // picked by the backgame's CATEGORY — 17 deep, 18 middle, 19 double-anchor
     // — the same NN whichever side holds it.
     if (categorized_backgame_) {
-        // Phased layout with the snake NN: a far-side prime holding a
-        // straggler against a crunched board is its own game before anything
-        // else (the holder's points sit in the opponent's home board, so the
-        // plan-pair gate would otherwise read it as a back game).
-        if (snake_ && snake_category(board))
-            return 22;
-        // Phased layout, first: a containment game is its own game whatever
-        // the container's structure — anchors that would otherwise read as a
-        // back game included — so it takes precedence over the trio.
-        if (phase_containment_ && containment_category(board))
-            return 21;
-        // Phased layout with the massive NN: the benchmark's massive family
-        // (many checkers back, behind in the race) ahead of the category
-        // trio, which would otherwise split it by anchor depth.
-        if (massive_ && massive_category(board))
-            return 23;
         BackgameCategory cat =
-            backgame_category_given_plans(board, player_gp, opponent_gp);
+            backgame_category_given_plans(board, player_gp, opponent_gp, player_pips, opp_pips);
         if (cat != BackgameCategory::NONE)
             return 17 + static_cast<int>(cat);
         // Phased layout: a containment position the plan-pair gate rejected
         // (the racer's block reads as priming, or the holder's) goes to the
         // early-containment NN instead of the standard pair net.
         if (phase_containment_ &&
-            backgame_phase(board) == BackgamePhase::EARLY_CONTAINMENT)
+            backgame_phase(board, player_pips, opp_pips) == BackgamePhase::EARLY_CONTAINMENT)
             return 20;
         return 1 + game_plan_pair_index(player_gp, opponent_gp);
     }
 
     // Player back game: (anchoring, racing) + player behind + 2+ anchors in opp home
     if (player_gp == GamePlan::ANCHORING && opponent_gp == GamePlan::RACING) {
-        auto [player_pips, opp_pips] = pip_counts(board);
         if (player_pips > opp_pips) {
             int anchors = 0, back = board[25];
             for (int pt = 19; pt <= 24; ++pt) {
@@ -2729,7 +2741,6 @@ int BackgameAwarePairStrategy::select_nn_idx(const Board& board) const {
 
     // Opponent back game: (racing, anchoring) + opp behind + 2+ opp anchors in player home
     if (player_gp == GamePlan::RACING && opponent_gp == GamePlan::ANCHORING) {
-        auto [player_pips, opp_pips] = pip_counts(board);
         if (opp_pips > player_pips) {
             int opp_anchors = 0, opp_back = board[0];
             for (int pt = 1; pt <= 6; ++pt) {
