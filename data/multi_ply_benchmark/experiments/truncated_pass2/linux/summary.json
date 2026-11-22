@@ -1,0 +1,86 @@
+{
+  "1T": {
+    "seconds": {
+      "baseline": 7.778027151,
+      "candidate": 5.397786423
+    },
+    "speedup": 1.4409660815510927,
+    "exact": 58,
+    "same_best_checker": 100,
+    "same_checker_order": 100,
+    "same_cube_action": 100,
+    "observations": 4724,
+    "material_farther": 0,
+    "material_closer": 0,
+    "api_seconds": {
+      "checker_play": [
+        4.600433531,
+        3.201235892
+      ],
+      "cube_action": [
+        1.562707104,
+        1.105403489
+      ],
+      "post_move_analytics": [
+        1.614886516,
+        1.091147042
+      ]
+    }
+  },
+  "2T": {
+    "seconds": {
+      "baseline": 51.003720802000004,
+      "candidate": 41.260216372
+    },
+    "speedup": 1.2361476813924839,
+    "exact": 29,
+    "same_best_checker": 100,
+    "same_checker_order": 100,
+    "same_cube_action": 100,
+    "observations": 4724,
+    "material_farther": 0,
+    "material_closer": 0,
+    "api_seconds": {
+      "checker_play": [
+        28.692087462,
+        23.016210237
+      ],
+      "cube_action": [
+        11.13068369,
+        9.072163077
+      ],
+      "post_move_analytics": [
+        11.18094965,
+        9.171843058
+      ]
+    }
+  },
+  "3T": {
+    "seconds": {
+      "baseline": 208.819725302,
+      "candidate": 211.981407246
+    },
+    "speedup": 0.9850850978627057,
+    "exact": 29,
+    "same_best_checker": 100,
+    "same_checker_order": 100,
+    "same_cube_action": 100,
+    "observations": 4724,
+    "material_farther": 0,
+    "material_closer": 0,
+    "api_seconds": {
+      "checker_play": [
+        108.875223228,
+        116.280515516
+      ],
+      "cube_action": [
+        49.49538089,
+        44.936646337
+      ],
+      "post_move_analytics": [
+        50.449121184,
+        50.764245393
+      ]
+    }
+  }
+}

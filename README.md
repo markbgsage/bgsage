@@ -44,6 +44,8 @@ The engine exposes Python and C++ interfaces. In Python, import `BgBotAnalyzer` 
 
 The timing runner measures 100 checker calls, 100 cube calls and 100 post-move calls. Each 100-position set is split evenly between unlimited play and five-point matches, with 20 positions per game plan. The cube and post-move calls use the same physical positions from opposite players' perspectives. The runner saves every returned field and reports timings by API, game plan and play format. [Positions and commands](data/multi_ply_benchmark/README.md)
 
+The CPU benchmark compares the original engine, the preceding release and the current engine at 1P–4P and 1T–3T. It reports wall time and accuracy against the same full-game rollout references on Linux and Windows. [All-level results](data/multi_ply_benchmark/experiments/truncated_pass2/results.md) · [Truncated-rollout experiments and reproduction](data/multi_ply_benchmark/experiments/truncated_pass2/README.md)
+
 The [third CPU search study](data/multi_ply_benchmark/experiments/search_pass3/README.md)
 measures checker, cube and post-move latency against the preceding engine
 and checks the values against full-game rollouts.

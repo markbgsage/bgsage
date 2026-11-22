@@ -1,0 +1,434 @@
+{
+  "direct": {
+    "median_ns": {
+      "False": 855.066,
+      "True": 839.0815
+    },
+    "floats": 14220,
+    "max_vs_control": 0.0,
+    "max_between_delta_paths": 0.0,
+    "sha256": "f302a46f3f5b490b6fd63e1bb493f66a544e911e55da239e427413f514c97aad",
+    "measurements": [
+      {
+        "direct": false,
+        "nanoseconds": 884.188
+      },
+      {
+        "direct": false,
+        "nanoseconds": 858.523
+      },
+      {
+        "direct": false,
+        "nanoseconds": 847.89
+      },
+      {
+        "direct": false,
+        "nanoseconds": 884.137
+      },
+      {
+        "direct": true,
+        "nanoseconds": 876.818
+      },
+      {
+        "direct": true,
+        "nanoseconds": 818.955
+      },
+      {
+        "direct": true,
+        "nanoseconds": 816.504
+      },
+      {
+        "direct": true,
+        "nanoseconds": 817.393
+      },
+      {
+        "direct": false,
+        "nanoseconds": 892.038
+      },
+      {
+        "direct": false,
+        "nanoseconds": 845.127
+      },
+      {
+        "direct": false,
+        "nanoseconds": 844.185
+      },
+      {
+        "direct": false,
+        "nanoseconds": 850.631
+      },
+      {
+        "direct": true,
+        "nanoseconds": 922.712
+      },
+      {
+        "direct": true,
+        "nanoseconds": 839.988
+      },
+      {
+        "direct": true,
+        "nanoseconds": 832.556
+      },
+      {
+        "direct": true,
+        "nanoseconds": 838.175
+      },
+      {
+        "direct": false,
+        "nanoseconds": 927.727
+      },
+      {
+        "direct": false,
+        "nanoseconds": 851.609
+      },
+      {
+        "direct": false,
+        "nanoseconds": 851.122
+      },
+      {
+        "direct": false,
+        "nanoseconds": 877.925
+      },
+      {
+        "direct": true,
+        "nanoseconds": 868.807
+      },
+      {
+        "direct": true,
+        "nanoseconds": 834.915
+      },
+      {
+        "direct": true,
+        "nanoseconds": 847.432
+      },
+      {
+        "direct": true,
+        "nanoseconds": 873.47
+      }
+    ]
+  },
+  "fuse": {
+    "median_ns": {
+      "False": 880.2735,
+      "True": 850.8695
+    },
+    "floats": 14220,
+    "max_vs_control": 0.0,
+    "max_between_delta_paths": 0.0,
+    "sha256": "f302a46f3f5b490b6fd63e1bb493f66a544e911e55da239e427413f514c97aad",
+    "measurements": [
+      {
+        "direct": false,
+        "nanoseconds": 909.216
+      },
+      {
+        "direct": false,
+        "nanoseconds": 868.705
+      },
+      {
+        "direct": false,
+        "nanoseconds": 867.073
+      },
+      {
+        "direct": false,
+        "nanoseconds": 870.391
+      },
+      {
+        "direct": true,
+        "nanoseconds": 866.556
+      },
+      {
+        "direct": true,
+        "nanoseconds": 832.187
+      },
+      {
+        "direct": true,
+        "nanoseconds": 830.941
+      },
+      {
+        "direct": true,
+        "nanoseconds": 827.253
+      },
+      {
+        "direct": false,
+        "nanoseconds": 931.346
+      },
+      {
+        "direct": false,
+        "nanoseconds": 981.494
+      },
+      {
+        "direct": false,
+        "nanoseconds": 877.221
+      },
+      {
+        "direct": false,
+        "nanoseconds": 880.1
+      },
+      {
+        "direct": true,
+        "nanoseconds": 867.125
+      },
+      {
+        "direct": true,
+        "nanoseconds": 829.221
+      },
+      {
+        "direct": true,
+        "nanoseconds": 835.183
+      },
+      {
+        "direct": true,
+        "nanoseconds": 833.96
+      },
+      {
+        "direct": false,
+        "nanoseconds": 953.653
+      },
+      {
+        "direct": false,
+        "nanoseconds": 895.619
+      },
+      {
+        "direct": false,
+        "nanoseconds": 880.447
+      },
+      {
+        "direct": false,
+        "nanoseconds": 872.813
+      },
+      {
+        "direct": true,
+        "nanoseconds": 885.265
+      },
+      {
+        "direct": true,
+        "nanoseconds": 972.748
+      },
+      {
+        "direct": true,
+        "nanoseconds": 902.717
+      },
+      {
+        "direct": true,
+        "nanoseconds": 885.692
+      }
+    ]
+  },
+  "exp": {
+    "median_ns": {
+      "False": 827.7845,
+      "True": 822.9849999999999
+    },
+    "floats": 14220,
+    "max_vs_control": 2.384185791015625e-07,
+    "max_between_delta_paths": 0.0,
+    "sha256": "7840f11c2b25f11f1ae60a460d3b831659b092473015a76981db2508dde24247",
+    "measurements": [
+      {
+        "direct": false,
+        "nanoseconds": 856.756
+      },
+      {
+        "direct": false,
+        "nanoseconds": 811.607
+      },
+      {
+        "direct": false,
+        "nanoseconds": 834.592
+      },
+      {
+        "direct": false,
+        "nanoseconds": 812.374
+      },
+      {
+        "direct": true,
+        "nanoseconds": 827.002
+      },
+      {
+        "direct": true,
+        "nanoseconds": 815.865
+      },
+      {
+        "direct": true,
+        "nanoseconds": 860.116
+      },
+      {
+        "direct": true,
+        "nanoseconds": 800.953
+      },
+      {
+        "direct": false,
+        "nanoseconds": 869.221
+      },
+      {
+        "direct": false,
+        "nanoseconds": 819.287
+      },
+      {
+        "direct": false,
+        "nanoseconds": 819.626
+      },
+      {
+        "direct": false,
+        "nanoseconds": 820.977
+      },
+      {
+        "direct": true,
+        "nanoseconds": 829.597
+      },
+      {
+        "direct": true,
+        "nanoseconds": 818.968
+      },
+      {
+        "direct": true,
+        "nanoseconds": 786.206
+      },
+      {
+        "direct": true,
+        "nanoseconds": 782.594
+      },
+      {
+        "direct": false,
+        "nanoseconds": 869.372
+      },
+      {
+        "direct": false,
+        "nanoseconds": 817.234
+      },
+      {
+        "direct": false,
+        "nanoseconds": 847.568
+      },
+      {
+        "direct": false,
+        "nanoseconds": 835.409
+      },
+      {
+        "direct": true,
+        "nanoseconds": 830.805
+      },
+      {
+        "direct": true,
+        "nanoseconds": 803.788
+      },
+      {
+        "direct": true,
+        "nanoseconds": 831.942
+      },
+      {
+        "direct": true,
+        "nanoseconds": 864.649
+      }
+    ]
+  },
+  "tile": {
+    "median_ns": {
+      "False": 908.494,
+      "True": 836.534
+    },
+    "floats": 14220,
+    "max_vs_control": 0.0,
+    "max_between_delta_paths": 0.0,
+    "sha256": "f302a46f3f5b490b6fd63e1bb493f66a544e911e55da239e427413f514c97aad",
+    "measurements": [
+      {
+        "direct": false,
+        "nanoseconds": 971.271
+      },
+      {
+        "direct": false,
+        "nanoseconds": 890.72
+      },
+      {
+        "direct": false,
+        "nanoseconds": 894.865
+      },
+      {
+        "direct": false,
+        "nanoseconds": 925.264
+      },
+      {
+        "direct": true,
+        "nanoseconds": 860.429
+      },
+      {
+        "direct": true,
+        "nanoseconds": 845.719
+      },
+      {
+        "direct": true,
+        "nanoseconds": 844.265
+      },
+      {
+        "direct": true,
+        "nanoseconds": 828.803
+      },
+      {
+        "direct": false,
+        "nanoseconds": 1008.84
+      },
+      {
+        "direct": false,
+        "nanoseconds": 964.346
+      },
+      {
+        "direct": false,
+        "nanoseconds": 906.378
+      },
+      {
+        "direct": false,
+        "nanoseconds": 910.61
+      },
+      {
+        "direct": true,
+        "nanoseconds": 867.643
+      },
+      {
+        "direct": true,
+        "nanoseconds": 806.289
+      },
+      {
+        "direct": true,
+        "nanoseconds": 852.095
+      },
+      {
+        "direct": true,
+        "nanoseconds": 822.398
+      },
+      {
+        "direct": false,
+        "nanoseconds": 929.766
+      },
+      {
+        "direct": false,
+        "nanoseconds": 867.492
+      },
+      {
+        "direct": false,
+        "nanoseconds": 845.529
+      },
+      {
+        "direct": false,
+        "nanoseconds": 841.315
+      },
+      {
+        "direct": true,
+        "nanoseconds": 859.861
+      },
+      {
+        "direct": true,
+        "nanoseconds": 805.779
+      },
+      {
+        "direct": true,
+        "nanoseconds": 814.934
+      },
+      {
+        "direct": true,
+        "nanoseconds": 803.649
+      }
+    ]
+  }
+}

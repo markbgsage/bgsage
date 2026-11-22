@@ -15,6 +15,12 @@ The [third CPU search study](experiments/search_pass3/README.md) includes
 paired timings, rollout comparisons, and separate experiments on legal moves,
 contact features, subtree reuse and parallel scheduling.
 
+The [truncated-rollout CPU study](experiments/truncated_pass2/README.md) measures
+shared neural evaluation across dice outcomes, repeated legal moves, trial scheduling
+and memory use. Its [all-level results](experiments/truncated_pass2/results.md)
+compare the original engine, the preceding release and the selected implementation
+on the same positions and rollout references.
+
 | File | Calls | Positions |
 | --- | --- | ---: |
 | `checker_play.json` | `checker_play(**position["inputs"])` | 100 |

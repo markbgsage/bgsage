@@ -1,0 +1,30 @@
+{
+  "3P": {
+    "seconds": {
+      "baseline": 2.0533798,
+      "candidate": 2.052465
+    },
+    "speedup": 1.0004457079657874,
+    "exact": 300,
+    "same_best_checker": 100,
+    "same_checker_order": 100,
+    "same_cube_action": 100,
+    "observations": 4724,
+    "material_farther": 0,
+    "material_closer": 0,
+    "api_seconds": {
+      "checker_play": [
+        1.797179,
+        1.7740883
+      ],
+      "cube_action": [
+        0.1476942,
+        0.1642452
+      ],
+      "post_move_analytics": [
+        0.1085066,
+        0.1141315
+      ]
+    }
+  }
+}

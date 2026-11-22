@@ -1,0 +1,43 @@
+{
+  "arms": {
+    "first": {
+      "extension": {
+        "path": "build/truncated_pass2/first/bgbot_cpp.cpython-314-x86_64-linux-gnu.so",
+        "sha256": "da8df9151754f97bb052fbf2d94df89f815cea9e2c17e7817d3746b5ddcd477e",
+        "bytes": 3232936
+      },
+      "source": "/mnt/c/Users/mghig/agents/sageapp/repo/bgsage/build/truncated_pass2/first"
+    },
+    "dedup": {
+      "extension": {
+        "path": "build/truncated_pass2/dedup/bgbot_cpp.cpython-314-x86_64-linux-gnu.so",
+        "sha256": "0b90eccd7e5de9e375e838f45964fecee1e8fdbebcf13aa857f1532d653de45d",
+        "bytes": 3232936
+      },
+      "source": "/mnt/c/Users/mghig/agents/sageapp/repo/bgsage/build/truncated_pass2/dedup"
+    },
+    "trial-tree": {
+      "extension": {
+        "path": "build/truncated_pass2/trial-tree/bgbot_cpp.cpython-314-x86_64-linux-gnu.so",
+        "sha256": "5a28902338cbc4cebec7962e66a5f02b35ce3279c812ae4a9100dba9fb5e26c3",
+        "bytes": 3232936
+      },
+      "source": "/mnt/c/Users/mghig/agents/sageapp/repo/bgsage/build/truncated_pass2/trial-tree"
+    },
+    "per-roll": {
+      "extension": {
+        "path": "build/truncated_pass2/per-roll/bgbot_cpp.cpython-314-x86_64-linux-gnu.so",
+        "sha256": "526cbdbd9ad2c9165c2131638cd92fecdc36c61b8de8a9725084fba99d6515e7",
+        "bytes": 3227064
+      },
+      "source": "/mnt/c/Users/mghig/agents/sageapp/repo/bgsage/build/truncated_pass2/per-roll"
+    }
+  },
+  "mask": 15,
+  "cases": 20,
+  "reference": {
+    "path": "data/multi_ply_benchmark/experiments/search_pass3/release/linux/full_outputs.zip",
+    "sha256": "4843b856c18073dfa4b1e1d77c8d04c70f7a4cb96d6d787f3a41c13c0399a4f7",
+    "bytes": 2894738
+  }
+}

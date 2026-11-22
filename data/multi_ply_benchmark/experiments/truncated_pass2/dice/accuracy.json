@@ -1,0 +1,82 @@
+{
+  "first": {
+    "2T": {
+      "cube_action": {
+        "cases": 10,
+        "materially_farther": 0,
+        "materially_closer": 0,
+        "all_fields_identical": 1,
+        "same_action": 10
+      }
+    },
+    "3T": {
+      "cube_action": {
+        "cases": 10,
+        "materially_farther": 0,
+        "materially_closer": 0,
+        "all_fields_identical": 1,
+        "same_action": 10
+      }
+    }
+  },
+  "dedup": {
+    "2T": {
+      "cube_action": {
+        "cases": 10,
+        "materially_farther": 0,
+        "materially_closer": 0,
+        "all_fields_identical": 1,
+        "same_action": 10
+      }
+    },
+    "3T": {
+      "cube_action": {
+        "cases": 10,
+        "materially_farther": 0,
+        "materially_closer": 0,
+        "all_fields_identical": 1,
+        "same_action": 10
+      }
+    }
+  },
+  "trial-tree": {
+    "2T": {
+      "cube_action": {
+        "cases": 10,
+        "materially_farther": 0,
+        "materially_closer": 0,
+        "all_fields_identical": 1,
+        "same_action": 10
+      }
+    },
+    "3T": {
+      "cube_action": {
+        "cases": 10,
+        "materially_farther": 0,
+        "materially_closer": 0,
+        "all_fields_identical": 1,
+        "same_action": 10
+      }
+    }
+  },
+  "per-roll": {
+    "2T": {
+      "cube_action": {
+        "cases": 10,
+        "materially_farther": 0,
+        "materially_closer": 0,
+        "all_fields_identical": 10,
+        "same_action": 10
+      }
+    },
+    "3T": {
+      "cube_action": {
+        "cases": 10,
+        "materially_farther": 0,
+        "materially_closer": 0,
+        "all_fields_identical": 10,
+        "same_action": 10
+      }
+    }
+  }
+}

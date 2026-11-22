@@ -1,0 +1,293 @@
+{
+  "modules": [
+    "test_rollout_prefill",
+    "test_cube_candidate_batch_reuse",
+    "test_multi_ply_bearoff_cache",
+    "test_2ply_details",
+    "test_cube_points",
+    "test_vr_and_dead_cube",
+    "test_backgame_category",
+    "test_extended_inputs",
+    "test_extended_inputs_v2",
+    "test_checker_cube_symmetry",
+    "test_move_arrays",
+    "test_move_dice",
+    "test_move_notation",
+    "test_rollout_progress_callback"
+  ],
+  "exit_code": 0,
+  "summary": "235 passed in 63.28s (0:01:03)",
+  "threads": 4,
+  "extension": {
+    "path": "build/multi_ply_trunc2_shipped/bgbot_cpp.cp314-win_amd64.pyd",
+    "sha256": "6bad675f394ae84a01261042f55ecd061f5f299a01eb043bef2b91c62bdafed0",
+    "bytes": 4967424
+  },
+  "package": {
+    "path": "build/trunc2_win_shipped/python/bgsage/__init__.py",
+    "sha256": "bdd1f0639a3d2e88c47af83386fef6b31ff517e628290f331a0f1805ad50f28a",
+    "bytes": 2800
+  },
+  "model_slots": {
+    "stage5": [
+      "sl_s5_purerace.weights.best",
+      "sl_s5_racing.weights.best",
+      "sl_s5_attacking.weights.best",
+      "sl_s5_priming.weights.best",
+      "sl_s5_anchoring.weights.best"
+    ],
+    "stage9": [
+      "sl_s9_purerace.weights.best",
+      "sl_s9_race_race.weights.best",
+      "sl_s9_race_att.weights.best",
+      "sl_s9_race_prim.weights.best",
+      "sl_s9_race_anch.weights.best",
+      "sl_s9_att_race.weights.best",
+      "sl_s9_att_att.weights.best",
+      "sl_s9_att_prim.weights.best",
+      "sl_s9_att_anch.weights.best",
+      "sl_s9_prim_race.weights.best",
+      "sl_s9_prim_att.weights.best",
+      "sl_s9_prim_anch.weights.best",
+      "sl_s9_prim_anch.weights.best",
+      "sl_s9_anch_race.weights.best",
+      "sl_s9_anch_att.weights.best",
+      "sl_s9_prim_anch.weights.best",
+      "sl_s9_prim_anch.weights.best",
+      "sl_s9_player_bg.weights.best",
+      "sl_s9_opponent_bg.weights.best"
+    ],
+    "stage11": [
+      "sl_s9_purerace.weights.best",
+      "sl_s9_race_race.weights.best",
+      "sl_s9_race_att.weights.best",
+      "sl_s9_race_prim.weights.best",
+      "sl_s9_race_anch.weights.best",
+      "sl_s9_att_race.weights.best",
+      "sl_s9_att_att.weights.best",
+      "sl_s9_att_prim.weights.best",
+      "sl_s9_att_anch.weights.best",
+      "sl_s9_prim_race.weights.best",
+      "sl_s9_prim_att.weights.best",
+      "sl_s9_prim_anch.weights.best",
+      "sl_s9_prim_anch.weights.best",
+      "sl_s9_anch_race.weights.best",
+      "sl_s9_anch_att.weights.best",
+      "sl_s9_prim_anch.weights.best",
+      "sl_s9_prim_anch.weights.best",
+      "sl_s11_bg_deep.weights.best",
+      "sl_s11_bg_middle.weights.best",
+      "sl_s11_bg_double.weights.best",
+      "sl_s11_bg_p3.weights.best",
+      "sl_s11_bg_containment.weights.best",
+      "sl_s11_bg_snake.weights.best",
+      "sl_s11_bg_massive.weights.best"
+    ]
+  },
+  "weights": {
+    "sl_s5_purerace.weights.best": {
+      "path": "build/trunc2_win_shipped/models/sl_s5_purerace.weights.best",
+      "sha256": "4f3bedb89abe0fc0fa9550eea2a3dafb263ef124c0cb10f7dd6bdef415505d3d",
+      "bytes": 161632
+    },
+    "sl_s5_racing.weights.best": {
+      "path": "build/trunc2_win_shipped/models/sl_s5_racing.weights.best",
+      "sha256": "ea4252b68134a5eea8fbdc5149a9b2e197a7d9f4025fea0432b7a296dc4e3754",
+      "bytes": 400032
+    },
+    "sl_s5_attacking.weights.best": {
+      "path": "build/trunc2_win_shipped/models/sl_s5_attacking.weights.best",
+      "sha256": "239447eb28eb48ce0800c395a0f066568cf863eb15241552264a751f2150b243",
+      "bytes": 400032
+    },
+    "sl_s5_priming.weights.best": {
+      "path": "build/trunc2_win_shipped/models/sl_s5_priming.weights.best",
+      "sha256": "002d3486dc279ca0da611de325400deed58c9162ff147e710b6ddbe4b26d53f6",
+      "bytes": 400032
+    },
+    "sl_s5_anchoring.weights.best": {
+      "path": "build/trunc2_win_shipped/models/sl_s5_anchoring.weights.best",
+      "sha256": "f4dde08260c0afc2c3b37328c4f944141f5925ac8829dbf65edc241fc20434b4",
+      "bytes": 400032
+    },
+    "sl_s9_purerace.weights.best": {
+      "path": "build/trunc2_win_shipped/models/sl_s9_purerace.weights.best",
+      "sha256": "9c5e64afa4b2d826b4af54ce3eb5c87e13de75f7a43e27ef812231451ce85545",
+      "bytes": 80832
+    },
+    "sl_s9_race_race.weights.best": {
+      "path": "build/trunc2_win_shipped/models/sl_s9_race_race.weights.best",
+      "sha256": "e1bd7faa62adc6a87012357f3773fae89eec15f387200062e717af07506354f9",
+      "bytes": 400032
+    },
+    "sl_s9_race_att.weights.best": {
+      "path": "build/trunc2_win_shipped/models/sl_s9_race_att.weights.best",
+      "sha256": "aa13ecc8dcfb7c2a46e00bff83947bfbacbc6832b625515dcea6a0582300e1e7",
+      "bytes": 400032
+    },
+    "sl_s9_race_prim.weights.best": {
+      "path": "build/trunc2_win_shipped/models/sl_s9_race_prim.weights.best",
+      "sha256": "ea4252b68134a5eea8fbdc5149a9b2e197a7d9f4025fea0432b7a296dc4e3754",
+      "bytes": 400032
+    },
+    "sl_s9_race_anch.weights.best": {
+      "path": "build/trunc2_win_shipped/models/sl_s9_race_anch.weights.best",
+      "sha256": "137d9da64e17898ba954a677d58bfed62d144d5de99431c5462ea0a55d7e90e0",
+      "bytes": 400032
+    },
+    "sl_s9_att_race.weights.best": {
+      "path": "build/trunc2_win_shipped/models/sl_s9_att_race.weights.best",
+      "sha256": "cd40466951c3a78b4f7b22d98664aab66258857c6e7ff6f15d51f2222543ecb9",
+      "bytes": 400032
+    },
+    "sl_s9_att_att.weights.best": {
+      "path": "build/trunc2_win_shipped/models/sl_s9_att_att.weights.best",
+      "sha256": "239447eb28eb48ce0800c395a0f066568cf863eb15241552264a751f2150b243",
+      "bytes": 400032
+    },
+    "sl_s9_att_prim.weights.best": {
+      "path": "build/trunc2_win_shipped/models/sl_s9_att_prim.weights.best",
+      "sha256": "fb112487b9ff4f4cc810f8f88f3ffab357c9f7ce8a900dd0aa45374189c2ae05",
+      "bytes": 400032
+    },
+    "sl_s9_att_anch.weights.best": {
+      "path": "build/trunc2_win_shipped/models/sl_s9_att_anch.weights.best",
+      "sha256": "58bdecf6930f4c1897a47c85a4f9863e533641b0029a5593bc0b6ac498dfd801",
+      "bytes": 400032
+    },
+    "sl_s9_prim_race.weights.best": {
+      "path": "build/trunc2_win_shipped/models/sl_s9_prim_race.weights.best",
+      "sha256": "6a466f82c474175a5a3f04e11568426c0b86538a08c99e2990c49af49c6d7ae4",
+      "bytes": 400032
+    },
+    "sl_s9_prim_att.weights.best": {
+      "path": "build/trunc2_win_shipped/models/sl_s9_prim_att.weights.best",
+      "sha256": "002d3486dc279ca0da611de325400deed58c9162ff147e710b6ddbe4b26d53f6",
+      "bytes": 400032
+    },
+    "sl_s9_prim_anch.weights.best": {
+      "path": "build/trunc2_win_shipped/models/sl_s9_prim_anch.weights.best",
+      "sha256": "453fa330381d33480b6720e14ed189f08a156394d6e4ad965b283e8fd45b7b04",
+      "bytes": 400032
+    },
+    "sl_s9_anch_race.weights.best": {
+      "path": "build/trunc2_win_shipped/models/sl_s9_anch_race.weights.best",
+      "sha256": "522e1de2d65d7d8c0b2f571b9cfab8b5f3113c68d194b0ad3414025a86d065bf",
+      "bytes": 400032
+    },
+    "sl_s9_anch_att.weights.best": {
+      "path": "build/trunc2_win_shipped/models/sl_s9_anch_att.weights.best",
+      "sha256": "94345949736aed37fad339d56f7c3c5a386da3303e4c975bc20fe31de4b3c3b1",
+      "bytes": 400032
+    },
+    "sl_s9_player_bg.weights.best": {
+      "path": "build/trunc2_win_shipped/models/sl_s9_player_bg.weights.best",
+      "sha256": "c39a3eeefe0a5dbda3309515faa422c47995b2f8bc3443465b7f4e3ea56bc6cd",
+      "bytes": 400032
+    },
+    "sl_s9_opponent_bg.weights.best": {
+      "path": "build/trunc2_win_shipped/models/sl_s9_opponent_bg.weights.best",
+      "sha256": "26fed902a4d4380059e9bb1676252de276c9dc638ac87e3577d01cf61a2ea2c6",
+      "bytes": 400032
+    },
+    "sl_s11_bg_deep.weights.best": {
+      "path": "build/trunc2_win_shipped/models/sl_s11_bg_deep.weights.best",
+      "sha256": "621031738d7def6186a98c5944bacbdcf1cc912588bac3aad7bb99d00f3a7a80",
+      "bytes": 400032
+    },
+    "sl_s11_bg_middle.weights.best": {
+      "path": "build/trunc2_win_shipped/models/sl_s11_bg_middle.weights.best",
+      "sha256": "e2c01a4caf321a96ea85d1bb706a94deeb5facb6a3f38285e38eb41087921059",
+      "bytes": 400032
+    },
+    "sl_s11_bg_double.weights.best": {
+      "path": "build/trunc2_win_shipped/models/sl_s11_bg_double.weights.best",
+      "sha256": "84f4a48e7393fdf5774295d66c0c8c90d90723f46eeb83135a750dc9a9bf600b",
+      "bytes": 400032
+    },
+    "sl_s11_bg_p3.weights.best": {
+      "path": "build/trunc2_win_shipped/models/sl_s11_bg_p3.weights.best",
+      "sha256": "f793cc34fa20f5de29d0564e95d6c9408f4632e47ef9f4d502483a8a97a82268",
+      "bytes": 400032
+    },
+    "sl_s11_bg_containment.weights.best": {
+      "path": "build/trunc2_win_shipped/models/sl_s11_bg_containment.weights.best",
+      "sha256": "6c9b8aad4b6694cba7aa1b83c616020b6e8aa922b7b7b99cf27b7558ffe964a1",
+      "bytes": 400032
+    },
+    "sl_s11_bg_snake.weights.best": {
+      "path": "build/trunc2_win_shipped/models/sl_s11_bg_snake.weights.best",
+      "sha256": "4604df0029736b1117c92291fe1d0735120d9699237fb86c13b029ed13ac1ba6",
+      "bytes": 400032
+    },
+    "sl_s11_bg_massive.weights.best": {
+      "path": "build/trunc2_win_shipped/models/sl_s11_bg_massive.weights.best",
+      "sha256": "d8960a41f2fd62467644546cbf9385b326e23da8cbc8e4577010aaa6bd8a0ce0",
+      "bytes": 400032
+    }
+  },
+  "bearoff_database": {
+    "path": "build/trunc2_win_shipped/data/bearoff_1sided.db",
+    "sha256": "907bbe0042dadfa14840a9f470b6b5adac213d5b2c17dc0e41aec27b087e3fe6",
+    "bytes": 4899292
+  },
+  "python_modules": [
+    {
+      "path": "build/trunc2_win_shipped/python/bgsage/analyzer.py",
+      "sha256": "5ef11b04a5e148222fac7429b1ee093344295f6204213402d8304410bbe21798",
+      "bytes": 75753
+    },
+    {
+      "path": "build/trunc2_win_shipped/python/bgsage/batch.py",
+      "sha256": "9f1506d11537cfdec31c84acbe0678294e3718fe19b2f856b16e7b8eff3f905a",
+      "bytes": 20390
+    },
+    {
+      "path": "build/trunc2_win_shipped/python/bgsage/board.py",
+      "sha256": "d8477ed90db4332f488a0fe7c7ad5d2ef4b52a690c6dd73b1839b92fa38d7818",
+      "bytes": 4868
+    },
+    {
+      "path": "build/trunc2_win_shipped/python/bgsage/cube_points.py",
+      "sha256": "bd107df9dc34ca7c00ee65c5d39efe717e47b8b84801e9a4b67ea5f95c7eb521",
+      "bytes": 23970
+    },
+    {
+      "path": "build/trunc2_win_shipped/python/bgsage/gnubg.py",
+      "sha256": "39c850713ba3da44dbc3305d1398563d86823861082de19f8edbac560887547e",
+      "bytes": 26442
+    },
+    {
+      "path": "build/trunc2_win_shipped/python/bgsage/luck.py",
+      "sha256": "e62be918869bd03530a014ed79c13adc91cbba48569a52bd5725ec6efca33074",
+      "bytes": 4947
+    },
+    {
+      "path": "build/trunc2_win_shipped/python/bgsage/matchinfo.py",
+      "sha256": "704774dcc914b7d767440be2d8b3b2aa74747e6ed33c819ec16dd9886acb0272",
+      "bytes": 9499
+    },
+    {
+      "path": "build/trunc2_win_shipped/python/bgsage/simulation.py",
+      "sha256": "2c37427b6f20471c299d97b33fa24e241d4b1d6695335d001ec1387a86fdd2e6",
+      "bytes": 11370
+    },
+    {
+      "path": "build/trunc2_win_shipped/python/bgsage/text_export.py",
+      "sha256": "57508fc6339539f32e5224c96fcb87dc35378c9d8299d35f3f4cb1f7c3424e2b",
+      "bytes": 21572
+    },
+    {
+      "path": "build/trunc2_win_shipped/python/bgsage/types.py",
+      "sha256": "5f8bf3558560329f8db73b3b6f2f1a6158418aae37010ea3901b428816d66e07",
+      "bytes": 7800
+    },
+    {
+      "path": "build/trunc2_win_shipped/python/bgsage/weights.py",
+      "sha256": "a4d698c82592a817c4ead2e5363b573bf2c89ae2e20c399e37c9edfd5328939d",
+      "bytes": 20280
+    }
+  ],
+  "skips": [],
+  "diagnostics": []
+}

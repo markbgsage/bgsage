@@ -1,0 +1,4 @@
+# Unified diffs keep a single context space on blank source lines.
+*.patch text eol=lf whitespace=-blank-at-eol
+# The qualification reports identify this historical build manifest by its raw bytes.
+/historical-linux/provenance.json text eol=lf

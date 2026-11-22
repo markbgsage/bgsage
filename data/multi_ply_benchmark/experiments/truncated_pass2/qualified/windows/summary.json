@@ -1,0 +1,198 @@
+{
+  "1P": {
+    "seconds": {
+      "baseline": 0.0228681,
+      "candidate": 0.0204627
+    },
+    "speedup": 1.1175504698793413,
+    "exact": 300,
+    "same_best_checker": 100,
+    "same_checker_order": 100,
+    "same_cube_action": 100,
+    "observations": 4724,
+    "material_farther": 0,
+    "material_closer": 0,
+    "api_seconds": {
+      "checker_play": [
+        0.0160336,
+        0.0150619
+      ],
+      "cube_action": [
+        0.0035600000000000002,
+        0.003175
+      ],
+      "post_move_analytics": [
+        0.0032745,
+        0.0022258
+      ]
+    }
+  },
+  "2P": {
+    "seconds": {
+      "baseline": 0.194471,
+      "candidate": 0.1913322
+    },
+    "speedup": 1.0164049752211075,
+    "exact": 300,
+    "same_best_checker": 100,
+    "same_checker_order": 100,
+    "same_cube_action": 100,
+    "observations": 4724,
+    "material_farther": 0,
+    "material_closer": 0,
+    "api_seconds": {
+      "checker_play": [
+        0.1405258,
+        0.1384926
+      ],
+      "cube_action": [
+        0.0323615,
+        0.0317387
+      ],
+      "post_move_analytics": [
+        0.0215837,
+        0.0211009
+      ]
+    }
+  },
+  "3P": {
+    "seconds": {
+      "baseline": 1.9625731,
+      "candidate": 2.2900096000000003
+    },
+    "speedup": 0.8570152282331042,
+    "exact": 300,
+    "same_best_checker": 100,
+    "same_checker_order": 100,
+    "same_cube_action": 100,
+    "observations": 4724,
+    "material_farther": 0,
+    "material_closer": 0,
+    "api_seconds": {
+      "checker_play": [
+        1.7127434,
+        2.0074862
+      ],
+      "cube_action": [
+        0.1382876,
+        0.1620376
+      ],
+      "post_move_analytics": [
+        0.1115421,
+        0.1204858
+      ]
+    }
+  },
+  "4P": {
+    "seconds": {
+      "baseline": 33.790069700000004,
+      "candidate": 33.0773399
+    },
+    "speedup": 1.021547373584295,
+    "exact": 300,
+    "same_best_checker": 100,
+    "same_checker_order": 100,
+    "same_cube_action": 100,
+    "observations": 4724,
+    "material_farther": 0,
+    "material_closer": 0,
+    "api_seconds": {
+      "checker_play": [
+        28.5421149,
+        27.8006318
+      ],
+      "cube_action": [
+        2.8856998,
+        2.9059875
+      ],
+      "post_move_analytics": [
+        2.362255,
+        2.3707206
+      ]
+    }
+  },
+  "1T": {
+    "seconds": {
+      "baseline": 8.739678900000001,
+      "candidate": 5.9000428000000005
+    },
+    "speedup": 1.48129076283989,
+    "exact": 58,
+    "same_best_checker": 100,
+    "same_checker_order": 100,
+    "same_cube_action": 100,
+    "observations": 4724,
+    "material_farther": 0,
+    "material_closer": 0,
+    "api_seconds": {
+      "checker_play": [
+        5.1445727,
+        3.4697311
+      ],
+      "cube_action": [
+        1.8196013,
+        1.2301723
+      ],
+      "post_move_analytics": [
+        1.7755049,
+        1.2001394
+      ]
+    }
+  },
+  "2T": {
+    "seconds": {
+      "baseline": 57.156906000000006,
+      "candidate": 42.7540026
+    },
+    "speedup": 1.3368784797706872,
+    "exact": 29,
+    "same_best_checker": 100,
+    "same_checker_order": 100,
+    "same_cube_action": 100,
+    "observations": 4724,
+    "material_farther": 0,
+    "material_closer": 0,
+    "api_seconds": {
+      "checker_play": [
+        32.0598359,
+        24.0436649
+      ],
+      "cube_action": [
+        12.5738466,
+        9.4043562
+      ],
+      "post_move_analytics": [
+        12.5232235,
+        9.3059815
+      ]
+    }
+  },
+  "3T": {
+    "seconds": {
+      "baseline": 207.1589077,
+      "candidate": 169.4946883
+    },
+    "speedup": 1.2222147477172591,
+    "exact": 29,
+    "same_best_checker": 100,
+    "same_checker_order": 100,
+    "same_cube_action": 100,
+    "observations": 4724,
+    "material_farther": 0,
+    "material_closer": 0,
+    "api_seconds": {
+      "checker_play": [
+        116.3904317,
+        95.2304962
+      ],
+      "cube_action": [
+        45.543438,
+        36.815642
+      ],
+      "post_move_analytics": [
+        45.225038,
+        37.4485501
+      ]
+    }
+  }
+}

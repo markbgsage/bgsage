@@ -1,0 +1,30 @@
+{
+  "3T": {
+    "seconds": {
+      "baseline": 197.46499814,
+      "candidate": 169.234235813
+    },
+    "speedup": 1.1668147239320674,
+    "exact": 12,
+    "same_best_checker": 100,
+    "same_checker_order": 100,
+    "same_cube_action": 100,
+    "observations": 4724,
+    "material_farther": 0,
+    "material_closer": 0,
+    "api_seconds": {
+      "checker_play": [
+        111.268369758,
+        95.106439577
+      ],
+      "cube_action": [
+        43.612300368,
+        36.904059012
+      ],
+      "post_move_analytics": [
+        42.584328014,
+        37.223737224
+      ]
+    }
+  }
+}

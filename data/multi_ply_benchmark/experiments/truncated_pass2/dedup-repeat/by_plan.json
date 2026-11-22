@@ -1,0 +1,126 @@
+{
+  "truncated2": {
+    "all": {
+      "calls": 30,
+      "exact": 30,
+      "first_wall": 10.200078530999974,
+      "dedup_wall": 9.398230771000016,
+      "first_cpu": 39.55467613800003,
+      "dedup_cpu": 36.36014186199998,
+      "wall_pct_saved": 7.861192024776975,
+      "cpu_pct_saved": 8.076249353818065
+    },
+    "anchoring": {
+      "calls": 6,
+      "exact": 6,
+      "first_wall": 3.061199065000011,
+      "dedup_wall": 2.853408711999961,
+      "first_cpu": 11.866552791999995,
+      "dedup_cpu": 11.048759004000011,
+      "wall_pct_saved": 6.787874574241348,
+      "cpu_pct_saved": 6.891586818299167
+    },
+    "priming": {
+      "calls": 6,
+      "exact": 6,
+      "first_wall": 2.4598274669999824,
+      "dedup_wall": 2.2635176,
+      "first_cpu": 9.58766857600001,
+      "dedup_cpu": 8.773604226000003,
+      "wall_pct_saved": 7.980635619107169,
+      "cpu_pct_saved": 8.490743537357803
+    },
+    "attacking": {
+      "calls": 6,
+      "exact": 6,
+      "first_wall": 2.421369690999967,
+      "dedup_wall": 2.2358789510000463,
+      "first_cpu": 9.390869660000009,
+      "dedup_cpu": 8.636374457999988,
+      "wall_pct_saved": 7.660570820283019,
+      "cpu_pct_saved": 8.034348567457595
+    },
+    "purerace": {
+      "calls": 6,
+      "exact": 6,
+      "first_wall": 0.1409873440000382,
+      "dedup_wall": 0.13308478099999377,
+      "first_cpu": 0.5223030300000389,
+      "dedup_cpu": 0.4913778270000009,
+      "wall_pct_saved": 5.605157722555787,
+      "cpu_pct_saved": 5.920931188171674
+    },
+    "racing": {
+      "calls": 6,
+      "exact": 6,
+      "first_wall": 2.1166949639999757,
+      "dedup_wall": 1.9123407270000143,
+      "first_cpu": 8.187282079999981,
+      "dedup_cpu": 7.41002634699997,
+      "wall_pct_saved": 9.654401813938629,
+      "cpu_pct_saved": 9.493452471836816
+    }
+  },
+  "truncated3": {
+    "all": {
+      "calls": 30,
+      "exact": 30,
+      "first_wall": 40.998807645000056,
+      "dedup_wall": 36.208391753,
+      "first_cpu": 159.222522702,
+      "dedup_cpu": 140.5427234640001,
+      "wall_pct_saved": 11.684281000265296,
+      "cpu_pct_saved": 11.731882475547073
+    },
+    "purerace": {
+      "calls": 6,
+      "exact": 6,
+      "first_wall": 0.4410271780000272,
+      "dedup_wall": 0.46996771700001716,
+      "first_cpu": 1.6797207869999837,
+      "dedup_cpu": 1.7986152150000507,
+      "wall_pct_saved": -6.562076090464464,
+      "cpu_pct_saved": -7.078225674185701
+    },
+    "attacking": {
+      "calls": 6,
+      "exact": 6,
+      "first_wall": 13.474514470999992,
+      "dedup_wall": 10.279031539999991,
+      "first_cpu": 52.25127440300001,
+      "dedup_cpu": 39.872330678000004,
+      "wall_pct_saved": 23.715013538167607,
+      "cpu_pct_saved": 23.691180485904606
+    },
+    "racing": {
+      "calls": 6,
+      "exact": 6,
+      "first_wall": 5.768727616000035,
+      "dedup_wall": 5.799879701000037,
+      "first_cpu": 22.490137462000018,
+      "dedup_cpu": 22.558070792999974,
+      "wall_pct_saved": -0.540016569920887,
+      "cpu_pct_saved": -0.3020583182950176
+    },
+    "priming": {
+      "calls": 6,
+      "exact": 6,
+      "first_wall": 9.23263448600001,
+      "dedup_wall": 8.706872849999954,
+      "first_cpu": 35.813603218000004,
+      "dedup_cpu": 33.72425459400002,
+      "wall_pct_saved": 5.694600352665313,
+      "cpu_pct_saved": 5.833952566241285
+    },
+    "anchoring": {
+      "calls": 6,
+      "exact": 6,
+      "first_wall": 12.081903893999993,
+      "dedup_wall": 10.952639945000001,
+      "first_cpu": 46.98778683199998,
+      "dedup_cpu": 42.58945218400004,
+      "wall_pct_saved": 9.346738385833353,
+      "cpu_pct_saved": 9.360591218577163
+    }
+  }
+}

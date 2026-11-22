@@ -1,0 +1,96 @@
+--- a/cpp/include/bgbot/rollout.h
++++ b/cpp/include/bgbot/rollout.h
+@@ -317,7 +317,8 @@
+     // evaluating survivors with the full model.
+     std::shared_ptr<Strategy> move_filter_;
+     RolloutConfig config_;
+-    mutable std::unique_ptr<SharedPosCache> shared_pos_cache_;
++    void initialize_shared_cache();
++    std::unique_ptr<SharedPosCache> shared_pos_cache_;
+ 
+     // Checker play strategies (move selection during trials).
+     // If checker config specifies >1-ply, wraps base_ in MultiPlyStrategy.
+--- a/cpp/src/rollout.cpp
++++ b/cpp/src/rollout.cpp
+@@ -356,10 +356,18 @@
+     truncation_strat = base;
+ }
+ 
+-// Common post-construction init for both RolloutStrategy constructors.
+-void RolloutStrategy_common_init(RolloutStrategy& self,
+-                                  const RolloutConfig& config,
+-                                  int cached_max_moves);
++void RolloutStrategy::initialize_shared_cache() {
++    // Only an N-ply evaluator uses the cross-thread position table.
++    // Resolve early, late and nested policies before deciding to allocate.
++    const bool uses_tree = checker_strat_ != base_ || checker_late_strat_ != base_
++        || truncation_ply_ > 1 || cube_eval_config_.ply > 1 || cube_late_eval_config_.ply > 1
++        || cube_inner_rollout_ || cube_late_inner_rollout_
++        || dynamic_cast<const MultiPlyStrategy*>(base_.get())
++        || dynamic_cast<const RolloutStrategy*>(base_.get());
++    if (uses_tree && rollout_thread_count(config_.n_trials) > 1) {
++        shared_pos_cache_ = std::make_unique<SharedPosCache>();
++    }
++}
+ 
+ RolloutStrategy::RolloutStrategy(std::shared_ptr<Strategy> base, RolloutConfig config)
+     : base_(std::move(base))
+@@ -385,9 +393,7 @@
+             config_.n_trials, cached_max_moves_, config_.seed, cached_dice_);
+     }
+ 
+-    if (rollout_thread_count(config_.n_trials) > 1) {
+-        shared_pos_cache_ = std::make_unique<SharedPosCache>();
+-    }
++    initialize_shared_cache();
+ }
+ 
+ RolloutStrategy::RolloutStrategy(std::shared_ptr<Strategy> base,
+@@ -416,9 +422,7 @@
+             config_.n_trials, cached_max_moves_, config_.seed, cached_dice_);
+     }
+ 
+-    if (rollout_thread_count(config_.n_trials) > 1) {
+-        shared_pos_cache_ = std::make_unique<SharedPosCache>();
+-    }
++    initialize_shared_cache();
+ }
+ 
+ // ======================== Stratified Dice (GNUbg-style) ========================
+@@ -2291,12 +2295,8 @@
+     {
+         // Unified threading: same threads do combined move0+move1 prefill (already done
+         // above for serial) then trials with work-stealing. SharedPosCache enables
+-        // cross-thread N-ply cache sharing. For dp==1, all strategies are 1-ply so
+-        // SharedPosCache/unified threading have minimal overhead.
+-        if (!shared_pos_cache_) {
+-            shared_pos_cache_ = std::make_unique<SharedPosCache>();
+-        }
+-        if (shared_pos_cache_->inserts.load(std::memory_order_relaxed) >=
++        // cross-thread sharing when the resolved policies include N-ply evaluation.
++        if (shared_pos_cache_ && shared_pos_cache_->inserts.load(std::memory_order_relaxed) >=
+             (SharedPosCache::CAPACITY * 3) / 4) {
+             shared_pos_cache_->clear();
+         }
+@@ -2486,10 +2486,7 @@
+         // Move0 and move1 for the same roll index are done back-to-back by the
+         // same thread (no barrier needed — move1[r] only depends on move0[r]).
+         // After all 21 entries are done, threads proceed to trial work-stealing.
+-        if (!shared_pos_cache_) {
+-            shared_pos_cache_ = std::make_unique<SharedPosCache>();
+-        }
+-        if (shared_pos_cache_->inserts.load(std::memory_order_relaxed) >=
++        if (shared_pos_cache_ && shared_pos_cache_->inserts.load(std::memory_order_relaxed) >=
+             (SharedPosCache::CAPACITY * 3) / 4) {
+             shared_pos_cache_->clear();
+         }
+@@ -2709,9 +2706,6 @@
+     Move0Cache move0_cache;
+     Move1Cache move1_cache(config_);
+ 
+-    if (n_threads > 1 && !shared_pos_cache_) {
+-        shared_pos_cache_ = std::make_unique<SharedPosCache>();
+-    }
+     if (shared_pos_cache_ &&
+         shared_pos_cache_->inserts.load(std::memory_order_relaxed) >=
+             (SharedPosCache::CAPACITY * 3) / 4) {

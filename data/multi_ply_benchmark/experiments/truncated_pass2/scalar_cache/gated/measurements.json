@@ -1,0 +1,391 @@
+{
+  "threads": 4,
+  "cpu_mask": "0xf00",
+  "control": {
+    "path": "build/multi_ply_third_release/bgbot_cpp.cp314-win_amd64.pyd",
+    "sha256": "5791d60bbeb4ee8e025ba347e4e86480cad25519812c4dcae4983e107eaade0a",
+    "bytes": 4965376
+  },
+  "candidate": {
+    "path": "build/multi_ply_trunc_pass2_cache/bgbot_cpp.cp314-win_amd64.pyd",
+    "sha256": "73084318746c2d4ac1720e15528b5fdfd497bb372c89e9baae21cfc60c659a42",
+    "bytes": 4964352
+  },
+  "reference": {
+    "path": "data/multi_ply_benchmark/experiments/search_pass3/release/windows/full_outputs.zip",
+    "sha256": "bd7875795886c48cdb6fd17875ffb87d5134c522a89030665080d3be0f83d58e",
+    "bytes": 2933458
+  },
+  "cases": [
+    {
+      "arm": "control",
+      "process_repeat": 0,
+      "level": "1T",
+      "api": "checker_play",
+      "position_id": "checker-money-attacking-01",
+      "seed": 200024665,
+      "before": {
+        "rss": 46211072,
+        "peak_rss": 46211072
+      },
+      "construction_seconds": 0.08129999996162951,
+      "after_construction": {
+        "rss": 390332416,
+        "peak_rss": 390332416
+      },
+      "calls": [
+        {
+          "seconds": 0.11990819999482483,
+          "rss": 560168960,
+          "peak_rss": 560168960,
+          "exact": true
+        },
+        {
+          "seconds": 0.11357420001877472,
+          "rss": 562069504,
+          "peak_rss": 562069504,
+          "exact": true
+        },
+        {
+          "seconds": 0.11329539999132976,
+          "rss": 563699712,
+          "peak_rss": 563699712,
+          "exact": true
+        }
+      ]
+    },
+    {
+      "arm": "candidate",
+      "process_repeat": 0,
+      "level": "1T",
+      "api": "checker_play",
+      "position_id": "checker-money-attacking-01",
+      "seed": 200024665,
+      "before": {
+        "rss": 46260224,
+        "peak_rss": 46260224
+      },
+      "construction_seconds": 0.04375919996527955,
+      "after_construction": {
+        "rss": 88354816,
+        "peak_rss": 88354816
+      },
+      "calls": [
+        {
+          "seconds": 0.11970260000089183,
+          "rss": 258265088,
+          "peak_rss": 258265088,
+          "exact": true
+        },
+        {
+          "seconds": 0.11185640003532171,
+          "rss": 259907584,
+          "peak_rss": 259907584,
+          "exact": true
+        },
+        {
+          "seconds": 0.1134081999771297,
+          "rss": 261226496,
+          "peak_rss": 261226496,
+          "exact": true
+        }
+      ]
+    },
+    {
+      "arm": "candidate",
+      "process_repeat": 0,
+      "level": "1T",
+      "api": "cube_action",
+      "position_id": "cube-match-anchoring-01",
+      "seed": 2941524523,
+      "before": {
+        "rss": 46567424,
+        "peak_rss": 46567424
+      },
+      "construction_seconds": 0.0435997000313364,
+      "after_construction": {
+        "rss": 88469504,
+        "peak_rss": 88469504
+      },
+      "calls": [
+        {
+          "seconds": 0.05205040000146255,
+          "rss": 257290240,
+          "peak_rss": 257290240,
+          "exact": true
+        },
+        {
+          "seconds": 0.04429389996221289,
+          "rss": 258002944,
+          "peak_rss": 258002944,
+          "exact": true
+        },
+        {
+          "seconds": 0.04394920001504943,
+          "rss": 258416640,
+          "peak_rss": 258416640,
+          "exact": true
+        }
+      ]
+    },
+    {
+      "arm": "control",
+      "process_repeat": 0,
+      "level": "1T",
+      "api": "cube_action",
+      "position_id": "cube-match-anchoring-01",
+      "seed": 2941524523,
+      "before": {
+        "rss": 46551040,
+        "peak_rss": 46551040
+      },
+      "construction_seconds": 0.0886426999932155,
+      "after_construction": {
+        "rss": 390402048,
+        "peak_rss": 390402048
+      },
+      "calls": [
+        {
+          "seconds": 0.0501386999967508,
+          "rss": 559005696,
+          "peak_rss": 559005696,
+          "exact": true
+        },
+        {
+          "seconds": 0.04432850005105138,
+          "rss": 559747072,
+          "peak_rss": 559747072,
+          "exact": true
+        },
+        {
+          "seconds": 0.044183499994687736,
+          "rss": 560336896,
+          "peak_rss": 560336896,
+          "exact": true
+        }
+      ]
+    },
+    {
+      "arm": "control",
+      "process_repeat": 0,
+      "level": "1T",
+      "api": "post_move_analytics",
+      "position_id": "cube-money-priming-01",
+      "seed": 851928682,
+      "before": {
+        "rss": 46309376,
+        "peak_rss": 46309376
+      },
+      "construction_seconds": 0.08003589999862015,
+      "after_construction": {
+        "rss": 390352896,
+        "peak_rss": 390352896
+      },
+      "calls": [
+        {
+          "seconds": 0.052683900052215904,
+          "rss": 559116288,
+          "peak_rss": 559116288,
+          "exact": true
+        },
+        {
+          "seconds": 0.04664499999489635,
+          "rss": 560013312,
+          "peak_rss": 560013312,
+          "exact": true
+        },
+        {
+          "seconds": 0.06031159998383373,
+          "rss": 560852992,
+          "peak_rss": 560852992,
+          "exact": true
+        }
+      ]
+    },
+    {
+      "arm": "candidate",
+      "process_repeat": 0,
+      "level": "1T",
+      "api": "post_move_analytics",
+      "position_id": "cube-money-priming-01",
+      "seed": 851928682,
+      "before": {
+        "rss": 46673920,
+        "peak_rss": 46673920
+      },
+      "construction_seconds": 0.045598600001540035,
+      "after_construction": {
+        "rss": 88555520,
+        "peak_rss": 88555520
+      },
+      "calls": [
+        {
+          "seconds": 0.05325180001091212,
+          "rss": 257294336,
+          "peak_rss": 257294336,
+          "exact": true
+        },
+        {
+          "seconds": 0.04714630002854392,
+          "rss": 258113536,
+          "peak_rss": 258113536,
+          "exact": true
+        },
+        {
+          "seconds": 0.051886800036299974,
+          "rss": 258957312,
+          "peak_rss": 258957312,
+          "exact": true
+        }
+      ]
+    },
+    {
+      "arm": "candidate",
+      "process_repeat": 0,
+      "level": "2T",
+      "api": "cube_action",
+      "position_id": "cube-match-anchoring-01",
+      "seed": 2941524523,
+      "before": {
+        "rss": 46268416,
+        "peak_rss": 46268416
+      },
+      "construction_seconds": 0.15462679998017848,
+      "after_construction": {
+        "rss": 409055232,
+        "peak_rss": 409055232
+      },
+      "calls": [
+        {
+          "seconds": 0.5857065999880433,
+          "rss": 578396160,
+          "peak_rss": 579919872,
+          "exact": true
+        },
+        {
+          "seconds": 0.7108810000354424,
+          "rss": 579559424,
+          "peak_rss": 581087232,
+          "exact": true
+        },
+        {
+          "seconds": 0.6288514999905601,
+          "rss": 580567040,
+          "peak_rss": 582094848,
+          "exact": true
+        }
+      ]
+    },
+    {
+      "arm": "control",
+      "process_repeat": 0,
+      "level": "2T",
+      "api": "cube_action",
+      "position_id": "cube-match-anchoring-01",
+      "seed": 2941524523,
+      "before": {
+        "rss": 46698496,
+        "peak_rss": 46698496
+      },
+      "construction_seconds": 0.17192950000753626,
+      "after_construction": {
+        "rss": 409038848,
+        "peak_rss": 409038848
+      },
+      "calls": [
+        {
+          "seconds": 0.6392841000342742,
+          "rss": 578719744,
+          "peak_rss": 580243456,
+          "exact": true
+        },
+        {
+          "seconds": 0.4669718000222929,
+          "rss": 579842048,
+          "peak_rss": 581369856,
+          "exact": true
+        },
+        {
+          "seconds": 0.36416590004228055,
+          "rss": 580849664,
+          "peak_rss": 582377472,
+          "exact": true
+        }
+      ]
+    },
+    {
+      "arm": "control",
+      "process_repeat": 0,
+      "level": "3T",
+      "api": "cube_action",
+      "position_id": "cube-match-anchoring-01",
+      "seed": 2941524523,
+      "before": {
+        "rss": 46825472,
+        "peak_rss": 46825472
+      },
+      "construction_seconds": 0.09928250004304573,
+      "after_construction": {
+        "rss": 409214976,
+        "peak_rss": 409214976
+      },
+      "calls": [
+        {
+          "seconds": 1.1193758000154048,
+          "rss": 578883584,
+          "peak_rss": 580407296,
+          "exact": true
+        },
+        {
+          "seconds": 1.11916870001005,
+          "rss": 579923968,
+          "peak_rss": 581451776,
+          "exact": true
+        },
+        {
+          "seconds": 1.1288821999914944,
+          "rss": 580980736,
+          "peak_rss": 582508544,
+          "exact": true
+        }
+      ]
+    },
+    {
+      "arm": "candidate",
+      "process_repeat": 0,
+      "level": "3T",
+      "api": "cube_action",
+      "position_id": "cube-match-anchoring-01",
+      "seed": 2941524523,
+      "before": {
+        "rss": 46333952,
+        "peak_rss": 46333952
+      },
+      "construction_seconds": 0.10697759996401146,
+      "after_construction": {
+        "rss": 409001984,
+        "peak_rss": 409001984
+      },
+      "calls": [
+        {
+          "seconds": 1.1186797000118531,
+          "rss": 578580480,
+          "peak_rss": 580104192,
+          "exact": true
+        },
+        {
+          "seconds": 1.1092443999950774,
+          "rss": 579784704,
+          "peak_rss": 581312512,
+          "exact": true
+        },
+        {
+          "seconds": 1.109041800023988,
+          "rss": 580960256,
+          "peak_rss": 582488064,
+          "exact": true
+        }
+      ]
+    }
+  ]
+}

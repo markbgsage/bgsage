@@ -1,0 +1,20 @@
+{
+  "hashes": {
+    "baseline": "c71851b01e3bc209c3887fcf28021d4a94412f408dcb563b1c0678841f30e407",
+    "candidate": "68ecba3d1c468e4922ac8ce54c40d1ddae6f8f1cdcd0d09a2d677f5b08406086"
+  },
+  "levels": {
+    "2T": {
+      "baseline": 2.86159920099999,
+      "candidate": 2.8072817350000037,
+      "exact": 10,
+      "pairs": 10
+    },
+    "3T": {
+      "baseline": 14.28864433400014,
+      "candidate": 14.038147282000125,
+      "exact": 10,
+      "pairs": 10
+    }
+  }
+}

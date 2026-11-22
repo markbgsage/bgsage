@@ -1,0 +1,126 @@
+{
+  "dispatch-tree truncated1": {
+    "seconds": {
+      "8-0": {
+        "post_move_analytics": 0.21832866499994452,
+        "cube_action": 0.20266933600009907,
+        "checker_play": 0.5873654969999507
+      },
+      "1-0": {
+        "post_move_analytics": 0.1701219700001957,
+        "cube_action": 0.1708179160000327,
+        "checker_play": 0.4787403620000532
+      },
+      "2-0": {
+        "post_move_analytics": 0.17725794799991945,
+        "cube_action": 0.17408662799959984,
+        "checker_play": 0.48741493600005015
+      },
+      "4-0": {
+        "post_move_analytics": 0.19039133500029948,
+        "cube_action": 0.18950762700001178,
+        "checker_play": 0.5256214600000249
+      }
+    },
+    "all_equal": 90,
+    "comparisons": 90,
+    "timed_calls": 120
+  },
+  "dispatch-tree truncated2": {
+    "seconds": {
+      "8-0": {
+        "post_move_analytics": 0.9613716160000649,
+        "cube_action": 0.9657254050001711,
+        "checker_play": 2.5088749140001028
+      },
+      "1-0": {
+        "post_move_analytics": 0.9175904619999073,
+        "cube_action": 0.925004453000156,
+        "checker_play": 2.3700659880000785
+      },
+      "2-0": {
+        "post_move_analytics": 0.9172542069998144,
+        "cube_action": 0.920311690000176,
+        "checker_play": 2.377571297000145
+      },
+      "4-0": {
+        "post_move_analytics": 0.9317701290001423,
+        "cube_action": 0.9457149309997703,
+        "checker_play": 2.410655333999898
+      }
+    },
+    "all_equal": 90,
+    "comparisons": 90,
+    "timed_calls": 120
+  },
+  "dispatch-tree truncated3": {
+    "seconds": {
+      "8-0": {
+        "post_move_analytics": 3.844742473999986,
+        "cube_action": 3.6083253070002,
+        "checker_play": 10.211980445000108
+      },
+      "1-0": {
+        "post_move_analytics": 3.6837691739999627,
+        "cube_action": 3.450070310000001,
+        "checker_play": 9.796139573999994
+      },
+      "2-0": {
+        "post_move_analytics": 3.7059150979998776,
+        "cube_action": 3.596950769999694,
+        "checker_play": 10.12276869599998
+      },
+      "4-0": {
+        "post_move_analytics": 3.8175153329998466,
+        "cube_action": 3.5941374619998214,
+        "checker_play": 10.084340953000265
+      },
+      "8-1": {
+        "post_move_analytics": 3.689408937000053,
+        "cube_action": 3.565481651000141,
+        "checker_play": 10.271317593000049
+      }
+    },
+    "all_equal": 120,
+    "comparisons": 120,
+    "timed_calls": 150
+  },
+  "dispatch-repeat truncated1": {
+    "seconds": {
+      "8-0": {
+        "checker_play": 0.763303603999816,
+        "cube_action": 0.14970196500030397,
+        "post_move_analytics": 0.14765429099986704
+      },
+      "1-0": {
+        "checker_play": 0.5857544620000681,
+        "cube_action": 0.10886344199991527,
+        "post_move_analytics": 0.110179073999916
+      },
+      "2-0": {
+        "checker_play": 0.6162379909998208,
+        "cube_action": 0.11402136900017013,
+        "post_move_analytics": 0.11889966200010349
+      },
+      "4-0": {
+        "checker_play": 0.6803536330002089,
+        "cube_action": 0.1306937890002473,
+        "post_move_analytics": 0.13242102500009878
+      }
+    },
+    "all_equal": 90,
+    "comparisons": 90,
+    "timed_calls": 120
+  },
+  "changed_source_files": [
+    "cpp/src/cube_eval.cpp",
+    "cpp/src/neural_net.cpp",
+    "cpp/src/rollout.cpp",
+    "cpp/include/bgbot/rollout.h",
+    "cpp/include/bgbot/rollout_vr.h",
+    "cpp/include/bgbot/trial_cube_table.h",
+    "python/bgsage/analyzer.py"
+  ],
+  "checkpoint": "1ecca3902fc7d04e35c43b9fcd3ec45920d0fcb5",
+  "binary_sha256": "5b14deccb07f109929e80f1d42f8d0a8e0187eb9907bfdddf0689dfb92664edb"
+}

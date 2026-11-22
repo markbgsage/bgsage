@@ -1,0 +1,54 @@
+--- a/cpp/include/bgbot/multipy.h
++++ b/cpp/include/bgbot/multipy.h
+@@ -12,6 +12,7 @@
+ #include <cstdint>
+ #include <functional>
+ #include <thread>
++#include <mutex>
+ 
+ namespace bgbot {
+ 
+@@ -44,12 +45,17 @@
+         Entry* reservation = nullptr;
+     };
+ 
+-    std::vector<Entry> entries;
++    mutable std::vector<Entry> entries;
++    mutable std::once_flag allocate_entries;
+     mutable std::atomic<std::size_t> hits{0};
+     mutable std::atomic<std::size_t> misses{0};
+     mutable std::atomic<std::size_t> inserts{0};
+ 
+-    SharedPosCache() : entries(CAPACITY) {}
++    // A parallel rollout can complete entirely with scalar or live-cube
++    // evaluations. Materialize the table only when a tree actually uses it.
++    void ensure_entries() const {
++        std::call_once(allocate_entries, [this] { entries = std::vector<Entry>(CAPACITY); });
++    }
+ 
+     void clear() {
+         for (auto& e : entries) {
+@@ -64,6 +70,7 @@
+ 
+     const std::array<float, NUM_OUTPUTS>* lookup(std::size_t h, int plies,
+                                                   const Board& board) const {
++        ensure_entries();
+         std::size_t key = h | 1;
+         std::size_t idx = key & MASK;
+         for (int probe = 0; probe < MAX_PROBE; ++probe) {
+@@ -81,6 +88,7 @@
+     }
+ 
+     LookupResult lookup_or_reserve(std::size_t h, int plies, const Board& board) {
++        ensure_entries();
+         std::size_t key = h | 1;
+         std::size_t idx = key & MASK;
+         for (int probe = 0; probe < MAX_PROBE; ++probe) {
+@@ -144,6 +152,7 @@
+ 
+     void insert(std::size_t h, int plies, const Board& board,
+                 const std::array<float, NUM_OUTPUTS>& probs) {
++        ensure_entries();
+         std::size_t key = h | 1;
+         std::size_t idx = key & MASK;
+         for (int probe = 0; probe < MAX_PROBE; ++probe) {

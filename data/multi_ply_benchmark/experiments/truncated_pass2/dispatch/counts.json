@@ -1,0 +1,82 @@
+[
+  {
+    "id": "cube-money-attacking-02",
+    "threads": 8,
+    "probes": 14131,
+    "hits": 994,
+    "inserts": 9006,
+    "bytes": 3031064
+  },
+  {
+    "id": "cube-money-priming-02",
+    "threads": 8,
+    "probes": 11316,
+    "hits": 220,
+    "inserts": 7977,
+    "bytes": 3031064
+  },
+  {
+    "id": "cube-money-anchoring-02",
+    "threads": 8,
+    "probes": 11272,
+    "hits": 1002,
+    "inserts": 7561,
+    "bytes": 3031064
+  },
+  {
+    "id": "cube-money-racing-02",
+    "threads": 8,
+    "probes": 21272,
+    "hits": 3230,
+    "inserts": 10598,
+    "bytes": 3031064
+  },
+  {
+    "id": "cube-money-purerace-02",
+    "threads": 8,
+    "probes": 14793,
+    "hits": 1367,
+    "inserts": 9049,
+    "bytes": 3031064
+  },
+  {
+    "id": "cube-match-attacking-02",
+    "threads": 8,
+    "probes": 11642,
+    "hits": 1056,
+    "inserts": 7701,
+    "bytes": 3031064
+  },
+  {
+    "id": "cube-match-priming-02",
+    "threads": 8,
+    "probes": 15282,
+    "hits": 1942,
+    "inserts": 8978,
+    "bytes": 3031064
+  },
+  {
+    "id": "cube-match-anchoring-02",
+    "threads": 8,
+    "probes": 11336,
+    "hits": 1277,
+    "inserts": 7462,
+    "bytes": 3031064
+  },
+  {
+    "id": "cube-match-racing-02",
+    "threads": 8,
+    "probes": 5009,
+    "hits": 985,
+    "inserts": 3547,
+    "bytes": 3031064
+  },
+  {
+    "id": "cube-match-purerace-02",
+    "threads": 8,
+    "probes": 2100,
+    "hits": 905,
+    "inserts": 1093,
+    "bytes": 3031064
+  }
+]

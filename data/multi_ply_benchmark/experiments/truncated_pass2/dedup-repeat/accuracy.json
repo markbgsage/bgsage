@@ -1,0 +1,98 @@
+{
+  "first": {
+    "2T": {
+      "checker_play": {
+        "cases": 10,
+        "materially_farther": 0,
+        "materially_closer": 0,
+        "all_fields_identical": 1,
+        "same_action": 10
+      },
+      "post_move_analytics": {
+        "cases": 10,
+        "materially_farther": 0,
+        "materially_closer": 0,
+        "all_fields_identical": 1,
+        "same_action": null
+      },
+      "cube_action": {
+        "cases": 10,
+        "materially_farther": 0,
+        "materially_closer": 0,
+        "all_fields_identical": 1,
+        "same_action": 10
+      }
+    },
+    "3T": {
+      "post_move_analytics": {
+        "cases": 10,
+        "materially_farther": 0,
+        "materially_closer": 0,
+        "all_fields_identical": 1,
+        "same_action": null
+      },
+      "checker_play": {
+        "cases": 10,
+        "materially_farther": 0,
+        "materially_closer": 0,
+        "all_fields_identical": 1,
+        "same_action": 10
+      },
+      "cube_action": {
+        "cases": 10,
+        "materially_farther": 0,
+        "materially_closer": 0,
+        "all_fields_identical": 1,
+        "same_action": 10
+      }
+    }
+  },
+  "dedup": {
+    "2T": {
+      "checker_play": {
+        "cases": 10,
+        "materially_farther": 0,
+        "materially_closer": 0,
+        "all_fields_identical": 1,
+        "same_action": 10
+      },
+      "post_move_analytics": {
+        "cases": 10,
+        "materially_farther": 0,
+        "materially_closer": 0,
+        "all_fields_identical": 1,
+        "same_action": null
+      },
+      "cube_action": {
+        "cases": 10,
+        "materially_farther": 0,
+        "materially_closer": 0,
+        "all_fields_identical": 1,
+        "same_action": 10
+      }
+    },
+    "3T": {
+      "post_move_analytics": {
+        "cases": 10,
+        "materially_farther": 0,
+        "materially_closer": 0,
+        "all_fields_identical": 1,
+        "same_action": null
+      },
+      "checker_play": {
+        "cases": 10,
+        "materially_farther": 0,
+        "materially_closer": 0,
+        "all_fields_identical": 1,
+        "same_action": 10
+      },
+      "cube_action": {
+        "cases": 10,
+        "materially_farther": 0,
+        "materially_closer": 0,
+        "all_fields_identical": 1,
+        "same_action": 10
+      }
+    }
+  }
+}

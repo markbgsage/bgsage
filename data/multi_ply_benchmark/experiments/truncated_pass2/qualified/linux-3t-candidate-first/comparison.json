@@ -1,0 +1,2563 @@
+{
+  "inputs": {
+    "baseline": [
+      {
+        "path": "logs/truncated_pass2/linux-3t-candidate-first/baseline/3T/results.jsonl",
+        "sha256": "6b743c770c0cc9df6b03b854fa750787867dbbb9c3602220bd1b20445458458f",
+        "bytes": 1063233
+      }
+    ],
+    "candidate": [
+      {
+        "path": "logs/truncated_pass2/linux-3t-candidate-first/candidate/3T/results.jsonl",
+        "sha256": "15ff0d21e1f47577ce9cc02414b45f9053768cb146b719be696fbab990c5a0dc",
+        "bytes": 1063134
+      }
+    ],
+    "truth": {
+      "path": "data/multi_ply_benchmark/rollout_positions/results.jsonl",
+      "sha256": "23b7bca2272c8ea750020f82c066dd489d3d556e39f0b8b2ec1cf99740051845",
+      "bytes": 1127327
+    }
+  },
+  "material_probability": 0.0025,
+  "material_equity": 0.005,
+  "reference_positions_by_origin": {
+    "frozen_public_rollout": 263,
+    "archival_rollout": 37
+  },
+  "levels": {
+    "3T": {
+      "by_api": {
+        "checker_play": {
+          "timing": {
+            "baseline": {
+              "count": 100,
+              "total_seconds": 111.268369758,
+              "mean_seconds": 1.11268369758,
+              "median_seconds": 0.9149078625,
+              "p95_seconds": 2.864424254,
+              "min_seconds": 0.007679317,
+              "max_seconds": 9.133117991,
+              "stdev_seconds": 1.3018822624753754
+            },
+            "candidate": {
+              "count": 100,
+              "total_seconds": 95.106439577,
+              "mean_seconds": 0.95106439577,
+              "median_seconds": 0.780838392,
+              "p95_seconds": 2.566423539,
+              "min_seconds": 0.004045993,
+              "max_seconds": 8.214750282,
+              "stdev_seconds": 1.1364216541852412
+            },
+            "speedup": 1.169935182653063,
+            "seconds_saved": 16.161930181000002,
+            "candidate_faster_calls": 98
+          },
+          "exact_analytics": 6,
+          "changed_outputs": [
+            {
+              "position_id": "checker-money-attacking-01",
+              "repeat": 1
+            },
+            {
+              "position_id": "checker-money-attacking-02",
+              "repeat": 1
+            },
+            {
+              "position_id": "checker-money-attacking-03",
+              "repeat": 1
+            },
+            {
+              "position_id": "checker-money-attacking-04",
+              "repeat": 1
+            },
+            {
+              "position_id": "checker-money-attacking-05",
+              "repeat": 1
+            },
+            {
+              "position_id": "checker-money-attacking-06",
+              "repeat": 1
+            },
+            {
+              "position_id": "checker-money-attacking-07",
+              "repeat": 1
+            },
+            {
+              "position_id": "checker-money-attacking-08",
+              "repeat": 1
+            },
+            {
+              "position_id": "checker-money-attacking-09",
+              "repeat": 1
+            },
+            {
+              "position_id": "checker-money-attacking-10",
+              "repeat": 1
+            },
+            {
+              "position_id": "checker-money-priming-01",
+              "repeat": 1
+            },
+            {
+              "position_id": "checker-money-priming-02",
+              "repeat": 1
+            },
+            {
+              "position_id": "checker-money-priming-03",
+              "repeat": 1
+            },
+            {
+              "position_id": "checker-money-priming-04",
+              "repeat": 1
+            },
+            {
+              "position_id": "checker-money-priming-05",
+              "repeat": 1
+            },
+            {
+              "position_id": "checker-money-priming-06",
+              "repeat": 1
+            },
+            {
+              "position_id": "checker-money-priming-07",
+              "repeat": 1
+            },
+            {
+              "position_id": "checker-money-priming-08",
+              "repeat": 1
+            },
+            {
+              "position_id": "checker-money-priming-09",
+              "repeat": 1
+            },
+            {
+              "position_id": "checker-money-priming-10",
+              "repeat": 1
+            },
+            {
+              "position_id": "checker-money-anchoring-01",
+              "repeat": 1
+            },
+            {
+              "position_id": "checker-money-anchoring-02",
+              "repeat": 1
+            },
+            {
+              "position_id": "checker-money-anchoring-03",
+              "repeat": 1
+            },
+            {
+              "position_id": "checker-money-anchoring-04",
+              "repeat": 1
+            },
+            {
+              "position_id": "checker-money-anchoring-05",
+              "repeat": 1
+            },
+            {
+              "position_id": "checker-money-anchoring-06",
+              "repeat": 1
+            },
+            {
+              "position_id": "checker-money-anchoring-07",
+              "repeat": 1
+            },
+            {
+              "position_id": "checker-money-anchoring-08",
+              "repeat": 1
+            },
+            {
+              "position_id": "checker-money-anchoring-09",
+              "repeat": 1
+            },
+            {
+              "position_id": "checker-money-anchoring-10",
+              "repeat": 1
+            },
+            {
+              "position_id": "checker-money-racing-01",
+              "repeat": 1
+            },
+            {
+              "position_id": "checker-money-racing-02",
+              "repeat": 1
+            },
+            {
+              "position_id": "checker-money-racing-03",
+              "repeat": 1
+            },
+            {
+              "position_id": "checker-money-racing-04",
+              "repeat": 1
+            },
+            {
+              "position_id": "checker-money-racing-05",
+              "repeat": 1
+            },
+            {
+              "position_id": "checker-money-racing-06",
+              "repeat": 1
+            },
+            {
+              "position_id": "checker-money-racing-07",
+              "repeat": 1
+            },
+            {
+              "position_id": "checker-money-racing-08",
+              "repeat": 1
+            },
+            {
+              "position_id": "checker-money-racing-09",
+              "repeat": 1
+            },
+            {
+              "position_id": "checker-money-racing-10",
+              "repeat": 1
+            },
+            {
+              "position_id": "checker-money-purerace-03",
+              "repeat": 1
+            },
+            {
+              "position_id": "checker-money-purerace-04",
+              "repeat": 1
+            },
+            {
+              "position_id": "checker-money-purerace-05",
+              "repeat": 1
+            },
+            {
+              "position_id": "checker-money-purerace-06",
+              "repeat": 1
+            },
+            {
+              "position_id": "checker-money-purerace-08",
+              "repeat": 1
+            },
+            {
+              "position_id": "checker-money-purerace-09",
+              "repeat": 1
+            },
+            {
+              "position_id": "checker-money-purerace-10",
+              "repeat": 1
+            },
+            {
+              "position_id": "checker-match-attacking-01",
+              "repeat": 1
+            },
+            {
+              "position_id": "checker-match-attacking-02",
+              "repeat": 1
+            },
+            {
+              "position_id": "checker-match-attacking-03",
+              "repeat": 1
+            },
+            {
+              "position_id": "checker-match-attacking-04",
+              "repeat": 1
+            },
+            {
+              "position_id": "checker-match-attacking-05",
+              "repeat": 1
+            },
+            {
+              "position_id": "checker-match-attacking-06",
+              "repeat": 1
+            },
+            {
+              "position_id": "checker-match-attacking-07",
+              "repeat": 1
+            },
+            {
+              "position_id": "checker-match-attacking-08",
+              "repeat": 1
+            },
+            {
+              "position_id": "checker-match-attacking-09",
+              "repeat": 1
+            },
+            {
+              "position_id": "checker-match-attacking-10",
+              "repeat": 1
+            },
+            {
+              "position_id": "checker-match-priming-01",
+              "repeat": 1
+            },
+            {
+              "position_id": "checker-match-priming-02",
+              "repeat": 1
+            },
+            {
+              "position_id": "checker-match-priming-03",
+              "repeat": 1
+            },
+            {
+              "position_id": "checker-match-priming-04",
+              "repeat": 1
+            },
+            {
+              "position_id": "checker-match-priming-05",
+              "repeat": 1
+            },
+            {
+              "position_id": "checker-match-priming-06",
+              "repeat": 1
+            },
+            {
+              "position_id": "checker-match-priming-07",
+              "repeat": 1
+            },
+            {
+              "position_id": "checker-match-priming-08",
+              "repeat": 1
+            },
+            {
+              "position_id": "checker-match-priming-09",
+              "repeat": 1
+            },
+            {
+              "position_id": "checker-match-priming-10",
+              "repeat": 1
+            },
+            {
+              "position_id": "checker-match-anchoring-01",
+              "repeat": 1
+            },
+            {
+              "position_id": "checker-match-anchoring-02",
+              "repeat": 1
+            },
+            {
+              "position_id": "checker-match-anchoring-03",
+              "repeat": 1
+            },
+            {
+              "position_id": "checker-match-anchoring-04",
+              "repeat": 1
+            },
+            {
+              "position_id": "checker-match-anchoring-05",
+              "repeat": 1
+            },
+            {
+              "position_id": "checker-match-anchoring-06",
+              "repeat": 1
+            },
+            {
+              "position_id": "checker-match-anchoring-07",
+              "repeat": 1
+            },
+            {
+              "position_id": "checker-match-anchoring-08",
+              "repeat": 1
+            },
+            {
+              "position_id": "checker-match-anchoring-09",
+              "repeat": 1
+            },
+            {
+              "position_id": "checker-match-anchoring-10",
+              "repeat": 1
+            },
+            {
+              "position_id": "checker-match-racing-01",
+              "repeat": 1
+            },
+            {
+              "position_id": "checker-match-racing-02",
+              "repeat": 1
+            },
+            {
+              "position_id": "checker-match-racing-03",
+              "repeat": 1
+            },
+            {
+              "position_id": "checker-match-racing-04",
+              "repeat": 1
+            },
+            {
+              "position_id": "checker-match-racing-05",
+              "repeat": 1
+            },
+            {
+              "position_id": "checker-match-racing-06",
+              "repeat": 1
+            },
+            {
+              "position_id": "checker-match-racing-07",
+              "repeat": 1
+            },
+            {
+              "position_id": "checker-match-racing-08",
+              "repeat": 1
+            },
+            {
+              "position_id": "checker-match-racing-09",
+              "repeat": 1
+            },
+            {
+              "position_id": "checker-match-racing-10",
+              "repeat": 1
+            },
+            {
+              "position_id": "checker-match-purerace-01",
+              "repeat": 1
+            },
+            {
+              "position_id": "checker-match-purerace-03",
+              "repeat": 1
+            },
+            {
+              "position_id": "checker-match-purerace-04",
+              "repeat": 1
+            },
+            {
+              "position_id": "checker-match-purerace-05",
+              "repeat": 1
+            },
+            {
+              "position_id": "checker-match-purerace-06",
+              "repeat": 1
+            },
+            {
+              "position_id": "checker-match-purerace-07",
+              "repeat": 1
+            },
+            {
+              "position_id": "checker-match-purerace-09",
+              "repeat": 1
+            }
+          ],
+          "public_field_changes": {
+            "cubeless_equity": 162,
+            "equity": 128,
+            "equity_diff": 727,
+            "prob_std_errors[0]": 210,
+            "prob_std_errors[1]": 192,
+            "prob_std_errors[2]": 182,
+            "prob_std_errors[3]": 251,
+            "prob_std_errors[4]": 212,
+            "probs.backgammon_loss": 221,
+            "probs.backgammon_win": 177,
+            "probs.gammon_loss": 191,
+            "probs.gammon_win": 170,
+            "probs.win": 74,
+            "std_error": 349
+          },
+          "numeric_shifts": {
+            "cubeless_equity": {
+              "n": 1709,
+              "max_abs_shift": 8.147209882736206e-06,
+              "worst_location": [
+                "checker-match-priming-03",
+                1,
+                [
+                  0,
+                  -1,
+                  0,
+                  0,
+                  2,
+                  0,
+                  4,
+                  0,
+                  4,
+                  0,
+                  0,
+                  1,
+                  -5,
+                  2,
+                  0,
+                  0,
+                  0,
+                  -2,
+                  0,
+                  -3,
+                  2,
+                  -2,
+                  -2,
+                  0,
+                  0,
+                  0
+                ]
+              ],
+              "over_material": 0
+            },
+            "die1": {
+              "n": 100,
+              "max_abs_shift": 0,
+              "worst_location": null,
+              "over_material": 0
+            },
+            "die2": {
+              "n": 100,
+              "max_abs_shift": 0,
+              "worst_location": null,
+              "over_material": 0
+            },
+            "equity": {
+              "n": 1709,
+              "max_abs_shift": 3.9637088775634766e-06,
+              "worst_location": [
+                "checker-match-priming-03",
+                1,
+                [
+                  0,
+                  -1,
+                  0,
+                  0,
+                  2,
+                  0,
+                  4,
+                  0,
+                  4,
+                  0,
+                  0,
+                  1,
+                  -5,
+                  2,
+                  0,
+                  0,
+                  0,
+                  -2,
+                  0,
+                  -3,
+                  2,
+                  -2,
+                  -2,
+                  0,
+                  0,
+                  0
+                ]
+              ],
+              "over_material": 0
+            },
+            "equity_diff": {
+              "n": 1709,
+              "max_abs_shift": 3.9637088775634766e-06,
+              "worst_location": [
+                "checker-match-priming-03",
+                1,
+                [
+                  0,
+                  -1,
+                  0,
+                  1,
+                  2,
+                  0,
+                  3,
+                  0,
+                  3,
+                  0,
+                  0,
+                  2,
+                  -5,
+                  2,
+                  0,
+                  0,
+                  0,
+                  -2,
+                  0,
+                  -3,
+                  2,
+                  -2,
+                  -2,
+                  0,
+                  0,
+                  0
+                ]
+              ],
+              "over_material": 0
+            },
+            "prob_std_errors[0]": {
+              "n": 382,
+              "max_abs_shift": 1.4621764421463013e-07,
+              "worst_location": [
+                "checker-money-priming-08",
+                1,
+                [
+                  2,
+                  2,
+                  0,
+                  2,
+                  0,
+                  2,
+                  2,
+                  0,
+                  2,
+                  0,
+                  0,
+                  0,
+                  -2,
+                  1,
+                  -2,
+                  0,
+                  0,
+                  -2,
+                  2,
+                  -2,
+                  -2,
+                  -2,
+                  0,
+                  2,
+                  -1,
+                  0
+                ]
+              ],
+              "over_material": 0
+            },
+            "prob_std_errors[1]": {
+              "n": 382,
+              "max_abs_shift": 1.2014061212539673e-07,
+              "worst_location": [
+                "checker-match-priming-04",
+                1,
+                [
+                  1,
+                  0,
+                  -2,
+                  2,
+                  2,
+                  2,
+                  4,
+                  2,
+                  0,
+                  0,
+                  1,
+                  0,
+                  0,
+                  0,
+                  1,
+                  -1,
+                  0,
+                  0,
+                  1,
+                  -3,
+                  -2,
+                  -2,
+                  0,
+                  0,
+                  -4,
+                  0
+                ]
+              ],
+              "over_material": 0
+            },
+            "prob_std_errors[2]": {
+              "n": 382,
+              "max_abs_shift": 1.8233549781143665e-08,
+              "worst_location": [
+                "checker-money-anchoring-10",
+                1,
+                [
+                  1,
+                  -1,
+                  -1,
+                  2,
+                  -1,
+                  -1,
+                  3,
+                  0,
+                  2,
+                  0,
+                  0,
+                  0,
+                  0,
+                  3,
+                  0,
+                  0,
+                  1,
+                  0,
+                  0,
+                  -3,
+                  3,
+                  -2,
+                  1,
+                  -3,
+                  -2,
+                  0
+                ]
+              ],
+              "over_material": 0
+            },
+            "prob_std_errors[3]": {
+              "n": 382,
+              "max_abs_shift": 2.330634742975235e-07,
+              "worst_location": [
+                "checker-match-priming-01",
+                1,
+                [
+                  1,
+                  1,
+                  1,
+                  0,
+                  2,
+                  1,
+                  2,
+                  0,
+                  0,
+                  1,
+                  0,
+                  -1,
+                  -2,
+                  0,
+                  -3,
+                  0,
+                  0,
+                  0,
+                  2,
+                  -2,
+                  -2,
+                  -2,
+                  -2,
+                  3,
+                  2,
+                  0
+                ]
+              ],
+              "over_material": 0
+            },
+            "prob_std_errors[4]": {
+              "n": 382,
+              "max_abs_shift": 9.452924132347107e-08,
+              "worst_location": [
+                "checker-match-priming-01",
+                1,
+                [
+                  1,
+                  1,
+                  1,
+                  0,
+                  2,
+                  1,
+                  2,
+                  0,
+                  0,
+                  1,
+                  0,
+                  -1,
+                  -2,
+                  0,
+                  -3,
+                  0,
+                  0,
+                  0,
+                  2,
+                  -2,
+                  -2,
+                  -2,
+                  -2,
+                  3,
+                  2,
+                  0
+                ]
+              ],
+              "over_material": 0
+            },
+            "probs.backgammon_loss": {
+              "n": 1709,
+              "max_abs_shift": 3.7401914596557617e-06,
+              "worst_location": [
+                "checker-match-priming-01",
+                1,
+                [
+                  1,
+                  1,
+                  1,
+                  0,
+                  2,
+                  1,
+                  2,
+                  0,
+                  0,
+                  1,
+                  0,
+                  -1,
+                  -2,
+                  0,
+                  -3,
+                  0,
+                  0,
+                  0,
+                  2,
+                  -2,
+                  -2,
+                  -2,
+                  -2,
+                  3,
+                  2,
+                  0
+                ]
+              ],
+              "over_material": 0
+            },
+            "probs.backgammon_win": {
+              "n": 1709,
+              "max_abs_shift": 1.0952353477478027e-06,
+              "worst_location": [
+                "checker-match-priming-08",
+                1,
+                [
+                  1,
+                  0,
+                  0,
+                  -1,
+                  -1,
+                  2,
+                  3,
+                  2,
+                  2,
+                  2,
+                  0,
+                  0,
+                  -2,
+                  2,
+                  0,
+                  0,
+                  -2,
+                  -3,
+                  0,
+                  -2,
+                  0,
+                  -3,
+                  2,
+                  0,
+                  0,
+                  0
+                ]
+              ],
+              "over_material": 0
+            },
+            "probs.gammon_loss": {
+              "n": 1709,
+              "max_abs_shift": 5.513429641723633e-06,
+              "worst_location": [
+                "checker-match-priming-03",
+                1,
+                [
+                  0,
+                  -1,
+                  0,
+                  0,
+                  2,
+                  0,
+                  4,
+                  0,
+                  4,
+                  0,
+                  0,
+                  1,
+                  -5,
+                  2,
+                  0,
+                  0,
+                  0,
+                  -2,
+                  0,
+                  -3,
+                  2,
+                  -2,
+                  -2,
+                  0,
+                  0,
+                  0
+                ]
+              ],
+              "over_material": 0
+            },
+            "probs.gammon_win": {
+              "n": 1709,
+              "max_abs_shift": 1.1041760444641113e-05,
+              "worst_location": [
+                "checker-match-priming-08",
+                1,
+                [
+                  1,
+                  0,
+                  0,
+                  -1,
+                  -1,
+                  2,
+                  3,
+                  2,
+                  2,
+                  2,
+                  0,
+                  0,
+                  -2,
+                  2,
+                  0,
+                  0,
+                  -2,
+                  -3,
+                  0,
+                  -2,
+                  0,
+                  -3,
+                  2,
+                  0,
+                  0,
+                  0
+                ]
+              ],
+              "over_material": 0
+            },
+            "probs.win": {
+              "n": 1709,
+              "max_abs_shift": 4.589557647705078e-06,
+              "worst_location": [
+                "checker-match-priming-03",
+                1,
+                [
+                  0,
+                  -1,
+                  0,
+                  0,
+                  2,
+                  0,
+                  4,
+                  0,
+                  4,
+                  0,
+                  0,
+                  1,
+                  -5,
+                  2,
+                  0,
+                  0,
+                  0,
+                  -2,
+                  0,
+                  -3,
+                  2,
+                  -2,
+                  -2,
+                  0,
+                  0,
+                  0
+                ]
+              ],
+              "over_material": 0
+            },
+            "std_error": {
+              "n": 382,
+              "max_abs_shift": 2.8967587441600107e-07,
+              "worst_location": [
+                "checker-money-priming-08",
+                1,
+                [
+                  2,
+                  2,
+                  0,
+                  2,
+                  0,
+                  2,
+                  2,
+                  0,
+                  2,
+                  0,
+                  0,
+                  0,
+                  -2,
+                  1,
+                  -2,
+                  0,
+                  0,
+                  -2,
+                  2,
+                  -2,
+                  -2,
+                  -2,
+                  0,
+                  2,
+                  -1,
+                  0
+                ]
+              ],
+              "over_material": 0
+            }
+          },
+          "rollout_error_by_field": {
+            "cubeless_equity": {
+              "n": 378,
+              "baseline_mae": 0.010865066215227832,
+              "candidate_mae": 0.010865046494841886,
+              "mean_change_in_abs_error": -1.9720385945032513e-08,
+              "worst_change_in_abs_error": 8.106231689453125e-06,
+              "materially_farther": 0,
+              "materially_closer": 0,
+              "best_change_in_abs_error": -8.147209882736206e-06,
+              "baseline_mean_value": -0.21782063555948927,
+              "candidate_mean_value": -0.21782064938642656,
+              "rollout_mean_value": -0.2146912597019936,
+              "baseline_max_abs_error": 0.22770593563715613,
+              "baseline_position_weighted_mae": 0.01226481426201563,
+              "candidate_max_abs_error": 0.22770593563715613,
+              "candidate_position_weighted_mae": 0.012264748283122451
+            },
+            "equity": {
+              "n": 378,
+              "baseline_mae": 0.010626144334817605,
+              "candidate_mae": 0.010626142520832828,
+              "mean_change_in_abs_error": -1.8139847766154658e-09,
+              "worst_change_in_abs_error": 2.6226043701171875e-06,
+              "materially_farther": 0,
+              "materially_closer": 0,
+              "best_change_in_abs_error": -3.9637088775634766e-06,
+              "baseline_mean_value": -0.23089618145188848,
+              "candidate_mean_value": -0.2308961825156412,
+              "rollout_mean_value": -0.22721398831260275,
+              "baseline_max_abs_error": 0.0993247926235199,
+              "baseline_position_weighted_mae": 0.012422797231775277,
+              "candidate_max_abs_error": 0.09932473301887512,
+              "candidate_position_weighted_mae": 0.012422767445374653
+            },
+            "equity_diff": {
+              "n": 378,
+              "baseline_mae": 0.004924935830089327,
+              "candidate_mae": 0.004924872469972503,
+              "mean_change_in_abs_error": -6.336011682395582e-08,
+              "worst_change_in_abs_error": 3.9637088775634766e-06,
+              "materially_farther": 0,
+              "materially_closer": 0,
+              "best_change_in_abs_error": -2.6226043701171875e-06,
+              "baseline_mean_value": -0.04144755184247587,
+              "candidate_mean_value": -0.04144744846135841,
+              "rollout_mean_value": -0.04164319571878527,
+              "baseline_max_abs_error": 0.07141071557998657,
+              "baseline_position_weighted_mae": 0.005714080461280761,
+              "candidate_max_abs_error": 0.07141095399856567,
+              "candidate_position_weighted_mae": 0.005714078776089325
+            },
+            "p.backgammon_loss": {
+              "n": 378,
+              "baseline_mae": 0.0026588886523386617,
+              "candidate_mae": 0.0026588786949157733,
+              "mean_change_in_abs_error": -9.957422888580593e-09,
+              "worst_change_in_abs_error": 1.7601996660232544e-07,
+              "materially_farther": 0,
+              "materially_closer": 0,
+              "best_change_in_abs_error": -3.7401914596557617e-06,
+              "baseline_mean_value": 0.004943438418340944,
+              "candidate_mean_value": 0.00494345040853923,
+              "rollout_mean_value": 0.007413396021454442,
+              "baseline_max_abs_error": 0.16929221898317337,
+              "baseline_position_weighted_mae": 0.0027343277208412464,
+              "candidate_max_abs_error": 0.16929221153259277,
+              "candidate_position_weighted_mae": 0.0027343162890041
+            },
+            "p.backgammon_win": {
+              "n": 378,
+              "baseline_mae": 0.0015358160070802894,
+              "candidate_mae": 0.0015358112667651436,
+              "mean_change_in_abs_error": -4.740315145703616e-09,
+              "worst_change_in_abs_error": 2.8172507882118225e-07,
+              "materially_farther": 0,
+              "materially_closer": 0,
+              "best_change_in_abs_error": -1.0952353477478027e-06,
+              "baseline_mean_value": 0.006668629780113028,
+              "candidate_mean_value": 0.0066686273291981565,
+              "rollout_mean_value": 0.007720592035423115,
+              "baseline_max_abs_error": 0.04517590254545212,
+              "baseline_position_weighted_mae": 0.0023115610226333715,
+              "candidate_max_abs_error": 0.04517590254545212,
+              "candidate_position_weighted_mae": 0.002311555202983368
+            },
+            "p.gammon_loss": {
+              "n": 378,
+              "baseline_mae": 0.004174852498372367,
+              "candidate_mae": 0.0041748547297052845,
+              "mean_change_in_abs_error": 2.2313329173768926e-09,
+              "worst_change_in_abs_error": 5.513429641723633e-06,
+              "materially_farther": 0,
+              "materially_closer": 0,
+              "best_change_in_abs_error": -4.5299530029296875e-06,
+              "baseline_mean_value": 0.18801874468892307,
+              "candidate_mean_value": 0.18801878159885407,
+              "rollout_mean_value": 0.18984020375541205,
+              "baseline_max_abs_error": 0.06878536939620972,
+              "baseline_position_weighted_mae": 0.004302085106869432,
+              "candidate_max_abs_error": 0.0687853991985321,
+              "candidate_position_weighted_mae": 0.004302089376462928
+            },
+            "p.gammon_win": {
+              "n": 378,
+              "baseline_mae": 0.004536315616641996,
+              "candidate_mae": 0.00453627830876447,
+              "mean_change_in_abs_error": -3.730787752570548e-08,
+              "worst_change_in_abs_error": 3.1888484954833984e-06,
+              "materially_farther": 0,
+              "materially_closer": 0,
+              "best_change_in_abs_error": -1.1041760444641113e-05,
+              "baseline_mean_value": 0.08612568119010253,
+              "candidate_mean_value": 0.08612567420229529,
+              "rollout_mean_value": 0.09008244754450458,
+              "baseline_max_abs_error": 0.18224926370506486,
+              "baseline_position_weighted_mae": 0.0057063570548865575,
+              "candidate_max_abs_error": 0.18224926370506486,
+              "candidate_position_weighted_mae": 0.005706322720728461
+            },
+            "p.win": {
+              "n": 378,
+              "baseline_mae": 0.002801749941349239,
+              "candidate_mae": 0.0028017316499767686,
+              "mean_change_in_abs_error": -1.8291372470754794e-08,
+              "worst_change_in_abs_error": 2.3245811462402344e-06,
+              "materially_farther": 0,
+              "materially_closer": 0,
+              "best_change_in_abs_error": -4.589557647705078e-06,
+              "baseline_mean_value": 0.4412500261528408,
+              "candidate_mean_value": 0.4412500475978982,
+              "rollout_mean_value": 0.44246333831305795,
+              "baseline_max_abs_error": 0.01858466863632202,
+              "baseline_position_weighted_mae": 0.0033455230200655425,
+              "candidate_max_abs_error": 0.01858466863632202,
+              "candidate_position_weighted_mae": 0.0033455005576667578
+            }
+          },
+          "reference_endpoint_levels": {
+            "Rollout": 378,
+            "1-ply": 896,
+            "2-ply": 435
+          },
+          "material_changes_in_rollout_error": [],
+          "same_best_action": 100,
+          "decision_accuracy": {
+            "baseline": {
+              "decisions": 100,
+              "agree_with_rollout": 90,
+              "scorable_regrets": 100,
+              "unscorable_regrets": 0,
+              "mean_regret_equity": 0.0002864411092466777,
+              "max_regret_equity": 0.00649699941277504,
+              "within_0_005_equity_of_best": 98
+            },
+            "candidate": {
+              "decisions": 100,
+              "agree_with_rollout": 90,
+              "scorable_regrets": 100,
+              "unscorable_regrets": 0,
+              "mean_regret_equity": 0.0002864411092466777,
+              "max_regret_equity": 0.00649699941277504,
+              "within_0_005_equity_of_best": 98
+            }
+          },
+          "same_full_move_order": 100
+        },
+        "cube_action": {
+          "timing": {
+            "baseline": {
+              "count": 100,
+              "total_seconds": 43.612300368,
+              "mean_seconds": 0.43612300368,
+              "median_seconds": 0.4568435745,
+              "p95_seconds": 0.842266217,
+              "min_seconds": 0.000784641,
+              "max_seconds": 1.021484334,
+              "stdev_seconds": 0.2757921295582852
+            },
+            "candidate": {
+              "count": 100,
+              "total_seconds": 36.904059012,
+              "mean_seconds": 0.36904059012,
+              "median_seconds": 0.403177209,
+              "p95_seconds": 0.720943542,
+              "min_seconds": 0.000676892,
+              "max_seconds": 0.920263142,
+              "stdev_seconds": 0.23448826042041057
+            },
+            "speedup": 1.1817751633721023,
+            "seconds_saved": 6.708241356000002,
+            "candidate_faster_calls": 95
+          },
+          "exact_analytics": 3,
+          "changed_outputs": [
+            {
+              "position_id": "cube-money-attacking-01",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-money-attacking-02",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-money-attacking-03",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-money-attacking-04",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-money-attacking-05",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-money-attacking-06",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-money-attacking-07",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-money-attacking-08",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-money-attacking-09",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-money-attacking-10",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-money-priming-01",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-money-priming-02",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-money-priming-03",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-money-priming-04",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-money-priming-05",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-money-priming-06",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-money-priming-07",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-money-priming-08",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-money-priming-09",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-money-priming-10",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-money-anchoring-01",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-money-anchoring-02",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-money-anchoring-03",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-money-anchoring-04",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-money-anchoring-05",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-money-anchoring-06",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-money-anchoring-07",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-money-anchoring-08",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-money-anchoring-09",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-money-anchoring-10",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-money-racing-01",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-money-racing-02",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-money-racing-03",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-money-racing-04",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-money-racing-05",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-money-racing-06",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-money-racing-07",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-money-racing-08",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-money-racing-09",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-money-racing-10",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-money-purerace-01",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-money-purerace-02",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-money-purerace-03",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-money-purerace-04",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-money-purerace-05",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-money-purerace-06",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-money-purerace-07",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-money-purerace-08",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-money-purerace-09",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-money-purerace-10",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-match-attacking-01",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-match-attacking-02",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-match-attacking-03",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-match-attacking-04",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-match-attacking-05",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-match-attacking-06",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-match-attacking-07",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-match-attacking-08",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-match-attacking-09",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-match-attacking-10",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-match-priming-01",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-match-priming-02",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-match-priming-03",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-match-priming-04",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-match-priming-05",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-match-priming-06",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-match-priming-07",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-match-priming-08",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-match-priming-09",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-match-priming-10",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-match-anchoring-01",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-match-anchoring-02",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-match-anchoring-03",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-match-anchoring-04",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-match-anchoring-05",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-match-anchoring-06",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-match-anchoring-07",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-match-anchoring-08",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-match-anchoring-09",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-match-anchoring-10",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-match-racing-01",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-match-racing-02",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-match-racing-03",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-match-racing-04",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-match-racing-05",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-match-racing-06",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-match-racing-07",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-match-racing-08",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-match-racing-09",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-match-racing-10",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-match-purerace-01",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-match-purerace-04",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-match-purerace-05",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-match-purerace-07",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-match-purerace-08",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-match-purerace-09",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-match-purerace-10",
+              "repeat": 1
+            }
+          ],
+          "public_field_changes": {
+            "cubeless_equity": 48,
+            "cubeless_se": 97,
+            "equity_dt": 50,
+            "equity_dt_se": 50,
+            "equity_nd": 39,
+            "equity_nd_se": 51,
+            "optimal_equity": 43,
+            "probs.backgammon_loss": 58,
+            "probs.backgammon_win": 68,
+            "probs.gammon_loss": 60,
+            "probs.gammon_win": 68,
+            "probs.win": 32
+          },
+          "numeric_shifts": {
+            "cubeless_equity": {
+              "n": 100,
+              "max_abs_shift": 3.904104232788086e-06,
+              "worst_location": [
+                "cube-match-attacking-02",
+                1,
+                null
+              ],
+              "over_material": 0
+            },
+            "cubeless_se": {
+              "n": 100,
+              "max_abs_shift": 1.1837546555135137e-07,
+              "worst_location": [
+                "cube-match-priming-02",
+                1,
+                null
+              ],
+              "over_material": 0
+            },
+            "equity_dp": {
+              "n": 100,
+              "max_abs_shift": 0.0,
+              "worst_location": null,
+              "over_material": 0
+            },
+            "equity_dt": {
+              "n": 100,
+              "max_abs_shift": 3.4570693969726562e-06,
+              "worst_location": [
+                "cube-money-priming-03",
+                1,
+                null
+              ],
+              "over_material": 0
+            },
+            "equity_dt_se": {
+              "n": 100,
+              "max_abs_shift": 2.5331974029541016e-07,
+              "worst_location": [
+                "cube-money-priming-03",
+                1,
+                null
+              ],
+              "over_material": 0
+            },
+            "equity_nd": {
+              "n": 100,
+              "max_abs_shift": 7.748603820800781e-07,
+              "worst_location": [
+                "cube-match-attacking-09",
+                1,
+                null
+              ],
+              "over_material": 0
+            },
+            "equity_nd_se": {
+              "n": 100,
+              "max_abs_shift": 2.7008354663848877e-08,
+              "worst_location": [
+                "cube-match-attacking-05",
+                1,
+                null
+              ],
+              "over_material": 0
+            },
+            "optimal_equity": {
+              "n": 100,
+              "max_abs_shift": 3.4570693969726562e-06,
+              "worst_location": [
+                "cube-money-priming-03",
+                1,
+                null
+              ],
+              "over_material": 0
+            },
+            "probs.backgammon_loss": {
+              "n": 100,
+              "max_abs_shift": 2.741347998380661e-06,
+              "worst_location": [
+                "cube-match-attacking-02",
+                1,
+                null
+              ],
+              "over_material": 0
+            },
+            "probs.backgammon_win": {
+              "n": 100,
+              "max_abs_shift": 2.16066837310791e-06,
+              "worst_location": [
+                "cube-match-priming-02",
+                1,
+                null
+              ],
+              "over_material": 0
+            },
+            "probs.gammon_loss": {
+              "n": 100,
+              "max_abs_shift": 2.1457672119140625e-06,
+              "worst_location": [
+                "cube-money-priming-08",
+                1,
+                null
+              ],
+              "over_material": 0
+            },
+            "probs.gammon_win": {
+              "n": 100,
+              "max_abs_shift": 3.11434268951416e-06,
+              "worst_location": [
+                "cube-money-priming-08",
+                1,
+                null
+              ],
+              "over_material": 0
+            },
+            "probs.win": {
+              "n": 100,
+              "max_abs_shift": 8.344650268554688e-07,
+              "worst_location": [
+                "cube-match-attacking-02",
+                1,
+                null
+              ],
+              "over_material": 0
+            }
+          },
+          "rollout_error_by_field": {
+            "cubeless_equity": {
+              "n": 100,
+              "baseline_mae": 0.01646660264581442,
+              "candidate_mae": 0.01646653365343809,
+              "mean_change_in_abs_error": -6.899237632751465e-08,
+              "worst_change_in_abs_error": 7.152557373046875e-07,
+              "materially_farther": 0,
+              "materially_closer": 0,
+              "best_change_in_abs_error": -3.904104232788086e-06,
+              "baseline_mean_value": 0.449953074529767,
+              "candidate_mean_value": 0.4499530225247145,
+              "rollout_mean_value": 0.4536048395559192,
+              "baseline_max_abs_error": 0.23189353942871094,
+              "baseline_position_weighted_mae": 0.01646660264581442,
+              "candidate_max_abs_error": 0.23189115524291992,
+              "candidate_position_weighted_mae": 0.01646653365343809
+            },
+            "equity_dp": {
+              "n": 100,
+              "baseline_mae": 0.0,
+              "candidate_mae": 0.0,
+              "mean_change_in_abs_error": 0.0,
+              "worst_change_in_abs_error": 0.0,
+              "materially_farther": 0,
+              "materially_closer": 0,
+              "best_change_in_abs_error": 0.0,
+              "baseline_mean_value": 0.9999999898672104,
+              "candidate_mean_value": 0.9999999898672104,
+              "rollout_mean_value": 0.9999999898672104,
+              "baseline_max_abs_error": 0.0,
+              "baseline_position_weighted_mae": 0.0,
+              "candidate_max_abs_error": 0.0,
+              "candidate_position_weighted_mae": 0.0
+            },
+            "equity_dt": {
+              "n": 100,
+              "baseline_mae": 0.024795178659260272,
+              "candidate_mae": 0.02479520607739687,
+              "mean_change_in_abs_error": 2.741813659667969e-08,
+              "worst_change_in_abs_error": 2.7418136596679688e-06,
+              "materially_farther": 0,
+              "materially_closer": 0,
+              "best_change_in_abs_error": -3.4570693969726562e-06,
+              "baseline_mean_value": 0.6203706555441022,
+              "candidate_mean_value": 0.6203706248477101,
+              "rollout_mean_value": 0.6278000463545322,
+              "baseline_max_abs_error": 0.2085753083229065,
+              "baseline_position_weighted_mae": 0.024795178659260272,
+              "candidate_max_abs_error": 0.2085753083229065,
+              "candidate_position_weighted_mae": 0.02479520607739687
+            },
+            "equity_nd": {
+              "n": 100,
+              "baseline_mae": 0.017596154490020124,
+              "candidate_mae": 0.01759617173112929,
+              "mean_change_in_abs_error": 1.7241109162569045e-08,
+              "worst_change_in_abs_error": 7.748603820800781e-07,
+              "materially_farther": 0,
+              "materially_closer": 0,
+              "best_change_in_abs_error": -3.5762786865234375e-07,
+              "baseline_mean_value": 0.5841524343960919,
+              "candidate_mean_value": 0.5841524412948638,
+              "rollout_mean_value": 0.5940223311446607,
+              "baseline_max_abs_error": 0.0914461612701416,
+              "baseline_position_weighted_mae": 0.017596154490020124,
+              "candidate_max_abs_error": 0.0914461612701416,
+              "candidate_position_weighted_mae": 0.01759617173112929
+            },
+            "optimal_equity": {
+              "n": 100,
+              "baseline_mae": 0.01884398637106642,
+              "candidate_mae": 0.018843972617760302,
+              "mean_change_in_abs_error": -1.3753306120634079e-08,
+              "worst_change_in_abs_error": 7.748603820800781e-07,
+              "materially_farther": 0,
+              "materially_closer": 0,
+              "best_change_in_abs_error": -3.4570693969726562e-06,
+              "baseline_mean_value": 0.5978116398327984,
+              "candidate_mean_value": 0.5978116097766906,
+              "rollout_mean_value": 0.6085527404211462,
+              "baseline_max_abs_error": 0.0914461612701416,
+              "baseline_position_weighted_mae": 0.01884398637106642,
+              "candidate_max_abs_error": 0.0914461612701416,
+              "candidate_position_weighted_mae": 0.018843972617760302
+            },
+            "p.backgammon_loss": {
+              "n": 100,
+              "baseline_mae": 0.00490251102946587,
+              "candidate_mae": 0.004902485229040679,
+              "mean_change_in_abs_error": -2.5800425191846444e-08,
+              "worst_change_in_abs_error": 3.6694109439849854e-07,
+              "materially_farther": 0,
+              "materially_closer": 0,
+              "best_change_in_abs_error": -2.741347998380661e-06,
+              "baseline_mean_value": 0.0035189074146001077,
+              "candidate_mean_value": 0.0035189393622590613,
+              "rollout_mean_value": 0.008330980421780794,
+              "baseline_max_abs_error": 0.10196904465556145,
+              "baseline_position_weighted_mae": 0.00490251102946587,
+              "candidate_max_abs_error": 0.10196904093027115,
+              "candidate_position_weighted_mae": 0.004902485229040679
+            },
+            "p.backgammon_win": {
+              "n": 100,
+              "baseline_mae": 0.005237278622227279,
+              "candidate_mae": 0.005237265382859278,
+              "mean_change_in_abs_error": -1.3239368001904949e-08,
+              "worst_change_in_abs_error": 2.845190465450287e-07,
+              "materially_farther": 0,
+              "materially_closer": 0,
+              "best_change_in_abs_error": -2.16066837310791e-06,
+              "baseline_mean_value": 0.007475916784546826,
+              "candidate_mean_value": 0.007475934847182373,
+              "rollout_mean_value": 0.012242961341976014,
+              "baseline_max_abs_error": 0.3029187172651291,
+              "baseline_position_weighted_mae": 0.005237278622227279,
+              "candidate_max_abs_error": 0.302916556596756,
+              "candidate_position_weighted_mae": 0.005237265382859278
+            },
+            "p.gammon_loss": {
+              "n": 100,
+              "baseline_mae": 0.004292957814528826,
+              "candidate_mae": 0.0042928942899548165,
+              "mean_change_in_abs_error": -6.352457400993216e-08,
+              "worst_change_in_abs_error": 9.08970832824707e-07,
+              "materially_farther": 0,
+              "materially_closer": 0,
+              "best_change_in_abs_error": -2.1457672119140625e-06,
+              "baseline_mean_value": 0.06612553629564598,
+              "candidate_mean_value": 0.06612559878134462,
+              "rollout_mean_value": 0.07016309235565167,
+              "baseline_max_abs_error": 0.03348354995250702,
+              "baseline_position_weighted_mae": 0.004292957814528826,
+              "candidate_max_abs_error": 0.033484458923339844,
+              "candidate_position_weighted_mae": 0.0042928942899548165
+            },
+            "p.gammon_win": {
+              "n": 100,
+              "baseline_mae": 0.005384460398419551,
+              "candidate_mae": 0.005384462026637751,
+              "mean_change_in_abs_error": 1.6282182002669287e-09,
+              "worst_change_in_abs_error": 1.7881393432617188e-06,
+              "materially_farther": 0,
+              "materially_closer": 0,
+              "best_change_in_abs_error": -3.11434268951416e-06,
+              "baseline_mean_value": 0.14523968304012777,
+              "candidate_mean_value": 0.14523973658345862,
+              "rollout_mean_value": 0.149390864767761,
+              "baseline_max_abs_error": 0.06863230466842651,
+              "baseline_position_weighted_mae": 0.005384460398419551,
+              "candidate_max_abs_error": 0.06863236427307129,
+              "candidate_position_weighted_mae": 0.005384462026637751
+            },
+            "p.win": {
+              "n": 100,
+              "baseline_mae": 0.0038425037264823913,
+              "candidate_mae": 0.0038424694538116456,
+              "mean_change_in_abs_error": -3.427267074584961e-08,
+              "worst_change_in_abs_error": 1.7881393432617188e-07,
+              "materially_farther": 0,
+              "materially_closer": 0,
+              "best_change_in_abs_error": -8.344650268554688e-07,
+              "baseline_mean_value": 0.6834409546852112,
+              "candidate_mean_value": 0.6834409406781197,
+              "rollout_mean_value": 0.6852328130602836,
+              "baseline_max_abs_error": 0.02251124382019043,
+              "baseline_position_weighted_mae": 0.0038425037264823913,
+              "candidate_max_abs_error": 0.02251124382019043,
+              "candidate_position_weighted_mae": 0.0038424694538116456
+            }
+          },
+          "reference_endpoint_levels": {
+            "Rollout": 100
+          },
+          "material_changes_in_rollout_error": [],
+          "same_best_action": 100,
+          "decision_accuracy": {
+            "baseline": {
+              "decisions": 100,
+              "agree_with_rollout": 98,
+              "scorable_regrets": 100,
+              "unscorable_regrets": 0,
+              "mean_regret_equity": 5.108833312988281e-05,
+              "max_regret_equity": 0.004721105098724365,
+              "within_0_005_equity_of_best": 100
+            },
+            "candidate": {
+              "decisions": 100,
+              "agree_with_rollout": 98,
+              "scorable_regrets": 100,
+              "unscorable_regrets": 0,
+              "mean_regret_equity": 5.108833312988281e-05,
+              "max_regret_equity": 0.004721105098724365,
+              "within_0_005_equity_of_best": 100
+            }
+          }
+        },
+        "post_move_analytics": {
+          "timing": {
+            "baseline": {
+              "count": 100,
+              "total_seconds": 42.584328014,
+              "mean_seconds": 0.42584328014,
+              "median_seconds": 0.452255014,
+              "p95_seconds": 0.807783639,
+              "min_seconds": 0.00082614,
+              "max_seconds": 0.982025511,
+              "stdev_seconds": 0.26776171858957293
+            },
+            "candidate": {
+              "count": 100,
+              "total_seconds": 37.223737224,
+              "mean_seconds": 0.37223737224,
+              "median_seconds": 0.398651194,
+              "p95_seconds": 0.719624822,
+              "min_seconds": 0.000736228,
+              "max_seconds": 0.952373477,
+              "stdev_seconds": 0.2358701214408516
+            },
+            "speedup": 1.144010010540902,
+            "seconds_saved": 5.360590790000003,
+            "candidate_faster_calls": 94
+          },
+          "exact_analytics": 3,
+          "changed_outputs": [
+            {
+              "position_id": "cube-money-attacking-01",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-money-attacking-02",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-money-attacking-03",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-money-attacking-04",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-money-attacking-05",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-money-attacking-06",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-money-attacking-07",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-money-attacking-08",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-money-attacking-09",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-money-attacking-10",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-money-priming-01",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-money-priming-02",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-money-priming-03",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-money-priming-04",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-money-priming-05",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-money-priming-06",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-money-priming-07",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-money-priming-08",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-money-priming-09",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-money-priming-10",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-money-anchoring-01",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-money-anchoring-02",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-money-anchoring-03",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-money-anchoring-04",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-money-anchoring-05",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-money-anchoring-06",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-money-anchoring-07",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-money-anchoring-08",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-money-anchoring-09",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-money-anchoring-10",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-money-racing-01",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-money-racing-02",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-money-racing-03",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-money-racing-04",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-money-racing-05",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-money-racing-06",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-money-racing-07",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-money-racing-08",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-money-racing-09",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-money-racing-10",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-money-purerace-01",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-money-purerace-02",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-money-purerace-03",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-money-purerace-04",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-money-purerace-05",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-money-purerace-06",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-money-purerace-07",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-money-purerace-08",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-money-purerace-09",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-money-purerace-10",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-match-attacking-01",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-match-attacking-02",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-match-attacking-03",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-match-attacking-04",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-match-attacking-05",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-match-attacking-06",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-match-attacking-07",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-match-attacking-08",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-match-attacking-09",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-match-attacking-10",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-match-priming-01",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-match-priming-02",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-match-priming-03",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-match-priming-04",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-match-priming-05",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-match-priming-06",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-match-priming-07",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-match-priming-08",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-match-priming-09",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-match-priming-10",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-match-anchoring-01",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-match-anchoring-02",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-match-anchoring-03",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-match-anchoring-04",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-match-anchoring-05",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-match-anchoring-06",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-match-anchoring-07",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-match-anchoring-08",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-match-anchoring-09",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-match-anchoring-10",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-match-racing-01",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-match-racing-02",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-match-racing-03",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-match-racing-04",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-match-racing-05",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-match-racing-06",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-match-racing-07",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-match-racing-08",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-match-racing-09",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-match-racing-10",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-match-purerace-01",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-match-purerace-04",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-match-purerace-05",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-match-purerace-07",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-match-purerace-08",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-match-purerace-09",
+              "repeat": 1
+            },
+            {
+              "position_id": "cube-match-purerace-10",
+              "repeat": 1
+            }
+          ],
+          "public_field_changes": {
+            "cubeful_equity": 43,
+            "cubeful_se": 50,
+            "cubeless_equity": 48,
+            "cubeless_se": 97,
+            "probs.backgammon_loss": 68,
+            "probs.backgammon_win": 58,
+            "probs.gammon_loss": 68,
+            "probs.gammon_win": 60,
+            "probs.win": 31
+          },
+          "numeric_shifts": {
+            "cubeful_equity": {
+              "n": 100,
+              "max_abs_shift": 3.4570693969726562e-06,
+              "worst_location": [
+                "cube-money-priming-03",
+                1,
+                null
+              ],
+              "over_material": 0
+            },
+            "cubeful_se": {
+              "n": 100,
+              "max_abs_shift": 2.5331974029541016e-07,
+              "worst_location": [
+                "cube-money-priming-03",
+                1,
+                null
+              ],
+              "over_material": 0
+            },
+            "cubeless_equity": {
+              "n": 100,
+              "max_abs_shift": 3.904104232788086e-06,
+              "worst_location": [
+                "cube-match-attacking-02",
+                1,
+                null
+              ],
+              "over_material": 0
+            },
+            "cubeless_se": {
+              "n": 100,
+              "max_abs_shift": 1.1837546555135137e-07,
+              "worst_location": [
+                "cube-match-priming-02",
+                1,
+                null
+              ],
+              "over_material": 0
+            },
+            "probs.backgammon_loss": {
+              "n": 100,
+              "max_abs_shift": 2.16066837310791e-06,
+              "worst_location": [
+                "cube-match-priming-02",
+                1,
+                null
+              ],
+              "over_material": 0
+            },
+            "probs.backgammon_win": {
+              "n": 100,
+              "max_abs_shift": 2.741347998380661e-06,
+              "worst_location": [
+                "cube-match-attacking-02",
+                1,
+                null
+              ],
+              "over_material": 0
+            },
+            "probs.gammon_loss": {
+              "n": 100,
+              "max_abs_shift": 3.11434268951416e-06,
+              "worst_location": [
+                "cube-money-priming-08",
+                1,
+                null
+              ],
+              "over_material": 0
+            },
+            "probs.gammon_win": {
+              "n": 100,
+              "max_abs_shift": 2.1457672119140625e-06,
+              "worst_location": [
+                "cube-money-priming-08",
+                1,
+                null
+              ],
+              "over_material": 0
+            },
+            "probs.win": {
+              "n": 100,
+              "max_abs_shift": 8.344650268554688e-07,
+              "worst_location": [
+                "cube-match-attacking-02",
+                1,
+                null
+              ],
+              "over_material": 0
+            }
+          },
+          "rollout_error_by_field": {
+            "cubeful_equity": {
+              "n": 100,
+              "baseline_mae": 0.01884398637106642,
+              "candidate_mae": 0.018843972617760302,
+              "mean_change_in_abs_error": -1.3753306120634079e-08,
+              "worst_change_in_abs_error": 7.748603820800781e-07,
+              "materially_farther": 0,
+              "materially_closer": 0,
+              "best_change_in_abs_error": -3.4570693969726562e-06,
+              "baseline_mean_value": -0.5978116398327984,
+              "candidate_mean_value": -0.5978116097766906,
+              "rollout_mean_value": -0.6085527404211462,
+              "baseline_max_abs_error": 0.0914461612701416,
+              "baseline_position_weighted_mae": 0.01884398637106642,
+              "candidate_max_abs_error": 0.0914461612701416,
+              "candidate_position_weighted_mae": 0.018843972617760302
+            },
+            "cubeless_equity": {
+              "n": 100,
+              "baseline_mae": 0.016483805738389493,
+              "candidate_mae": 0.016483736746013163,
+              "mean_change_in_abs_error": -6.899237632751465e-08,
+              "worst_change_in_abs_error": 7.152557373046875e-07,
+              "materially_farther": 0,
+              "materially_closer": 0,
+              "best_change_in_abs_error": -3.904104232788086e-06,
+              "baseline_mean_value": -0.4499326015263796,
+              "candidate_mean_value": -0.449932549521327,
+              "rollout_mean_value": -0.4535673565790057,
+              "baseline_max_abs_error": 0.23189353942871094,
+              "baseline_position_weighted_mae": 0.016483805738389493,
+              "candidate_max_abs_error": 0.23189115524291992,
+              "candidate_position_weighted_mae": 0.016483736746013163
+            },
+            "p.backgammon_loss": {
+              "n": 100,
+              "baseline_mae": 0.005237278622227279,
+              "candidate_mae": 0.005237265382859278,
+              "mean_change_in_abs_error": -1.3239368001904949e-08,
+              "worst_change_in_abs_error": 2.845190465450287e-07,
+              "materially_farther": 0,
+              "materially_closer": 0,
+              "best_change_in_abs_error": -2.16066837310791e-06,
+              "baseline_mean_value": 0.007475916784546826,
+              "candidate_mean_value": 0.007475934847182373,
+              "rollout_mean_value": 0.012242961341976014,
+              "baseline_max_abs_error": 0.3029187172651291,
+              "baseline_position_weighted_mae": 0.005237278622227279,
+              "candidate_max_abs_error": 0.302916556596756,
+              "candidate_position_weighted_mae": 0.005237265382859278
+            },
+            "p.backgammon_win": {
+              "n": 100,
+              "baseline_mae": 0.00490251102946587,
+              "candidate_mae": 0.004902485229040679,
+              "mean_change_in_abs_error": -2.5800425191846444e-08,
+              "worst_change_in_abs_error": 3.6694109439849854e-07,
+              "materially_farther": 0,
+              "materially_closer": 0,
+              "best_change_in_abs_error": -2.741347998380661e-06,
+              "baseline_mean_value": 0.0035189074146001077,
+              "candidate_mean_value": 0.0035189393622590613,
+              "rollout_mean_value": 0.008330980421780794,
+              "baseline_max_abs_error": 0.10196904465556145,
+              "baseline_position_weighted_mae": 0.00490251102946587,
+              "candidate_max_abs_error": 0.10196904093027115,
+              "candidate_position_weighted_mae": 0.004902485229040679
+            },
+            "p.gammon_loss": {
+              "n": 100,
+              "baseline_mae": 0.005384460398419551,
+              "candidate_mae": 0.005384462026637751,
+              "mean_change_in_abs_error": 1.6282182002669287e-09,
+              "worst_change_in_abs_error": 1.7881393432617188e-06,
+              "materially_farther": 0,
+              "materially_closer": 0,
+              "best_change_in_abs_error": -3.11434268951416e-06,
+              "baseline_mean_value": 0.14523968304012777,
+              "candidate_mean_value": 0.14523973658345862,
+              "rollout_mean_value": 0.149390864767761,
+              "baseline_max_abs_error": 0.06863230466842651,
+              "baseline_position_weighted_mae": 0.005384460398419551,
+              "candidate_max_abs_error": 0.06863236427307129,
+              "candidate_position_weighted_mae": 0.005384462026637751
+            },
+            "p.gammon_win": {
+              "n": 100,
+              "baseline_mae": 0.004292957814528826,
+              "candidate_mae": 0.0042928942899548165,
+              "mean_change_in_abs_error": -6.352457400993216e-08,
+              "worst_change_in_abs_error": 9.08970832824707e-07,
+              "materially_farther": 0,
+              "materially_closer": 0,
+              "best_change_in_abs_error": -2.1457672119140625e-06,
+              "baseline_mean_value": 0.06612553629564598,
+              "candidate_mean_value": 0.06612559878134462,
+              "rollout_mean_value": 0.07016309235565167,
+              "baseline_max_abs_error": 0.03348354995250702,
+              "baseline_position_weighted_mae": 0.004292957814528826,
+              "candidate_max_abs_error": 0.033484458923339844,
+              "candidate_position_weighted_mae": 0.0042928942899548165
+            },
+            "p.win": {
+              "n": 100,
+              "baseline_mae": 0.003851104378700256,
+              "candidate_mae": 0.0038510704040527343,
+              "mean_change_in_abs_error": -3.3974647521972653e-08,
+              "worst_change_in_abs_error": 1.7881393432617188e-07,
+              "materially_farther": 0,
+              "materially_closer": 0,
+              "best_change_in_abs_error": -8.344650268554688e-07,
+              "baseline_mean_value": 0.3165692812204361,
+              "candidate_mean_value": 0.3165692961215973,
+              "rollout_mean_value": 0.31478592872619626,
+              "baseline_max_abs_error": 0.02251124382019043,
+              "baseline_position_weighted_mae": 0.003851104378700256,
+              "candidate_max_abs_error": 0.02251124382019043,
+              "candidate_position_weighted_mae": 0.0038510704040527343
+            }
+          },
+          "reference_endpoint_levels": {
+            "Rollout": 100
+          },
+          "material_changes_in_rollout_error": []
+        }
+      },
+      "total_call_seconds": {
+        "baseline": 197.46499814,
+        "candidate": 169.234235813
+      },
+      "speedup": 1.1668147239320674
+    }
+  }
+}

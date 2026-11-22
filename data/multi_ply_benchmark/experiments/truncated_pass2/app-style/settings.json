@@ -1,0 +1,488 @@
+{
+  "arms": {
+    "original": {
+      "extension": {
+        "path": "build/truncated_pass2/original-reserved/bgbot_cpp.cpython-314-x86_64-linux-gnu.so",
+        "sha256": "b5e04dc8a0c202804ea490d837bbe64b9c8d4411ba676fe1455d985a7d6d1147",
+        "bytes": 2394392
+      },
+      "python": {
+        "path": "build/truncated_pass2/original-reserved/python/bgsage/__init__.py",
+        "sha256": "e8a3ca269b3898b350ea9dc8f71324294117c98c099544149f584fcf20ebcdba",
+        "bytes": 2702
+      },
+      "analyzer": {
+        "path": "build/truncated_pass2/original-reserved/python/bgsage/analyzer.py",
+        "sha256": "9bc375c7d437459a58a29e03297674bde94ef4e10a27736c66f3fdb9afc1ca0a",
+        "bytes": 77690
+      },
+      "weight_slots": [
+        {
+          "path": "models/sl_s9_purerace.weights.best",
+          "sha256": "9c5e64afa4b2d826b4af54ce3eb5c87e13de75f7a43e27ef812231451ce85545",
+          "bytes": 80832
+        },
+        {
+          "path": "models/sl_s9_race_race.weights.best",
+          "sha256": "e1bd7faa62adc6a87012357f3773fae89eec15f387200062e717af07506354f9",
+          "bytes": 400032
+        },
+        {
+          "path": "models/sl_s9_race_att.weights.best",
+          "sha256": "aa13ecc8dcfb7c2a46e00bff83947bfbacbc6832b625515dcea6a0582300e1e7",
+          "bytes": 400032
+        },
+        {
+          "path": "models/sl_s9_race_prim.weights.best",
+          "sha256": "ea4252b68134a5eea8fbdc5149a9b2e197a7d9f4025fea0432b7a296dc4e3754",
+          "bytes": 400032
+        },
+        {
+          "path": "models/sl_s9_race_anch.weights.best",
+          "sha256": "137d9da64e17898ba954a677d58bfed62d144d5de99431c5462ea0a55d7e90e0",
+          "bytes": 400032
+        },
+        {
+          "path": "models/sl_s9_att_race.weights.best",
+          "sha256": "cd40466951c3a78b4f7b22d98664aab66258857c6e7ff6f15d51f2222543ecb9",
+          "bytes": 400032
+        },
+        {
+          "path": "models/sl_s9_att_att.weights.best",
+          "sha256": "239447eb28eb48ce0800c395a0f066568cf863eb15241552264a751f2150b243",
+          "bytes": 400032
+        },
+        {
+          "path": "models/sl_s9_att_prim.weights.best",
+          "sha256": "fb112487b9ff4f4cc810f8f88f3ffab357c9f7ce8a900dd0aa45374189c2ae05",
+          "bytes": 400032
+        },
+        {
+          "path": "models/sl_s9_att_anch.weights.best",
+          "sha256": "58bdecf6930f4c1897a47c85a4f9863e533641b0029a5593bc0b6ac498dfd801",
+          "bytes": 400032
+        },
+        {
+          "path": "models/sl_s9_prim_race.weights.best",
+          "sha256": "6a466f82c474175a5a3f04e11568426c0b86538a08c99e2990c49af49c6d7ae4",
+          "bytes": 400032
+        },
+        {
+          "path": "models/sl_s9_prim_att.weights.best",
+          "sha256": "002d3486dc279ca0da611de325400deed58c9162ff147e710b6ddbe4b26d53f6",
+          "bytes": 400032
+        },
+        {
+          "path": "models/sl_s9_prim_anch.weights.best",
+          "sha256": "453fa330381d33480b6720e14ed189f08a156394d6e4ad965b283e8fd45b7b04",
+          "bytes": 400032
+        },
+        {
+          "path": "models/sl_s9_prim_anch.weights.best",
+          "sha256": "453fa330381d33480b6720e14ed189f08a156394d6e4ad965b283e8fd45b7b04",
+          "bytes": 400032
+        },
+        {
+          "path": "models/sl_s9_anch_race.weights.best",
+          "sha256": "522e1de2d65d7d8c0b2f571b9cfab8b5f3113c68d194b0ad3414025a86d065bf",
+          "bytes": 400032
+        },
+        {
+          "path": "models/sl_s9_anch_att.weights.best",
+          "sha256": "94345949736aed37fad339d56f7c3c5a386da3303e4c975bc20fe31de4b3c3b1",
+          "bytes": 400032
+        },
+        {
+          "path": "models/sl_s9_prim_anch.weights.best",
+          "sha256": "453fa330381d33480b6720e14ed189f08a156394d6e4ad965b283e8fd45b7b04",
+          "bytes": 400032
+        },
+        {
+          "path": "models/sl_s9_prim_anch.weights.best",
+          "sha256": "453fa330381d33480b6720e14ed189f08a156394d6e4ad965b283e8fd45b7b04",
+          "bytes": 400032
+        },
+        {
+          "path": "models/sl_s11_bg_deep.weights.best",
+          "sha256": "621031738d7def6186a98c5944bacbdcf1cc912588bac3aad7bb99d00f3a7a80",
+          "bytes": 400032
+        },
+        {
+          "path": "models/sl_s11_bg_middle.weights.best",
+          "sha256": "e2c01a4caf321a96ea85d1bb706a94deeb5facb6a3f38285e38eb41087921059",
+          "bytes": 400032
+        },
+        {
+          "path": "models/sl_s11_bg_double.weights.best",
+          "sha256": "84f4a48e7393fdf5774295d66c0c8c90d90723f46eeb83135a750dc9a9bf600b",
+          "bytes": 400032
+        },
+        {
+          "path": "models/sl_s11_bg_p3.weights.best",
+          "sha256": "f793cc34fa20f5de29d0564e95d6c9408f4632e47ef9f4d502483a8a97a82268",
+          "bytes": 400032
+        },
+        {
+          "path": "models/sl_s11_bg_containment.weights.best",
+          "sha256": "6c9b8aad4b6694cba7aa1b83c616020b6e8aa922b7b7b99cf27b7558ffe964a1",
+          "bytes": 400032
+        },
+        {
+          "path": "models/sl_s11_bg_snake.weights.best",
+          "sha256": "4604df0029736b1117c92291fe1d0735120d9699237fb86c13b029ed13ac1ba6",
+          "bytes": 400032
+        },
+        {
+          "path": "models/sl_s11_bg_massive.weights.best",
+          "sha256": "d8960a41f2fd62467644546cbf9385b326e23da8cbc8e4577010aaa6bd8a0ce0",
+          "bytes": 400032
+        }
+      ],
+      "database": {
+        "path": "data/bearoff_1sided.db",
+        "sha256": "907bbe0042dadfa14840a9f470b6b5adac213d5b2c17dc0e41aec27b087e3fe6",
+        "bytes": 4899292
+      },
+      "threads": 16,
+      "seed": 42,
+      "commit": "139427d826dd67798226e7d23c003c90315306ba"
+    },
+    "intermediate": {
+      "extension": {
+        "path": "build/det_eval2/linux_release/guarded/bgbot_cpp.cpython-314-x86_64-linux-gnu.so",
+        "sha256": "39c443658441df8474ff4ee3892e555afd7e191616f6e4ed54e840bb38acef5f",
+        "bytes": 3193088
+      },
+      "python": {
+        "path": "build/det_eval2/linux_release/guarded/python/bgsage/__init__.py",
+        "sha256": "bdd1f0639a3d2e88c47af83386fef6b31ff517e628290f331a0f1805ad50f28a",
+        "bytes": 2800
+      },
+      "analyzer": {
+        "path": "build/det_eval2/linux_release/guarded/python/bgsage/analyzer.py",
+        "sha256": "34bde2de89de85ec781657f92854b663b34cfd553272c920663a272182ba5b4b",
+        "bytes": 75718
+      },
+      "weight_slots": [
+        {
+          "path": "models/sl_s9_purerace.weights.best",
+          "sha256": "9c5e64afa4b2d826b4af54ce3eb5c87e13de75f7a43e27ef812231451ce85545",
+          "bytes": 80832
+        },
+        {
+          "path": "models/sl_s9_race_race.weights.best",
+          "sha256": "e1bd7faa62adc6a87012357f3773fae89eec15f387200062e717af07506354f9",
+          "bytes": 400032
+        },
+        {
+          "path": "models/sl_s9_race_att.weights.best",
+          "sha256": "aa13ecc8dcfb7c2a46e00bff83947bfbacbc6832b625515dcea6a0582300e1e7",
+          "bytes": 400032
+        },
+        {
+          "path": "models/sl_s9_race_prim.weights.best",
+          "sha256": "ea4252b68134a5eea8fbdc5149a9b2e197a7d9f4025fea0432b7a296dc4e3754",
+          "bytes": 400032
+        },
+        {
+          "path": "models/sl_s9_race_anch.weights.best",
+          "sha256": "137d9da64e17898ba954a677d58bfed62d144d5de99431c5462ea0a55d7e90e0",
+          "bytes": 400032
+        },
+        {
+          "path": "models/sl_s9_att_race.weights.best",
+          "sha256": "cd40466951c3a78b4f7b22d98664aab66258857c6e7ff6f15d51f2222543ecb9",
+          "bytes": 400032
+        },
+        {
+          "path": "models/sl_s9_att_att.weights.best",
+          "sha256": "239447eb28eb48ce0800c395a0f066568cf863eb15241552264a751f2150b243",
+          "bytes": 400032
+        },
+        {
+          "path": "models/sl_s9_att_prim.weights.best",
+          "sha256": "fb112487b9ff4f4cc810f8f88f3ffab357c9f7ce8a900dd0aa45374189c2ae05",
+          "bytes": 400032
+        },
+        {
+          "path": "models/sl_s9_att_anch.weights.best",
+          "sha256": "58bdecf6930f4c1897a47c85a4f9863e533641b0029a5593bc0b6ac498dfd801",
+          "bytes": 400032
+        },
+        {
+          "path": "models/sl_s9_prim_race.weights.best",
+          "sha256": "6a466f82c474175a5a3f04e11568426c0b86538a08c99e2990c49af49c6d7ae4",
+          "bytes": 400032
+        },
+        {
+          "path": "models/sl_s9_prim_att.weights.best",
+          "sha256": "002d3486dc279ca0da611de325400deed58c9162ff147e710b6ddbe4b26d53f6",
+          "bytes": 400032
+        },
+        {
+          "path": "models/sl_s9_prim_anch.weights.best",
+          "sha256": "453fa330381d33480b6720e14ed189f08a156394d6e4ad965b283e8fd45b7b04",
+          "bytes": 400032
+        },
+        {
+          "path": "models/sl_s9_prim_anch.weights.best",
+          "sha256": "453fa330381d33480b6720e14ed189f08a156394d6e4ad965b283e8fd45b7b04",
+          "bytes": 400032
+        },
+        {
+          "path": "models/sl_s9_anch_race.weights.best",
+          "sha256": "522e1de2d65d7d8c0b2f571b9cfab8b5f3113c68d194b0ad3414025a86d065bf",
+          "bytes": 400032
+        },
+        {
+          "path": "models/sl_s9_anch_att.weights.best",
+          "sha256": "94345949736aed37fad339d56f7c3c5a386da3303e4c975bc20fe31de4b3c3b1",
+          "bytes": 400032
+        },
+        {
+          "path": "models/sl_s9_prim_anch.weights.best",
+          "sha256": "453fa330381d33480b6720e14ed189f08a156394d6e4ad965b283e8fd45b7b04",
+          "bytes": 400032
+        },
+        {
+          "path": "models/sl_s9_prim_anch.weights.best",
+          "sha256": "453fa330381d33480b6720e14ed189f08a156394d6e4ad965b283e8fd45b7b04",
+          "bytes": 400032
+        },
+        {
+          "path": "models/sl_s11_bg_deep.weights.best",
+          "sha256": "621031738d7def6186a98c5944bacbdcf1cc912588bac3aad7bb99d00f3a7a80",
+          "bytes": 400032
+        },
+        {
+          "path": "models/sl_s11_bg_middle.weights.best",
+          "sha256": "e2c01a4caf321a96ea85d1bb706a94deeb5facb6a3f38285e38eb41087921059",
+          "bytes": 400032
+        },
+        {
+          "path": "models/sl_s11_bg_double.weights.best",
+          "sha256": "84f4a48e7393fdf5774295d66c0c8c90d90723f46eeb83135a750dc9a9bf600b",
+          "bytes": 400032
+        },
+        {
+          "path": "models/sl_s11_bg_p3.weights.best",
+          "sha256": "f793cc34fa20f5de29d0564e95d6c9408f4632e47ef9f4d502483a8a97a82268",
+          "bytes": 400032
+        },
+        {
+          "path": "models/sl_s11_bg_containment.weights.best",
+          "sha256": "6c9b8aad4b6694cba7aa1b83c616020b6e8aa922b7b7b99cf27b7558ffe964a1",
+          "bytes": 400032
+        },
+        {
+          "path": "models/sl_s11_bg_snake.weights.best",
+          "sha256": "4604df0029736b1117c92291fe1d0735120d9699237fb86c13b029ed13ac1ba6",
+          "bytes": 400032
+        },
+        {
+          "path": "models/sl_s11_bg_massive.weights.best",
+          "sha256": "d8960a41f2fd62467644546cbf9385b326e23da8cbc8e4577010aaa6bd8a0ce0",
+          "bytes": 400032
+        }
+      ],
+      "database": {
+        "path": "data/bearoff_1sided.db",
+        "sha256": "907bbe0042dadfa14840a9f470b6b5adac213d5b2c17dc0e41aec27b087e3fe6",
+        "bytes": 4899292
+      },
+      "threads": 16,
+      "seed": 42,
+      "commit": "82e63972379b77ab52ebafc716620e813ff7baa1"
+    },
+    "selected": {
+      "extension": {
+        "path": "build/truncated_pass2/shipped/bgbot_cpp.cpython-314-x86_64-linux-gnu.so",
+        "sha256": "0cb634a173d7c0c5a3f70a3489de84b782a9fc2cbca559ed7c53284e5c0b8e11",
+        "bytes": 3235840
+      },
+      "python": {
+        "path": "build/truncated_pass2/shipped/python/bgsage/__init__.py",
+        "sha256": "bdd1f0639a3d2e88c47af83386fef6b31ff517e628290f331a0f1805ad50f28a",
+        "bytes": 2800
+      },
+      "analyzer": {
+        "path": "build/truncated_pass2/shipped/python/bgsage/analyzer.py",
+        "sha256": "5ef11b04a5e148222fac7429b1ee093344295f6204213402d8304410bbe21798",
+        "bytes": 75753
+      },
+      "weight_slots": [
+        {
+          "path": "models/sl_s9_purerace.weights.best",
+          "sha256": "9c5e64afa4b2d826b4af54ce3eb5c87e13de75f7a43e27ef812231451ce85545",
+          "bytes": 80832
+        },
+        {
+          "path": "models/sl_s9_race_race.weights.best",
+          "sha256": "e1bd7faa62adc6a87012357f3773fae89eec15f387200062e717af07506354f9",
+          "bytes": 400032
+        },
+        {
+          "path": "models/sl_s9_race_att.weights.best",
+          "sha256": "aa13ecc8dcfb7c2a46e00bff83947bfbacbc6832b625515dcea6a0582300e1e7",
+          "bytes": 400032
+        },
+        {
+          "path": "models/sl_s9_race_prim.weights.best",
+          "sha256": "ea4252b68134a5eea8fbdc5149a9b2e197a7d9f4025fea0432b7a296dc4e3754",
+          "bytes": 400032
+        },
+        {
+          "path": "models/sl_s9_race_anch.weights.best",
+          "sha256": "137d9da64e17898ba954a677d58bfed62d144d5de99431c5462ea0a55d7e90e0",
+          "bytes": 400032
+        },
+        {
+          "path": "models/sl_s9_att_race.weights.best",
+          "sha256": "cd40466951c3a78b4f7b22d98664aab66258857c6e7ff6f15d51f2222543ecb9",
+          "bytes": 400032
+        },
+        {
+          "path": "models/sl_s9_att_att.weights.best",
+          "sha256": "239447eb28eb48ce0800c395a0f066568cf863eb15241552264a751f2150b243",
+          "bytes": 400032
+        },
+        {
+          "path": "models/sl_s9_att_prim.weights.best",
+          "sha256": "fb112487b9ff4f4cc810f8f88f3ffab357c9f7ce8a900dd0aa45374189c2ae05",
+          "bytes": 400032
+        },
+        {
+          "path": "models/sl_s9_att_anch.weights.best",
+          "sha256": "58bdecf6930f4c1897a47c85a4f9863e533641b0029a5593bc0b6ac498dfd801",
+          "bytes": 400032
+        },
+        {
+          "path": "models/sl_s9_prim_race.weights.best",
+          "sha256": "6a466f82c474175a5a3f04e11568426c0b86538a08c99e2990c49af49c6d7ae4",
+          "bytes": 400032
+        },
+        {
+          "path": "models/sl_s9_prim_att.weights.best",
+          "sha256": "002d3486dc279ca0da611de325400deed58c9162ff147e710b6ddbe4b26d53f6",
+          "bytes": 400032
+        },
+        {
+          "path": "models/sl_s9_prim_anch.weights.best",
+          "sha256": "453fa330381d33480b6720e14ed189f08a156394d6e4ad965b283e8fd45b7b04",
+          "bytes": 400032
+        },
+        {
+          "path": "models/sl_s9_prim_anch.weights.best",
+          "sha256": "453fa330381d33480b6720e14ed189f08a156394d6e4ad965b283e8fd45b7b04",
+          "bytes": 400032
+        },
+        {
+          "path": "models/sl_s9_anch_race.weights.best",
+          "sha256": "522e1de2d65d7d8c0b2f571b9cfab8b5f3113c68d194b0ad3414025a86d065bf",
+          "bytes": 400032
+        },
+        {
+          "path": "models/sl_s9_anch_att.weights.best",
+          "sha256": "94345949736aed37fad339d56f7c3c5a386da3303e4c975bc20fe31de4b3c3b1",
+          "bytes": 400032
+        },
+        {
+          "path": "models/sl_s9_prim_anch.weights.best",
+          "sha256": "453fa330381d33480b6720e14ed189f08a156394d6e4ad965b283e8fd45b7b04",
+          "bytes": 400032
+        },
+        {
+          "path": "models/sl_s9_prim_anch.weights.best",
+          "sha256": "453fa330381d33480b6720e14ed189f08a156394d6e4ad965b283e8fd45b7b04",
+          "bytes": 400032
+        },
+        {
+          "path": "models/sl_s11_bg_deep.weights.best",
+          "sha256": "621031738d7def6186a98c5944bacbdcf1cc912588bac3aad7bb99d00f3a7a80",
+          "bytes": 400032
+        },
+        {
+          "path": "models/sl_s11_bg_middle.weights.best",
+          "sha256": "e2c01a4caf321a96ea85d1bb706a94deeb5facb6a3f38285e38eb41087921059",
+          "bytes": 400032
+        },
+        {
+          "path": "models/sl_s11_bg_double.weights.best",
+          "sha256": "84f4a48e7393fdf5774295d66c0c8c90d90723f46eeb83135a750dc9a9bf600b",
+          "bytes": 400032
+        },
+        {
+          "path": "models/sl_s11_bg_p3.weights.best",
+          "sha256": "f793cc34fa20f5de29d0564e95d6c9408f4632e47ef9f4d502483a8a97a82268",
+          "bytes": 400032
+        },
+        {
+          "path": "models/sl_s11_bg_containment.weights.best",
+          "sha256": "6c9b8aad4b6694cba7aa1b83c616020b6e8aa922b7b7b99cf27b7558ffe964a1",
+          "bytes": 400032
+        },
+        {
+          "path": "models/sl_s11_bg_snake.weights.best",
+          "sha256": "4604df0029736b1117c92291fe1d0735120d9699237fb86c13b029ed13ac1ba6",
+          "bytes": 400032
+        },
+        {
+          "path": "models/sl_s11_bg_massive.weights.best",
+          "sha256": "d8960a41f2fd62467644546cbf9385b326e23da8cbc8e4577010aaa6bd8a0ce0",
+          "bytes": 400032
+        }
+      ],
+      "database": {
+        "path": "data/bearoff_1sided.db",
+        "sha256": "907bbe0042dadfa14840a9f470b6b5adac213d5b2c17dc0e41aec27b087e3fe6",
+        "bytes": 4899292
+      },
+      "threads": 16,
+      "seed": 42
+    }
+  },
+  "cpu_mask": "0xffff",
+  "default_seed": 42,
+  "python": "3.14.4 (main, Apr  8 2026, 04:02:31) [GCC 15.2.0]",
+  "affinity_workers": 16,
+  "preset": "truncated2",
+  "games": 360,
+  "reseed": false,
+  "cold_start_timed": false,
+  "warmup_id": "cube-money-racing-02",
+  "archive_sources": {
+    "checker_play": {
+      "path": "data/multi_ply_benchmark/checker_play.json",
+      "sha256": "1e69cf43b3bb4ae29b4337e8008f5e30c76f7b8b8f6f1bf271e46d75d8beac0b",
+      "bytes": 97997
+    },
+    "cube_action": {
+      "path": "data/multi_ply_benchmark/cube_action.json",
+      "sha256": "31f56488ded1f2d0f3f280db754be4bce39e136b605bd5a7318952c2361830de",
+      "bytes": 150067
+    }
+  },
+  "order": [
+    "checker-match-attacking-01",
+    "cube-money-purerace-01",
+    "checker-money-attacking-01",
+    "cube-money-racing-01",
+    "cube-match-attacking-01",
+    "cube-match-purerace-01",
+    "checker-money-purerace-01",
+    "cube-match-racing-01",
+    "checker-money-anchoring-01",
+    "cube-match-anchoring-01",
+    "checker-match-priming-01",
+    "cube-match-priming-01",
+    "checker-match-anchoring-01",
+    "checker-money-racing-01",
+    "checker-match-purerace-01",
+    "checker-money-priming-01",
+    "checker-match-racing-01",
+    "cube-money-priming-01",
+    "cube-money-attacking-01",
+    "cube-money-anchoring-01"
+  ],
+  "timing": "public call including counter callbacks"
+}

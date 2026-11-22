@@ -1,5 +1,17 @@
 # Engine project notes
 
+- **2026-11-22, truncated-rollout CPU study.** At a single cube-aware VR
+  node, different dice can reach the same endpoint. Share its static
+  probabilities only within the same board, model and driving cube, checking
+  full board equality. All 98,973 native winner indices matched the per-roll
+  selector on 2,008 boards. Custom nested rollouts require each active
+  generator to retain its own legal boards until it consumes the chosen index.
+  A one-worker/two-worker replay caught a different cube decision with the
+  same seed. The corrected full responses matched. When timing a caller that
+  requests progress, measure inside its callback as well. On ten 2T checker
+  positions, smaller work assignments raised the callback count from 1,352
+  to 3,602. [Measurements and reproducer](../../data/multi_ply_benchmark/experiments/truncated_pass2/README.md)
+
 - **2026-11-22, third multi-ply CPU study.** Within a standalone dice node,
   the pre-roll board is a stable neural base across rolls. A partial
   live-cube shortlist can serve the independent cubeless traversal only

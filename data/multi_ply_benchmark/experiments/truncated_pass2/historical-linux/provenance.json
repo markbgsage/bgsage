@@ -1,0 +1,338 @@
+{
+  "label": "original + cache race fix",
+  "commit": "139427d826dd67798226e7d23c003c90315306ba",
+  "source": {
+    "verified_git_blobs": 73,
+    "source": "cpp/src/rollout.cpp",
+    "inserted_lines": 10,
+    "deleted_lines": 0,
+    "original_linux_cmake_wrapper": {
+      "path": "build/truncated_pass2/original-reserved/CMakeLists.txt",
+      "sha256": "e5208cd12818ef58f0fb27440179bbf039a5902c321f69a912a73e9cab148f67",
+      "bytes": 130
+    },
+    "original_source_sha256": "7eafb8afa2ced4d091f19ba0d7aaa1c5eafe6652e8ab28422ad2148c5c5e17fe",
+    "corrected_source_sha256": "afe484c79fe3791b6ee7f30448b47382ea2176908fd5382bf5ef960f2e36e808",
+    "patch_sha256": "4d10f1d75be4bdc081683d51ecc787632d69d31155c710f42aa3eabf4734e81d",
+    "correction_commit": "60f93556137a7a5c4be671502f4b3f521998ff94"
+  },
+  "build_source": "build/truncated_pass2/original-reserved",
+  "compiler": "x86_64-linux-gnu-g++-15 (Ubuntu 15.2.0-16ubuntu1) 15.2.0",
+  "compile_command": [
+    "/mnt/c/Users/mghig/agents/sageapp/repo/bgsage/build/logs/linux_cpu/toolchain/usr/bin/x86_64-linux-gnu-g++-15",
+    "-I/mnt/c/Users/mghig/agents/sageapp/repo/bgsage/build/truncated_pass2/original-reserved/cpp/include",
+    "--sysroot=/mnt/c/Users/mghig/agents/sageapp/repo/bgsage/build/logs/linux_cpu/toolchain",
+    "-B/mnt/c/Users/mghig/agents/sageapp/repo/bgsage/build/logs/linux_cpu/toolchain/usr/lib/gcc/x86_64-linux-gnu/15/",
+    "-B/mnt/c/Users/mghig/agents/sageapp/repo/bgsage/build/logs/linux_cpu/toolchain/usr/libexec/gcc/x86_64-linux-gnu/15/",
+    "-B/mnt/c/Users/mghig/agents/sageapp/repo/bgsage/build/logs/linux_cpu/toolchain/usr/lib/x86_64-linux-gnu/",
+    "-isystem",
+    "/mnt/c/Users/mghig/agents/sageapp/repo/bgsage/build/logs/linux_cpu/toolchain/usr/include/c++/15",
+    "-isystem",
+    "/mnt/c/Users/mghig/agents/sageapp/repo/bgsage/build/logs/linux_cpu/toolchain/usr/include/x86_64-linux-gnu/c++/15",
+    "-isystem",
+    "/mnt/c/Users/mghig/agents/sageapp/repo/bgsage/build/logs/linux_cpu/toolchain/usr/include/c++/15/backward",
+    "-O3",
+    "-DNDEBUG",
+    "-std=gnu++17",
+    "-fPIC",
+    "-O3",
+    "-ffast-math",
+    "-funroll-loops",
+    "-mavx2",
+    "-mfma",
+    "-o",
+    "/mnt/c/Users/mghig/agents/sageapp/repo/bgsage/build/truncated_pass2/original-reserved/rollout.cpp.o",
+    "-c",
+    "/mnt/c/Users/mghig/agents/sageapp/repo/bgsage/build/truncated_pass2/original-reserved/cpp/src/rollout.cpp"
+  ],
+  "link_command": [
+    "/mnt/c/Users/mghig/agents/sageapp/repo/bgsage/build/logs/linux_cpu/toolchain/usr/bin/x86_64-linux-gnu-g++-15",
+    "-fPIC",
+    "--sysroot=/mnt/c/Users/mghig/agents/sageapp/repo/bgsage/build/logs/linux_cpu/toolchain",
+    "-B/mnt/c/Users/mghig/agents/sageapp/repo/bgsage/build/logs/linux_cpu/toolchain/usr/lib/gcc/x86_64-linux-gnu/15/",
+    "-B/mnt/c/Users/mghig/agents/sageapp/repo/bgsage/build/logs/linux_cpu/toolchain/usr/libexec/gcc/x86_64-linux-gnu/15/",
+    "-B/mnt/c/Users/mghig/agents/sageapp/repo/bgsage/build/logs/linux_cpu/toolchain/usr/lib/x86_64-linux-gnu/",
+    "-isystem",
+    "/mnt/c/Users/mghig/agents/sageapp/repo/bgsage/build/logs/linux_cpu/toolchain/usr/include/c++/15",
+    "-isystem",
+    "/mnt/c/Users/mghig/agents/sageapp/repo/bgsage/build/logs/linux_cpu/toolchain/usr/include/x86_64-linux-gnu/c++/15",
+    "-isystem",
+    "/mnt/c/Users/mghig/agents/sageapp/repo/bgsage/build/logs/linux_cpu/toolchain/usr/include/c++/15/backward",
+    "-O3",
+    "-DNDEBUG",
+    "-shared",
+    "-flto=auto",
+    "-Wl,--dependency-file=link.d",
+    "-o",
+    "bgbot_cpp.cpython-314-x86_64-linux-gnu.so",
+    "/mnt/c/Users/mghig/agents/sageapp/repo/bgsage/build/logs/linux_cpu/original-gcc/CMakeFiles/bgbot_cpp.dir/cpp/pybind/bindings.cpp.o",
+    "libbgbot_lib.a",
+    "/mnt/c/Users/mghig/agents/sageapp/repo/bgsage/build/logs/linux_cpu/original-gcc/libbgbot_cuda_stub.a",
+    "libbgbot_lib.a"
+  ],
+  "strip_command": [
+    "/usr/bin/x86_64-linux-gnu-strip",
+    "bgbot_cpp.cpython-314-x86_64-linux-gnu.so"
+  ],
+  "archive_members": {
+    "board.cpp.o": {
+      "original": "1538bd6abe50abbda2e5f8c3cc2291885b0731e0b60a3dcc3095093a7b720172",
+      "corrected": "1538bd6abe50abbda2e5f8c3cc2291885b0731e0b60a3dcc3095093a7b720172"
+    },
+    "moves.cpp.o": {
+      "original": "3be61189c950bfe99b929d0e77438249dd50e1ce9d2f7326b032fd6330e95529",
+      "corrected": "3be61189c950bfe99b929d0e77438249dd50e1ce9d2f7326b032fd6330e95529"
+    },
+    "strategy.cpp.o": {
+      "original": "51203886bb62d146b200857b528ad4277402fc6d8d074281b7d0273499fef9b7",
+      "corrected": "51203886bb62d146b200857b528ad4277402fc6d8d074281b7d0273499fef9b7"
+    },
+    "pubeval.cpp.o": {
+      "original": "b0e5c37e8b352566c64d66edae4a5b0cf964915d0d8f34db8a4254b77ed9363a",
+      "corrected": "b0e5c37e8b352566c64d66edae4a5b0cf964915d0d8f34db8a4254b77ed9363a"
+    },
+    "game.cpp.o": {
+      "original": "52392afb8db76cfd74cf7eb9621babe7794cf4dc63f9284adb842dee36ac8531",
+      "corrected": "52392afb8db76cfd74cf7eb9621babe7794cf4dc63f9284adb842dee36ac8531"
+    },
+    "benchmark.cpp.o": {
+      "original": "bfed1636112a714f2b9b51249ec9a52cf2f7ea87afeca1543ae4dc832e4693ee",
+      "corrected": "bfed1636112a714f2b9b51249ec9a52cf2f7ea87afeca1543ae4dc832e4693ee"
+    },
+    "encoding.cpp.o": {
+      "original": "ac2ccd5207faa59e81d8cddd3e1087fd17a60612a55cafb4a29cb528c6825b87",
+      "corrected": "ac2ccd5207faa59e81d8cddd3e1087fd17a60612a55cafb4a29cb528c6825b87"
+    },
+    "neural_net.cpp.o": {
+      "original": "b62bf47a38342d26d04bdfade367fca22e5f694ed16059b78a5c154ebf2a9e4b",
+      "corrected": "b62bf47a38342d26d04bdfade367fca22e5f694ed16059b78a5c154ebf2a9e4b"
+    },
+    "training.cpp.o": {
+      "original": "d2062c0a49a006af9728db8cbd90d12f4725f68291dbb1daf6799080d558bcaf",
+      "corrected": "d2062c0a49a006af9728db8cbd90d12f4725f68291dbb1daf6799080d558bcaf"
+    },
+    "multipy.cpp.o": {
+      "original": "2d5fc6cc718e5620d7144ba06e68ab482f8a207c8e10cc4db601ef54aaabfdd5",
+      "corrected": "2d5fc6cc718e5620d7144ba06e68ab482f8a207c8e10cc4db601ef54aaabfdd5"
+    },
+    "rollout.cpp.o": {
+      "original": "128b4ae77d66d8e1e5b74671cc231c5777465a0d16de43af540e7e168e04b321",
+      "corrected": "35d99e9f94a7c8acaf48cca4bf425de2d9c979e0b2e7f8060ec9126599a34a14"
+    },
+    "cube.cpp.o": {
+      "original": "f7be60b6a466d5926f43ff811c2b6c1360d6fb3a2226c8ada9c52eea6e143086",
+      "corrected": "f7be60b6a466d5926f43ff811c2b6c1360d6fb3a2226c8ada9c52eea6e143086"
+    },
+    "cube_eval.cpp.o": {
+      "original": "5b3fd08220092ec2f4f79cc93fe67c5f9aabdbbc8124a2b87fedfae866d98d18",
+      "corrected": "5b3fd08220092ec2f4f79cc93fe67c5f9aabdbbc8124a2b87fedfae866d98d18"
+    },
+    "match_equity.cpp.o": {
+      "original": "d4d904c30f1e570f9ea6663a19969451bdf80753504d59ce01d50be010425961",
+      "corrected": "d4d904c30f1e570f9ea6663a19969451bdf80753504d59ce01d50be010425961"
+    },
+    "bearoff.cpp.o": {
+      "original": "f2212afdc5512f977eb6b7d7e28b380044e672836e4f6ab7260428bed0611321",
+      "corrected": "f2212afdc5512f977eb6b7d7e28b380044e672836e4f6ab7260428bed0611321"
+    }
+  },
+  "original_library": {
+    "path": "build/logs/linux_cpu/original-gcc/libbgbot_lib.a",
+    "sha256": "74f36ba06f3c7b936e8451a3c4df49837cc9e6ff5059ee2f0ab6be5195338d06",
+    "bytes": 1490702
+  },
+  "original_binding": {
+    "path": "build/logs/linux_cpu/original-gcc/CMakeFiles/bgbot_cpp.dir/cpp/pybind/bindings.cpp.o",
+    "sha256": "622a2cd8fa4ad88cdaf166b4754068b31da3509b92551df1e57b8082cce437f3",
+    "bytes": 12235424
+  },
+  "original_cuda_stub": {
+    "path": "build/logs/linux_cpu/original-gcc/libbgbot_cuda_stub.a",
+    "sha256": "f143d4223ad9db552a93f1600d94046c15db3fce48dbc765368188ca528bac04",
+    "bytes": 2032
+  },
+  "original_extension": {
+    "path": "build/logs/linux_cpu/original-gcc/bgbot_cpp.cpython-314-x86_64-linux-gnu.so",
+    "sha256": "8b4ff1e79da111458d5c5796b56c243f7ca60bc83a07e67b736ca851a5322d15",
+    "bytes": 2390296
+  },
+  "extension": {
+    "path": "build/truncated_pass2/original-reserved/bgbot_cpp.cpython-314-x86_64-linux-gnu.so",
+    "sha256": "b5e04dc8a0c202804ea490d837bbe64b9c8d4411ba676fe1455d985a7d6d1147",
+    "bytes": 2394392
+  },
+  "inputs": {
+    "model": "stage11",
+    "ordered_weight_slots": 24,
+    "ordered_name_and_sha256_digest": "3ce28a9b494fbd7461688bbdcae3ce5c0aced6e9be560742ebd3dc42f53b6629",
+    "bearoff": {
+      "path": "data/bearoff_1sided.db",
+      "sha256": "907bbe0042dadfa14840a9f470b6b5adac213d5b2c17dc0e41aec27b087e3fe6",
+      "bytes": 4899292
+    },
+    "positions": {
+      "checker_play": {
+        "path": "data/multi_ply_benchmark/checker_play.json",
+        "sha256": "1e69cf43b3bb4ae29b4337e8008f5e30c76f7b8b8f6f1bf271e46d75d8beac0b",
+        "bytes": 97997
+      },
+      "cube_action": {
+        "path": "data/multi_ply_benchmark/cube_action.json",
+        "sha256": "31f56488ded1f2d0f3f280db754be4bce39e136b605bd5a7318952c2361830de",
+        "bytes": 150067
+      }
+    },
+    "rollout_truth": {
+      "path": "data/multi_ply_benchmark/rollout_positions/results.jsonl",
+      "sha256": "23b7bca2272c8ea750020f82c066dd489d3d556e39f0b8b2ec1cf99740051845",
+      "bytes": 1127327
+    },
+    "weights": [
+      {
+        "path": "models/sl_s9_purerace.weights.best",
+        "sha256": "9c5e64afa4b2d826b4af54ce3eb5c87e13de75f7a43e27ef812231451ce85545",
+        "bytes": 80832
+      },
+      {
+        "path": "models/sl_s9_race_race.weights.best",
+        "sha256": "e1bd7faa62adc6a87012357f3773fae89eec15f387200062e717af07506354f9",
+        "bytes": 400032
+      },
+      {
+        "path": "models/sl_s9_race_att.weights.best",
+        "sha256": "aa13ecc8dcfb7c2a46e00bff83947bfbacbc6832b625515dcea6a0582300e1e7",
+        "bytes": 400032
+      },
+      {
+        "path": "models/sl_s9_race_prim.weights.best",
+        "sha256": "ea4252b68134a5eea8fbdc5149a9b2e197a7d9f4025fea0432b7a296dc4e3754",
+        "bytes": 400032
+      },
+      {
+        "path": "models/sl_s9_race_anch.weights.best",
+        "sha256": "137d9da64e17898ba954a677d58bfed62d144d5de99431c5462ea0a55d7e90e0",
+        "bytes": 400032
+      },
+      {
+        "path": "models/sl_s9_att_race.weights.best",
+        "sha256": "cd40466951c3a78b4f7b22d98664aab66258857c6e7ff6f15d51f2222543ecb9",
+        "bytes": 400032
+      },
+      {
+        "path": "models/sl_s9_att_att.weights.best",
+        "sha256": "239447eb28eb48ce0800c395a0f066568cf863eb15241552264a751f2150b243",
+        "bytes": 400032
+      },
+      {
+        "path": "models/sl_s9_att_prim.weights.best",
+        "sha256": "fb112487b9ff4f4cc810f8f88f3ffab357c9f7ce8a900dd0aa45374189c2ae05",
+        "bytes": 400032
+      },
+      {
+        "path": "models/sl_s9_att_anch.weights.best",
+        "sha256": "58bdecf6930f4c1897a47c85a4f9863e533641b0029a5593bc0b6ac498dfd801",
+        "bytes": 400032
+      },
+      {
+        "path": "models/sl_s9_prim_race.weights.best",
+        "sha256": "6a466f82c474175a5a3f04e11568426c0b86538a08c99e2990c49af49c6d7ae4",
+        "bytes": 400032
+      },
+      {
+        "path": "models/sl_s9_prim_att.weights.best",
+        "sha256": "002d3486dc279ca0da611de325400deed58c9162ff147e710b6ddbe4b26d53f6",
+        "bytes": 400032
+      },
+      {
+        "path": "models/sl_s9_prim_anch.weights.best",
+        "sha256": "453fa330381d33480b6720e14ed189f08a156394d6e4ad965b283e8fd45b7b04",
+        "bytes": 400032
+      },
+      {
+        "path": "models/sl_s9_prim_anch.weights.best",
+        "sha256": "453fa330381d33480b6720e14ed189f08a156394d6e4ad965b283e8fd45b7b04",
+        "bytes": 400032
+      },
+      {
+        "path": "models/sl_s9_anch_race.weights.best",
+        "sha256": "522e1de2d65d7d8c0b2f571b9cfab8b5f3113c68d194b0ad3414025a86d065bf",
+        "bytes": 400032
+      },
+      {
+        "path": "models/sl_s9_anch_att.weights.best",
+        "sha256": "94345949736aed37fad339d56f7c3c5a386da3303e4c975bc20fe31de4b3c3b1",
+        "bytes": 400032
+      },
+      {
+        "path": "models/sl_s9_prim_anch.weights.best",
+        "sha256": "453fa330381d33480b6720e14ed189f08a156394d6e4ad965b283e8fd45b7b04",
+        "bytes": 400032
+      },
+      {
+        "path": "models/sl_s9_prim_anch.weights.best",
+        "sha256": "453fa330381d33480b6720e14ed189f08a156394d6e4ad965b283e8fd45b7b04",
+        "bytes": 400032
+      },
+      {
+        "path": "models/sl_s11_bg_deep.weights.best",
+        "sha256": "621031738d7def6186a98c5944bacbdcf1cc912588bac3aad7bb99d00f3a7a80",
+        "bytes": 400032
+      },
+      {
+        "path": "models/sl_s11_bg_middle.weights.best",
+        "sha256": "e2c01a4caf321a96ea85d1bb706a94deeb5facb6a3f38285e38eb41087921059",
+        "bytes": 400032
+      },
+      {
+        "path": "models/sl_s11_bg_double.weights.best",
+        "sha256": "84f4a48e7393fdf5774295d66c0c8c90d90723f46eeb83135a750dc9a9bf600b",
+        "bytes": 400032
+      },
+      {
+        "path": "models/sl_s11_bg_p3.weights.best",
+        "sha256": "f793cc34fa20f5de29d0564e95d6c9408f4632e47ef9f4d502483a8a97a82268",
+        "bytes": 400032
+      },
+      {
+        "path": "models/sl_s11_bg_containment.weights.best",
+        "sha256": "6c9b8aad4b6694cba7aa1b83c616020b6e8aa922b7b7b99cf27b7558ffe964a1",
+        "bytes": 400032
+      },
+      {
+        "path": "models/sl_s11_bg_snake.weights.best",
+        "sha256": "4604df0029736b1117c92291fe1d0735120d9699237fb86c13b029ed13ac1ba6",
+        "bytes": 400032
+      },
+      {
+        "path": "models/sl_s11_bg_massive.weights.best",
+        "sha256": "d8960a41f2fd62467644546cbf9385b326e23da8cbc8e4577010aaa6bd8a0ce0",
+        "bytes": 400032
+      }
+    ]
+  },
+  "runtime": {
+    "cpu": "AMD Ryzen 7 9700X 8-Core Processor",
+    "affinity": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15
+    ],
+    "platform": "Linux-6.18.33.2-microsoft-standard-WSL2-x86_64-with-glibc2.43",
+    "python": "3.14.4 (main, Apr  8 2026, 04:02:31) [GCC 15.2.0]",
+    "interpreter": "/usr/bin/python3",
+    "label": "One fresh process per level, one public call at a time, 16 rollout threads"
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "arms": {
+    "first": {
+      "extension": {
+        "path": "build/truncated_pass2/first/bgbot_cpp.cpython-314-x86_64-linux-gnu.so",
+        "sha256": "da8df9151754f97bb052fbf2d94df89f815cea9e2c17e7817d3746b5ddcd477e",
+        "bytes": 3232936
+      },
+      "source": "build/truncated_pass2/first"
+    },
+    "dedup": {
+      "extension": {
+        "path": "build/truncated_pass2/dedup/bgbot_cpp.cpython-314-x86_64-linux-gnu.so",
+        "sha256": "0b90eccd7e5de9e375e838f45964fecee1e8fdbebcf13aa857f1532d653de45d",
+        "bytes": 3232936
+      },
+      "source": "build/truncated_pass2/dedup"
+    }
+  },
+  "mask": 240,
+  "cases": 60,
+  "reference": {
+    "path": "data/multi_ply_benchmark/experiments/search_pass3/release/linux/full_outputs.zip",
+    "sha256": "4843b856c18073dfa4b1e1d77c8d04c70f7a4cb96d6d787f3a41c13c0399a4f7",
+    "bytes": 2894738
+  }
+}
