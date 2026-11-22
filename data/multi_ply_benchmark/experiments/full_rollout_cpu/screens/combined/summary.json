@@ -1,0 +1,2227 @@
+{
+  "arm_order": [
+    "baseline",
+    "core",
+    "aux",
+    "boardcache",
+    "group",
+    "deep8",
+    "filter26"
+  ],
+  "trials": 1296,
+  "repeats": 1,
+  "cases": 3,
+  "full_budget_baseline_outputs_matching_checkpoint": 3,
+  "full_budget_baseline_checkpoint_comparison": [
+    {
+      "api": "cube_action",
+      "position_id": "cube-money-anchoring-01",
+      "exact": true,
+      "same_decision": true,
+      "direct": {
+        "probability": {
+          "observations": 5,
+          "largest": 0.0,
+          "material": 0
+        },
+        "equity": {
+          "observations": 5,
+          "largest": 0.0,
+          "material": 0
+        }
+      }
+    },
+    {
+      "api": "checker_play",
+      "position_id": "checker-money-priming-01",
+      "exact": true,
+      "same_decision": true,
+      "direct": {
+        "probability": {
+          "observations": 120,
+          "largest": 0.0,
+          "material": 0
+        },
+        "equity": {
+          "observations": 72,
+          "largest": 0.0,
+          "material": 0
+        }
+      }
+    },
+    {
+      "api": "post_move_analytics",
+      "position_id": "cube-money-purerace-01",
+      "exact": true,
+      "same_decision": true,
+      "direct": {
+        "probability": {
+          "observations": 5,
+          "largest": 0.0,
+          "material": 0
+        },
+        "equity": {
+          "observations": 2,
+          "largest": 0.0,
+          "material": 0
+        }
+      }
+    }
+  ],
+  "comparisons": {
+    "core": {
+      "overall": {
+        "calls": 3,
+        "baseline_seconds": 35.132021296,
+        "candidate_seconds": 33.59444975,
+        "speedup": 1.045768618252186,
+        "time_saved_percent": 4.376553039876063,
+        "median_paired_speedup": 1.035966909037364,
+        "faster_pairs": 3
+      },
+      "by_api": {
+        "checker_play": {
+          "calls": 1,
+          "baseline_seconds": 18.674565953,
+          "candidate_seconds": 18.344678857,
+          "speedup": 1.0179827130565504,
+          "time_saved_percent": 1.7665047574880965,
+          "median_paired_speedup": 1.0179827130565504,
+          "faster_pairs": 1
+        },
+        "cube_action": {
+          "calls": 1,
+          "baseline_seconds": 15.746028191,
+          "candidate_seconds": 14.563043213,
+          "speedup": 1.081231989818171,
+          "time_saved_percent": 7.512910326657252,
+          "median_paired_speedup": 1.081231989818171,
+          "faster_pairs": 1
+        },
+        "post_move_analytics": {
+          "calls": 1,
+          "baseline_seconds": 0.711427152,
+          "candidate_seconds": 0.68672768,
+          "speedup": 1.035966909037364,
+          "time_saved_percent": 3.4718202602421866,
+          "median_paired_speedup": 1.035966909037364,
+          "faster_pairs": 1
+        }
+      },
+      "by_plan": {
+        "anchoring": {
+          "calls": 1,
+          "baseline_seconds": 15.746028191,
+          "candidate_seconds": 14.563043213,
+          "speedup": 1.081231989818171,
+          "time_saved_percent": 7.512910326657252,
+          "median_paired_speedup": 1.081231989818171,
+          "faster_pairs": 1
+        },
+        "priming": {
+          "calls": 1,
+          "baseline_seconds": 18.674565953,
+          "candidate_seconds": 18.344678857,
+          "speedup": 1.0179827130565504,
+          "time_saved_percent": 1.7665047574880965,
+          "median_paired_speedup": 1.0179827130565504,
+          "faster_pairs": 1
+        },
+        "purerace": {
+          "calls": 1,
+          "baseline_seconds": 0.711427152,
+          "candidate_seconds": 0.68672768,
+          "speedup": 1.035966909037364,
+          "time_saved_percent": 3.4718202602421866,
+          "median_paired_speedup": 1.035966909037364,
+          "faster_pairs": 1
+        }
+      },
+      "pairs": [
+        {
+          "sequence": 1,
+          "api": "cube_action",
+          "position_id": "cube-money-anchoring-01",
+          "mode": "money",
+          "game_plan": "anchoring",
+          "seed": 934123713,
+          "reference_origin": "frozen_public_rollout",
+          "recorded_reference_seed": 934123713,
+          "original_seconds": 15.746028191,
+          "selected_seconds": 14.563043213,
+          "speedup": 1.081231989818171,
+          "fixed_batches": {
+            "original": 1,
+            "selected": 1
+          },
+          "same_cube_action": true,
+          "direct_shifts": {
+            "probability": {
+              "observations": 5,
+              "largest": 0.0,
+              "material": 0
+            },
+            "equity": {
+              "observations": 5,
+              "largest": 0.0,
+              "material": 0
+            }
+          }
+        },
+        {
+          "sequence": 3,
+          "api": "checker_play",
+          "position_id": "checker-money-priming-01",
+          "mode": "money",
+          "game_plan": "priming",
+          "seed": 3129701301,
+          "reference_origin": "frozen_public_rollout",
+          "recorded_reference_seed": 3129701301,
+          "original_seconds": 18.674565953,
+          "selected_seconds": 18.344678857,
+          "speedup": 1.0179827130565504,
+          "legal_endpoints": 24,
+          "rollout_endpoints": {
+            "original": [
+              [
+                0,
+                -1,
+                -1,
+                0,
+                0,
+                0,
+                5,
+                4,
+                4,
+                0,
+                0,
+                0,
+                -2,
+                0,
+                -1,
+                0,
+                0,
+                -2,
+                2,
+                -4,
+                -2,
+                0,
+                0,
+                -2,
+                0,
+                0
+              ],
+              [
+                1,
+                -1,
+                2,
+                0,
+                0,
+                0,
+                5,
+                2,
+                2,
+                0,
+                0,
+                0,
+                -2,
+                2,
+                -1,
+                0,
+                0,
+                -2,
+                2,
+                -4,
+                -2,
+                0,
+                0,
+                -2,
+                0,
+                0
+              ]
+            ],
+            "selected": [
+              [
+                0,
+                -1,
+                -1,
+                0,
+                0,
+                0,
+                5,
+                4,
+                4,
+                0,
+                0,
+                0,
+                -2,
+                0,
+                -1,
+                0,
+                0,
+                -2,
+                2,
+                -4,
+                -2,
+                0,
+                0,
+                -2,
+                0,
+                0
+              ],
+              [
+                1,
+                -1,
+                2,
+                0,
+                0,
+                0,
+                5,
+                2,
+                2,
+                0,
+                0,
+                0,
+                -2,
+                2,
+                -1,
+                0,
+                0,
+                -2,
+                2,
+                -4,
+                -2,
+                0,
+                0,
+                -2,
+                0,
+                0
+              ]
+            ],
+            "reference": [
+              [
+                0,
+                -1,
+                -1,
+                0,
+                0,
+                0,
+                5,
+                4,
+                4,
+                0,
+                0,
+                0,
+                -2,
+                0,
+                -1,
+                0,
+                0,
+                -2,
+                2,
+                -4,
+                -2,
+                0,
+                0,
+                -2,
+                0,
+                0
+              ],
+              [
+                1,
+                -1,
+                2,
+                0,
+                0,
+                0,
+                5,
+                2,
+                2,
+                0,
+                0,
+                0,
+                -2,
+                2,
+                -1,
+                0,
+                0,
+                -2,
+                2,
+                -4,
+                -2,
+                0,
+                0,
+                -2,
+                0,
+                0
+              ]
+            ]
+          },
+          "same_rollout_shortlist_including_promotions": true,
+          "same_full_order": true,
+          "same_best_move": true,
+          "count_at_top_equity": {
+            "original": 1,
+            "selected": 1
+          },
+          "changed_levels": 0,
+          "fixed_batches": {
+            "original": 2,
+            "selected": 2
+          },
+          "direct_shifts": {
+            "probability": {
+              "observations": 120,
+              "largest": 0.0,
+              "material": 0
+            },
+            "equity": {
+              "observations": 72,
+              "largest": 0.0,
+              "material": 0
+            }
+          }
+        },
+        {
+          "sequence": 2,
+          "api": "post_move_analytics",
+          "position_id": "cube-money-purerace-01",
+          "mode": "money",
+          "game_plan": "purerace",
+          "seed": 159841666,
+          "reference_origin": "frozen_public_rollout",
+          "recorded_reference_seed": 159841666,
+          "original_seconds": 0.711427152,
+          "selected_seconds": 0.68672768,
+          "speedup": 1.035966909037364,
+          "fixed_batches": {
+            "original": 1,
+            "selected": 1
+          },
+          "direct_shifts": {
+            "probability": {
+              "observations": 5,
+              "largest": 0.0,
+              "material": 0
+            },
+            "equity": {
+              "observations": 2,
+              "largest": 0.0,
+              "material": 0
+            }
+          }
+        }
+      ],
+      "exact_complete": 3,
+      "checker_order": 1,
+      "checker_shortlists": 1,
+      "cube_agree": 1,
+      "scored": 33,
+      "material_farther": 0,
+      "material_closer": 0,
+      "fixed_batches": {
+        "original": 4,
+        "selected": 4
+      },
+      "direct_max": {
+        "equity": 0.0,
+        "probability": 0.0
+      }
+    },
+    "aux": {
+      "overall": {
+        "calls": 3,
+        "baseline_seconds": 35.132021296,
+        "candidate_seconds": 36.790511648,
+        "speedup": 0.9549207043417087,
+        "time_saved_percent": -4.720737067835112,
+        "median_paired_speedup": 0.959033366688707,
+        "faster_pairs": 1
+      },
+      "by_api": {
+        "checker_play": {
+          "calls": 1,
+          "baseline_seconds": 18.674565953,
+          "candidate_seconds": 19.472279695,
+          "speedup": 0.959033366688707,
+          "time_saved_percent": -4.271658811282042,
+          "median_paired_speedup": 0.959033366688707,
+          "faster_pairs": 0
+        },
+        "cube_action": {
+          "calls": 1,
+          "baseline_seconds": 15.746028191,
+          "candidate_seconds": 16.69539659,
+          "speedup": 0.9431359181027996,
+          "time_saved_percent": -6.02925631457103,
+          "median_paired_speedup": 0.9431359181027996,
+          "faster_pairs": 0
+        },
+        "post_move_analytics": {
+          "calls": 1,
+          "baseline_seconds": 0.711427152,
+          "candidate_seconds": 0.622835363,
+          "speedup": 1.1422394974063153,
+          "time_saved_percent": 12.45268594977662,
+          "median_paired_speedup": 1.1422394974063153,
+          "faster_pairs": 1
+        }
+      },
+      "by_plan": {
+        "anchoring": {
+          "calls": 1,
+          "baseline_seconds": 15.746028191,
+          "candidate_seconds": 16.69539659,
+          "speedup": 0.9431359181027996,
+          "time_saved_percent": -6.02925631457103,
+          "median_paired_speedup": 0.9431359181027996,
+          "faster_pairs": 0
+        },
+        "priming": {
+          "calls": 1,
+          "baseline_seconds": 18.674565953,
+          "candidate_seconds": 19.472279695,
+          "speedup": 0.959033366688707,
+          "time_saved_percent": -4.271658811282042,
+          "median_paired_speedup": 0.959033366688707,
+          "faster_pairs": 0
+        },
+        "purerace": {
+          "calls": 1,
+          "baseline_seconds": 0.711427152,
+          "candidate_seconds": 0.622835363,
+          "speedup": 1.1422394974063153,
+          "time_saved_percent": 12.45268594977662,
+          "median_paired_speedup": 1.1422394974063153,
+          "faster_pairs": 1
+        }
+      },
+      "pairs": [
+        {
+          "sequence": 1,
+          "api": "cube_action",
+          "position_id": "cube-money-anchoring-01",
+          "mode": "money",
+          "game_plan": "anchoring",
+          "seed": 934123713,
+          "reference_origin": "frozen_public_rollout",
+          "recorded_reference_seed": 934123713,
+          "original_seconds": 15.746028191,
+          "selected_seconds": 16.69539659,
+          "speedup": 0.9431359181027996,
+          "fixed_batches": {
+            "original": 1,
+            "selected": 1
+          },
+          "same_cube_action": true,
+          "direct_shifts": {
+            "probability": {
+              "observations": 5,
+              "largest": 0.0,
+              "material": 0
+            },
+            "equity": {
+              "observations": 5,
+              "largest": 0.0,
+              "material": 0
+            }
+          }
+        },
+        {
+          "sequence": 3,
+          "api": "checker_play",
+          "position_id": "checker-money-priming-01",
+          "mode": "money",
+          "game_plan": "priming",
+          "seed": 3129701301,
+          "reference_origin": "frozen_public_rollout",
+          "recorded_reference_seed": 3129701301,
+          "original_seconds": 18.674565953,
+          "selected_seconds": 19.472279695,
+          "speedup": 0.959033366688707,
+          "legal_endpoints": 24,
+          "rollout_endpoints": {
+            "original": [
+              [
+                0,
+                -1,
+                -1,
+                0,
+                0,
+                0,
+                5,
+                4,
+                4,
+                0,
+                0,
+                0,
+                -2,
+                0,
+                -1,
+                0,
+                0,
+                -2,
+                2,
+                -4,
+                -2,
+                0,
+                0,
+                -2,
+                0,
+                0
+              ],
+              [
+                1,
+                -1,
+                2,
+                0,
+                0,
+                0,
+                5,
+                2,
+                2,
+                0,
+                0,
+                0,
+                -2,
+                2,
+                -1,
+                0,
+                0,
+                -2,
+                2,
+                -4,
+                -2,
+                0,
+                0,
+                -2,
+                0,
+                0
+              ]
+            ],
+            "selected": [
+              [
+                0,
+                -1,
+                -1,
+                0,
+                0,
+                0,
+                5,
+                4,
+                4,
+                0,
+                0,
+                0,
+                -2,
+                0,
+                -1,
+                0,
+                0,
+                -2,
+                2,
+                -4,
+                -2,
+                0,
+                0,
+                -2,
+                0,
+                0
+              ],
+              [
+                1,
+                -1,
+                2,
+                0,
+                0,
+                0,
+                5,
+                2,
+                2,
+                0,
+                0,
+                0,
+                -2,
+                2,
+                -1,
+                0,
+                0,
+                -2,
+                2,
+                -4,
+                -2,
+                0,
+                0,
+                -2,
+                0,
+                0
+              ]
+            ],
+            "reference": [
+              [
+                0,
+                -1,
+                -1,
+                0,
+                0,
+                0,
+                5,
+                4,
+                4,
+                0,
+                0,
+                0,
+                -2,
+                0,
+                -1,
+                0,
+                0,
+                -2,
+                2,
+                -4,
+                -2,
+                0,
+                0,
+                -2,
+                0,
+                0
+              ],
+              [
+                1,
+                -1,
+                2,
+                0,
+                0,
+                0,
+                5,
+                2,
+                2,
+                0,
+                0,
+                0,
+                -2,
+                2,
+                -1,
+                0,
+                0,
+                -2,
+                2,
+                -4,
+                -2,
+                0,
+                0,
+                -2,
+                0,
+                0
+              ]
+            ]
+          },
+          "same_rollout_shortlist_including_promotions": true,
+          "same_full_order": true,
+          "same_best_move": true,
+          "count_at_top_equity": {
+            "original": 1,
+            "selected": 1
+          },
+          "changed_levels": 0,
+          "fixed_batches": {
+            "original": 2,
+            "selected": 2
+          },
+          "direct_shifts": {
+            "probability": {
+              "observations": 120,
+              "largest": 0.0,
+              "material": 0
+            },
+            "equity": {
+              "observations": 72,
+              "largest": 0.0,
+              "material": 0
+            }
+          }
+        },
+        {
+          "sequence": 2,
+          "api": "post_move_analytics",
+          "position_id": "cube-money-purerace-01",
+          "mode": "money",
+          "game_plan": "purerace",
+          "seed": 159841666,
+          "reference_origin": "frozen_public_rollout",
+          "recorded_reference_seed": 159841666,
+          "original_seconds": 0.711427152,
+          "selected_seconds": 0.622835363,
+          "speedup": 1.1422394974063153,
+          "fixed_batches": {
+            "original": 1,
+            "selected": 1
+          },
+          "direct_shifts": {
+            "probability": {
+              "observations": 5,
+              "largest": 0.0,
+              "material": 0
+            },
+            "equity": {
+              "observations": 2,
+              "largest": 0.0,
+              "material": 0
+            }
+          }
+        }
+      ],
+      "exact_complete": 3,
+      "checker_order": 1,
+      "checker_shortlists": 1,
+      "cube_agree": 1,
+      "scored": 33,
+      "material_farther": 0,
+      "material_closer": 0,
+      "fixed_batches": {
+        "original": 4,
+        "selected": 4
+      },
+      "direct_max": {
+        "equity": 0.0,
+        "probability": 0.0
+      }
+    },
+    "boardcache": {
+      "overall": {
+        "calls": 3,
+        "baseline_seconds": 35.132021296,
+        "candidate_seconds": 34.362881769000005,
+        "speedup": 1.0223828586953339,
+        "time_saved_percent": 2.1892834474843137,
+        "median_paired_speedup": 1.0003973937047552,
+        "faster_pairs": 2
+      },
+      "by_api": {
+        "checker_play": {
+          "calls": 1,
+          "baseline_seconds": 18.674565953,
+          "candidate_seconds": 18.667147746,
+          "speedup": 1.0003973937047552,
+          "time_saved_percent": 0.03972358457309255,
+          "median_paired_speedup": 1.0003973937047552,
+          "faster_pairs": 1
+        },
+        "cube_action": {
+          "calls": 1,
+          "baseline_seconds": 15.746028191,
+          "candidate_seconds": 14.91761928,
+          "speedup": 1.0555322464966408,
+          "time_saved_percent": 5.261065844360013,
+          "median_paired_speedup": 1.0555322464966408,
+          "faster_pairs": 1
+        },
+        "post_move_analytics": {
+          "calls": 1,
+          "baseline_seconds": 0.711427152,
+          "candidate_seconds": 0.778114743,
+          "speedup": 0.9142959420831844,
+          "time_saved_percent": -9.37377647346247,
+          "median_paired_speedup": 0.9142959420831844,
+          "faster_pairs": 0
+        }
+      },
+      "by_plan": {
+        "anchoring": {
+          "calls": 1,
+          "baseline_seconds": 15.746028191,
+          "candidate_seconds": 14.91761928,
+          "speedup": 1.0555322464966408,
+          "time_saved_percent": 5.261065844360013,
+          "median_paired_speedup": 1.0555322464966408,
+          "faster_pairs": 1
+        },
+        "priming": {
+          "calls": 1,
+          "baseline_seconds": 18.674565953,
+          "candidate_seconds": 18.667147746,
+          "speedup": 1.0003973937047552,
+          "time_saved_percent": 0.03972358457309255,
+          "median_paired_speedup": 1.0003973937047552,
+          "faster_pairs": 1
+        },
+        "purerace": {
+          "calls": 1,
+          "baseline_seconds": 0.711427152,
+          "candidate_seconds": 0.778114743,
+          "speedup": 0.9142959420831844,
+          "time_saved_percent": -9.37377647346247,
+          "median_paired_speedup": 0.9142959420831844,
+          "faster_pairs": 0
+        }
+      },
+      "pairs": [
+        {
+          "sequence": 1,
+          "api": "cube_action",
+          "position_id": "cube-money-anchoring-01",
+          "mode": "money",
+          "game_plan": "anchoring",
+          "seed": 934123713,
+          "reference_origin": "frozen_public_rollout",
+          "recorded_reference_seed": 934123713,
+          "original_seconds": 15.746028191,
+          "selected_seconds": 14.91761928,
+          "speedup": 1.0555322464966408,
+          "fixed_batches": {
+            "original": 1,
+            "selected": 1
+          },
+          "same_cube_action": true,
+          "direct_shifts": {
+            "probability": {
+              "observations": 5,
+              "largest": 0.0,
+              "material": 0
+            },
+            "equity": {
+              "observations": 5,
+              "largest": 0.0,
+              "material": 0
+            }
+          }
+        },
+        {
+          "sequence": 3,
+          "api": "checker_play",
+          "position_id": "checker-money-priming-01",
+          "mode": "money",
+          "game_plan": "priming",
+          "seed": 3129701301,
+          "reference_origin": "frozen_public_rollout",
+          "recorded_reference_seed": 3129701301,
+          "original_seconds": 18.674565953,
+          "selected_seconds": 18.667147746,
+          "speedup": 1.0003973937047552,
+          "legal_endpoints": 24,
+          "rollout_endpoints": {
+            "original": [
+              [
+                0,
+                -1,
+                -1,
+                0,
+                0,
+                0,
+                5,
+                4,
+                4,
+                0,
+                0,
+                0,
+                -2,
+                0,
+                -1,
+                0,
+                0,
+                -2,
+                2,
+                -4,
+                -2,
+                0,
+                0,
+                -2,
+                0,
+                0
+              ],
+              [
+                1,
+                -1,
+                2,
+                0,
+                0,
+                0,
+                5,
+                2,
+                2,
+                0,
+                0,
+                0,
+                -2,
+                2,
+                -1,
+                0,
+                0,
+                -2,
+                2,
+                -4,
+                -2,
+                0,
+                0,
+                -2,
+                0,
+                0
+              ]
+            ],
+            "selected": [
+              [
+                0,
+                -1,
+                -1,
+                0,
+                0,
+                0,
+                5,
+                4,
+                4,
+                0,
+                0,
+                0,
+                -2,
+                0,
+                -1,
+                0,
+                0,
+                -2,
+                2,
+                -4,
+                -2,
+                0,
+                0,
+                -2,
+                0,
+                0
+              ],
+              [
+                1,
+                -1,
+                2,
+                0,
+                0,
+                0,
+                5,
+                2,
+                2,
+                0,
+                0,
+                0,
+                -2,
+                2,
+                -1,
+                0,
+                0,
+                -2,
+                2,
+                -4,
+                -2,
+                0,
+                0,
+                -2,
+                0,
+                0
+              ]
+            ],
+            "reference": [
+              [
+                0,
+                -1,
+                -1,
+                0,
+                0,
+                0,
+                5,
+                4,
+                4,
+                0,
+                0,
+                0,
+                -2,
+                0,
+                -1,
+                0,
+                0,
+                -2,
+                2,
+                -4,
+                -2,
+                0,
+                0,
+                -2,
+                0,
+                0
+              ],
+              [
+                1,
+                -1,
+                2,
+                0,
+                0,
+                0,
+                5,
+                2,
+                2,
+                0,
+                0,
+                0,
+                -2,
+                2,
+                -1,
+                0,
+                0,
+                -2,
+                2,
+                -4,
+                -2,
+                0,
+                0,
+                -2,
+                0,
+                0
+              ]
+            ]
+          },
+          "same_rollout_shortlist_including_promotions": true,
+          "same_full_order": true,
+          "same_best_move": true,
+          "count_at_top_equity": {
+            "original": 1,
+            "selected": 1
+          },
+          "changed_levels": 0,
+          "fixed_batches": {
+            "original": 2,
+            "selected": 2
+          },
+          "direct_shifts": {
+            "probability": {
+              "observations": 120,
+              "largest": 5.960464477539063e-08,
+              "material": 0
+            },
+            "equity": {
+              "observations": 72,
+              "largest": 5.8673322200775146e-08,
+              "material": 0
+            }
+          }
+        },
+        {
+          "sequence": 2,
+          "api": "post_move_analytics",
+          "position_id": "cube-money-purerace-01",
+          "mode": "money",
+          "game_plan": "purerace",
+          "seed": 159841666,
+          "reference_origin": "frozen_public_rollout",
+          "recorded_reference_seed": 159841666,
+          "original_seconds": 0.711427152,
+          "selected_seconds": 0.778114743,
+          "speedup": 0.9142959420831844,
+          "fixed_batches": {
+            "original": 1,
+            "selected": 1
+          },
+          "direct_shifts": {
+            "probability": {
+              "observations": 5,
+              "largest": 0.0,
+              "material": 0
+            },
+            "equity": {
+              "observations": 2,
+              "largest": 0.0,
+              "material": 0
+            }
+          }
+        }
+      ],
+      "exact_complete": 2,
+      "checker_order": 1,
+      "checker_shortlists": 1,
+      "cube_agree": 1,
+      "scored": 33,
+      "material_farther": 0,
+      "material_closer": 0,
+      "fixed_batches": {
+        "original": 4,
+        "selected": 4
+      },
+      "direct_max": {
+        "equity": 5.8673322200775146e-08,
+        "probability": 5.960464477539063e-08
+      }
+    },
+    "group": {
+      "overall": {
+        "calls": 3,
+        "baseline_seconds": 35.132021296,
+        "candidate_seconds": 33.729437213000004,
+        "speedup": 1.041583382318025,
+        "time_saved_percent": 3.9923239007021993,
+        "median_paired_speedup": 1.02809695505913,
+        "faster_pairs": 2
+      },
+      "by_api": {
+        "checker_play": {
+          "calls": 1,
+          "baseline_seconds": 18.674565953,
+          "candidate_seconds": 18.164207044,
+          "speedup": 1.02809695505913,
+          "time_saved_percent": 2.732909082248358,
+          "median_paired_speedup": 1.02809695505913,
+          "faster_pairs": 1
+        },
+        "cube_action": {
+          "calls": 1,
+          "baseline_seconds": 15.746028191,
+          "candidate_seconds": 14.756931716,
+          "speedup": 1.0670258895301106,
+          "time_saved_percent": 6.281561692905779,
+          "median_paired_speedup": 1.0670258895301106,
+          "faster_pairs": 1
+        },
+        "post_move_analytics": {
+          "calls": 1,
+          "baseline_seconds": 0.711427152,
+          "candidate_seconds": 0.808298453,
+          "speedup": 0.8801540437935242,
+          "time_saved_percent": -13.616475099055547,
+          "median_paired_speedup": 0.8801540437935242,
+          "faster_pairs": 0
+        }
+      },
+      "by_plan": {
+        "anchoring": {
+          "calls": 1,
+          "baseline_seconds": 15.746028191,
+          "candidate_seconds": 14.756931716,
+          "speedup": 1.0670258895301106,
+          "time_saved_percent": 6.281561692905779,
+          "median_paired_speedup": 1.0670258895301106,
+          "faster_pairs": 1
+        },
+        "priming": {
+          "calls": 1,
+          "baseline_seconds": 18.674565953,
+          "candidate_seconds": 18.164207044,
+          "speedup": 1.02809695505913,
+          "time_saved_percent": 2.732909082248358,
+          "median_paired_speedup": 1.02809695505913,
+          "faster_pairs": 1
+        },
+        "purerace": {
+          "calls": 1,
+          "baseline_seconds": 0.711427152,
+          "candidate_seconds": 0.808298453,
+          "speedup": 0.8801540437935242,
+          "time_saved_percent": -13.616475099055547,
+          "median_paired_speedup": 0.8801540437935242,
+          "faster_pairs": 0
+        }
+      },
+      "pairs": [
+        {
+          "sequence": 1,
+          "api": "cube_action",
+          "position_id": "cube-money-anchoring-01",
+          "mode": "money",
+          "game_plan": "anchoring",
+          "seed": 934123713,
+          "reference_origin": "frozen_public_rollout",
+          "recorded_reference_seed": 934123713,
+          "original_seconds": 15.746028191,
+          "selected_seconds": 14.756931716,
+          "speedup": 1.0670258895301106,
+          "fixed_batches": {
+            "original": 1,
+            "selected": 1
+          },
+          "same_cube_action": true,
+          "direct_shifts": {
+            "probability": {
+              "observations": 5,
+              "largest": 0.0,
+              "material": 0
+            },
+            "equity": {
+              "observations": 5,
+              "largest": 0.0,
+              "material": 0
+            }
+          }
+        },
+        {
+          "sequence": 3,
+          "api": "checker_play",
+          "position_id": "checker-money-priming-01",
+          "mode": "money",
+          "game_plan": "priming",
+          "seed": 3129701301,
+          "reference_origin": "frozen_public_rollout",
+          "recorded_reference_seed": 3129701301,
+          "original_seconds": 18.674565953,
+          "selected_seconds": 18.164207044,
+          "speedup": 1.02809695505913,
+          "legal_endpoints": 24,
+          "rollout_endpoints": {
+            "original": [
+              [
+                0,
+                -1,
+                -1,
+                0,
+                0,
+                0,
+                5,
+                4,
+                4,
+                0,
+                0,
+                0,
+                -2,
+                0,
+                -1,
+                0,
+                0,
+                -2,
+                2,
+                -4,
+                -2,
+                0,
+                0,
+                -2,
+                0,
+                0
+              ],
+              [
+                1,
+                -1,
+                2,
+                0,
+                0,
+                0,
+                5,
+                2,
+                2,
+                0,
+                0,
+                0,
+                -2,
+                2,
+                -1,
+                0,
+                0,
+                -2,
+                2,
+                -4,
+                -2,
+                0,
+                0,
+                -2,
+                0,
+                0
+              ]
+            ],
+            "selected": [
+              [
+                0,
+                -1,
+                -1,
+                0,
+                0,
+                0,
+                5,
+                4,
+                4,
+                0,
+                0,
+                0,
+                -2,
+                0,
+                -1,
+                0,
+                0,
+                -2,
+                2,
+                -4,
+                -2,
+                0,
+                0,
+                -2,
+                0,
+                0
+              ],
+              [
+                1,
+                -1,
+                2,
+                0,
+                0,
+                0,
+                5,
+                2,
+                2,
+                0,
+                0,
+                0,
+                -2,
+                2,
+                -1,
+                0,
+                0,
+                -2,
+                2,
+                -4,
+                -2,
+                0,
+                0,
+                -2,
+                0,
+                0
+              ]
+            ],
+            "reference": [
+              [
+                0,
+                -1,
+                -1,
+                0,
+                0,
+                0,
+                5,
+                4,
+                4,
+                0,
+                0,
+                0,
+                -2,
+                0,
+                -1,
+                0,
+                0,
+                -2,
+                2,
+                -4,
+                -2,
+                0,
+                0,
+                -2,
+                0,
+                0
+              ],
+              [
+                1,
+                -1,
+                2,
+                0,
+                0,
+                0,
+                5,
+                2,
+                2,
+                0,
+                0,
+                0,
+                -2,
+                2,
+                -1,
+                0,
+                0,
+                -2,
+                2,
+                -4,
+                -2,
+                0,
+                0,
+                -2,
+                0,
+                0
+              ]
+            ]
+          },
+          "same_rollout_shortlist_including_promotions": true,
+          "same_full_order": true,
+          "same_best_move": true,
+          "count_at_top_equity": {
+            "original": 1,
+            "selected": 1
+          },
+          "changed_levels": 0,
+          "fixed_batches": {
+            "original": 2,
+            "selected": 2
+          },
+          "direct_shifts": {
+            "probability": {
+              "observations": 120,
+              "largest": 0.0,
+              "material": 0
+            },
+            "equity": {
+              "observations": 72,
+              "largest": 0.0,
+              "material": 0
+            }
+          }
+        },
+        {
+          "sequence": 2,
+          "api": "post_move_analytics",
+          "position_id": "cube-money-purerace-01",
+          "mode": "money",
+          "game_plan": "purerace",
+          "seed": 159841666,
+          "reference_origin": "frozen_public_rollout",
+          "recorded_reference_seed": 159841666,
+          "original_seconds": 0.711427152,
+          "selected_seconds": 0.808298453,
+          "speedup": 0.8801540437935242,
+          "fixed_batches": {
+            "original": 1,
+            "selected": 1
+          },
+          "direct_shifts": {
+            "probability": {
+              "observations": 5,
+              "largest": 0.0,
+              "material": 0
+            },
+            "equity": {
+              "observations": 2,
+              "largest": 0.0,
+              "material": 0
+            }
+          }
+        }
+      ],
+      "exact_complete": 3,
+      "checker_order": 1,
+      "checker_shortlists": 1,
+      "cube_agree": 1,
+      "scored": 33,
+      "material_farther": 0,
+      "material_closer": 0,
+      "fixed_batches": {
+        "original": 4,
+        "selected": 4
+      },
+      "direct_max": {
+        "equity": 0.0,
+        "probability": 0.0
+      }
+    },
+    "deep8": {
+      "overall": {
+        "calls": 3,
+        "baseline_seconds": 35.132021296,
+        "candidate_seconds": 29.632028756,
+        "speedup": 1.1856097193104382,
+        "time_saved_percent": 15.655212359290605,
+        "median_paired_speedup": 1.1640249675778647,
+        "faster_pairs": 2
+      },
+      "by_api": {
+        "checker_play": {
+          "calls": 1,
+          "baseline_seconds": 18.674565953,
+          "candidate_seconds": 16.043097419,
+          "speedup": 1.1640249675778647,
+          "time_saved_percent": 14.091189806621795,
+          "median_paired_speedup": 1.1640249675778647,
+          "faster_pairs": 1
+        },
+        "cube_action": {
+          "calls": 1,
+          "baseline_seconds": 15.746028191,
+          "candidate_seconds": 12.856685647,
+          "speedup": 1.2247346340519887,
+          "time_saved_percent": 18.349659412215892,
+          "median_paired_speedup": 1.2247346340519887,
+          "faster_pairs": 1
+        },
+        "post_move_analytics": {
+          "calls": 1,
+          "baseline_seconds": 0.711427152,
+          "candidate_seconds": 0.73224569,
+          "speedup": 0.9715689169846804,
+          "time_saved_percent": -2.9263063605983852,
+          "median_paired_speedup": 0.9715689169846804,
+          "faster_pairs": 0
+        }
+      },
+      "by_plan": {
+        "anchoring": {
+          "calls": 1,
+          "baseline_seconds": 15.746028191,
+          "candidate_seconds": 12.856685647,
+          "speedup": 1.2247346340519887,
+          "time_saved_percent": 18.349659412215892,
+          "median_paired_speedup": 1.2247346340519887,
+          "faster_pairs": 1
+        },
+        "priming": {
+          "calls": 1,
+          "baseline_seconds": 18.674565953,
+          "candidate_seconds": 16.043097419,
+          "speedup": 1.1640249675778647,
+          "time_saved_percent": 14.091189806621795,
+          "median_paired_speedup": 1.1640249675778647,
+          "faster_pairs": 1
+        },
+        "purerace": {
+          "calls": 1,
+          "baseline_seconds": 0.711427152,
+          "candidate_seconds": 0.73224569,
+          "speedup": 0.9715689169846804,
+          "time_saved_percent": -2.9263063605983852,
+          "median_paired_speedup": 0.9715689169846804,
+          "faster_pairs": 0
+        }
+      },
+      "pairs": [
+        {
+          "sequence": 1,
+          "api": "cube_action",
+          "position_id": "cube-money-anchoring-01",
+          "mode": "money",
+          "game_plan": "anchoring",
+          "seed": 934123713,
+          "reference_origin": "frozen_public_rollout",
+          "recorded_reference_seed": 934123713,
+          "original_seconds": 15.746028191,
+          "selected_seconds": 12.856685647,
+          "speedup": 1.2247346340519887,
+          "fixed_batches": {
+            "original": 1,
+            "selected": 1
+          },
+          "same_cube_action": true,
+          "direct_shifts": {
+            "probability": {
+              "observations": 5,
+              "largest": 0.0023079514503479004,
+              "material": 0
+            },
+            "equity": {
+              "observations": 5,
+              "largest": 0.002335846424102783,
+              "material": 0
+            }
+          }
+        },
+        {
+          "sequence": 3,
+          "api": "checker_play",
+          "position_id": "checker-money-priming-01",
+          "mode": "money",
+          "game_plan": "priming",
+          "seed": 3129701301,
+          "reference_origin": "frozen_public_rollout",
+          "recorded_reference_seed": 3129701301,
+          "original_seconds": 18.674565953,
+          "selected_seconds": 16.043097419,
+          "speedup": 1.1640249675778647,
+          "legal_endpoints": 24,
+          "rollout_endpoints": {
+            "original": [
+              [
+                0,
+                -1,
+                -1,
+                0,
+                0,
+                0,
+                5,
+                4,
+                4,
+                0,
+                0,
+                0,
+                -2,
+                0,
+                -1,
+                0,
+                0,
+                -2,
+                2,
+                -4,
+                -2,
+                0,
+                0,
+                -2,
+                0,
+                0
+              ],
+              [
+                1,
+                -1,
+                2,
+                0,
+                0,
+                0,
+                5,
+                2,
+                2,
+                0,
+                0,
+                0,
+                -2,
+                2,
+                -1,
+                0,
+                0,
+                -2,
+                2,
+                -4,
+                -2,
+                0,
+                0,
+                -2,
+                0,
+                0
+              ]
+            ],
+            "selected": [
+              [
+                0,
+                -1,
+                -1,
+                0,
+                0,
+                0,
+                5,
+                4,
+                4,
+                0,
+                0,
+                0,
+                -2,
+                0,
+                -1,
+                0,
+                0,
+                -2,
+                2,
+                -4,
+                -2,
+                0,
+                0,
+                -2,
+                0,
+                0
+              ],
+              [
+                1,
+                -1,
+                2,
+                0,
+                0,
+                0,
+                5,
+                2,
+                2,
+                0,
+                0,
+                0,
+                -2,
+                2,
+                -1,
+                0,
+                0,
+                -2,
+                2,
+                -4,
+                -2,
+                0,
+                0,
+                -2,
+                0,
+                0
+              ]
+            ],
+            "reference": [
+              [
+                0,
+                -1,
+                -1,
+                0,
+                0,
+                0,
+                5,
+                4,
+                4,
+                0,
+                0,
+                0,
+                -2,
+                0,
+                -1,
+                0,
+                0,
+                -2,
+                2,
+                -4,
+                -2,
+                0,
+                0,
+                -2,
+                0,
+                0
+              ],
+              [
+                1,
+                -1,
+                2,
+                0,
+                0,
+                0,
+                5,
+                2,
+                2,
+                0,
+                0,
+                0,
+                -2,
+                2,
+                -1,
+                0,
+                0,
+                -2,
+                2,
+                -4,
+                -2,
+                0,
+                0,
+                -2,
+                0,
+                0
+              ]
+            ]
+          },
+          "same_rollout_shortlist_including_promotions": true,
+          "same_full_order": true,
+          "same_best_move": true,
+          "count_at_top_equity": {
+            "original": 1,
+            "selected": 1
+          },
+          "changed_levels": 0,
+          "fixed_batches": {
+            "original": 2,
+            "selected": 2
+          },
+          "direct_shifts": {
+            "probability": {
+              "observations": 120,
+              "largest": 0.0004112720489501953,
+              "material": 0
+            },
+            "equity": {
+              "observations": 72,
+              "largest": 0.007277995347976685,
+              "material": 2
+            }
+          }
+        },
+        {
+          "sequence": 2,
+          "api": "post_move_analytics",
+          "position_id": "cube-money-purerace-01",
+          "mode": "money",
+          "game_plan": "purerace",
+          "seed": 159841666,
+          "reference_origin": "frozen_public_rollout",
+          "recorded_reference_seed": 159841666,
+          "original_seconds": 0.711427152,
+          "selected_seconds": 0.73224569,
+          "speedup": 0.9715689169846804,
+          "fixed_batches": {
+            "original": 1,
+            "selected": 1
+          },
+          "direct_shifts": {
+            "probability": {
+              "observations": 5,
+              "largest": 0.0,
+              "material": 0
+            },
+            "equity": {
+              "observations": 2,
+              "largest": 0.0,
+              "material": 0
+            }
+          }
+        }
+      ],
+      "exact_complete": 1,
+      "checker_order": 1,
+      "checker_shortlists": 1,
+      "cube_agree": 1,
+      "scored": 33,
+      "material_farther": 2,
+      "material_closer": 0,
+      "fixed_batches": {
+        "original": 4,
+        "selected": 4
+      },
+      "direct_max": {
+        "equity": 0.007277995347976685,
+        "probability": 0.0023079514503479004
+      }
+    },
+    "filter26": {
+      "overall": {
+        "calls": 3,
+        "baseline_seconds": 35.132021296,
+        "candidate_seconds": 32.01360478,
+        "speedup": 1.0974091027058652,
+        "time_saved_percent": 8.876279818135735,
+        "median_paired_speedup": 1.090944165849669,
+        "faster_pairs": 3
+      },
+      "by_api": {
+        "checker_play": {
+          "calls": 1,
+          "baseline_seconds": 18.674565953,
+          "candidate_seconds": 17.279187645,
+          "speedup": 1.080754855880263,
+          "time_saved_percent": 7.472078930840354,
+          "median_paired_speedup": 1.080754855880263,
+          "faster_pairs": 1
+        },
+        "cube_action": {
+          "calls": 1,
+          "baseline_seconds": 15.746028191,
+          "candidate_seconds": 14.082296546,
+          "speedup": 1.1181434888525035,
+          "time_saved_percent": 10.56604005034707,
+          "median_paired_speedup": 1.1181434888525035,
+          "faster_pairs": 1
+        },
+        "post_move_analytics": {
+          "calls": 1,
+          "baseline_seconds": 0.711427152,
+          "candidate_seconds": 0.652120589,
+          "speedup": 1.090944165849669,
+          "time_saved_percent": 8.336280507888173,
+          "median_paired_speedup": 1.090944165849669,
+          "faster_pairs": 1
+        }
+      },
+      "by_plan": {
+        "anchoring": {
+          "calls": 1,
+          "baseline_seconds": 15.746028191,
+          "candidate_seconds": 14.082296546,
+          "speedup": 1.1181434888525035,
+          "time_saved_percent": 10.56604005034707,
+          "median_paired_speedup": 1.1181434888525035,
+          "faster_pairs": 1
+        },
+        "priming": {
+          "calls": 1,
+          "baseline_seconds": 18.674565953,
+          "candidate_seconds": 17.279187645,
+          "speedup": 1.080754855880263,
+          "time_saved_percent": 7.472078930840354,
+          "median_paired_speedup": 1.080754855880263,
+          "faster_pairs": 1
+        },
+        "purerace": {
+          "calls": 1,
+          "baseline_seconds": 0.711427152,
+          "candidate_seconds": 0.652120589,
+          "speedup": 1.090944165849669,
+          "time_saved_percent": 8.336280507888173,
+          "median_paired_speedup": 1.090944165849669,
+          "faster_pairs": 1
+        }
+      },
+      "pairs": [
+        {
+          "sequence": 1,
+          "api": "cube_action",
+          "position_id": "cube-money-anchoring-01",
+          "mode": "money",
+          "game_plan": "anchoring",
+          "seed": 934123713,
+          "reference_origin": "frozen_public_rollout",
+          "recorded_reference_seed": 934123713,
+          "original_seconds": 15.746028191,
+          "selected_seconds": 14.082296546,
+          "speedup": 1.1181434888525035,
+          "fixed_batches": {
+            "original": 1,
+            "selected": 1
+          },
+          "same_cube_action": true,
+          "direct_shifts": {
+            "probability": {
+              "observations": 5,
+              "largest": 0.00038249045610427856,
+              "material": 0
+            },
+            "equity": {
+              "observations": 5,
+              "largest": 0.005470246076583862,
+              "material": 2
+            }
+          }
+        },
+        {
+          "sequence": 3,
+          "api": "checker_play",
+          "position_id": "checker-money-priming-01",
+          "mode": "money",
+          "game_plan": "priming",
+          "seed": 3129701301,
+          "reference_origin": "frozen_public_rollout",
+          "recorded_reference_seed": 3129701301,
+          "original_seconds": 18.674565953,
+          "selected_seconds": 17.279187645,
+          "speedup": 1.080754855880263,
+          "legal_endpoints": 24,
+          "rollout_endpoints": {
+            "original": [
+              [
+                0,
+                -1,
+                -1,
+                0,
+                0,
+                0,
+                5,
+                4,
+                4,
+                0,
+                0,
+                0,
+                -2,
+                0,
+                -1,
+                0,
+                0,
+                -2,
+                2,
+                -4,
+                -2,
+                0,
+                0,
+                -2,
+                0,
+                0
+              ],
+              [
+                1,
+                -1,
+                2,
+                0,
+                0,
+                0,
+                5,
+                2,
+                2,
+                0,
+                0,
+                0,
+                -2,
+                2,
+                -1,
+                0,
+                0,
+                -2,
+                2,
+                -4,
+                -2,
+                0,
+                0,
+                -2,
+                0,
+                0
+              ]
+            ],
+            "selected": [
+              [
+                0,
+                -1,
+                -1,
+                0,
+                0,
+                0,
+                5,
+                4,
+                4,
+                0,
+                0,
+                0,
+                -2,
+                0,
+                -1,
+                0,
+                0,
+                -2,
+                2,
+                -4,
+                -2,
+                0,
+                0,
+                -2,
+                0,
+                0
+              ],
+              [
+                1,
+                -1,
+                2,
+                0,
+                0,
+                0,
+                5,
+                2,
+                2,
+                0,
+                0,
+                0,
+                -2,
+                2,
+                -1,
+                0,
+                0,
+                -2,
+                2,
+                -4,
+                -2,
+                0,
+                0,
+                -2,
+                0,
+                0
+              ]
+            ],
+            "reference": [
+              [
+                0,
+                -1,
+                -1,
+                0,
+                0,
+                0,
+                5,
+                4,
+                4,
+                0,
+                0,
+                0,
+                -2,
+                0,
+                -1,
+                0,
+                0,
+                -2,
+                2,
+                -4,
+                -2,
+                0,
+                0,
+                -2,
+                0,
+                0
+              ],
+              [
+                1,
+                -1,
+                2,
+                0,
+                0,
+                0,
+                5,
+                2,
+                2,
+                0,
+                0,
+                0,
+                -2,
+                2,
+                -1,
+                0,
+                0,
+                -2,
+                2,
+                -4,
+                -2,
+                0,
+                0,
+                -2,
+                0,
+                0
+              ]
+            ]
+          },
+          "same_rollout_shortlist_including_promotions": true,
+          "same_full_order": true,
+          "same_best_move": true,
+          "count_at_top_equity": {
+            "original": 1,
+            "selected": 1
+          },
+          "changed_levels": 0,
+          "fixed_batches": {
+            "original": 2,
+            "selected": 2
+          },
+          "direct_shifts": {
+            "probability": {
+              "observations": 120,
+              "largest": 0.0022311508655548096,
+              "material": 0
+            },
+            "equity": {
+              "observations": 72,
+              "largest": 0.008825570344924927,
+              "material": 2
+            }
+          }
+        },
+        {
+          "sequence": 2,
+          "api": "post_move_analytics",
+          "position_id": "cube-money-purerace-01",
+          "mode": "money",
+          "game_plan": "purerace",
+          "seed": 159841666,
+          "reference_origin": "frozen_public_rollout",
+          "recorded_reference_seed": 159841666,
+          "original_seconds": 0.711427152,
+          "selected_seconds": 0.652120589,
+          "speedup": 1.090944165849669,
+          "fixed_batches": {
+            "original": 1,
+            "selected": 1
+          },
+          "direct_shifts": {
+            "probability": {
+              "observations": 5,
+              "largest": 0.0,
+              "material": 0
+            },
+            "equity": {
+              "observations": 2,
+              "largest": 0.0,
+              "material": 0
+            }
+          }
+        }
+      ],
+      "exact_complete": 1,
+      "checker_order": 1,
+      "checker_shortlists": 1,
+      "cube_agree": 1,
+      "scored": 33,
+      "material_farther": 4,
+      "material_closer": 0,
+      "fixed_batches": {
+        "original": 4,
+        "selected": 4
+      },
+      "direct_max": {
+        "equity": 0.008825570344924927,
+        "probability": 0.0022311508655548096
+      }
+    }
+  }
+}

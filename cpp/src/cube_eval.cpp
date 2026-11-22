@@ -311,7 +311,7 @@ void eval_groups_pair(const S& s, const std::vector<Board>& cands,
             saved_base.resize(nh);
             saved_inputs.resize(ni);
             const auto save = [&](const auto& inputs) {
-                nn.forward_save_base(inputs.data(), saved_base.data(), saved_inputs.data());
+                nn.save_hidden_base(inputs.data(), saved_base.data(), saved_inputs.data());
             };
             if (is_pr) save(compute_tesauro_inputs(base));
             else save(compute_extended_contact_inputs(base));

@@ -79,9 +79,17 @@ constexpr std::array<std::array<int, 7>, 7> kOrderedRollToIndex = {{
 }};
 
 int trial_chunk_size(int depth, int trials, int workers) {
-    // At fewer than 32 trials per worker, eight-trial assignments can leave
-    // most workers idle while the last few expensive trajectories finish.
-    return depth > 0 && trials / workers < 32 ? 1 : 8;
+    // Full games vary widely in length. Let each idle worker take the next
+    // game, as for short truncated batches with few trials per worker.
+    return depth <= 0 || trials / workers < 32 ? 1 : 8;
+}
+
+int trial_report_interval(int depth, int trials, int workers) {
+    // Full-game workers claim individual paths, but a caller can publish
+    // every progress event. Keep updates at least eight paths apart in
+    // parallel full rollouts, including each batch of an adaptive cube call.
+    const int minimum = depth <= 0 && workers > 1 ? 8 : 1;
+    return std::max(minimum, trials / 100);
 }
 
 // A nested checker rollout can enter the same generator on the same worker
@@ -2168,7 +2176,8 @@ RolloutResult RolloutStrategy::run_trials_parallel(
         double sum_eq = 0.0, sum_eq_sq = 0.0;
         double sum_svr_eq = 0.0, sum_svr_eq_sq = 0.0;
 
-        const int report_interval = progress ? std::max(1, n_trials / 100) : 0;
+        const int report_interval = progress
+            ? trial_report_interval(config_.truncation_depth, n_trials, n_threads) : 0;
         for (int t = 0; t < n_trials; ++t) {
             auto r = run_trial_unified(board, true, nullptr, 0, all_dice[t].data(), max_moves,
                                        &move0_cache, &move1_cache);
@@ -2228,7 +2237,8 @@ RolloutResult RolloutStrategy::run_trials_parallel(
         SharedPosCache* shared_cache = shared_pos_cache_.get();
         std::atomic<int> next_trial{0};
         std::atomic<int> completed_trials{0};
-        const int report_interval = progress ? std::max(1, n_trials / 100) : 0;
+        const int report_interval = progress
+            ? trial_report_interval(config_.truncation_depth, n_trials, n_threads) : 0;
 
         // Use persistent thread pool to avoid thread churn. Creating
         // ephemeral threads per rollout exhausts Windows TLS slots and
@@ -2382,7 +2392,8 @@ RolloutStrategy::CubefulRolloutResult RolloutStrategy::cubeful_cube_decision(
         n_select_cubes = 2;
     }
 
-    const int report_interval = progress ? std::max(1, n_trials / 100) : 0;
+    const int report_interval = progress
+        ? trial_report_interval(config_.truncation_depth, n_trials, n_threads) : 0;
 
     if (n_threads == 1) {
         // Serial: prefill + trials on a single thread (PosCache stays warm)
@@ -2734,7 +2745,8 @@ RolloutStrategy::CubefulRolloutResult RolloutStrategy::cubeful_cube_decision_bat
             config_.seed + static_cast<uint32_t>(b) * 0x9E3779B9u;
         generate_stratified_dice(n_trials, max_moves, batch_seed, batch_dice);
 
-        const int report_interval = progress ? std::max(1, n_trials / 100) : 0;
+        const int report_interval = progress
+            ? trial_report_interval(config_.truncation_depth, n_trials, n_threads) : 0;
 
         if (n_threads == 1) {
             for (int t = 0; t < n_trials; ++t) {

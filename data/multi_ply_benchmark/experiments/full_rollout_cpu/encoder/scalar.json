@@ -1,0 +1,20 @@
+{
+  "shipped": {
+    "metrics": {
+      "boards": 656128,
+      "pairs": 315648,
+      "dense_fallbacks": 2146,
+      "feature_hash": 14210451938374954444
+    },
+    "encoding_cpp_sha256_lf": "afcc520000b996b34ef9362d04fb82adc7b3e8629c4c9f38a6ff030a800b7a75"
+  },
+  "selected": {
+    "metrics": {
+      "boards": 656128,
+      "pairs": 315648,
+      "dense_fallbacks": 2146,
+      "feature_hash": 14210451938374954444
+    },
+    "encoding_cpp_sha256_lf": "47cee55ab2169dc990d9a89d879433058beeab42be0cc28b851d9e14bc548231"
+  }
+}

@@ -232,3 +232,22 @@ def test_checker_native_cancellation_without_progress():
     inner._rollout_strategy = native
     analyzer.reset_cancel()
     assert analyzer.checker_play(_BOARD, 4, 2).moves
+
+
+@pytest.mark.parametrize("threads,reports_per_batch", [(1, 37), (4, 5)])
+@pytest.mark.parametrize("target_se,batches", [(0.0, 1), (1e-12, 2)])
+def test_full_game_cube_progress_cadence(threads, reports_per_batch, target_se, batches):
+    from bgsage import BgBotAnalyzer
+
+    # An odd batch size exercises the final partial notification; the tight
+    # target exercises the same reporting policy in a second full-game batch.
+    board = [0, 1, 0, 3, 3, 3, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, 0,
+             -1, -2, -4, -1, -3, -1, -2, 0]
+    analyzer = BgBotAnalyzer(eval_level="rollout", n_trials=37, truncation_depth=0,
+                             parallel_threads=threads, target_se=target_se, max_batches=2, seed=42)
+    reports = []
+    result = analyzer.cube_action(board, progress_callback=lambda done, total, partial: reports.append((done, total)))
+    assert result.equity_nd_se > target_se
+    assert len(reports) == reports_per_batch * batches
+    assert reports.count((37, 37)) == batches
+    assert all(1 <= done <= total == 37 for done, total in reports)

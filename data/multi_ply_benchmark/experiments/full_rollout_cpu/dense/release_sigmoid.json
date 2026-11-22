@@ -1,0 +1,14 @@
+{
+  "wide": {
+    "kernel_source_sha256": "bea53e2a54cc29b6878094e6124d1d3e7d1b629fececf2405a0989d52b02904c",
+    "inputs": 1048576,
+    "unequal": 569394,
+    "max_absolute_difference": 1.788139343e-07
+  },
+  "split_reciprocal": {
+    "kernel_source_sha256": "df7447e5ea26efcc8451f21a387ff1e2e84a63e016e4353e4157827ea57ea2ef",
+    "inputs": 1048576,
+    "unequal": 0,
+    "max_absolute_difference": 0
+  }
+}

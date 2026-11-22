@@ -1,0 +1,114 @@
+{
+  "1P": {
+    "equity": {
+      "observations": 1834,
+      "largest_increase": 0.0,
+      "largest_decrease": 0.0,
+      "materially_farther": 0,
+      "materially_closer": 0
+    },
+    "probability": {
+      "observations": 2890,
+      "largest_increase": 0.0,
+      "largest_decrease": 0.0,
+      "materially_farther": 0,
+      "materially_closer": 0
+    }
+  },
+  "2P": {
+    "equity": {
+      "observations": 1834,
+      "largest_increase": 1.430511474609375e-06,
+      "largest_decrease": -7.748603820800781e-07,
+      "materially_farther": 0,
+      "materially_closer": 0
+    },
+    "probability": {
+      "observations": 2890,
+      "largest_increase": 1.1920928955078125e-07,
+      "largest_decrease": -1.7881393432617188e-07,
+      "materially_farther": 0,
+      "materially_closer": 0
+    }
+  },
+  "3P": {
+    "equity": {
+      "observations": 1834,
+      "largest_increase": 7.748603820800781e-07,
+      "largest_decrease": -7.748603820800781e-07,
+      "materially_farther": 0,
+      "materially_closer": 0
+    },
+    "probability": {
+      "observations": 2890,
+      "largest_increase": 1.7229467630386353e-06,
+      "largest_decrease": -1.2516975402832031e-06,
+      "materially_farther": 0,
+      "materially_closer": 0
+    }
+  },
+  "4P": {
+    "equity": {
+      "observations": 1834,
+      "largest_increase": 7.748603820800781e-07,
+      "largest_decrease": -7.3015689849853516e-06,
+      "materially_farther": 0,
+      "materially_closer": 0
+    },
+    "probability": {
+      "observations": 2890,
+      "largest_increase": 8.046627044677734e-07,
+      "largest_decrease": -6.973743438720703e-06,
+      "materially_farther": 0,
+      "materially_closer": 0
+    }
+  },
+  "1T": {
+    "equity": {
+      "observations": 1834,
+      "largest_increase": 7.748603820800781e-07,
+      "largest_decrease": -7.748603820800781e-07,
+      "materially_farther": 0,
+      "materially_closer": 0
+    },
+    "probability": {
+      "observations": 2890,
+      "largest_increase": 1.0365620255470276e-06,
+      "largest_decrease": -1.7881393432617188e-07,
+      "materially_farther": 0,
+      "materially_closer": 0
+    }
+  },
+  "2T": {
+    "equity": {
+      "observations": 1834,
+      "largest_increase": 7.271766662597656e-06,
+      "largest_decrease": -1.0073184967041016e-05,
+      "materially_farther": 0,
+      "materially_closer": 0
+    },
+    "probability": {
+      "observations": 2890,
+      "largest_increase": 4.470348358154297e-06,
+      "largest_decrease": -1.3619661331176758e-05,
+      "materially_farther": 0,
+      "materially_closer": 0
+    }
+  },
+  "3T": {
+    "equity": {
+      "observations": 1834,
+      "largest_increase": 7.271766662597656e-06,
+      "largest_decrease": -1.0073184967041016e-05,
+      "materially_farther": 0,
+      "materially_closer": 0
+    },
+    "probability": {
+      "observations": 2890,
+      "largest_increase": 4.470348358154297e-06,
+      "largest_decrease": -1.3649463653564453e-05,
+      "materially_farther": 0,
+      "materially_closer": 0
+    }
+  }
+}

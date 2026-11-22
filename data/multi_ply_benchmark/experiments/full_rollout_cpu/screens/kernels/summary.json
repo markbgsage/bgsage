@@ -1,0 +1,2417 @@
+{
+  "arm_order": [
+    "baseline",
+    "core",
+    "wide",
+    "sparse",
+    "sevenroll"
+  ],
+  "trials": 1296,
+  "repeats": 1,
+  "cases": 4,
+  "full_budget_baseline_outputs_matching_checkpoint": 4,
+  "full_budget_baseline_checkpoint_comparison": [
+    {
+      "api": "cube_action",
+      "position_id": "cube-money-attacking-01",
+      "exact": true,
+      "same_decision": true,
+      "direct": {
+        "probability": {
+          "observations": 5,
+          "largest": 0.0,
+          "material": 0
+        },
+        "equity": {
+          "observations": 5,
+          "largest": 0.0,
+          "material": 0
+        }
+      }
+    },
+    {
+      "api": "checker_play",
+      "position_id": "checker-money-racing-01",
+      "exact": true,
+      "same_decision": true,
+      "direct": {
+        "probability": {
+          "observations": 10,
+          "largest": 0.0,
+          "material": 0
+        },
+        "equity": {
+          "observations": 6,
+          "largest": 0.0,
+          "material": 0
+        }
+      }
+    },
+    {
+      "api": "post_move_analytics",
+      "position_id": "cube-money-anchoring-01",
+      "exact": true,
+      "same_decision": true,
+      "direct": {
+        "probability": {
+          "observations": 5,
+          "largest": 0.0,
+          "material": 0
+        },
+        "equity": {
+          "observations": 2,
+          "largest": 0.0,
+          "material": 0
+        }
+      }
+    },
+    {
+      "api": "checker_play",
+      "position_id": "checker-match-purerace-01",
+      "exact": true,
+      "same_decision": true,
+      "direct": {
+        "probability": {
+          "observations": 10,
+          "largest": 0.0,
+          "material": 0
+        },
+        "equity": {
+          "observations": 6,
+          "largest": 0.0,
+          "material": 0
+        }
+      }
+    }
+  ],
+  "comparisons": {
+    "core": {
+      "overall": {
+        "calls": 4,
+        "baseline_seconds": 40.813818469,
+        "candidate_seconds": 37.781151423,
+        "speedup": 1.080269312389294,
+        "time_saved_percent": 7.430490847856963,
+        "median_paired_speedup": 1.088677256198684,
+        "faster_pairs": 4
+      },
+      "by_api": {
+        "checker_play": {
+          "calls": 2,
+          "baseline_seconds": 11.434762072,
+          "candidate_seconds": 10.784311148,
+          "speedup": 1.0603145546408523,
+          "time_saved_percent": 5.688364304428695,
+          "median_paired_speedup": 1.078332918621584,
+          "faster_pairs": 2
+        },
+        "cube_action": {
+          "calls": 1,
+          "baseline_seconds": 13.325505864,
+          "candidate_seconds": 12.189657084,
+          "speedup": 1.093181356306643,
+          "time_saved_percent": 8.523869874753442,
+          "median_paired_speedup": 1.093181356306643,
+          "faster_pairs": 1
+        },
+        "post_move_analytics": {
+          "calls": 1,
+          "baseline_seconds": 16.053550533,
+          "candidate_seconds": 14.807183191,
+          "speedup": 1.0841731560907248,
+          "time_saved_percent": 7.763811123514031,
+          "median_paired_speedup": 1.0841731560907248,
+          "faster_pairs": 1
+        }
+      },
+      "by_plan": {
+        "anchoring": {
+          "calls": 1,
+          "baseline_seconds": 16.053550533,
+          "candidate_seconds": 14.807183191,
+          "speedup": 1.0841731560907248,
+          "time_saved_percent": 7.763811123514031,
+          "median_paired_speedup": 1.0841731560907248,
+          "faster_pairs": 1
+        },
+        "attacking": {
+          "calls": 1,
+          "baseline_seconds": 13.325505864,
+          "candidate_seconds": 12.189657084,
+          "speedup": 1.093181356306643,
+          "time_saved_percent": 8.523869874753442,
+          "median_paired_speedup": 1.093181356306643,
+          "faster_pairs": 1
+        },
+        "purerace": {
+          "calls": 1,
+          "baseline_seconds": 1.035188303,
+          "candidate_seconds": 0.940943248,
+          "speedup": 1.1001601905325538,
+          "time_saved_percent": 9.104146050228312,
+          "median_paired_speedup": 1.1001601905325538,
+          "faster_pairs": 1
+        },
+        "racing": {
+          "calls": 1,
+          "baseline_seconds": 10.399573769,
+          "candidate_seconds": 9.8433679,
+          "speedup": 1.0565056467106142,
+          "time_saved_percent": 5.348352551313096,
+          "median_paired_speedup": 1.0565056467106142,
+          "faster_pairs": 1
+        }
+      },
+      "pairs": [
+        {
+          "sequence": 10,
+          "api": "cube_action",
+          "position_id": "cube-money-attacking-01",
+          "mode": "money",
+          "game_plan": "attacking",
+          "seed": 3858400225,
+          "reference_origin": "frozen_public_rollout",
+          "recorded_reference_seed": 3858400225,
+          "original_seconds": 13.325505864,
+          "selected_seconds": 12.189657084,
+          "speedup": 1.093181356306643,
+          "fixed_batches": {
+            "original": 1,
+            "selected": 1
+          },
+          "same_cube_action": true,
+          "direct_shifts": {
+            "probability": {
+              "observations": 5,
+              "largest": 0.0,
+              "material": 0
+            },
+            "equity": {
+              "observations": 5,
+              "largest": 0.0,
+              "material": 0
+            }
+          }
+        },
+        {
+          "sequence": 9,
+          "api": "checker_play",
+          "position_id": "checker-money-racing-01",
+          "mode": "money",
+          "game_plan": "racing",
+          "seed": 3221203605,
+          "reference_origin": "frozen_public_rollout",
+          "recorded_reference_seed": 3221203605,
+          "original_seconds": 10.399573769,
+          "selected_seconds": 9.8433679,
+          "speedup": 1.0565056467106142,
+          "legal_endpoints": 2,
+          "rollout_endpoints": {
+            "original": [
+              [
+                0,
+                2,
+                7,
+                -4,
+                4,
+                1,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                -1,
+                -3,
+                -2,
+                -2,
+                -2,
+                -1,
+                0,
+                0,
+                0
+              ],
+              [
+                0,
+                3,
+                6,
+                -4,
+                3,
+                2,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                -1,
+                -3,
+                -2,
+                -2,
+                -2,
+                -1,
+                0,
+                0,
+                0
+              ]
+            ],
+            "selected": [
+              [
+                0,
+                2,
+                7,
+                -4,
+                4,
+                1,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                -1,
+                -3,
+                -2,
+                -2,
+                -2,
+                -1,
+                0,
+                0,
+                0
+              ],
+              [
+                0,
+                3,
+                6,
+                -4,
+                3,
+                2,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                -1,
+                -3,
+                -2,
+                -2,
+                -2,
+                -1,
+                0,
+                0,
+                0
+              ]
+            ],
+            "reference": [
+              [
+                0,
+                2,
+                7,
+                -4,
+                4,
+                1,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                -1,
+                -3,
+                -2,
+                -2,
+                -2,
+                -1,
+                0,
+                0,
+                0
+              ],
+              [
+                0,
+                3,
+                6,
+                -4,
+                3,
+                2,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                -1,
+                -3,
+                -2,
+                -2,
+                -2,
+                -1,
+                0,
+                0,
+                0
+              ]
+            ]
+          },
+          "same_rollout_shortlist_including_promotions": true,
+          "same_full_order": true,
+          "same_best_move": true,
+          "count_at_top_equity": {
+            "original": 1,
+            "selected": 1
+          },
+          "changed_levels": 0,
+          "fixed_batches": {
+            "original": 2,
+            "selected": 2
+          },
+          "direct_shifts": {
+            "probability": {
+              "observations": 10,
+              "largest": 0.0,
+              "material": 0
+            },
+            "equity": {
+              "observations": 6,
+              "largest": 0.0,
+              "material": 0
+            }
+          }
+        },
+        {
+          "sequence": 11,
+          "api": "post_move_analytics",
+          "position_id": "cube-money-anchoring-01",
+          "mode": "money",
+          "game_plan": "anchoring",
+          "seed": 934123713,
+          "reference_origin": "frozen_public_rollout",
+          "recorded_reference_seed": 934123713,
+          "original_seconds": 16.053550533,
+          "selected_seconds": 14.807183191,
+          "speedup": 1.0841731560907248,
+          "fixed_batches": {
+            "original": 1,
+            "selected": 1
+          },
+          "direct_shifts": {
+            "probability": {
+              "observations": 5,
+              "largest": 0.0,
+              "material": 0
+            },
+            "equity": {
+              "observations": 2,
+              "largest": 0.0,
+              "material": 0
+            }
+          }
+        },
+        {
+          "sequence": 12,
+          "api": "checker_play",
+          "position_id": "checker-match-purerace-01",
+          "mode": "match",
+          "game_plan": "purerace",
+          "seed": 2866618836,
+          "reference_origin": "frozen_public_rollout",
+          "recorded_reference_seed": 2866618836,
+          "original_seconds": 1.035188303,
+          "selected_seconds": 0.940943248,
+          "speedup": 1.1001601905325538,
+          "legal_endpoints": 2,
+          "rollout_endpoints": {
+            "original": [
+              [
+                0,
+                2,
+                3,
+                1,
+                0,
+                -1,
+                0,
+                0,
+                -1,
+                0,
+                -1,
+                0,
+                0,
+                -1,
+                -1,
+                0,
+                0,
+                0,
+                0,
+                -5,
+                -2,
+                -1,
+                -2,
+                0,
+                0,
+                0
+              ],
+              [
+                0,
+                3,
+                4,
+                0,
+                0,
+                -1,
+                0,
+                0,
+                -1,
+                0,
+                -1,
+                0,
+                0,
+                -1,
+                -1,
+                0,
+                0,
+                0,
+                0,
+                -5,
+                -2,
+                -1,
+                -2,
+                0,
+                0,
+                0
+              ]
+            ],
+            "selected": [
+              [
+                0,
+                2,
+                3,
+                1,
+                0,
+                -1,
+                0,
+                0,
+                -1,
+                0,
+                -1,
+                0,
+                0,
+                -1,
+                -1,
+                0,
+                0,
+                0,
+                0,
+                -5,
+                -2,
+                -1,
+                -2,
+                0,
+                0,
+                0
+              ],
+              [
+                0,
+                3,
+                4,
+                0,
+                0,
+                -1,
+                0,
+                0,
+                -1,
+                0,
+                -1,
+                0,
+                0,
+                -1,
+                -1,
+                0,
+                0,
+                0,
+                0,
+                -5,
+                -2,
+                -1,
+                -2,
+                0,
+                0,
+                0
+              ]
+            ],
+            "reference": [
+              [
+                0,
+                2,
+                3,
+                1,
+                0,
+                -1,
+                0,
+                0,
+                -1,
+                0,
+                -1,
+                0,
+                0,
+                -1,
+                -1,
+                0,
+                0,
+                0,
+                0,
+                -5,
+                -2,
+                -1,
+                -2,
+                0,
+                0,
+                0
+              ],
+              [
+                0,
+                3,
+                4,
+                0,
+                0,
+                -1,
+                0,
+                0,
+                -1,
+                0,
+                -1,
+                0,
+                0,
+                -1,
+                -1,
+                0,
+                0,
+                0,
+                0,
+                -5,
+                -2,
+                -1,
+                -2,
+                0,
+                0,
+                0
+              ]
+            ]
+          },
+          "same_rollout_shortlist_including_promotions": true,
+          "same_full_order": true,
+          "same_best_move": true,
+          "count_at_top_equity": {
+            "original": 1,
+            "selected": 1
+          },
+          "changed_levels": 0,
+          "fixed_batches": {
+            "original": 2,
+            "selected": 2
+          },
+          "direct_shifts": {
+            "probability": {
+              "observations": 10,
+              "largest": 0.0,
+              "material": 0
+            },
+            "equity": {
+              "observations": 6,
+              "largest": 0.0,
+              "material": 0
+            }
+          }
+        }
+      ],
+      "exact_complete": 4,
+      "checker_order": 2,
+      "checker_shortlists": 2,
+      "cube_agree": 1,
+      "scored": 49,
+      "material_farther": 0,
+      "material_closer": 0,
+      "fixed_batches": {
+        "original": 6,
+        "selected": 6
+      },
+      "direct_max": {
+        "equity": 0.0,
+        "probability": 0.0
+      }
+    },
+    "wide": {
+      "overall": {
+        "calls": 4,
+        "baseline_seconds": 40.813818469,
+        "candidate_seconds": 37.683226413,
+        "speedup": 1.0830765397232547,
+        "time_saved_percent": 7.670421865520449,
+        "median_paired_speedup": 1.0818537875279985,
+        "faster_pairs": 4
+      },
+      "by_api": {
+        "checker_play": {
+          "calls": 2,
+          "baseline_seconds": 11.434762072,
+          "candidate_seconds": 10.529701666000001,
+          "speedup": 1.0859530910474324,
+          "time_saved_percent": 7.914991149804473,
+          "median_paired_speedup": 1.0817276866699221,
+          "faster_pairs": 2
+        },
+        "cube_action": {
+          "calls": 1,
+          "baseline_seconds": 13.325505864,
+          "candidate_seconds": 12.330609771,
+          "speedup": 1.0806850684172868,
+          "time_saved_percent": 7.466103749860609,
+          "median_paired_speedup": 1.0806850684172868,
+          "faster_pairs": 1
+        },
+        "post_move_analytics": {
+          "calls": 1,
+          "baseline_seconds": 16.053550533,
+          "candidate_seconds": 14.822914976,
+          "speedup": 1.0830225066387105,
+          "time_saved_percent": 7.6658154497989734,
+          "median_paired_speedup": 1.0830225066387105,
+          "faster_pairs": 1
+        }
+      },
+      "by_plan": {
+        "anchoring": {
+          "calls": 1,
+          "baseline_seconds": 16.053550533,
+          "candidate_seconds": 14.822914976,
+          "speedup": 1.0830225066387105,
+          "time_saved_percent": 7.6658154497989734,
+          "median_paired_speedup": 1.0830225066387105,
+          "faster_pairs": 1
+        },
+        "attacking": {
+          "calls": 1,
+          "baseline_seconds": 13.325505864,
+          "candidate_seconds": 12.330609771,
+          "speedup": 1.0806850684172868,
+          "time_saved_percent": 7.466103749860609,
+          "median_paired_speedup": 1.0806850684172868,
+          "faster_pairs": 1
+        },
+        "purerace": {
+          "calls": 1,
+          "baseline_seconds": 1.035188303,
+          "candidate_seconds": 0.961572155,
+          "speedup": 1.0765581112319127,
+          "time_saved_percent": 7.111377493993953,
+          "median_paired_speedup": 1.0765581112319127,
+          "faster_pairs": 1
+        },
+        "racing": {
+          "calls": 1,
+          "baseline_seconds": 10.399573769,
+          "candidate_seconds": 9.568129511,
+          "speedup": 1.0868972621079314,
+          "time_saved_percent": 7.994983991348226,
+          "median_paired_speedup": 1.0868972621079314,
+          "faster_pairs": 1
+        }
+      },
+      "pairs": [
+        {
+          "sequence": 10,
+          "api": "cube_action",
+          "position_id": "cube-money-attacking-01",
+          "mode": "money",
+          "game_plan": "attacking",
+          "seed": 3858400225,
+          "reference_origin": "frozen_public_rollout",
+          "recorded_reference_seed": 3858400225,
+          "original_seconds": 13.325505864,
+          "selected_seconds": 12.330609771,
+          "speedup": 1.0806850684172868,
+          "fixed_batches": {
+            "original": 1,
+            "selected": 1
+          },
+          "same_cube_action": true,
+          "direct_shifts": {
+            "probability": {
+              "observations": 5,
+              "largest": 7.450580596923828e-09,
+              "material": 0
+            },
+            "equity": {
+              "observations": 5,
+              "largest": 5.960464477539063e-08,
+              "material": 0
+            }
+          }
+        },
+        {
+          "sequence": 9,
+          "api": "checker_play",
+          "position_id": "checker-money-racing-01",
+          "mode": "money",
+          "game_plan": "racing",
+          "seed": 3221203605,
+          "reference_origin": "frozen_public_rollout",
+          "recorded_reference_seed": 3221203605,
+          "original_seconds": 10.399573769,
+          "selected_seconds": 9.568129511,
+          "speedup": 1.0868972621079314,
+          "legal_endpoints": 2,
+          "rollout_endpoints": {
+            "original": [
+              [
+                0,
+                2,
+                7,
+                -4,
+                4,
+                1,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                -1,
+                -3,
+                -2,
+                -2,
+                -2,
+                -1,
+                0,
+                0,
+                0
+              ],
+              [
+                0,
+                3,
+                6,
+                -4,
+                3,
+                2,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                -1,
+                -3,
+                -2,
+                -2,
+                -2,
+                -1,
+                0,
+                0,
+                0
+              ]
+            ],
+            "selected": [
+              [
+                0,
+                2,
+                7,
+                -4,
+                4,
+                1,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                -1,
+                -3,
+                -2,
+                -2,
+                -2,
+                -1,
+                0,
+                0,
+                0
+              ],
+              [
+                0,
+                3,
+                6,
+                -4,
+                3,
+                2,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                -1,
+                -3,
+                -2,
+                -2,
+                -2,
+                -1,
+                0,
+                0,
+                0
+              ]
+            ],
+            "reference": [
+              [
+                0,
+                2,
+                7,
+                -4,
+                4,
+                1,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                -1,
+                -3,
+                -2,
+                -2,
+                -2,
+                -1,
+                0,
+                0,
+                0
+              ],
+              [
+                0,
+                3,
+                6,
+                -4,
+                3,
+                2,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                -1,
+                -3,
+                -2,
+                -2,
+                -2,
+                -1,
+                0,
+                0,
+                0
+              ]
+            ]
+          },
+          "same_rollout_shortlist_including_promotions": true,
+          "same_full_order": true,
+          "same_best_move": true,
+          "count_at_top_equity": {
+            "original": 1,
+            "selected": 1
+          },
+          "changed_levels": 0,
+          "fixed_batches": {
+            "original": 2,
+            "selected": 2
+          },
+          "direct_shifts": {
+            "probability": {
+              "observations": 10,
+              "largest": 2.3283064365386963e-10,
+              "material": 0
+            },
+            "equity": {
+              "observations": 6,
+              "largest": 5.960464477539063e-08,
+              "material": 0
+            }
+          }
+        },
+        {
+          "sequence": 11,
+          "api": "post_move_analytics",
+          "position_id": "cube-money-anchoring-01",
+          "mode": "money",
+          "game_plan": "anchoring",
+          "seed": 934123713,
+          "reference_origin": "frozen_public_rollout",
+          "recorded_reference_seed": 934123713,
+          "original_seconds": 16.053550533,
+          "selected_seconds": 14.822914976,
+          "speedup": 1.0830225066387105,
+          "fixed_batches": {
+            "original": 1,
+            "selected": 1
+          },
+          "direct_shifts": {
+            "probability": {
+              "observations": 5,
+              "largest": 3.5762786865234375e-07,
+              "material": 0
+            },
+            "equity": {
+              "observations": 2,
+              "largest": 8.940696716308594e-08,
+              "material": 0
+            }
+          }
+        },
+        {
+          "sequence": 12,
+          "api": "checker_play",
+          "position_id": "checker-match-purerace-01",
+          "mode": "match",
+          "game_plan": "purerace",
+          "seed": 2866618836,
+          "reference_origin": "frozen_public_rollout",
+          "recorded_reference_seed": 2866618836,
+          "original_seconds": 1.035188303,
+          "selected_seconds": 0.961572155,
+          "speedup": 1.0765581112319127,
+          "legal_endpoints": 2,
+          "rollout_endpoints": {
+            "original": [
+              [
+                0,
+                2,
+                3,
+                1,
+                0,
+                -1,
+                0,
+                0,
+                -1,
+                0,
+                -1,
+                0,
+                0,
+                -1,
+                -1,
+                0,
+                0,
+                0,
+                0,
+                -5,
+                -2,
+                -1,
+                -2,
+                0,
+                0,
+                0
+              ],
+              [
+                0,
+                3,
+                4,
+                0,
+                0,
+                -1,
+                0,
+                0,
+                -1,
+                0,
+                -1,
+                0,
+                0,
+                -1,
+                -1,
+                0,
+                0,
+                0,
+                0,
+                -5,
+                -2,
+                -1,
+                -2,
+                0,
+                0,
+                0
+              ]
+            ],
+            "selected": [
+              [
+                0,
+                2,
+                3,
+                1,
+                0,
+                -1,
+                0,
+                0,
+                -1,
+                0,
+                -1,
+                0,
+                0,
+                -1,
+                -1,
+                0,
+                0,
+                0,
+                0,
+                -5,
+                -2,
+                -1,
+                -2,
+                0,
+                0,
+                0
+              ],
+              [
+                0,
+                3,
+                4,
+                0,
+                0,
+                -1,
+                0,
+                0,
+                -1,
+                0,
+                -1,
+                0,
+                0,
+                -1,
+                -1,
+                0,
+                0,
+                0,
+                0,
+                -5,
+                -2,
+                -1,
+                -2,
+                0,
+                0,
+                0
+              ]
+            ],
+            "reference": [
+              [
+                0,
+                2,
+                3,
+                1,
+                0,
+                -1,
+                0,
+                0,
+                -1,
+                0,
+                -1,
+                0,
+                0,
+                -1,
+                -1,
+                0,
+                0,
+                0,
+                0,
+                -5,
+                -2,
+                -1,
+                -2,
+                0,
+                0,
+                0
+              ],
+              [
+                0,
+                3,
+                4,
+                0,
+                0,
+                -1,
+                0,
+                0,
+                -1,
+                0,
+                -1,
+                0,
+                0,
+                -1,
+                -1,
+                0,
+                0,
+                0,
+                0,
+                -5,
+                -2,
+                -1,
+                -2,
+                0,
+                0,
+                0
+              ]
+            ]
+          },
+          "same_rollout_shortlist_including_promotions": true,
+          "same_full_order": true,
+          "same_best_move": true,
+          "count_at_top_equity": {
+            "original": 1,
+            "selected": 1
+          },
+          "changed_levels": 0,
+          "fixed_batches": {
+            "original": 2,
+            "selected": 2
+          },
+          "direct_shifts": {
+            "probability": {
+              "observations": 10,
+              "largest": 0.0,
+              "material": 0
+            },
+            "equity": {
+              "observations": 6,
+              "largest": 0.0,
+              "material": 0
+            }
+          }
+        }
+      ],
+      "exact_complete": 1,
+      "checker_order": 2,
+      "checker_shortlists": 2,
+      "cube_agree": 1,
+      "scored": 49,
+      "material_farther": 0,
+      "material_closer": 0,
+      "fixed_batches": {
+        "original": 6,
+        "selected": 6
+      },
+      "direct_max": {
+        "equity": 8.940696716308594e-08,
+        "probability": 3.5762786865234375e-07
+      }
+    },
+    "sparse": {
+      "overall": {
+        "calls": 4,
+        "baseline_seconds": 40.813818469,
+        "candidate_seconds": 39.64146412,
+        "speedup": 1.02957394170536,
+        "time_saved_percent": 2.872444659620499,
+        "median_paired_speedup": 1.010996165261174,
+        "faster_pairs": 3
+      },
+      "by_api": {
+        "checker_play": {
+          "calls": 2,
+          "baseline_seconds": 11.434762072,
+          "candidate_seconds": 11.250173912000001,
+          "speedup": 1.0164075828021741,
+          "time_saved_percent": 1.6142719790558258,
+          "median_paired_speedup": 0.9938166361853683,
+          "faster_pairs": 1
+        },
+        "cube_action": {
+          "calls": 1,
+          "baseline_seconds": 13.325505864,
+          "candidate_seconds": 12.342033096,
+          "speedup": 1.0796848266691765,
+          "time_saved_percent": 7.38037848647034,
+          "median_paired_speedup": 1.0796848266691765,
+          "faster_pairs": 1
+        },
+        "post_move_analytics": {
+          "calls": 1,
+          "baseline_seconds": 16.053550533,
+          "candidate_seconds": 16.049257112,
+          "speedup": 1.000267515248216,
+          "time_saved_percent": 0.026744370294751185,
+          "median_paired_speedup": 1.000267515248216,
+          "faster_pairs": 1
+        }
+      },
+      "by_plan": {
+        "anchoring": {
+          "calls": 1,
+          "baseline_seconds": 16.053550533,
+          "candidate_seconds": 16.049257112,
+          "speedup": 1.000267515248216,
+          "time_saved_percent": 0.026744370294751185,
+          "median_paired_speedup": 1.000267515248216,
+          "faster_pairs": 1
+        },
+        "attacking": {
+          "calls": 1,
+          "baseline_seconds": 13.325505864,
+          "candidate_seconds": 12.342033096,
+          "speedup": 1.0796848266691765,
+          "time_saved_percent": 7.38037848647034,
+          "median_paired_speedup": 1.0796848266691765,
+          "faster_pairs": 1
+        },
+        "purerace": {
+          "calls": 1,
+          "baseline_seconds": 1.035188303,
+          "candidate_seconds": 1.071725064,
+          "speedup": 0.9659084570966048,
+          "time_saved_percent": -3.529479698921989,
+          "median_paired_speedup": 0.9659084570966048,
+          "faster_pairs": 0
+        },
+        "racing": {
+          "calls": 1,
+          "baseline_seconds": 10.399573769,
+          "candidate_seconds": 10.178448848,
+          "speedup": 1.0217248152741318,
+          "time_saved_percent": 2.1262883067299287,
+          "median_paired_speedup": 1.0217248152741318,
+          "faster_pairs": 1
+        }
+      },
+      "pairs": [
+        {
+          "sequence": 10,
+          "api": "cube_action",
+          "position_id": "cube-money-attacking-01",
+          "mode": "money",
+          "game_plan": "attacking",
+          "seed": 3858400225,
+          "reference_origin": "frozen_public_rollout",
+          "recorded_reference_seed": 3858400225,
+          "original_seconds": 13.325505864,
+          "selected_seconds": 12.342033096,
+          "speedup": 1.0796848266691765,
+          "fixed_batches": {
+            "original": 1,
+            "selected": 1
+          },
+          "same_cube_action": true,
+          "direct_shifts": {
+            "probability": {
+              "observations": 5,
+              "largest": 0.0,
+              "material": 0
+            },
+            "equity": {
+              "observations": 5,
+              "largest": 0.0,
+              "material": 0
+            }
+          }
+        },
+        {
+          "sequence": 9,
+          "api": "checker_play",
+          "position_id": "checker-money-racing-01",
+          "mode": "money",
+          "game_plan": "racing",
+          "seed": 3221203605,
+          "reference_origin": "frozen_public_rollout",
+          "recorded_reference_seed": 3221203605,
+          "original_seconds": 10.399573769,
+          "selected_seconds": 10.178448848,
+          "speedup": 1.0217248152741318,
+          "legal_endpoints": 2,
+          "rollout_endpoints": {
+            "original": [
+              [
+                0,
+                2,
+                7,
+                -4,
+                4,
+                1,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                -1,
+                -3,
+                -2,
+                -2,
+                -2,
+                -1,
+                0,
+                0,
+                0
+              ],
+              [
+                0,
+                3,
+                6,
+                -4,
+                3,
+                2,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                -1,
+                -3,
+                -2,
+                -2,
+                -2,
+                -1,
+                0,
+                0,
+                0
+              ]
+            ],
+            "selected": [
+              [
+                0,
+                2,
+                7,
+                -4,
+                4,
+                1,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                -1,
+                -3,
+                -2,
+                -2,
+                -2,
+                -1,
+                0,
+                0,
+                0
+              ],
+              [
+                0,
+                3,
+                6,
+                -4,
+                3,
+                2,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                -1,
+                -3,
+                -2,
+                -2,
+                -2,
+                -1,
+                0,
+                0,
+                0
+              ]
+            ],
+            "reference": [
+              [
+                0,
+                2,
+                7,
+                -4,
+                4,
+                1,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                -1,
+                -3,
+                -2,
+                -2,
+                -2,
+                -1,
+                0,
+                0,
+                0
+              ],
+              [
+                0,
+                3,
+                6,
+                -4,
+                3,
+                2,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                -1,
+                -3,
+                -2,
+                -2,
+                -2,
+                -1,
+                0,
+                0,
+                0
+              ]
+            ]
+          },
+          "same_rollout_shortlist_including_promotions": true,
+          "same_full_order": true,
+          "same_best_move": true,
+          "count_at_top_equity": {
+            "original": 1,
+            "selected": 1
+          },
+          "changed_levels": 0,
+          "fixed_batches": {
+            "original": 2,
+            "selected": 2
+          },
+          "direct_shifts": {
+            "probability": {
+              "observations": 10,
+              "largest": 0.0,
+              "material": 0
+            },
+            "equity": {
+              "observations": 6,
+              "largest": 0.0,
+              "material": 0
+            }
+          }
+        },
+        {
+          "sequence": 11,
+          "api": "post_move_analytics",
+          "position_id": "cube-money-anchoring-01",
+          "mode": "money",
+          "game_plan": "anchoring",
+          "seed": 934123713,
+          "reference_origin": "frozen_public_rollout",
+          "recorded_reference_seed": 934123713,
+          "original_seconds": 16.053550533,
+          "selected_seconds": 16.049257112,
+          "speedup": 1.000267515248216,
+          "fixed_batches": {
+            "original": 1,
+            "selected": 1
+          },
+          "direct_shifts": {
+            "probability": {
+              "observations": 5,
+              "largest": 0.0,
+              "material": 0
+            },
+            "equity": {
+              "observations": 2,
+              "largest": 0.0,
+              "material": 0
+            }
+          }
+        },
+        {
+          "sequence": 12,
+          "api": "checker_play",
+          "position_id": "checker-match-purerace-01",
+          "mode": "match",
+          "game_plan": "purerace",
+          "seed": 2866618836,
+          "reference_origin": "frozen_public_rollout",
+          "recorded_reference_seed": 2866618836,
+          "original_seconds": 1.035188303,
+          "selected_seconds": 1.071725064,
+          "speedup": 0.9659084570966048,
+          "legal_endpoints": 2,
+          "rollout_endpoints": {
+            "original": [
+              [
+                0,
+                2,
+                3,
+                1,
+                0,
+                -1,
+                0,
+                0,
+                -1,
+                0,
+                -1,
+                0,
+                0,
+                -1,
+                -1,
+                0,
+                0,
+                0,
+                0,
+                -5,
+                -2,
+                -1,
+                -2,
+                0,
+                0,
+                0
+              ],
+              [
+                0,
+                3,
+                4,
+                0,
+                0,
+                -1,
+                0,
+                0,
+                -1,
+                0,
+                -1,
+                0,
+                0,
+                -1,
+                -1,
+                0,
+                0,
+                0,
+                0,
+                -5,
+                -2,
+                -1,
+                -2,
+                0,
+                0,
+                0
+              ]
+            ],
+            "selected": [
+              [
+                0,
+                2,
+                3,
+                1,
+                0,
+                -1,
+                0,
+                0,
+                -1,
+                0,
+                -1,
+                0,
+                0,
+                -1,
+                -1,
+                0,
+                0,
+                0,
+                0,
+                -5,
+                -2,
+                -1,
+                -2,
+                0,
+                0,
+                0
+              ],
+              [
+                0,
+                3,
+                4,
+                0,
+                0,
+                -1,
+                0,
+                0,
+                -1,
+                0,
+                -1,
+                0,
+                0,
+                -1,
+                -1,
+                0,
+                0,
+                0,
+                0,
+                -5,
+                -2,
+                -1,
+                -2,
+                0,
+                0,
+                0
+              ]
+            ],
+            "reference": [
+              [
+                0,
+                2,
+                3,
+                1,
+                0,
+                -1,
+                0,
+                0,
+                -1,
+                0,
+                -1,
+                0,
+                0,
+                -1,
+                -1,
+                0,
+                0,
+                0,
+                0,
+                -5,
+                -2,
+                -1,
+                -2,
+                0,
+                0,
+                0
+              ],
+              [
+                0,
+                3,
+                4,
+                0,
+                0,
+                -1,
+                0,
+                0,
+                -1,
+                0,
+                -1,
+                0,
+                0,
+                -1,
+                -1,
+                0,
+                0,
+                0,
+                0,
+                -5,
+                -2,
+                -1,
+                -2,
+                0,
+                0,
+                0
+              ]
+            ]
+          },
+          "same_rollout_shortlist_including_promotions": true,
+          "same_full_order": true,
+          "same_best_move": true,
+          "count_at_top_equity": {
+            "original": 1,
+            "selected": 1
+          },
+          "changed_levels": 0,
+          "fixed_batches": {
+            "original": 2,
+            "selected": 2
+          },
+          "direct_shifts": {
+            "probability": {
+              "observations": 10,
+              "largest": 0.0,
+              "material": 0
+            },
+            "equity": {
+              "observations": 6,
+              "largest": 0.0,
+              "material": 0
+            }
+          }
+        }
+      ],
+      "exact_complete": 4,
+      "checker_order": 2,
+      "checker_shortlists": 2,
+      "cube_agree": 1,
+      "scored": 49,
+      "material_farther": 0,
+      "material_closer": 0,
+      "fixed_batches": {
+        "original": 6,
+        "selected": 6
+      },
+      "direct_max": {
+        "equity": 0.0,
+        "probability": 0.0
+      }
+    },
+    "sevenroll": {
+      "overall": {
+        "calls": 4,
+        "baseline_seconds": 40.813818469,
+        "candidate_seconds": 40.743392353,
+        "speedup": 1.001728528527763,
+        "time_saved_percent": 0.17255458724964035,
+        "median_paired_speedup": 0.9895104214470214,
+        "faster_pairs": 2
+      },
+      "by_api": {
+        "checker_play": {
+          "calls": 2,
+          "baseline_seconds": 11.434762072,
+          "candidate_seconds": 11.742541701,
+          "speedup": 0.973789351842473,
+          "time_saved_percent": -2.691613756911071,
+          "median_paired_speedup": 0.9581791805119546,
+          "faster_pairs": 0
+        },
+        "cube_action": {
+          "calls": 1,
+          "baseline_seconds": 13.325505864,
+          "candidate_seconds": 13.303918723,
+          "speedup": 1.0016226152195804,
+          "time_saved_percent": 0.16199866046601175,
+          "median_paired_speedup": 1.0016226152195804,
+          "faster_pairs": 1
+        },
+        "post_move_analytics": {
+          "calls": 1,
+          "baseline_seconds": 16.053550533,
+          "candidate_seconds": 15.696931929,
+          "speedup": 1.022719000478122,
+          "time_saved_percent": 2.221431347955871,
+          "median_paired_speedup": 1.022719000478122,
+          "faster_pairs": 1
+        }
+      },
+      "by_plan": {
+        "anchoring": {
+          "calls": 1,
+          "baseline_seconds": 16.053550533,
+          "candidate_seconds": 15.696931929,
+          "speedup": 1.022719000478122,
+          "time_saved_percent": 2.221431347955871,
+          "median_paired_speedup": 1.022719000478122,
+          "faster_pairs": 1
+        },
+        "attacking": {
+          "calls": 1,
+          "baseline_seconds": 13.325505864,
+          "candidate_seconds": 13.303918723,
+          "speedup": 1.0016226152195804,
+          "time_saved_percent": 0.16199866046601175,
+          "median_paired_speedup": 1.0016226152195804,
+          "faster_pairs": 1
+        },
+        "purerace": {
+          "calls": 1,
+          "baseline_seconds": 1.035188303,
+          "candidate_seconds": 1.102483765,
+          "speedup": 0.9389601333494467,
+          "time_saved_percent": -6.500794281096112,
+          "median_paired_speedup": 0.9389601333494467,
+          "faster_pairs": 0
+        },
+        "racing": {
+          "calls": 1,
+          "baseline_seconds": 10.399573769,
+          "candidate_seconds": 10.640057936,
+          "speedup": 0.9773982276744625,
+          "time_saved_percent": -2.312442532182013,
+          "median_paired_speedup": 0.9773982276744625,
+          "faster_pairs": 0
+        }
+      },
+      "pairs": [
+        {
+          "sequence": 10,
+          "api": "cube_action",
+          "position_id": "cube-money-attacking-01",
+          "mode": "money",
+          "game_plan": "attacking",
+          "seed": 3858400225,
+          "reference_origin": "frozen_public_rollout",
+          "recorded_reference_seed": 3858400225,
+          "original_seconds": 13.325505864,
+          "selected_seconds": 13.303918723,
+          "speedup": 1.0016226152195804,
+          "fixed_batches": {
+            "original": 1,
+            "selected": 1
+          },
+          "same_cube_action": true,
+          "direct_shifts": {
+            "probability": {
+              "observations": 5,
+              "largest": 0.008443087339401245,
+              "material": 2
+            },
+            "equity": {
+              "observations": 5,
+              "largest": 0.02241140604019165,
+              "material": 4
+            }
+          }
+        },
+        {
+          "sequence": 9,
+          "api": "checker_play",
+          "position_id": "checker-money-racing-01",
+          "mode": "money",
+          "game_plan": "racing",
+          "seed": 3221203605,
+          "reference_origin": "frozen_public_rollout",
+          "recorded_reference_seed": 3221203605,
+          "original_seconds": 10.399573769,
+          "selected_seconds": 10.640057936,
+          "speedup": 0.9773982276744625,
+          "legal_endpoints": 2,
+          "rollout_endpoints": {
+            "original": [
+              [
+                0,
+                2,
+                7,
+                -4,
+                4,
+                1,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                -1,
+                -3,
+                -2,
+                -2,
+                -2,
+                -1,
+                0,
+                0,
+                0
+              ],
+              [
+                0,
+                3,
+                6,
+                -4,
+                3,
+                2,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                -1,
+                -3,
+                -2,
+                -2,
+                -2,
+                -1,
+                0,
+                0,
+                0
+              ]
+            ],
+            "selected": [
+              [
+                0,
+                2,
+                7,
+                -4,
+                4,
+                1,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                -1,
+                -3,
+                -2,
+                -2,
+                -2,
+                -1,
+                0,
+                0,
+                0
+              ],
+              [
+                0,
+                3,
+                6,
+                -4,
+                3,
+                2,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                -1,
+                -3,
+                -2,
+                -2,
+                -2,
+                -1,
+                0,
+                0,
+                0
+              ]
+            ],
+            "reference": [
+              [
+                0,
+                2,
+                7,
+                -4,
+                4,
+                1,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                -1,
+                -3,
+                -2,
+                -2,
+                -2,
+                -1,
+                0,
+                0,
+                0
+              ],
+              [
+                0,
+                3,
+                6,
+                -4,
+                3,
+                2,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                -1,
+                -3,
+                -2,
+                -2,
+                -2,
+                -1,
+                0,
+                0,
+                0
+              ]
+            ]
+          },
+          "same_rollout_shortlist_including_promotions": true,
+          "same_full_order": true,
+          "same_best_move": true,
+          "count_at_top_equity": {
+            "original": 1,
+            "selected": 1
+          },
+          "changed_levels": 0,
+          "fixed_batches": {
+            "original": 2,
+            "selected": 2
+          },
+          "direct_shifts": {
+            "probability": {
+              "observations": 10,
+              "largest": 0.0003756880760192871,
+              "material": 0
+            },
+            "equity": {
+              "observations": 6,
+              "largest": 0.0009184479713439941,
+              "material": 0
+            }
+          }
+        },
+        {
+          "sequence": 11,
+          "api": "post_move_analytics",
+          "position_id": "cube-money-anchoring-01",
+          "mode": "money",
+          "game_plan": "anchoring",
+          "seed": 934123713,
+          "reference_origin": "frozen_public_rollout",
+          "recorded_reference_seed": 934123713,
+          "original_seconds": 16.053550533,
+          "selected_seconds": 15.696931929,
+          "speedup": 1.022719000478122,
+          "fixed_batches": {
+            "original": 1,
+            "selected": 1
+          },
+          "direct_shifts": {
+            "probability": {
+              "observations": 5,
+              "largest": 0.0007385015487670898,
+              "material": 0
+            },
+            "equity": {
+              "observations": 2,
+              "largest": 0.009795993566513062,
+              "material": 1
+            }
+          }
+        },
+        {
+          "sequence": 12,
+          "api": "checker_play",
+          "position_id": "checker-match-purerace-01",
+          "mode": "match",
+          "game_plan": "purerace",
+          "seed": 2866618836,
+          "reference_origin": "frozen_public_rollout",
+          "recorded_reference_seed": 2866618836,
+          "original_seconds": 1.035188303,
+          "selected_seconds": 1.102483765,
+          "speedup": 0.9389601333494467,
+          "legal_endpoints": 2,
+          "rollout_endpoints": {
+            "original": [
+              [
+                0,
+                2,
+                3,
+                1,
+                0,
+                -1,
+                0,
+                0,
+                -1,
+                0,
+                -1,
+                0,
+                0,
+                -1,
+                -1,
+                0,
+                0,
+                0,
+                0,
+                -5,
+                -2,
+                -1,
+                -2,
+                0,
+                0,
+                0
+              ],
+              [
+                0,
+                3,
+                4,
+                0,
+                0,
+                -1,
+                0,
+                0,
+                -1,
+                0,
+                -1,
+                0,
+                0,
+                -1,
+                -1,
+                0,
+                0,
+                0,
+                0,
+                -5,
+                -2,
+                -1,
+                -2,
+                0,
+                0,
+                0
+              ]
+            ],
+            "selected": [
+              [
+                0,
+                2,
+                3,
+                1,
+                0,
+                -1,
+                0,
+                0,
+                -1,
+                0,
+                -1,
+                0,
+                0,
+                -1,
+                -1,
+                0,
+                0,
+                0,
+                0,
+                -5,
+                -2,
+                -1,
+                -2,
+                0,
+                0,
+                0
+              ],
+              [
+                0,
+                3,
+                4,
+                0,
+                0,
+                -1,
+                0,
+                0,
+                -1,
+                0,
+                -1,
+                0,
+                0,
+                -1,
+                -1,
+                0,
+                0,
+                0,
+                0,
+                -5,
+                -2,
+                -1,
+                -2,
+                0,
+                0,
+                0
+              ]
+            ],
+            "reference": [
+              [
+                0,
+                2,
+                3,
+                1,
+                0,
+                -1,
+                0,
+                0,
+                -1,
+                0,
+                -1,
+                0,
+                0,
+                -1,
+                -1,
+                0,
+                0,
+                0,
+                0,
+                -5,
+                -2,
+                -1,
+                -2,
+                0,
+                0,
+                0
+              ],
+              [
+                0,
+                3,
+                4,
+                0,
+                0,
+                -1,
+                0,
+                0,
+                -1,
+                0,
+                -1,
+                0,
+                0,
+                -1,
+                -1,
+                0,
+                0,
+                0,
+                0,
+                -5,
+                -2,
+                -1,
+                -2,
+                0,
+                0,
+                0
+              ]
+            ]
+          },
+          "same_rollout_shortlist_including_promotions": true,
+          "same_full_order": true,
+          "same_best_move": true,
+          "count_at_top_equity": {
+            "original": 1,
+            "selected": 1
+          },
+          "changed_levels": 0,
+          "fixed_batches": {
+            "original": 2,
+            "selected": 2
+          },
+          "direct_shifts": {
+            "probability": {
+              "observations": 10,
+              "largest": 0.0,
+              "material": 0
+            },
+            "equity": {
+              "observations": 6,
+              "largest": 0.0,
+              "material": 0
+            }
+          }
+        }
+      ],
+      "exact_complete": 1,
+      "checker_order": 2,
+      "checker_shortlists": 2,
+      "cube_agree": 1,
+      "scored": 49,
+      "material_farther": 7,
+      "material_closer": 0,
+      "fixed_batches": {
+        "original": 6,
+        "selected": 6
+      },
+      "direct_max": {
+        "equity": 0.02241140604019165,
+        "probability": 0.008443087339401245
+      }
+    }
+  }
+}

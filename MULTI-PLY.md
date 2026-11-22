@@ -319,17 +319,30 @@ and [routing implementation](cpp/src/neural_net.cpp)
 
 **CPU evaluation.** In standalone trees and searches inside rollout trials, a worker encodes the pre-roll board
 and saves its pre-activation hidden sums once for each network it uses at
-that node. All 21 dice rolls have that same starting board. Each worker keeps
+that node. The base supplies the starting sums for all 21 dice rolls. The
+cube tree evaluates the output layer only for positions requiring a prediction.
+Each worker keeps
 separate scratch space by depth and network and tags it with the node's
 unique identity. The deep rollout prefilter selects which candidates receive
 a neural evaluation. For each candidate
 evaluated by differences, the kernel compares the 24 board points to its base and encodes point features
-only where the checker count changed. It recomputes each side's auxiliary
-features (two per side for race, 26 for contact) and compares them to the
-saved inputs. The evaluator gathers nonzero differences in ascending input
+only where the checker count changed. There are two auxiliary features per
+side for race and 26 for contact. If every opposing checker and the opposing
+bar match the base, the contact encoder reuses that side's one-sided features.
+It also reuses the features that depend on the mover's front checker when
+that checker stays on the same point. It recomputes interactions such as hits
+and mobility. Comparing the occupied points catches sibling moves that hit
+different blots while putting the same number of checkers on the bar. The
+evaluator gathers nonzero differences in ascending input
 order and applies their weight columns to a copy of the saved hidden sums.
 AVX2 applies four successive columns per hidden-vector load in that order.
-At 64 changed inputs the candidate gets a full forward pass.
+On x86 GCC and Clang builds, a runtime AVX-512F check enables 16-lane
+hidden updates for networks whose hidden width is divisible by 16. This
+kernel keeps up to 64 hidden sums in registers across the input changes
+and applies the sigmoid before writing the results. The five output dot
+products retain their eight-lane accumulation order. Other CPU builds and
+hidden widths use the platform's standard incremental kernel. At 64
+changed inputs the candidate gets a full forward pass.
 [Neural kernel](cpp/src/neural_net.cpp)
 
 Pure race uses 196 Tesauro inputs. Contact uses 244 inputs. The contact encoder
@@ -343,6 +356,9 @@ The portable path enumerates the rolls in scalar code. With checkers on the
 bar, both paths account for entry, blocked intermediate points and direct
 hits. Escape, containment,
 mobility, anchor and entry features also use the point masks where applicable.
+Back-checker escape counts use a table indexed by the back point and the
+12 possible blocking points ahead. Bar-entry pip loss uses the six entry
+blocks and whether the side has one or several checkers on the bar.
 The separate `double_hitting_shots` helper has a compile-time table indexed by
 two hit distances. It stores the double and number of steps needed on each leg.
 These operations implement the feature definitions consumed by the trained

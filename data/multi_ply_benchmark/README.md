@@ -21,6 +21,14 @@ and memory use. Its [all-level results](experiments/truncated_pass2/results.md)
 compare the original engine, the preceding release and the selected implementation
 on the same positions and rollout references.
 
+The [1,296-path full-game study](experiments/full_rollout_1296/README.md)
+times 3P checker and cube policies through complete games on the original and
+optimized engines. Its five calls per API cover all five game plans.
+The [full-game CPU optimization study](experiments/full_rollout_cpu/README.md)
+uses the same calls to measure trial scheduling, contact-feature reuse and
+CPU neural evaluation. It includes the phase profile and complete public
+responses for the candidates.
+
 | File | Calls | Positions |
 | --- | --- | ---: |
 | `checker_play.json` | `checker_play(**position["inputs"])` | 100 |

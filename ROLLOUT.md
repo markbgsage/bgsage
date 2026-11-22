@@ -126,7 +126,9 @@ Trial dispatch uses the persistent multi-ply worker pool. An explicit positive `
 
 Each active trial or opening generator owns its legal-move buffers until it finishes using their board indices. If the checker or cube policy starts a child rollout on the same worker, the child uses a separate buffer. Sequential calls on that worker reuse an idle allocation. This applies to opening candidates, reply tables and later half-moves.
 
-Workers claim trials by atomic increment. In truncated runs with fewer than 32 trials per worker, each claim takes one trial. Other parallel runs use chunks of eight. Workers write results by original trial index and reduce in index order. A single-thread cubeless rollout can accumulate directly. Dispatch clears thread-local hybrid and cubeful search caches at operation boundaries. Hybrid cubeless and all-dead-cube recursion use distinct keys in a shared position table. It allocates its two million entries on the first operation that needs them and retains the storage across calls. Dispatch clears populated entries at the occupancy threshold. [Worker pool and search caches](MULTI-PLY.md) · [Rollout scheduling](cpp/src/rollout.cpp)
+In a parallel full rollout, an idle worker claims one game at a time. This balances short games against games that take many turns or need expensive checker searches. Truncated rollouts claim one trial when there are fewer than 32 trials per worker and eight otherwise. Workers draw the dice stream assigned to the original trial index, write their result to that index and reduce in index order. Parallel full-game progress updates occur every `max(8, floor(trials per batch / 100))` completed paths and at the end of each batch. A single-thread cubeless rollout can accumulate directly. [Rollout scheduling](cpp/src/rollout.cpp)
+
+Dispatch clears thread-local hybrid and cubeful search caches at operation boundaries. Hybrid cubeless and all-dead-cube recursion use distinct keys in a shared position table. It allocates its two million entries on the first operation that needs them and retains the storage across calls. Dispatch clears populated entries at the occupancy threshold. [Worker pool and search caches](MULTI-PLY.md)
 
 When requested, the public checker interface combines trial progress across candidate moves and reports individual promotion progress. Calls without a progress callback skip the Python reporting bridge. Workers test the cancellation flag between claims in either case. Once the workers return, cancellation raises `RolloutCancelled`. The Python adapter translates the native exception and checks cancellation between candidate evaluations. [Python progress and cancellation](python/bgsage/analyzer.py) · [Native binding](cpp/pybind/bindings.cpp)
 
@@ -145,7 +147,10 @@ point masks. The CPU path uses direct entry calculations when a checker is on
 the bar. On AVX2, off-bar rolls are evaluated in vector lanes. Both paths
 produce the same network inputs. Higher-ply trial searches group surviving
 moves by network and use the pre-roll board at that tree node as the common
-neural base for its dice rolls. Each trial runs its own searches serially. [Feature encoding and tree evaluation](MULTI-PLY.md#6-checker-selection-within-the-cube-tree)
+neural base for its dice rolls. The tree prepares the base's hidden sums
+once and computes predictions for the candidate endpoints. When a candidate
+leaves the opposing checkers in place, the contact encoder reuses their
+one-sided features. Each trial runs its own searches serially. [Feature encoding and tree evaluation](MULTI-PLY.md#6-checker-selection-within-the-cube-tree)
 
 With a loaded one-sided bearoff database, the base evaluator used for rollout leaves and VR can return exact in-range probabilities. A cubeless static roll ranks terminal candidates by their result, in-range candidates by database equity and other candidates by NN equity. An all-bearoff cube-aware roll ranks exact post-move probabilities for each cube and keeps the first candidate at the largest exact cubeful value. At a mixed cube-aware boundary, the wrapper delegates the whole ranking to the base strategy. A selected winner in range still receives its exact probabilities when the VR evaluator scores that board. The public checker output also uses exact database probabilities for an in-range endpoint.
 

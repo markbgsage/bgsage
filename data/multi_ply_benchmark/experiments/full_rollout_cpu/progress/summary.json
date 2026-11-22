@@ -1,0 +1,69 @@
+{
+  "counts": {
+    "serial-fixed": {
+      "before": 37,
+      "single_claim": 37,
+      "selected": 37
+    },
+    "serial-fixed-cubeless": {
+      "before": 37,
+      "single_claim": 37,
+      "selected": 37
+    },
+    "parallel-fixed": {
+      "before": 5,
+      "single_claim": 37,
+      "selected": 5
+    },
+    "parallel-fixed-cubeless": {
+      "before": 5,
+      "single_claim": 37,
+      "selected": 5
+    },
+    "serial-target": {
+      "before": 74,
+      "single_claim": 74,
+      "selected": 74
+    },
+    "parallel-target": {
+      "before": 10,
+      "single_claim": 74,
+      "selected": 10
+    },
+    "full-1296": {
+      "before": 108,
+      "single_claim": 108,
+      "selected": 108
+    },
+    "full-five": {
+      "before": 1,
+      "single_claim": 5,
+      "selected": 1
+    },
+    "truncated-custom": {
+      "before": 37,
+      "single_claim": 37,
+      "selected": 37
+    }
+  },
+  "all_analytics_equal_between_builds": true,
+  "same_serial_parallel": true,
+  "same_with_and_without_callback": true,
+  "binaries": {
+    "before": {
+      "path": "build/truncated_pass2/shipped/bgbot_cpp.cpython-314-x86_64-linux-gnu.so",
+      "sha256": "0cb634a173d7c0c5a3f70a3489de84b782a9fc2cbca559ed7c53284e5c0b8e11",
+      "bytes": 3235840
+    },
+    "single_claim": {
+      "path": "build/truncated_pass2/full-par-chunk1/bgbot_cpp.cpython-314-x86_64-linux-gnu.so",
+      "sha256": "969affe829fbc7323ea1ddcbc230ee4cf437ea1fb795013888fe3983ba085bf4",
+      "bytes": 3235840
+    },
+    "selected": {
+      "path": "build/truncated_pass2/full-wide-release/bgbot_cpp.cpython-314-x86_64-linux-gnu.so",
+      "sha256": "f0bee9eb474c6dc2941e96ff1087368983f968f4df175ecc69a0ddde9de45a10",
+      "bytes": 3240264
+    }
+  }
+}

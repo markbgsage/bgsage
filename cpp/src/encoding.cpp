@@ -25,6 +25,8 @@ static const int anPoint[16] = {0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
 
 static int anEscapes[0x1000];
 static int anEscapes1[0x1000];
+static uint8_t back_escape_counts[6][4096];
+static int entry_losses[2][64];
 static std::once_flag escape_tables_init_flag;
 
 static void compute_escape_table0() {
@@ -60,6 +62,27 @@ void init_escape_tables() {
     std::call_once(escape_tables_init_flag, []() {
         compute_escape_table0();
         compute_escape_table1();
+        // The trained back-escape feature tests the 12 points immediately
+        // in front of the back checker. A longer double already escapes
+        // by its second step, so no farther blocker can change its result.
+        for (int back = 19; back <= 24; ++back) {
+            Board board{};
+            board[back] = 1;
+            for (unsigned mask = 0; mask < 4096; ++mask) {
+                for (int bit = 0; bit < 12; ++bit)
+                    board[back - 12 + bit] = (mask & (1u << bit)) ? -2 : 0;
+                back_escape_counts[back - 19][mask] = static_cast<uint8_t>(back_escapes(board));
+            }
+        }
+        for (int bar = 1; bar <= 2; ++bar) {
+            Board board{};
+            board[25] = bar;
+            for (unsigned mask = 0; mask < 64; ++mask) {
+                for (int bit = 0; bit < 6; ++bit)
+                    board[24 - bit] = (mask & (1u << bit)) ? -2 : 0;
+                entry_losses[bar - 1][mask] = enter_loss(board);
+            }
+        }
     });
 }
 
@@ -1851,44 +1874,56 @@ static ShotFeatures shot_features(const Board& board, const ContactPointMasks& m
     return counts;
 }
 
-// Compute all extended features for one side (player) of the board.
-// `board` is from the player's perspective. `opp_back` is the highest point
-// with opponent checkers (from player's view). The two bit masks mark blocked
-// points in each half-board's coordinates. Containment returns raw roll counts.
-static void compute_side_features(
-    const Board& board,
-    int opp_back,
-    unsigned player_blocks,
-    unsigned opp_blocks,
-    // Outputs:
-    int& out_break_contact,
-    int& out_free_pip,
-    float& out_acontain,
-    float& out_contain,
-    int& out_mobility,
-    int& out_moment2_val,
-    int& out_enter,
-    int& out_timing_val,
-    float& out_backbone_val,
-    float& out_backg_val,
-    float& out_backg1_val,
-    int& out_backrescapes)
-{
-    out_break_contact = break_contact_fast(board, opp_back);
-    out_free_pip = free_pip_fast(board, opp_back);
-    out_acontain = acontainment_fast(player_blocks, opp_back);
-    out_contain = containment_fast(player_blocks);
-    out_mobility = mobility_fast(board, opp_blocks);
-    out_moment2_val = moment2(board);
-    out_enter = enter_loss(board);
-    out_timing_val = timing_fast(board, opp_back);
-    out_backbone_val = backbone_from_mask(board, player_blocks);
-    out_backg_val = backg(board);
-    out_backg1_val = backg1(board);
-    out_backrescapes = back_rescue_escapes_fast(player_blocks, opp_back);
+// A saved half describes exactly the same checkers and bar. Its one-sided
+// features survive unchanged. Interaction features also depend on the
+// opposing checkers, their made points, and the position of their back man.
+static void contact_half(const Board& board, const ContactPointMasks& side, unsigned other_made,
+                         float* out, const float* saved = nullptr, int previous_opp_back = -1) {
+    const int back = highest_set_point(side.occupied);
+    const int opp_back = highest_set_point(side.enemy_blots | side.enemy_blocks);
+    if (saved) {
+        std::copy_n(saved, 26, out);
+    } else {
+        const int off = player_borne_off(board);
+        const int forward = forward_anchor_from_mask(side.made);
+        const float contain = containment_fast(side.made);
+        out[0] = board[25] / 2.0f;
+        out[1] = off >= 5 ? 1.0f : off / 5.0f;
+        out[2] = off >= 10 ? 1.0f : (off <= 5 ? 0.0f : (off - 5) / 5.0f);
+        out[3] = off <= 10 ? 0.0f : (off - 10) / 5.0f;
+        out[5] = forward == 0 ? 2.0f : forward / 6.0f;
+        out[9] = back / 24.0f;
+        out[10] = highest_set_point(side.made) / 24.0f;
+        out[16] = contain * (1.0f / 36.0f);
+        out[17] = (contain * contain) * (1.0f / 1296.0f);
+        out[19] = moment2(board) / 400.0f;
+        out[22] = backbone_from_mask(board, side.made);
+        out[23] = backg(board);
+        out[24] = backg1(board);
+    }
+    if (!saved || previous_opp_back != opp_back) {
+        const float contain = acontainment_fast(side.made, opp_back);
+        out[11] = break_contact_fast(board, opp_back) / 167.0f;
+        out[12] = free_pip_fast(board, opp_back) / 100.0f;
+        out[14] = contain * (1.0f / 36.0f);
+        out[15] = (contain * contain) * (1.0f / 1296.0f);
+        out[21] = timing_fast(board, opp_back) / 100.0f;
+        out[25] = back_rescue_escapes_fast(side.made, opp_back) / 36.0f;
+    }
+    const auto shots = board[25] ? shot_features<true>(board, side) : shot_features<false>(board, side);
+    const int escapes = back < 19 ? 36 : back_escape_counts[back - 19][(side.enemy_blocks >> (back - 13)) & 4095];
+    const int entry_loss = board[25] ? entry_losses[board[25] > 1][other_made & 63] : 0;
+    out[4] = blocked_entry_probability(side.enemy_blocks);
+    out[6] = shots.single_hits / 36.0f;
+    out[7] = shots.double_hits / 36.0f;
+    out[8] = escapes / 36.0f;
+    out[13] = shots.pip_loss / (12.0f * 36.0f);
+    out[18] = mobility_fast(board, other_made) / 3600.0f;
+    out[20] = entry_loss / (36.0f * (49.0f / 6.0f));
 }
 
-static void contact_aux(const Board& board, float* p_aux, float* o_aux) {
+static void contact_aux(const Board& board, float* p_aux, float* o_aux,
+                        const float* saved_opponent = nullptr, int previous_front_in_opponent_view = -1) {
     const Board flipped = flip(board);
 #if defined(__AVX2__)
     const auto [player, opponent] = both_contact_point_masks(board);
@@ -1896,100 +1931,9 @@ static void contact_aux(const Board& board, float* p_aux, float* o_aux) {
     const auto player = contact_point_masks(board);
     const auto opponent = contact_point_masks(flipped);
 #endif
-    const int p_opp_back = highest_set_point(player.enemy_blots | player.enemy_blocks);
-    const int o_opp_back = highest_set_point(opponent.enemy_blots | opponent.enemy_blocks);
-
-    // Initialize escape tables once
     init_escape_tables();
-
-    // Count borne-off checkers
-    int player_off = player_borne_off(board);
-    int opp_off = opponent_borne_off(board);
-
-    const int p_max_pt = highest_set_point(player.occupied);
-    const int o_max_pt = highest_set_point(opponent.occupied);
-    const int p_max_anch = highest_set_point(player.made);
-    const int o_max_anch = highest_set_point(opponent.made);
-    const int p_back_esc = p_max_pt < 19 ? 36 : back_escapes(board);
-    const int o_back_esc = o_max_pt < 19 ? 36 : back_escapes(flipped);
-    const int p_forward = forward_anchor_from_mask(player.made);
-    const int o_forward = forward_anchor_from_mask(opponent.made);
-    const auto p_shots = board[25] ? shot_features<true>(board, player) : shot_features<false>(board, player);
-    const auto o_shots = flipped[25] ? shot_features<true>(flipped, opponent) : shot_features<false>(flipped, opponent);
-
-    // Compute all GNUbg features for player using precomputed data
-    int p_break_contact, p_free_pip, p_mobility_val, p_moment2_val, p_enter, p_timing_val, p_backrescapes;
-    float p_acontain, p_contain, p_backbone_val, p_backg_val, p_backg1_val;
-    compute_side_features(board, p_opp_back, player.made, opponent.made,
-        p_break_contact, p_free_pip, p_acontain, p_contain,
-        p_mobility_val, p_moment2_val, p_enter, p_timing_val,
-        p_backbone_val, p_backg_val, p_backg1_val, p_backrescapes);
-
-    // Compute all GNUbg features for opponent using precomputed data
-    int o_break_contact, o_free_pip, o_mobility_val, o_moment2_val, o_enter, o_timing_val, o_backrescapes;
-    float o_acontain, o_contain, o_backbone_val, o_backg_val, o_backg1_val;
-    compute_side_features(flipped, o_opp_back, opponent.made, player.made,
-        o_break_contact, o_free_pip, o_acontain, o_contain,
-        o_mobility_val, o_moment2_val, o_enter, o_timing_val,
-        o_backbone_val, o_backg_val, o_backg1_val, o_backrescapes);
-
-    // === Player 1 features [96-121] ===
-    p_aux[0]  = board[25] / 2.0f;  // bar
-    p_aux[1]  = player_off >= 5 ? 1.0f : player_off / 5.0f;
-    p_aux[2]  = player_off >= 10 ? 1.0f : (player_off <= 5 ? 0.0f : (player_off - 5) / 5.0f);
-    p_aux[3]  = player_off <= 10 ? 0.0f : (player_off - 10) / 5.0f;
-    p_aux[4] = blocked_entry_probability(player.enemy_blocks);                                          // I_ENTER2
-    p_aux[5] = p_forward == 0 ? 2.0f : p_forward / 6.0f; // I_FORWARD_ANCHOR
-    p_aux[6] = p_shots.single_hits / 36.0f;                                            // I_P1
-    p_aux[7] = p_shots.double_hits / 36.0f;                                        // I_P2
-    p_aux[8] = p_back_esc / 36.0f;                                         // I_BACKESCAPES
-    p_aux[9] = p_max_pt / 24.0f;                                           // I_BACK_CHEQUER
-    p_aux[10] = p_max_anch / 24.0f;                                         // I_BACK_ANCHOR
-    p_aux[11] = p_break_contact / 167.0f;                                   // I_BREAK_CONTACT
-    p_aux[12] = p_free_pip / 100.0f;                                        // I_FREEPIP
-    p_aux[13] = p_shots.pip_loss / (12.0f * 36.0f);                                // I_PIPLOSS
-    // Square the raw count before normalizing. This preserves the original
-    // optimized engine's rounding for the squared containment inputs.
-    p_aux[14] = p_acontain * (1.0f / 36.0f);                                 // I_ACONTAIN
-    p_aux[15] = (p_acontain * p_acontain) * (1.0f / 1296.0f);                // I_ACONTAIN2
-    p_aux[16] = p_contain * (1.0f / 36.0f);                                  // I_CONTAIN
-    p_aux[17] = (p_contain * p_contain) * (1.0f / 1296.0f);                  // I_CONTAIN2
-    p_aux[18] = p_mobility_val / 3600.0f;                                    // I_MOBILITY
-    p_aux[19] = p_moment2_val / 400.0f;                                      // I_MOMENT2
-    p_aux[20] = p_enter / (36.0f * (49.0f / 6.0f));                          // I_ENTER
-    p_aux[21] = p_timing_val / 100.0f;                                       // I_TIMING
-    p_aux[22] = p_backbone_val;                                              // I_BACKBONE
-    p_aux[23] = p_backg_val;                                                 // I_BACKG
-    p_aux[24] = p_backg1_val;                                                // I_BACKG1
-    p_aux[25] = p_backrescapes / 36.0f;                                      // I_BACKRESCAPES
-
-    // === Player 2 features [218-243] ===
-    o_aux[0]  = board[0] / 2.0f;  // bar (index 218)
-    o_aux[1]  = opp_off >= 5 ? 1.0f : opp_off / 5.0f;
-    o_aux[2]  = opp_off >= 10 ? 1.0f : (opp_off <= 5 ? 0.0f : (opp_off - 5) / 5.0f);
-    o_aux[3]  = opp_off <= 10 ? 0.0f : (opp_off - 10) / 5.0f;
-    o_aux[4] = blocked_entry_probability(opponent.enemy_blocks);
-    o_aux[5] = o_forward == 0 ? 2.0f : o_forward / 6.0f;
-    o_aux[6] = o_shots.single_hits / 36.0f;
-    o_aux[7] = o_shots.double_hits / 36.0f;
-    o_aux[8] = o_back_esc / 36.0f;
-    o_aux[9] = o_max_pt / 24.0f;
-    o_aux[10] = o_max_anch / 24.0f;
-    o_aux[11] = o_break_contact / 167.0f;
-    o_aux[12] = o_free_pip / 100.0f;
-    o_aux[13] = o_shots.pip_loss / (12.0f * 36.0f);
-    o_aux[14] = o_acontain * (1.0f / 36.0f);
-    o_aux[15] = (o_acontain * o_acontain) * (1.0f / 1296.0f);
-    o_aux[16] = o_contain * (1.0f / 36.0f);
-    o_aux[17] = (o_contain * o_contain) * (1.0f / 1296.0f);
-    o_aux[18] = o_mobility_val / 3600.0f;
-    o_aux[19] = o_moment2_val / 400.0f;
-    o_aux[20] = o_enter / (36.0f * (49.0f / 6.0f));
-    o_aux[21] = o_timing_val / 100.0f;
-    o_aux[22] = o_backbone_val;
-    o_aux[23] = o_backg_val;
-    o_aux[24] = o_backg1_val;
-    o_aux[25] = o_backrescapes / 36.0f;
+    contact_half(board, player, opponent.made, p_aux);
+    contact_half(flipped, opponent, player.made, o_aux, saved_opponent, previous_front_in_opponent_view);
 }
 
 std::array<float, EXTENDED_CONTACT_INPUTS> compute_extended_contact_inputs(const Board& board) {
@@ -2036,7 +1980,24 @@ int board_input_deltas(const Board& board, const Board& base, const float* saved
         o_aux[0] = board[0] / 2.0f;
         o_aux[1] = opponent_borne_off(board) / 15.0f;
     } else {
-        contact_aux(board, p_aux, o_aux);
+        // Comparing bar counts alone misses siblings that hit different blots.
+        bool same_opponent = board[0] == base[0];
+        for (unsigned bits = changed; same_opponent && bits; bits &= bits - 1) {
+            const int point = highest_set_point(bits & (0u - bits));
+            same_opponent = board[point] >= 0 && base[point] >= 0;
+        }
+        int previous_front = 0;
+        if (same_opponent) {
+            for (int point = 1; point <= 24; ++point) {
+                if (base[point] > 0) {
+                    previous_front = 25 - point;
+                    break;
+                }
+            }
+        }
+        constexpr int opponent_aux_offset = EXTENDED_CONTACT_INPUTS / 2 + 24 * 4;
+        contact_aux(board, p_aux, o_aux, same_opponent ? saved_inputs + opponent_aux_offset : nullptr,
+                    previous_front);
     }
     int count = 0;
     auto append = [&](int index, float current) {

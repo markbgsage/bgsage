@@ -55,6 +55,9 @@ public:
     std::array<float, NN_OUTPUTS> forward_save_base(
         const float* inputs, float* saved_base, float* saved_inputs) const;
 
+    // Prepare the same delta-evaluation state without evaluating its output.
+    void save_hidden_base(const float* inputs, float* saved_base, float* saved_inputs) const;
+
     // forward_from_base: incremental forward using saved base. Computes delta
     // between new inputs and saved_inputs, applies delta to saved_base (copied
     // internally), applies sigmoid, then output layer.

@@ -1,0 +1,515 @@
+{
+  "old_commit": "139427d826dd67798226e7d23c003c90315306ba",
+  "selected_commit": "5de8023cc5e548ef5ab4400488508fd1bbe8aa7b",
+  "overall": {
+    "calls": 3,
+    "original_seconds": 166.049480866,
+    "selected_seconds": 68.107973317,
+    "speedup": 2.438032917132089,
+    "percent_time_saved": 58.98332655917042,
+    "median_paired_speedup": 2.5823810235593765,
+    "geometric_mean_paired_speedup": 2.550974269033827,
+    "faster_pairs": 3
+  },
+  "by_api": {
+    "checker_play": {
+      "calls": 1,
+      "original_seconds": 91.154175855,
+      "selected_seconds": 40.811598378,
+      "speedup": 2.2335360406794997,
+      "percent_time_saved": 55.22794430951855,
+      "median_paired_speedup": 2.2335360406794997,
+      "geometric_mean_paired_speedup": 2.2335360406794997,
+      "faster_pairs": 1
+    },
+    "cube_action": {
+      "calls": 1,
+      "original_seconds": 42.879156126,
+      "selected_seconds": 14.898456664,
+      "speedup": 2.8780938249537873,
+      "percent_time_saved": 65.25478108706005,
+      "median_paired_speedup": 2.8780938249537873,
+      "geometric_mean_paired_speedup": 2.878093824953787,
+      "faster_pairs": 1
+    },
+    "post_move_analytics": {
+      "calls": 1,
+      "original_seconds": 32.016148885,
+      "selected_seconds": 12.397918275,
+      "speedup": 2.5823810235593765,
+      "percent_time_saved": 61.276047536096414,
+      "median_paired_speedup": 2.5823810235593765,
+      "geometric_mean_paired_speedup": 2.5823810235593765,
+      "faster_pairs": 1
+    }
+  },
+  "by_game_plan": {
+    "attacking": {
+      "calls": 1,
+      "original_seconds": 91.154175855,
+      "selected_seconds": 40.811598378,
+      "speedup": 2.2335360406794997,
+      "percent_time_saved": 55.22794430951855,
+      "median_paired_speedup": 2.2335360406794997,
+      "geometric_mean_paired_speedup": 2.2335360406794997,
+      "faster_pairs": 1
+    },
+    "anchoring": {
+      "calls": 1,
+      "original_seconds": 42.879156126,
+      "selected_seconds": 14.898456664,
+      "speedup": 2.8780938249537873,
+      "percent_time_saved": 65.25478108706005,
+      "median_paired_speedup": 2.8780938249537873,
+      "geometric_mean_paired_speedup": 2.878093824953787,
+      "faster_pairs": 1
+    },
+    "racing": {
+      "calls": 1,
+      "original_seconds": 32.016148885,
+      "selected_seconds": 12.397918275,
+      "speedup": 2.5823810235593765,
+      "percent_time_saved": 61.276047536096414,
+      "median_paired_speedup": 2.5823810235593765,
+      "geometric_mean_paired_speedup": 2.5823810235593765,
+      "faster_pairs": 1
+    }
+  },
+  "by_mode": {
+    "money": {
+      "calls": 1,
+      "original_seconds": 42.879156126,
+      "selected_seconds": 14.898456664,
+      "speedup": 2.8780938249537873,
+      "percent_time_saved": 65.25478108706005,
+      "median_paired_speedup": 2.8780938249537873,
+      "geometric_mean_paired_speedup": 2.878093824953787,
+      "faster_pairs": 1
+    },
+    "match": {
+      "calls": 2,
+      "original_seconds": 123.17032474000001,
+      "selected_seconds": 53.209516653,
+      "speedup": 2.3148175831635855,
+      "percent_time_saved": 56.80005166397031,
+      "median_paired_speedup": 2.407958532119438,
+      "geometric_mean_paired_speedup": 2.4016330042049896,
+      "faster_pairs": 2
+    }
+  },
+  "by_first_arm": {
+    "original": {
+      "calls": 1,
+      "original_seconds": 42.879156126,
+      "selected_seconds": 14.898456664,
+      "speedup": 2.8780938249537873,
+      "percent_time_saved": 65.25478108706005,
+      "median_paired_speedup": 2.8780938249537873,
+      "geometric_mean_paired_speedup": 2.878093824953787,
+      "faster_pairs": 1
+    },
+    "selected": {
+      "calls": 2,
+      "original_seconds": 123.17032474000001,
+      "selected_seconds": 53.209516653,
+      "speedup": 2.3148175831635855,
+      "percent_time_saved": 56.80005166397031,
+      "median_paired_speedup": 2.407958532119438,
+      "geometric_mean_paired_speedup": 2.4016330042049896,
+      "faster_pairs": 2
+    }
+  },
+  "batches": {
+    "original": 4,
+    "selected": 4
+  },
+  "scheduled_trial_paths": {
+    "original": 5184,
+    "selected": 5184
+  },
+  "same_checker_rollout_shortlist": 1,
+  "endpoints_returned": 35,
+  "checker_rollout_endpoints": {
+    "original": 2,
+    "selected": 2,
+    "reference": 2
+  },
+  "reference_fields": 33,
+  "material_farther": 0,
+  "material_closer": 0,
+  "probability_threshold": 0.0025,
+  "equity_threshold": 0.005,
+  "direct_shifts": {
+    "probability": {
+      "observations": 185,
+      "material": 0,
+      "largest": 1.9073486328125e-06
+    },
+    "equity": {
+      "observations": 112,
+      "material": 0,
+      "largest": 8.940696716308594e-07
+    }
+  },
+  "same_checker_order": 1,
+  "same_checker_best": 1,
+  "same_cube_action": 1,
+  "complete_analytics_equal": 0,
+  "reference_origins": {
+    "frozen_public_rollout": 3
+  },
+  "pairs": [
+    {
+      "sequence": 0,
+      "api": "checker_play",
+      "position_id": "checker-match-attacking-01",
+      "mode": "match",
+      "game_plan": "attacking",
+      "seed": 1903266716,
+      "reference_origin": "frozen_public_rollout",
+      "recorded_reference_seed": 1903266716,
+      "original_seconds": 91.154175855,
+      "selected_seconds": 40.811598378,
+      "speedup": 2.2335360406794997,
+      "legal_endpoints": 35,
+      "rollout_endpoints": {
+        "original": [
+          [
+            0,
+            0,
+            0,
+            0,
+            -1,
+            2,
+            4,
+            -2,
+            2,
+            0,
+            2,
+            0,
+            -2,
+            3,
+            2,
+            0,
+            0,
+            -3,
+            0,
+            -5,
+            -2,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            -1,
+            2,
+            4,
+            -2,
+            2,
+            2,
+            2,
+            0,
+            -2,
+            2,
+            0,
+            0,
+            0,
+            -3,
+            0,
+            -5,
+            -2,
+            0,
+            0,
+            1,
+            0,
+            0
+          ]
+        ],
+        "selected": [
+          [
+            0,
+            0,
+            0,
+            0,
+            -1,
+            2,
+            4,
+            -2,
+            2,
+            0,
+            2,
+            0,
+            -2,
+            3,
+            2,
+            0,
+            0,
+            -3,
+            0,
+            -5,
+            -2,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            -1,
+            2,
+            4,
+            -2,
+            2,
+            2,
+            2,
+            0,
+            -2,
+            2,
+            0,
+            0,
+            0,
+            -3,
+            0,
+            -5,
+            -2,
+            0,
+            0,
+            1,
+            0,
+            0
+          ]
+        ],
+        "reference": [
+          [
+            0,
+            0,
+            0,
+            0,
+            -1,
+            2,
+            4,
+            -2,
+            2,
+            0,
+            2,
+            0,
+            -2,
+            3,
+            2,
+            0,
+            0,
+            -3,
+            0,
+            -5,
+            -2,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            -1,
+            2,
+            4,
+            -2,
+            2,
+            2,
+            2,
+            0,
+            -2,
+            2,
+            0,
+            0,
+            0,
+            -3,
+            0,
+            -5,
+            -2,
+            0,
+            0,
+            1,
+            0,
+            0
+          ]
+        ]
+      },
+      "same_rollout_shortlist_including_promotions": true,
+      "same_full_order": true,
+      "same_best_move": true,
+      "count_at_top_equity": {
+        "original": 1,
+        "selected": 1
+      },
+      "changed_levels": 0,
+      "fixed_batches": {
+        "original": 2,
+        "selected": 2
+      },
+      "direct_shifts": {
+        "probability": {
+          "observations": 175,
+          "largest": 4.6193599700927734e-07,
+          "material": 0
+        },
+        "equity": {
+          "observations": 105,
+          "largest": 7.748603820800781e-07,
+          "material": 0
+        }
+      }
+    },
+    {
+      "sequence": 1,
+      "api": "cube_action",
+      "position_id": "cube-money-anchoring-01",
+      "mode": "money",
+      "game_plan": "anchoring",
+      "seed": 934123713,
+      "reference_origin": "frozen_public_rollout",
+      "recorded_reference_seed": 934123713,
+      "original_seconds": 42.879156126,
+      "selected_seconds": 14.898456664,
+      "speedup": 2.8780938249537873,
+      "fixed_batches": {
+        "original": 1,
+        "selected": 1
+      },
+      "same_cube_action": true,
+      "direct_shifts": {
+        "probability": {
+          "observations": 5,
+          "largest": 1.9073486328125e-06,
+          "material": 0
+        },
+        "equity": {
+          "observations": 5,
+          "largest": 1.1920928955078125e-07,
+          "material": 0
+        }
+      }
+    },
+    {
+      "sequence": 14,
+      "api": "post_move_analytics",
+      "position_id": "cube-match-racing-01",
+      "mode": "match",
+      "game_plan": "racing",
+      "seed": 2750371835,
+      "reference_origin": "frozen_public_rollout",
+      "recorded_reference_seed": 2750371835,
+      "original_seconds": 32.016148885,
+      "selected_seconds": 12.397918275,
+      "speedup": 2.5823810235593765,
+      "fixed_batches": {
+        "original": 1,
+        "selected": 1
+      },
+      "direct_shifts": {
+        "probability": {
+          "observations": 5,
+          "largest": 1.2069940567016602e-06,
+          "material": 0
+        },
+        "equity": {
+          "observations": 2,
+          "largest": 8.940696716308594e-07,
+          "material": 0
+        }
+      }
+    }
+  ],
+  "reference_sha256": "23b7bca2272c8ea750020f82c066dd489d3d556e39f0b8b2ec1cf99740051845",
+  "source_sha256": {
+    "settings.json": "757bbfdcfdb266c437d8523c582127c2512acd2c2f4547b0ce1b2b876c4cfed6",
+    "calls.jsonl": "daa37e8a06641344ea1a24813114f9304a7eeec8a02dfc366e9a80edcd039345"
+  },
+  "comparison_with_primary_run": [
+    {
+      "api": "checker_play",
+      "position_id": "checker-match-attacking-01",
+      "unmodified_original_seconds": 91.154175855,
+      "corrected_original_seconds": 96.255972874,
+      "first_selected_seconds": 40.465711801,
+      "repeated_selected_seconds": 40.811598378,
+      "selected_analytics_identical": true,
+      "original_analytics_identical": true,
+      "direct_shifts_raw_to_corrected": {
+        "probability": {
+          "observations": 175,
+          "largest": 0.0,
+          "material": 0
+        },
+        "equity": {
+          "observations": 105,
+          "largest": 0.0,
+          "material": 0
+        }
+      },
+      "raw_to_corrected_material_farther": 0,
+      "raw_to_corrected_material_closer": 0
+    },
+    {
+      "api": "cube_action",
+      "position_id": "cube-money-anchoring-01",
+      "unmodified_original_seconds": 42.879156126,
+      "corrected_original_seconds": 46.362897319,
+      "first_selected_seconds": 15.793725883,
+      "repeated_selected_seconds": 14.898456664,
+      "selected_analytics_identical": true,
+      "original_analytics_identical": true,
+      "direct_shifts_raw_to_corrected": {
+        "probability": {
+          "observations": 5,
+          "largest": 0.0,
+          "material": 0
+        },
+        "equity": {
+          "observations": 5,
+          "largest": 0.0,
+          "material": 0
+        }
+      },
+      "raw_to_corrected_material_farther": 0,
+      "raw_to_corrected_material_closer": 0
+    },
+    {
+      "api": "post_move_analytics",
+      "position_id": "cube-match-racing-01",
+      "unmodified_original_seconds": 32.016148885,
+      "corrected_original_seconds": 31.996076574,
+      "first_selected_seconds": 13.433547405,
+      "repeated_selected_seconds": 12.397918275,
+      "selected_analytics_identical": true,
+      "original_analytics_identical": true,
+      "direct_shifts_raw_to_corrected": {
+        "probability": {
+          "observations": 5,
+          "largest": 0.0,
+          "material": 0
+        },
+        "equity": {
+          "observations": 2,
+          "largest": 0.0,
+          "material": 0
+        }
+      },
+      "raw_to_corrected_material_farther": 0,
+      "raw_to_corrected_material_closer": 0
+    }
+  ]
+}

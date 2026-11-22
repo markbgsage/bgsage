@@ -1,0 +1,69 @@
+{
+  "cases": 288,
+  "input_widths": [
+    1,
+    39,
+    196,
+    244
+  ],
+  "hidden_widths": [
+    1,
+    7,
+    8,
+    19,
+    200,
+    400,
+    513,
+    544
+  ],
+  "seeds": [
+    2,
+    5,
+    9
+  ],
+  "input_patterns": [
+    "mixed",
+    "zeros",
+    "dense"
+  ],
+  "perturbation": "one input in every thirteen",
+  "comparison": "saved hidden sums, saved inputs, five predictions, five delta predictions",
+  "arms": {
+    "control": {
+      "binary_sha256": "0cb634a173d7c0c5a3f70a3489de84b782a9fc2cbca559ed7c53284e5c0b8e11",
+      "floats": 98352,
+      "results_sha256": "33f29bd12e5611057aa32d669c913c9bc20d2f8a9c30fc7f36b308af045aa8df"
+    },
+    "candidate": {
+      "binary_sha256": "f0bee9eb474c6dc2941e96ff1087368983f968f4df175ecc69a0ddde9de45a10",
+      "floats": 98352,
+      "results_sha256": "6f2ad2dd398e883e519a8e2da4a8bb05316849d4a0df60664e173411f8c01101"
+    }
+  },
+  "byte_identical": false,
+  "sections": {
+    "saved_hidden": {
+      "floats": 60912,
+      "unequal_floats": 0,
+      "max_absolute_difference": 0.0
+    },
+    "saved_inputs": {
+      "floats": 34560,
+      "unequal_floats": 0,
+      "max_absolute_difference": 0.0
+    },
+    "base_prediction": {
+      "floats": 1440,
+      "unequal_floats": 0,
+      "max_absolute_difference": 0.0
+    },
+    "incremental_prediction": {
+      "floats": 1440,
+      "unequal_floats": 66,
+      "max_absolute_difference": 2.384185791015625e-07
+    }
+  },
+  "unequal_floats": 66,
+  "max_absolute_difference": 2.384185791015625e-07,
+  "direct_preparation_cases_matched": 288
+}

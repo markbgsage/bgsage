@@ -1,0 +1,1236 @@
+{
+  "arm_order": [
+    "baseline",
+    "driver",
+    "half",
+    "filter20",
+    "tree",
+    "paircache",
+    "prefix",
+    "chunk"
+  ],
+  "trials": 1296,
+  "repeats": 1,
+  "cases": 3,
+  "full_budget_baseline_outputs_matching_checkpoint": 3,
+  "full_budget_baseline_checkpoint_comparison": [
+    {
+      "api": "cube_action",
+      "position_id": "cube-match-priming-01",
+      "exact": true,
+      "same_decision": true,
+      "direct": {
+        "probability": {
+          "observations": 5,
+          "largest": 0.0,
+          "material": 0
+        },
+        "equity": {
+          "observations": 5,
+          "largest": 0.0,
+          "material": 0
+        }
+      }
+    },
+    {
+      "api": "post_move_analytics",
+      "position_id": "cube-money-purerace-01",
+      "exact": true,
+      "same_decision": true,
+      "direct": {
+        "probability": {
+          "observations": 5,
+          "largest": 0.0,
+          "material": 0
+        },
+        "equity": {
+          "observations": 2,
+          "largest": 0.0,
+          "material": 0
+        }
+      }
+    },
+    {
+      "api": "cube_action",
+      "position_id": "cube-money-anchoring-01",
+      "exact": true,
+      "same_decision": true,
+      "direct": {
+        "probability": {
+          "observations": 5,
+          "largest": 0.0,
+          "material": 0
+        },
+        "equity": {
+          "observations": 5,
+          "largest": 0.0,
+          "material": 0
+        }
+      }
+    }
+  ],
+  "comparisons": {
+    "driver": {
+      "overall": {
+        "calls": 3,
+        "baseline_seconds": 24.244544085,
+        "candidate_seconds": 25.788648867,
+        "speedup": 0.9401246342930403,
+        "time_saved_percent": -6.3688753089621075,
+        "median_paired_speedup": 0.9229365643594798,
+        "faster_pairs": 1
+      },
+      "by_api": {
+        "cube_action": {
+          "calls": 2,
+          "baseline_seconds": 23.621850594,
+          "candidate_seconds": 25.113961662,
+          "speedup": 0.9405863922195232,
+          "time_saved_percent": -6.316656106439855,
+          "median_paired_speedup": 0.9621296913857791,
+          "faster_pairs": 1
+        },
+        "post_move_analytics": {
+          "calls": 1,
+          "baseline_seconds": 0.622693491,
+          "candidate_seconds": 0.674687205,
+          "speedup": 0.9229365643594798,
+          "time_saved_percent": -8.349808493501666,
+          "median_paired_speedup": 0.9229365643594798,
+          "faster_pairs": 0
+        }
+      },
+      "by_plan": {
+        "anchoring": {
+          "calls": 1,
+          "baseline_seconds": 15.463605461,
+          "candidate_seconds": 17.126137561,
+          "speedup": 0.9029242820175664,
+          "time_saved_percent": -10.751257875745669,
+          "median_paired_speedup": 0.9029242820175664,
+          "faster_pairs": 0
+        },
+        "priming": {
+          "calls": 1,
+          "baseline_seconds": 8.158245133,
+          "candidate_seconds": 7.987824101,
+          "speedup": 1.021335100753992,
+          "time_saved_percent": 2.0889422813571534,
+          "median_paired_speedup": 1.021335100753992,
+          "faster_pairs": 1
+        },
+        "purerace": {
+          "calls": 1,
+          "baseline_seconds": 0.622693491,
+          "candidate_seconds": 0.674687205,
+          "speedup": 0.9229365643594798,
+          "time_saved_percent": -8.349808493501666,
+          "median_paired_speedup": 0.9229365643594798,
+          "faster_pairs": 0
+        }
+      },
+      "pairs": [
+        {
+          "sequence": 13,
+          "api": "cube_action",
+          "position_id": "cube-match-priming-01",
+          "mode": "match",
+          "game_plan": "priming",
+          "seed": 1278938448,
+          "reference_origin": "frozen_public_rollout",
+          "recorded_reference_seed": 1278938448,
+          "original_seconds": 8.158245133,
+          "selected_seconds": 7.987824101,
+          "speedup": 1.021335100753992,
+          "fixed_batches": {
+            "original": 1,
+            "selected": 1
+          },
+          "same_cube_action": true,
+          "direct_shifts": {
+            "probability": {
+              "observations": 5,
+              "largest": 0.0,
+              "material": 0
+            },
+            "equity": {
+              "observations": 5,
+              "largest": 0.0,
+              "material": 0
+            }
+          }
+        },
+        {
+          "sequence": 2,
+          "api": "post_move_analytics",
+          "position_id": "cube-money-purerace-01",
+          "mode": "money",
+          "game_plan": "purerace",
+          "seed": 159841666,
+          "reference_origin": "frozen_public_rollout",
+          "recorded_reference_seed": 159841666,
+          "original_seconds": 0.622693491,
+          "selected_seconds": 0.674687205,
+          "speedup": 0.9229365643594798,
+          "fixed_batches": {
+            "original": 1,
+            "selected": 1
+          },
+          "direct_shifts": {
+            "probability": {
+              "observations": 5,
+              "largest": 0.0,
+              "material": 0
+            },
+            "equity": {
+              "observations": 2,
+              "largest": 0.0,
+              "material": 0
+            }
+          }
+        },
+        {
+          "sequence": 1,
+          "api": "cube_action",
+          "position_id": "cube-money-anchoring-01",
+          "mode": "money",
+          "game_plan": "anchoring",
+          "seed": 934123713,
+          "reference_origin": "frozen_public_rollout",
+          "recorded_reference_seed": 934123713,
+          "original_seconds": 15.463605461,
+          "selected_seconds": 17.126137561,
+          "speedup": 0.9029242820175664,
+          "fixed_batches": {
+            "original": 1,
+            "selected": 1
+          },
+          "same_cube_action": true,
+          "direct_shifts": {
+            "probability": {
+              "observations": 5,
+              "largest": 0.0,
+              "material": 0
+            },
+            "equity": {
+              "observations": 5,
+              "largest": 0.0,
+              "material": 0
+            }
+          }
+        }
+      ],
+      "exact_complete": 3,
+      "checker_order": 0,
+      "checker_shortlists": 0,
+      "cube_agree": 2,
+      "scored": 27,
+      "material_farther": 0,
+      "material_closer": 0,
+      "fixed_batches": {
+        "original": 3,
+        "selected": 3
+      },
+      "direct_max": {
+        "equity": 0.0,
+        "probability": 0.0
+      }
+    },
+    "half": {
+      "overall": {
+        "calls": 3,
+        "baseline_seconds": 24.244544085,
+        "candidate_seconds": 23.408982925,
+        "speedup": 1.0356940394496017,
+        "time_saved_percent": 3.4463884207125983,
+        "median_paired_speedup": 1.0364870713754801,
+        "faster_pairs": 2
+      },
+      "by_api": {
+        "cube_action": {
+          "calls": 2,
+          "baseline_seconds": 23.621850594,
+          "candidate_seconds": 22.631277409,
+          "speedup": 1.0437700960090777,
+          "time_saved_percent": 4.193461393120524,
+          "median_paired_speedup": 1.0471732407764187,
+          "faster_pairs": 2
+        },
+        "post_move_analytics": {
+          "calls": 1,
+          "baseline_seconds": 0.622693491,
+          "candidate_seconds": 0.777705516,
+          "speedup": 0.8006803066059262,
+          "time_saved_percent": -24.8937924099804,
+          "median_paired_speedup": 0.8006803066059262,
+          "faster_pairs": 0
+        }
+      },
+      "by_plan": {
+        "anchoring": {
+          "calls": 1,
+          "baseline_seconds": 15.463605461,
+          "candidate_seconds": 14.919245872,
+          "speedup": 1.0364870713754801,
+          "time_saved_percent": 3.520263048439143,
+          "median_paired_speedup": 1.0364870713754801,
+          "faster_pairs": 1
+        },
+        "priming": {
+          "calls": 1,
+          "baseline_seconds": 8.158245133,
+          "candidate_seconds": 7.712031537,
+          "speedup": 1.0578594101773575,
+          "time_saved_percent": 5.469480123796123,
+          "median_paired_speedup": 1.0578594101773575,
+          "faster_pairs": 1
+        },
+        "purerace": {
+          "calls": 1,
+          "baseline_seconds": 0.622693491,
+          "candidate_seconds": 0.777705516,
+          "speedup": 0.8006803066059262,
+          "time_saved_percent": -24.8937924099804,
+          "median_paired_speedup": 0.8006803066059262,
+          "faster_pairs": 0
+        }
+      },
+      "pairs": [
+        {
+          "sequence": 13,
+          "api": "cube_action",
+          "position_id": "cube-match-priming-01",
+          "mode": "match",
+          "game_plan": "priming",
+          "seed": 1278938448,
+          "reference_origin": "frozen_public_rollout",
+          "recorded_reference_seed": 1278938448,
+          "original_seconds": 8.158245133,
+          "selected_seconds": 7.712031537,
+          "speedup": 1.0578594101773575,
+          "fixed_batches": {
+            "original": 1,
+            "selected": 1
+          },
+          "same_cube_action": true,
+          "direct_shifts": {
+            "probability": {
+              "observations": 5,
+              "largest": 0.0,
+              "material": 0
+            },
+            "equity": {
+              "observations": 5,
+              "largest": 0.0,
+              "material": 0
+            }
+          }
+        },
+        {
+          "sequence": 2,
+          "api": "post_move_analytics",
+          "position_id": "cube-money-purerace-01",
+          "mode": "money",
+          "game_plan": "purerace",
+          "seed": 159841666,
+          "reference_origin": "frozen_public_rollout",
+          "recorded_reference_seed": 159841666,
+          "original_seconds": 0.622693491,
+          "selected_seconds": 0.777705516,
+          "speedup": 0.8006803066059262,
+          "fixed_batches": {
+            "original": 1,
+            "selected": 1
+          },
+          "direct_shifts": {
+            "probability": {
+              "observations": 5,
+              "largest": 0.0,
+              "material": 0
+            },
+            "equity": {
+              "observations": 2,
+              "largest": 0.0,
+              "material": 0
+            }
+          }
+        },
+        {
+          "sequence": 1,
+          "api": "cube_action",
+          "position_id": "cube-money-anchoring-01",
+          "mode": "money",
+          "game_plan": "anchoring",
+          "seed": 934123713,
+          "reference_origin": "frozen_public_rollout",
+          "recorded_reference_seed": 934123713,
+          "original_seconds": 15.463605461,
+          "selected_seconds": 14.919245872,
+          "speedup": 1.0364870713754801,
+          "fixed_batches": {
+            "original": 1,
+            "selected": 1
+          },
+          "same_cube_action": true,
+          "direct_shifts": {
+            "probability": {
+              "observations": 5,
+              "largest": 0.0,
+              "material": 0
+            },
+            "equity": {
+              "observations": 5,
+              "largest": 0.0,
+              "material": 0
+            }
+          }
+        }
+      ],
+      "exact_complete": 3,
+      "checker_order": 0,
+      "checker_shortlists": 0,
+      "cube_agree": 2,
+      "scored": 27,
+      "material_farther": 0,
+      "material_closer": 0,
+      "fixed_batches": {
+        "original": 3,
+        "selected": 3
+      },
+      "direct_max": {
+        "equity": 0.0,
+        "probability": 0.0
+      }
+    },
+    "filter20": {
+      "overall": {
+        "calls": 3,
+        "baseline_seconds": 24.244544085,
+        "candidate_seconds": 21.915404362,
+        "speedup": 1.106278656078032,
+        "time_saved_percent": 9.6068612997389,
+        "median_paired_speedup": 1.0447663654665473,
+        "faster_pairs": 3
+      },
+      "by_api": {
+        "cube_action": {
+          "calls": 2,
+          "baseline_seconds": 23.621850594,
+          "candidate_seconds": 21.303091852,
+          "speedup": 1.1088461129543647,
+          "time_saved_percent": 9.816160392568774,
+          "median_paired_speedup": 1.0953464372787765,
+          "faster_pairs": 2
+        },
+        "post_move_analytics": {
+          "calls": 1,
+          "baseline_seconds": 0.622693491,
+          "candidate_seconds": 0.61231251,
+          "speedup": 1.0169537300487297,
+          "time_saved_percent": 1.667109284108459,
+          "median_paired_speedup": 1.0169537300487297,
+          "faster_pairs": 1
+        }
+      },
+      "by_plan": {
+        "anchoring": {
+          "calls": 1,
+          "baseline_seconds": 15.463605461,
+          "candidate_seconds": 13.494412895,
+          "speedup": 1.1459265090910056,
+          "time_saved_percent": 12.734368908767134,
+          "median_paired_speedup": 1.1459265090910056,
+          "faster_pairs": 1
+        },
+        "priming": {
+          "calls": 1,
+          "baseline_seconds": 8.158245133,
+          "candidate_seconds": 7.808678957,
+          "speedup": 1.0447663654665473,
+          "time_saved_percent": 4.284820697358171,
+          "median_paired_speedup": 1.0447663654665473,
+          "faster_pairs": 1
+        },
+        "purerace": {
+          "calls": 1,
+          "baseline_seconds": 0.622693491,
+          "candidate_seconds": 0.61231251,
+          "speedup": 1.0169537300487297,
+          "time_saved_percent": 1.667109284108459,
+          "median_paired_speedup": 1.0169537300487297,
+          "faster_pairs": 1
+        }
+      },
+      "pairs": [
+        {
+          "sequence": 13,
+          "api": "cube_action",
+          "position_id": "cube-match-priming-01",
+          "mode": "match",
+          "game_plan": "priming",
+          "seed": 1278938448,
+          "reference_origin": "frozen_public_rollout",
+          "recorded_reference_seed": 1278938448,
+          "original_seconds": 8.158245133,
+          "selected_seconds": 7.808678957,
+          "speedup": 1.0447663654665473,
+          "fixed_batches": {
+            "original": 1,
+            "selected": 1
+          },
+          "same_cube_action": true,
+          "direct_shifts": {
+            "probability": {
+              "observations": 5,
+              "largest": 0.0015333890914916992,
+              "material": 0
+            },
+            "equity": {
+              "observations": 5,
+              "largest": 0.0018041133880615234,
+              "material": 0
+            }
+          }
+        },
+        {
+          "sequence": 2,
+          "api": "post_move_analytics",
+          "position_id": "cube-money-purerace-01",
+          "mode": "money",
+          "game_plan": "purerace",
+          "seed": 159841666,
+          "reference_origin": "frozen_public_rollout",
+          "recorded_reference_seed": 159841666,
+          "original_seconds": 0.622693491,
+          "selected_seconds": 0.61231251,
+          "speedup": 1.0169537300487297,
+          "fixed_batches": {
+            "original": 1,
+            "selected": 1
+          },
+          "direct_shifts": {
+            "probability": {
+              "observations": 5,
+              "largest": 1.6808509826660156e-05,
+              "material": 0
+            },
+            "equity": {
+              "observations": 2,
+              "largest": 3.361701965332031e-05,
+              "material": 0
+            }
+          }
+        },
+        {
+          "sequence": 1,
+          "api": "cube_action",
+          "position_id": "cube-money-anchoring-01",
+          "mode": "money",
+          "game_plan": "anchoring",
+          "seed": 934123713,
+          "reference_origin": "frozen_public_rollout",
+          "recorded_reference_seed": 934123713,
+          "original_seconds": 15.463605461,
+          "selected_seconds": 13.494412895,
+          "speedup": 1.1459265090910056,
+          "fixed_batches": {
+            "original": 1,
+            "selected": 1
+          },
+          "same_cube_action": true,
+          "direct_shifts": {
+            "probability": {
+              "observations": 5,
+              "largest": 0.0010008513927459717,
+              "material": 0
+            },
+            "equity": {
+              "observations": 5,
+              "largest": 0.01175031065940857,
+              "material": 3
+            }
+          }
+        }
+      ],
+      "exact_complete": 0,
+      "checker_order": 0,
+      "checker_shortlists": 0,
+      "cube_agree": 2,
+      "scored": 27,
+      "material_farther": 3,
+      "material_closer": 0,
+      "fixed_batches": {
+        "original": 3,
+        "selected": 3
+      },
+      "direct_max": {
+        "equity": 0.01175031065940857,
+        "probability": 0.0015333890914916992
+      }
+    },
+    "tree": {
+      "overall": {
+        "calls": 3,
+        "baseline_seconds": 24.244544085,
+        "candidate_seconds": 24.015193934,
+        "speedup": 1.0095502102389977,
+        "time_saved_percent": 0.9459866524852534,
+        "median_paired_speedup": 0.9875340146670071,
+        "faster_pairs": 1
+      },
+      "by_api": {
+        "cube_action": {
+          "calls": 2,
+          "baseline_seconds": 23.621850594,
+          "candidate_seconds": 23.376999639,
+          "speedup": 1.010474011155457,
+          "time_saved_percent": 1.0365443385802808,
+          "median_paired_speedup": 1.0222745542854585,
+          "faster_pairs": 1
+        },
+        "post_move_analytics": {
+          "calls": 1,
+          "baseline_seconds": 0.622693491,
+          "candidate_seconds": 0.638194295,
+          "speedup": 0.9757114657378754,
+          "time_saved_percent": -2.4893152448256295,
+          "median_paired_speedup": 0.9757114657378754,
+          "faster_pairs": 0
+        }
+      },
+      "by_plan": {
+        "anchoring": {
+          "calls": 1,
+          "baseline_seconds": 15.463605461,
+          "candidate_seconds": 15.658807931,
+          "speedup": 0.9875340146670071,
+          "time_saved_percent": -1.2623347801540286,
+          "median_paired_speedup": 0.9875340146670071,
+          "faster_pairs": 0
+        },
+        "priming": {
+          "calls": 1,
+          "baseline_seconds": 8.158245133,
+          "candidate_seconds": 7.718191708,
+          "speedup": 1.05701509390391,
+          "time_saved_percent": 5.393971593474056,
+          "median_paired_speedup": 1.05701509390391,
+          "faster_pairs": 1
+        },
+        "purerace": {
+          "calls": 1,
+          "baseline_seconds": 0.622693491,
+          "candidate_seconds": 0.638194295,
+          "speedup": 0.9757114657378754,
+          "time_saved_percent": -2.4893152448256295,
+          "median_paired_speedup": 0.9757114657378754,
+          "faster_pairs": 0
+        }
+      },
+      "pairs": [
+        {
+          "sequence": 13,
+          "api": "cube_action",
+          "position_id": "cube-match-priming-01",
+          "mode": "match",
+          "game_plan": "priming",
+          "seed": 1278938448,
+          "reference_origin": "frozen_public_rollout",
+          "recorded_reference_seed": 1278938448,
+          "original_seconds": 8.158245133,
+          "selected_seconds": 7.718191708,
+          "speedup": 1.05701509390391,
+          "fixed_batches": {
+            "original": 1,
+            "selected": 1
+          },
+          "same_cube_action": true,
+          "direct_shifts": {
+            "probability": {
+              "observations": 5,
+              "largest": 0.0,
+              "material": 0
+            },
+            "equity": {
+              "observations": 5,
+              "largest": 0.0,
+              "material": 0
+            }
+          }
+        },
+        {
+          "sequence": 2,
+          "api": "post_move_analytics",
+          "position_id": "cube-money-purerace-01",
+          "mode": "money",
+          "game_plan": "purerace",
+          "seed": 159841666,
+          "reference_origin": "frozen_public_rollout",
+          "recorded_reference_seed": 159841666,
+          "original_seconds": 0.622693491,
+          "selected_seconds": 0.638194295,
+          "speedup": 0.9757114657378754,
+          "fixed_batches": {
+            "original": 1,
+            "selected": 1
+          },
+          "direct_shifts": {
+            "probability": {
+              "observations": 5,
+              "largest": 0.0,
+              "material": 0
+            },
+            "equity": {
+              "observations": 2,
+              "largest": 0.0,
+              "material": 0
+            }
+          }
+        },
+        {
+          "sequence": 1,
+          "api": "cube_action",
+          "position_id": "cube-money-anchoring-01",
+          "mode": "money",
+          "game_plan": "anchoring",
+          "seed": 934123713,
+          "reference_origin": "frozen_public_rollout",
+          "recorded_reference_seed": 934123713,
+          "original_seconds": 15.463605461,
+          "selected_seconds": 15.658807931,
+          "speedup": 0.9875340146670071,
+          "fixed_batches": {
+            "original": 1,
+            "selected": 1
+          },
+          "same_cube_action": true,
+          "direct_shifts": {
+            "probability": {
+              "observations": 5,
+              "largest": 0.0,
+              "material": 0
+            },
+            "equity": {
+              "observations": 5,
+              "largest": 0.0,
+              "material": 0
+            }
+          }
+        }
+      ],
+      "exact_complete": 3,
+      "checker_order": 0,
+      "checker_shortlists": 0,
+      "cube_agree": 2,
+      "scored": 27,
+      "material_farther": 0,
+      "material_closer": 0,
+      "fixed_batches": {
+        "original": 3,
+        "selected": 3
+      },
+      "direct_max": {
+        "equity": 0.0,
+        "probability": 0.0
+      }
+    },
+    "paircache": {
+      "overall": {
+        "calls": 3,
+        "baseline_seconds": 24.244544085,
+        "candidate_seconds": 23.842973471,
+        "speedup": 1.0168423042741892,
+        "time_saved_percent": 1.656333947102151,
+        "median_paired_speedup": 1.008081120750676,
+        "faster_pairs": 2
+      },
+      "by_api": {
+        "cube_action": {
+          "calls": 2,
+          "baseline_seconds": 23.621850594,
+          "candidate_seconds": 23.195991939000002,
+          "speedup": 1.0183591482580225,
+          "time_saved_percent": 1.802816647685379,
+          "median_paired_speedup": 1.0232541402898854,
+          "faster_pairs": 2
+        },
+        "post_move_analytics": {
+          "calls": 1,
+          "baseline_seconds": 0.622693491,
+          "candidate_seconds": 0.646981532,
+          "speedup": 0.962459452397476,
+          "time_saved_percent": -3.900480951068741,
+          "median_paired_speedup": 0.962459452397476,
+          "faster_pairs": 0
+        }
+      },
+      "by_plan": {
+        "anchoring": {
+          "calls": 1,
+          "baseline_seconds": 15.463605461,
+          "candidate_seconds": 15.339643946,
+          "speedup": 1.008081120750676,
+          "time_saved_percent": 0.801633974124838,
+          "median_paired_speedup": 1.008081120750676,
+          "faster_pairs": 1
+        },
+        "priming": {
+          "calls": 1,
+          "baseline_seconds": 8.158245133,
+          "candidate_seconds": 7.856347993,
+          "speedup": 1.0384271598290948,
+          "time_saved_percent": 3.7005156755933855,
+          "median_paired_speedup": 1.0384271598290948,
+          "faster_pairs": 1
+        },
+        "purerace": {
+          "calls": 1,
+          "baseline_seconds": 0.622693491,
+          "candidate_seconds": 0.646981532,
+          "speedup": 0.962459452397476,
+          "time_saved_percent": -3.900480951068741,
+          "median_paired_speedup": 0.962459452397476,
+          "faster_pairs": 0
+        }
+      },
+      "pairs": [
+        {
+          "sequence": 13,
+          "api": "cube_action",
+          "position_id": "cube-match-priming-01",
+          "mode": "match",
+          "game_plan": "priming",
+          "seed": 1278938448,
+          "reference_origin": "frozen_public_rollout",
+          "recorded_reference_seed": 1278938448,
+          "original_seconds": 8.158245133,
+          "selected_seconds": 7.856347993,
+          "speedup": 1.0384271598290948,
+          "fixed_batches": {
+            "original": 1,
+            "selected": 1
+          },
+          "same_cube_action": true,
+          "direct_shifts": {
+            "probability": {
+              "observations": 5,
+              "largest": 0.0,
+              "material": 0
+            },
+            "equity": {
+              "observations": 5,
+              "largest": 0.0,
+              "material": 0
+            }
+          }
+        },
+        {
+          "sequence": 2,
+          "api": "post_move_analytics",
+          "position_id": "cube-money-purerace-01",
+          "mode": "money",
+          "game_plan": "purerace",
+          "seed": 159841666,
+          "reference_origin": "frozen_public_rollout",
+          "recorded_reference_seed": 159841666,
+          "original_seconds": 0.622693491,
+          "selected_seconds": 0.646981532,
+          "speedup": 0.962459452397476,
+          "fixed_batches": {
+            "original": 1,
+            "selected": 1
+          },
+          "direct_shifts": {
+            "probability": {
+              "observations": 5,
+              "largest": 0.0,
+              "material": 0
+            },
+            "equity": {
+              "observations": 2,
+              "largest": 0.0,
+              "material": 0
+            }
+          }
+        },
+        {
+          "sequence": 1,
+          "api": "cube_action",
+          "position_id": "cube-money-anchoring-01",
+          "mode": "money",
+          "game_plan": "anchoring",
+          "seed": 934123713,
+          "reference_origin": "frozen_public_rollout",
+          "recorded_reference_seed": 934123713,
+          "original_seconds": 15.463605461,
+          "selected_seconds": 15.339643946,
+          "speedup": 1.008081120750676,
+          "fixed_batches": {
+            "original": 1,
+            "selected": 1
+          },
+          "same_cube_action": true,
+          "direct_shifts": {
+            "probability": {
+              "observations": 5,
+              "largest": 0.0,
+              "material": 0
+            },
+            "equity": {
+              "observations": 5,
+              "largest": 0.0,
+              "material": 0
+            }
+          }
+        }
+      ],
+      "exact_complete": 3,
+      "checker_order": 0,
+      "checker_shortlists": 0,
+      "cube_agree": 2,
+      "scored": 27,
+      "material_farther": 0,
+      "material_closer": 0,
+      "fixed_batches": {
+        "original": 3,
+        "selected": 3
+      },
+      "direct_max": {
+        "equity": 0.0,
+        "probability": 0.0
+      }
+    },
+    "prefix": {
+      "overall": {
+        "calls": 3,
+        "baseline_seconds": 24.244544085,
+        "candidate_seconds": 23.227782212,
+        "speedup": 1.043773523607205,
+        "time_saved_percent": 4.193776007646466,
+        "median_paired_speedup": 1.0387533135254146,
+        "faster_pairs": 3
+      },
+      "by_api": {
+        "cube_action": {
+          "calls": 2,
+          "baseline_seconds": 23.621850594,
+          "candidate_seconds": 22.626426441,
+          "speedup": 1.0439938739595331,
+          "time_saved_percent": 4.213997328612528,
+          "median_paired_speedup": 1.0427666759262086,
+          "faster_pairs": 2
+        },
+        "post_move_analytics": {
+          "calls": 1,
+          "baseline_seconds": 0.622693491,
+          "candidate_seconds": 0.601355771,
+          "speedup": 1.0354826893313376,
+          "time_saved_percent": 3.426681073176663,
+          "median_paired_speedup": 1.0354826893313376,
+          "faster_pairs": 1
+        }
+      },
+      "by_plan": {
+        "anchoring": {
+          "calls": 1,
+          "baseline_seconds": 15.463605461,
+          "candidate_seconds": 14.772545229,
+          "speedup": 1.0467800383270027,
+          "time_saved_percent": 4.468946351113834,
+          "median_paired_speedup": 1.0467800383270027,
+          "faster_pairs": 1
+        },
+        "priming": {
+          "calls": 1,
+          "baseline_seconds": 8.158245133,
+          "candidate_seconds": 7.853881212,
+          "speedup": 1.0387533135254146,
+          "time_saved_percent": 3.7307523375198826,
+          "median_paired_speedup": 1.0387533135254146,
+          "faster_pairs": 1
+        },
+        "purerace": {
+          "calls": 1,
+          "baseline_seconds": 0.622693491,
+          "candidate_seconds": 0.601355771,
+          "speedup": 1.0354826893313376,
+          "time_saved_percent": 3.426681073176663,
+          "median_paired_speedup": 1.0354826893313376,
+          "faster_pairs": 1
+        }
+      },
+      "pairs": [
+        {
+          "sequence": 13,
+          "api": "cube_action",
+          "position_id": "cube-match-priming-01",
+          "mode": "match",
+          "game_plan": "priming",
+          "seed": 1278938448,
+          "reference_origin": "frozen_public_rollout",
+          "recorded_reference_seed": 1278938448,
+          "original_seconds": 8.158245133,
+          "selected_seconds": 7.853881212,
+          "speedup": 1.0387533135254146,
+          "fixed_batches": {
+            "original": 1,
+            "selected": 1
+          },
+          "same_cube_action": true,
+          "direct_shifts": {
+            "probability": {
+              "observations": 5,
+              "largest": 0.0,
+              "material": 0
+            },
+            "equity": {
+              "observations": 5,
+              "largest": 0.0,
+              "material": 0
+            }
+          }
+        },
+        {
+          "sequence": 2,
+          "api": "post_move_analytics",
+          "position_id": "cube-money-purerace-01",
+          "mode": "money",
+          "game_plan": "purerace",
+          "seed": 159841666,
+          "reference_origin": "frozen_public_rollout",
+          "recorded_reference_seed": 159841666,
+          "original_seconds": 0.622693491,
+          "selected_seconds": 0.601355771,
+          "speedup": 1.0354826893313376,
+          "fixed_batches": {
+            "original": 1,
+            "selected": 1
+          },
+          "direct_shifts": {
+            "probability": {
+              "observations": 5,
+              "largest": 0.0,
+              "material": 0
+            },
+            "equity": {
+              "observations": 2,
+              "largest": 0.0,
+              "material": 0
+            }
+          }
+        },
+        {
+          "sequence": 1,
+          "api": "cube_action",
+          "position_id": "cube-money-anchoring-01",
+          "mode": "money",
+          "game_plan": "anchoring",
+          "seed": 934123713,
+          "reference_origin": "frozen_public_rollout",
+          "recorded_reference_seed": 934123713,
+          "original_seconds": 15.463605461,
+          "selected_seconds": 14.772545229,
+          "speedup": 1.0467800383270027,
+          "fixed_batches": {
+            "original": 1,
+            "selected": 1
+          },
+          "same_cube_action": true,
+          "direct_shifts": {
+            "probability": {
+              "observations": 5,
+              "largest": 0.0,
+              "material": 0
+            },
+            "equity": {
+              "observations": 5,
+              "largest": 0.0,
+              "material": 0
+            }
+          }
+        }
+      ],
+      "exact_complete": 1,
+      "checker_order": 0,
+      "checker_shortlists": 0,
+      "cube_agree": 2,
+      "scored": 27,
+      "material_farther": 0,
+      "material_closer": 0,
+      "fixed_batches": {
+        "original": 3,
+        "selected": 3
+      },
+      "direct_max": {
+        "equity": 0.0,
+        "probability": 0.0
+      }
+    },
+    "chunk": {
+      "overall": {
+        "calls": 3,
+        "baseline_seconds": 24.244544085,
+        "candidate_seconds": 23.137306843999998,
+        "speedup": 1.0478550614583362,
+        "time_saved_percent": 4.5669542686308855,
+        "median_paired_speedup": 1.039380417185137,
+        "faster_pairs": 2
+      },
+      "by_api": {
+        "cube_action": {
+          "calls": 2,
+          "baseline_seconds": 23.621850594,
+          "candidate_seconds": 22.505247978,
+          "speedup": 1.0496152105096348,
+          "time_saved_percent": 4.726990425905164,
+          "median_paired_speedup": 1.0472384584647427,
+          "faster_pairs": 2
+        },
+        "post_move_analytics": {
+          "calls": 1,
+          "baseline_seconds": 0.622693491,
+          "candidate_seconds": 0.632058866,
+          "speedup": 0.9851827487853007,
+          "time_saved_percent": -1.5040104217180605,
+          "median_paired_speedup": 0.9851827487853007,
+          "faster_pairs": 0
+        }
+      },
+      "by_plan": {
+        "anchoring": {
+          "calls": 1,
+          "baseline_seconds": 15.463605461,
+          "candidate_seconds": 14.656105356,
+          "speedup": 1.0550964997443486,
+          "time_saved_percent": 5.221939392055475,
+          "median_paired_speedup": 1.0550964997443486,
+          "faster_pairs": 1
+        },
+        "priming": {
+          "calls": 1,
+          "baseline_seconds": 8.158245133,
+          "candidate_seconds": 7.849142622,
+          "speedup": 1.039380417185137,
+          "time_saved_percent": 3.7888357846675103,
+          "median_paired_speedup": 1.039380417185137,
+          "faster_pairs": 1
+        },
+        "purerace": {
+          "calls": 1,
+          "baseline_seconds": 0.622693491,
+          "candidate_seconds": 0.632058866,
+          "speedup": 0.9851827487853007,
+          "time_saved_percent": -1.5040104217180605,
+          "median_paired_speedup": 0.9851827487853007,
+          "faster_pairs": 0
+        }
+      },
+      "pairs": [
+        {
+          "sequence": 13,
+          "api": "cube_action",
+          "position_id": "cube-match-priming-01",
+          "mode": "match",
+          "game_plan": "priming",
+          "seed": 1278938448,
+          "reference_origin": "frozen_public_rollout",
+          "recorded_reference_seed": 1278938448,
+          "original_seconds": 8.158245133,
+          "selected_seconds": 7.849142622,
+          "speedup": 1.039380417185137,
+          "fixed_batches": {
+            "original": 1,
+            "selected": 1
+          },
+          "same_cube_action": true,
+          "direct_shifts": {
+            "probability": {
+              "observations": 5,
+              "largest": 0.0,
+              "material": 0
+            },
+            "equity": {
+              "observations": 5,
+              "largest": 0.0,
+              "material": 0
+            }
+          }
+        },
+        {
+          "sequence": 2,
+          "api": "post_move_analytics",
+          "position_id": "cube-money-purerace-01",
+          "mode": "money",
+          "game_plan": "purerace",
+          "seed": 159841666,
+          "reference_origin": "frozen_public_rollout",
+          "recorded_reference_seed": 159841666,
+          "original_seconds": 0.622693491,
+          "selected_seconds": 0.632058866,
+          "speedup": 0.9851827487853007,
+          "fixed_batches": {
+            "original": 1,
+            "selected": 1
+          },
+          "direct_shifts": {
+            "probability": {
+              "observations": 5,
+              "largest": 0.0,
+              "material": 0
+            },
+            "equity": {
+              "observations": 2,
+              "largest": 0.0,
+              "material": 0
+            }
+          }
+        },
+        {
+          "sequence": 1,
+          "api": "cube_action",
+          "position_id": "cube-money-anchoring-01",
+          "mode": "money",
+          "game_plan": "anchoring",
+          "seed": 934123713,
+          "reference_origin": "frozen_public_rollout",
+          "recorded_reference_seed": 934123713,
+          "original_seconds": 15.463605461,
+          "selected_seconds": 14.656105356,
+          "speedup": 1.0550964997443486,
+          "fixed_batches": {
+            "original": 1,
+            "selected": 1
+          },
+          "same_cube_action": true,
+          "direct_shifts": {
+            "probability": {
+              "observations": 5,
+              "largest": 0.0,
+              "material": 0
+            },
+            "equity": {
+              "observations": 5,
+              "largest": 0.0,
+              "material": 0
+            }
+          }
+        }
+      ],
+      "exact_complete": 1,
+      "checker_order": 0,
+      "checker_shortlists": 0,
+      "cube_agree": 2,
+      "scored": 27,
+      "material_farther": 0,
+      "material_closer": 0,
+      "fixed_batches": {
+        "original": 3,
+        "selected": 3
+      },
+      "direct_max": {
+        "equity": 0.0,
+        "probability": 0.0
+      }
+    }
+  }
+}

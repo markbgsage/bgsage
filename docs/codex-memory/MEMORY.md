@@ -1,5 +1,26 @@
 # Engine project notes
 
+- **2026-11-22, full-game CPU scheduling.** Give workers individual paths
+  at full depth. Keep callback spacing independent of the claim size so
+  short fixed and target-SE jobs retain their reporting cadence. A 37-path
+  parallel batch produced five notifications and a 1,296-path batch produced
+  108. When optimizing move encoding, check every opponent point as well
+  as the bar before reusing that side's features. Two sibling moves can hit
+  different blots. The independent scalar and AVX2 encoder probes matched
+  on 656,128 boards. On the local 16-thread Ryzen, all 15 full-budget public
+  calls got faster (262.00 s to 220.92 s). A Linux build using only the AVX2
+  path saved 6.2% on a separate three-call sample. Preserve CPU capability
+  and sample size with speed claims. [Full-game study and checks](../../data/multi_ply_benchmark/experiments/full_rollout_cpu/README.md)
+
+- **2026-11-22, fixed-budget full rollouts.** For full-game speed, time the
+  whole public call with one batch of 1,296 paths per selected checker
+  alternative or cube position. The shortlist and promotions determine how
+  many batches a checker request runs. Compare the actual endpoint sets,
+  including terminal shortcuts. The pre-optimization control with the opening-cache
+  correction and `5de8023` used the same 24 batches across 15 calls. Direct paired Linux timings gave 2.54×
+  overall and 2.39× for checker play. The standard opening reply and cube
+  screen still apply at configured 3P strength. [Fixed-budget timings and verification](../../data/multi_ply_benchmark/experiments/full_rollout_1296/README.md)
+
 - **2026-11-22, truncated-rollout CPU study.** At a single cube-aware VR
   node, different dice can reach the same endpoint. Share its static
   probabilities only within the same board, model and driving cube, checking

@@ -1,0 +1,252 @@
+{
+  "arm_order": [
+    "profile"
+  ],
+  "trials": 1296,
+  "repeats": 1,
+  "cases": 4,
+  "full_budget_baseline_outputs_matching_checkpoint": 1,
+  "full_budget_baseline_checkpoint_comparison": [
+    {
+      "api": "cube_action",
+      "position_id": "cube-money-anchoring-01",
+      "exact": false,
+      "same_decision": true,
+      "direct": {
+        "probability": {
+          "observations": 5,
+          "largest": 0.0,
+          "material": 0
+        },
+        "equity": {
+          "observations": 5,
+          "largest": 0.0,
+          "material": 0
+        }
+      }
+    },
+    {
+      "api": "post_move_analytics",
+      "position_id": "cube-money-purerace-01",
+      "exact": true,
+      "same_decision": true,
+      "direct": {
+        "probability": {
+          "observations": 5,
+          "largest": 0.0,
+          "material": 0
+        },
+        "equity": {
+          "observations": 2,
+          "largest": 0.0,
+          "material": 0
+        }
+      }
+    },
+    {
+      "api": "cube_action",
+      "position_id": "cube-match-priming-01",
+      "exact": false,
+      "same_decision": true,
+      "direct": {
+        "probability": {
+          "observations": 5,
+          "largest": 0.0,
+          "material": 0
+        },
+        "equity": {
+          "observations": 5,
+          "largest": 0.0,
+          "material": 0
+        }
+      }
+    },
+    {
+      "api": "checker_play",
+      "position_id": "checker-money-priming-01",
+      "exact": false,
+      "same_decision": true,
+      "direct": {
+        "probability": {
+          "observations": 120,
+          "largest": 0.0,
+          "material": 0
+        },
+        "equity": {
+          "observations": 72,
+          "largest": 0.0,
+          "material": 0
+        }
+      }
+    }
+  ],
+  "comparisons": {},
+  "profile": {
+    "phases_worker_seconds": {
+      "prefill0": 1.058381032,
+      "prefill1": 0.042140290999999996,
+      "cube": 42.470220337,
+      "movegen": 1.876365566,
+      "vr_mean": 0.269633548,
+      "select": 553.893365035,
+      "vr_luck": 0.542335675,
+      "truncation": 0.0,
+      "other": 0.063892537,
+      "fan": 87.417294322,
+      "cube_race": 3.228206705,
+      "select_race": 59.290173509
+    },
+    "shares": {
+      "prefill0": 0.0014108887531154018,
+      "prefill1": 5.617566909013746e-05,
+      "cube": 0.056615485731613444,
+      "movegen": 0.0025013137931995887,
+      "vr_mean": 0.000359438547020183,
+      "select": 0.7383748343225459,
+      "vr_luck": 0.0007229677036301515,
+      "truncation": 0.0,
+      "other": 8.517278667680211e-05,
+      "fan": 0.11653277379095044,
+      "cube_race": 0.00430340340114507,
+      "select_race": 0.07903754550101275
+    },
+    "cases": [
+      {
+        "api": "cube_action",
+        "position_id": "cube-money-anchoring-01",
+        "elapsed_seconds": 15.986927478,
+        "cpu_seconds": 241.919372393,
+        "phase_visits": {
+          "prefill0": 21,
+          "prefill1": 21,
+          "cube": 47477,
+          "movegen": 113538,
+          "vr_mean": 167715,
+          "select": 47170,
+          "vr_luck": 56769,
+          "truncation": 0,
+          "other": 115182,
+          "fan": 54177,
+          "cube_race": 9640,
+          "select_race": 9599
+        },
+        "phase_worker_seconds": {
+          "prefill0": 0.292192448,
+          "prefill1": 0.006083052,
+          "cube": 16.788148438,
+          "movegen": 0.545074935,
+          "vr_mean": 0.053101118,
+          "select": 187.451928053,
+          "vr_luck": 0.168773304,
+          "truncation": 0.0,
+          "other": 0.014090291,
+          "fan": 29.249761335,
+          "cube_race": 0.277572329,
+          "select_race": 12.14292302
+        }
+      },
+      {
+        "api": "post_move_analytics",
+        "position_id": "cube-money-purerace-01",
+        "elapsed_seconds": 0.759105037,
+        "cpu_seconds": 10.961000388000002,
+        "phase_visits": {
+          "prefill0": 21,
+          "prefill1": 21,
+          "cube": 0,
+          "movegen": 39184,
+          "vr_mean": 56184,
+          "select": 0,
+          "vr_luck": 19592,
+          "truncation": 0,
+          "other": 40777,
+          "fan": 17000,
+          "cube_race": 19889,
+          "select_race": 19592
+        },
+        "phase_worker_seconds": {
+          "prefill0": 0.03823858,
+          "prefill1": 0.003297198,
+          "cube": 0.0,
+          "movegen": 0.094270723,
+          "vr_mean": 0.016552083,
+          "select": 0.0,
+          "vr_luck": 0.006724964,
+          "truncation": 0.0,
+          "other": 0.004805626,
+          "fan": 0.427599632,
+          "cube_race": 1.440793017,
+          "select_race": 9.684838713
+        }
+      },
+      {
+        "api": "cube_action",
+        "position_id": "cube-match-priming-01",
+        "elapsed_seconds": 9.708227795,
+        "cpu_seconds": 137.952495128,
+        "phase_visits": {
+          "prefill0": 21,
+          "prefill1": 21,
+          "cube": 40097,
+          "movegen": 104078,
+          "vr_mean": 153525,
+          "select": 40097,
+          "vr_luck": 52039,
+          "truncation": 0,
+          "other": 105374,
+          "fan": 49447,
+          "cube_race": 11942,
+          "select_race": 11942
+        },
+        "phase_worker_seconds": {
+          "prefill0": 0.32791604,
+          "prefill1": 0.001349757,
+          "cube": 0.008857053,
+          "movegen": 0.437521855,
+          "vr_mean": 0.107537324,
+          "select": 115.635515123,
+          "vr_luck": 0.158312459,
+          "truncation": 0.0,
+          "other": 0.015742853,
+          "fan": 25.111764309,
+          "cube_race": 0.003198378,
+          "select_race": 8.054064583
+        }
+      },
+      {
+        "api": "checker_play",
+        "position_id": "checker-money-priming-01",
+        "elapsed_seconds": 22.127460924,
+        "cpu_seconds": 321.69570729500003,
+        "phase_visits": {
+          "prefill0": 42,
+          "prefill1": 42,
+          "cube": 59608,
+          "movegen": 157638,
+          "vr_mean": 231273,
+          "select": 58826,
+          "vr_luck": 78819,
+          "truncation": 0,
+          "other": 161187,
+          "fan": 73635,
+          "cube_race": 20168,
+          "select_race": 19993
+        },
+        "phase_worker_seconds": {
+          "prefill0": 0.400033964,
+          "prefill1": 0.031410284,
+          "cube": 25.673214846,
+          "movegen": 0.799498053,
+          "vr_mean": 0.092443023,
+          "select": 250.805921859,
+          "vr_luck": 0.208524948,
+          "truncation": 0.0,
+          "other": 0.029253767,
+          "fan": 32.628169046,
+          "cube_race": 1.506642981,
+          "select_race": 29.408347193
+        }
+      }
+    ]
+  }
+}

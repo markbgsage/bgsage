@@ -46,6 +46,8 @@ The timing runner measures 100 checker calls, 100 cube calls and 100 post-move c
 
 The CPU benchmark compares the original engine, the preceding release and the current engine at 1P–4P and 1T–3T. It reports wall time and accuracy against the same full-game rollout references on Linux and Windows. [All-level results](data/multi_ply_benchmark/experiments/truncated_pass2/results.md) · [Truncated-rollout experiments and reproduction](data/multi_ply_benchmark/experiments/truncated_pass2/README.md)
 
+On a 16-thread Linux Ryzen 7 9700X, full-game rollouts with 3P checker and cube decisions, variance reduction and 1,296 paths took 220.92 s across 15 public calls. The preceding engine took 262.00 s in the same run (1.19× speedup). The original control took 645.47 s on the same positions (2.92× cumulative). All checker rankings and cube recommendations agreed. [Full-rollout timings, inputs and complete outputs](data/multi_ply_benchmark/experiments/full_rollout_cpu/README.md)
+
 The [third CPU search study](data/multi_ply_benchmark/experiments/search_pass3/README.md)
 measures checker, cube and post-move latency against the preceding engine
 and checks the values against full-game rollouts.

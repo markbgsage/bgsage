@@ -1,0 +1,19 @@
+{
+  "archive": {
+    "path": "data/multi_ply_benchmark/experiments/truncated_pass2/qualified/linux/full_outputs.zip",
+    "sha256": "e70b43f96cdd45c257fdba0ba37ca24849810e7f5ba877bdb36b6bd968da4cea",
+    "bytes": 2894467
+  },
+  "member_arm": "candidate",
+  "control_extension": {
+    "path": "build/truncated_pass2/shipped/bgbot_cpp.cpython-314-x86_64-linux-gnu.so",
+    "sha256": "0cb634a173d7c0c5a3f70a3489de84b782a9fc2cbca559ed7c53284e5c0b8e11",
+    "bytes": 3235840
+  },
+  "selected_extension": {
+    "path": "build/truncated_pass2/full-wide-release/bgbot_cpp.cpython-314-x86_64-linux-gnu.so",
+    "sha256": "f0bee9eb474c6dc2941e96ff1087368983f968f4df175ecc69a0ddde9de45a10",
+    "bytes": 3240264
+  },
+  "timing_design": "The archived control and the new candidate ran in different sessions on the same machine."
+}
