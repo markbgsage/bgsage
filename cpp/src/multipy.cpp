@@ -429,51 +429,6 @@ int MultiPlyStrategy::parallel_thread_count(int plies) const {
 //     convention scores better on the benchmark ER). `pre_move_board` still
 //     drives the 1-ply base case.
 
-// Cubeless N-ply evaluation through the cubeful evaluation engine
-// (cube_eval.cpp): a single dead cube (cube_value=1, max_cube_value=1)
-// makes cl2cf bypass Janowski everywhere and interior picks reduce to
-// cubeless 1-ply equity, so the tree is exactly a cubeless N-ply
-// evaluation of flip(board); its accumulated probs, inverted, are the
-// post-move probs of `board`'s mover. Mirrors the dead-cube paths the
-// rollout trial loop uses for cubeless move selection and truncation.
-std::array<float, NUM_OUTPUTS> MultiPlyStrategy::cubeless_tree_probs(
-    const Board& board, const Board& pre_move_board,
-    int plies, int n_threads, bool deep_prefilter) const
-{
-    // Exact-DB short-circuit and 1-ply base case mirror the recursion's.
-    if (bearoff_db_ && bearoff_db_->is_bearoff(board)) {
-        auto probs = bearoff_db_->lookup_probs(board, /*post_move=*/true);
-        clamp_probs_to_board(probs, board);
-        return probs;
-    }
-    if (plies <= 1) {
-        auto probs = base_->evaluate_probs(board, pre_move_board);
-        clamp_probs_to_board(probs, board);
-        return probs;
-    }
-    GameResult result = check_game_over(board);
-    if (result != GameResult::NOT_OVER) {
-        return terminal_probs(result);
-    }
-
-    static const CubeInfo dead = [] {
-        CubeInfo c;
-        c.cube_value = 1;
-        c.max_cube_value = 1;
-        return c;
-    }();
-    float cf_unused;
-    std::array<float, NUM_OUTPUTS> tree_probs{};
-    cubeful_equity_nply_multi(
-        flip(board), &dead, 1, *base_, plies, &cf_unused,
-        MoveFilters::TINY, n_threads,
-        move_prefilter_ ? move_prefilter_.get() : nullptr,
-        /*fTop=*/false, &tree_probs, deep_prefilter, &pre_move_board);
-    auto probs = invert_probs(tree_probs);
-    clamp_probs_to_board(probs, board);
-    return probs;
-}
-
 std::array<float, NUM_OUTPUTS> MultiPlyStrategy::evaluate_probs_nply(
     const Board& board, const Board& pre_move_board, int plies) const
 {

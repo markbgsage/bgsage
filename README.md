@@ -12,18 +12,17 @@ positions, dice, cube actions and scores for custom research. See
 [SIMULATION.md](SIMULATION.md) for examples, policy customization and rules.
 
 It is a joint Python/C++ library that includes:
+
 * A neural network-based backgammon bot.
 * Neural network training framework using both self play and supervised learning, including training code, benchmark scoring, with customizable inputs. Uses your NVIDIA GPU (via CUDA) if you have one.
 * The post-training weights for several different versions of the bot engine.
-* Multi-ply and rollout calculations that efficiently parallelize on the CPU. Full technical specifications of the algorithms are in MULTI-PLY.md (N-ply search and the cubeful evaluation engine) and ROLLOUT.md (truncated and full rollouts with variance reduction).
+* CPU-parallel search and simulation. See the [multi-ply search specification](MULTI-PLY.md) and the [rollout specification](ROLLOUT.md).
 * Test framework.
 * VIBING.md: information on how to use Claude Code-style tools to interact with and change it, and how to submit changes back to us (the maintainers). Most of this code was written by Anthropic's Claude Code and OpenAI's Codex.
 
 ## What Evaluation Levels Does It Support?
 
-The library supports "multi-ply" lookahead calculations. 1-ply is the raw neural network evaluation (we follow the XG/eXtreme Gammon
-numbering convention; GNUbg calls this "0-ply"). Adding a ply makes the calculation roughly 20x slower. It efficiently parallelizes
-these multi-ply calculations on your CPUs.
+The engine follows the XG/eXtreme Gammon ply convention. A 1-ply evaluation uses the neural network, or the exact bearoff database when applicable. Each additional ply looks ahead one turn and averages over the 21 distinct dice rolls with their probabilities. The CPU cost depends on the position, the requested analytics and the number of threads.
 
 It supports truncated rollout calculations, where it simulates the game several turns into the future and then stops the simulation, using bot evaluations at the leaves.
 
@@ -33,12 +32,24 @@ Truncated and full rollouts both include variance reduction and efficiently para
 
 ## What are Its Interfaces?
 
-It offers both Python and C++ interfaces for:
-* Checker play analytics: given a list of checker positions, the two dice, and cube information, it returns you a list of information about the top possible moves, sorted in descending order of equity; for each it gives you equity and cubeless post-move probabilities. You can specify the evaluation level.
-* Post-move position analytics: given a list of checker positions and the cube information, it returns you cubeful equity, cubeless equity, and the cubeless probabilities - for a post-move position (right before the opponent's turn).
-* Cube action analytics: given a list of checker positions and the cube information, it returns you cubeful equity information about the three states (ND, D/T, and D/P), cubeless equity, and the cubeless probabilities - for a pre-roll position.
-* Game plan classification: given a list of checkers, it returns the optimal game plans of the player and the opponent.
+The engine exposes Python and C++ interfaces. In Python, import `BgBotAnalyzer` from `bgsage`, create an analyzer with `eval_level="3ply"` and reuse it across positions to keep the model loaded. Pass `parallel_threads` to set the worker count. Each analytics call takes one 26-element board and the cube and match context relative to the player whose perspective the board represents.
+
+* `checker_play(board, die1, die2, ...)` ranks legal moves by equity and gives post-move probabilities and the evaluation level for each move.
+* `post_move_analytics(board, ...)` returns cubeless probabilities, cubeless equity and cubeful equity for the player who just moved, before the opponent rolls.
+* `cube_action(board, ...)` returns the optimal cube action, no-double, double/take and double/pass equities, and cubeless probabilities and equity for the player on roll.
+* Game plan classification identifies both players' game plans.
 * Game utilities (flip a board, etc).
+
+## Benchmarking 3-ply analytics
+
+The timing runner measures 100 checker calls, 100 cube calls and 100 post-move calls. Each 100-position set is split evenly between unlimited play and five-point matches, with 20 positions per game plan. The cube and post-move calls use the same physical positions from opposite players' perspectives. The runner saves every returned field and reports timings by API, game plan and play format. [Positions and commands](data/multi_ply_benchmark/README.md)
+
+On the benchmarked 16-thread Ryzen 7 9700X under Windows, the original and optimized builds took 10.92 s and 3.96 s respectively for the 300 calls. Every reported value and decision matched in the paired Windows builds. The report also compares both versions with full-game rollout references and gives separate Linux CPU measurements. [Timings and accuracy](data/multi_ply_benchmark/experiments/README.md)
+
+The [1T, 2T and 3T timing study](data/multi_ply_benchmark/experiments/truncated_16t/README.md)
+compares all three public truncated-rollout presets with the same fixed
+positions and full-game references. It includes the full analytics for
+every timed call, per-position wall times and rollout standard errors.
 
 ## How Does it Compare to XG?
 

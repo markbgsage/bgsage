@@ -1,0 +1,2731 @@
+{
+  "checker_recorded": [
+    "post-move board",
+    "cubeful equity",
+    "cubeless equity",
+    "five cubeless probabilities",
+    "per-move eval_level",
+    "cubeless equity std_error"
+  ],
+  "cube_recorded": [
+    "five cubeless probabilities",
+    "equity_nd",
+    "equity_dt",
+    "equity_dp",
+    "should_double_ref",
+    "should_take_ref",
+    "optimal_action",
+    "is_beaver",
+    "eval_level"
+  ],
+  "historical_generator": {
+    "default_model_at_both_revisions": "stage9",
+    "full_rollout": {
+      "base_seed": 42,
+      "checker_ply": 3,
+      "cube_ply": 3,
+      "max_batches": 16,
+      "paths_per_batch": 1296,
+      "target_equity_se": 0.00255,
+      "truncation_depth": 0,
+      "variance_reduction": true
+    },
+    "source_revisions": {
+      "match": [
+        "4e8cd04",
+        "2026-06-27"
+      ],
+      "money": [
+        "1796482",
+        "2026-06-24"
+      ]
+    },
+    "unrecorded_per_position": [
+      "weights_hash",
+      "binary_hash",
+      "trial_seed",
+      "batch_count"
+    ]
+  },
+  "post_move_support": {
+    "away_scores": "swap",
+    "beaver_and_cube_limit": "not accepted by the post-move API",
+    "board": "flip source board",
+    "cube_owner": "swap player and opponent",
+    "cube_value_crawford_jacoby": "preserve",
+    "cubeful_equity_proxy": "negative of the source optimal branch equity",
+    "probabilities": [
+      "1-win",
+      "gammon_loss",
+      "backgammon_loss",
+      "gammon_win",
+      "backgammon_win"
+    ],
+    "separately_recorded_post_move_call": false
+  },
+  "rows_archive_sha256": "71bbb842afcb19419878947acfec61334a5110c8495d2bd27dfed2c453539d0c",
+  "rows_jsonl_sha256": "a161bc03239654c419096de2b15ab8fed05c33abc5bdb5b166f1374ea9810fbe",
+  "source_kind": "native Sage adaptive reference",
+  "source_modes": {
+    "match": {
+      "fixed": {
+        "checker_play": {
+          "full_rollout_coverage": {
+            "all": 2,
+            "best_move_rolled": 18,
+            "none": 32,
+            "partial": 16
+          },
+          "move_eval_level_by_root_tier": {
+            "3P": {
+              "1-ply": 165,
+              "3-ply": 42
+            },
+            "3T": {
+              "1-ply": 132,
+              "2-ply": 75,
+              "Rollout": 47
+            },
+            "rollout": {
+              "1-ply": 110,
+              "2-ply": 88,
+              "Rollout": 102
+            }
+          },
+          "position_tiers": {
+            "3P": 17,
+            "3T": 15,
+            "rollout": 18
+          },
+          "positions": [
+            {
+              "decision_index": 7692,
+              "eval_level_counts": {
+                "1-ply": 33,
+                "3-ply": 2
+              },
+              "full_rollout_ranks": [],
+              "id": "checker-match-attacking-01",
+              "key": "755863579f56c5988ae21600c28bf961",
+              "legal_moves": 35,
+              "tier": "3P"
+            },
+            {
+              "decision_index": 1256,
+              "eval_level_counts": {
+                "1-ply": 21,
+                "3-ply": 5
+              },
+              "full_rollout_ranks": [],
+              "id": "checker-match-attacking-02",
+              "key": "62ecab1d137cc204e6817fa2ed04151f",
+              "legal_moves": 26,
+              "tier": "3P"
+            },
+            {
+              "decision_index": 6340,
+              "eval_level_counts": {
+                "3-ply": 2
+              },
+              "full_rollout_ranks": [],
+              "id": "checker-match-attacking-03",
+              "key": "34634fd58374243c22664f6d2912894e",
+              "legal_moves": 2,
+              "tier": "3P"
+            },
+            {
+              "decision_index": 2404,
+              "eval_level_counts": {
+                "1-ply": 22,
+                "2-ply": 6,
+                "Rollout": 3
+              },
+              "full_rollout_ranks": [
+                1,
+                2,
+                3
+              ],
+              "id": "checker-match-attacking-04",
+              "key": "c00db0e0d36d5f89eb844efde8052d67",
+              "legal_moves": 31,
+              "tier": "rollout"
+            },
+            {
+              "decision_index": 2408,
+              "eval_level_counts": {
+                "1-ply": 8,
+                "2-ply": 13,
+                "Rollout": 5
+              },
+              "full_rollout_ranks": [],
+              "id": "checker-match-attacking-05",
+              "key": "79175c62966e890b45d3b6b5c4ce6edf",
+              "legal_moves": 26,
+              "tier": "3T"
+            },
+            {
+              "decision_index": 2812,
+              "eval_level_counts": {
+                "1-ply": 2,
+                "3-ply": 2
+              },
+              "full_rollout_ranks": [],
+              "id": "checker-match-attacking-06",
+              "key": "0421421cf47b1aec463b1963f0ee196e",
+              "legal_moves": 4,
+              "tier": "3P"
+            },
+            {
+              "decision_index": 3429,
+              "eval_level_counts": {
+                "1-ply": 10,
+                "2-ply": 15,
+                "Rollout": 5
+              },
+              "full_rollout_ranks": [],
+              "id": "checker-match-attacking-07",
+              "key": "9bbcd2b52d18124aa81e2a7c2aa4f2d8",
+              "legal_moves": 30,
+              "tier": "3T"
+            },
+            {
+              "decision_index": 13830,
+              "eval_level_counts": {
+                "1-ply": 16,
+                "2-ply": 2,
+                "Rollout": 2
+              },
+              "full_rollout_ranks": [],
+              "id": "checker-match-attacking-08",
+              "key": "d8d9e597b7f588ead76ee4a09ddd2f3a",
+              "legal_moves": 20,
+              "tier": "3T"
+            },
+            {
+              "decision_index": 7909,
+              "eval_level_counts": {
+                "1-ply": 12,
+                "3-ply": 3
+              },
+              "full_rollout_ranks": [],
+              "id": "checker-match-attacking-09",
+              "key": "56d22d5cc1ca7f193e2aa96114370433",
+              "legal_moves": 15,
+              "tier": "3P"
+            },
+            {
+              "decision_index": 867,
+              "eval_level_counts": {
+                "1-ply": 11,
+                "3-ply": 3
+              },
+              "full_rollout_ranks": [],
+              "id": "checker-match-attacking-10",
+              "key": "22f21b79747d0c0f179d45566d90d12e",
+              "legal_moves": 14,
+              "tier": "3P"
+            },
+            {
+              "decision_index": 13887,
+              "eval_level_counts": {
+                "1-ply": 7,
+                "2-ply": 12,
+                "Rollout": 5
+              },
+              "full_rollout_ranks": [],
+              "id": "checker-match-priming-01",
+              "key": "0230949623b5192674b6706e8715f546",
+              "legal_moves": 24,
+              "tier": "3T"
+            },
+            {
+              "decision_index": 3216,
+              "eval_level_counts": {
+                "1-ply": 8,
+                "2-ply": 2,
+                "Rollout": 4
+              },
+              "full_rollout_ranks": [],
+              "id": "checker-match-priming-02",
+              "key": "69891b2a0cdc1bbb0d467dd8440472d6",
+              "legal_moves": 14,
+              "tier": "3T"
+            },
+            {
+              "decision_index": 136,
+              "eval_level_counts": {
+                "1-ply": 26,
+                "2-ply": 2,
+                "Rollout": 2
+              },
+              "full_rollout_ranks": [],
+              "id": "checker-match-priming-03",
+              "key": "59917c28934462da51fae33080dda48d",
+              "legal_moves": 30,
+              "tier": "3T"
+            },
+            {
+              "decision_index": 7836,
+              "eval_level_counts": {
+                "1-ply": 2,
+                "3-ply": 2
+              },
+              "full_rollout_ranks": [],
+              "id": "checker-match-priming-04",
+              "key": "4e997090924747f5800140152b1217b7",
+              "legal_moves": 4,
+              "tier": "3P"
+            },
+            {
+              "decision_index": 7016,
+              "eval_level_counts": {
+                "1-ply": 2,
+                "3-ply": 2
+              },
+              "full_rollout_ranks": [],
+              "id": "checker-match-priming-05",
+              "key": "181f8877336b26be366ce83881169b6d",
+              "legal_moves": 4,
+              "tier": "3P"
+            },
+            {
+              "decision_index": 6915,
+              "eval_level_counts": {
+                "1-ply": 15,
+                "Rollout": 2
+              },
+              "full_rollout_ranks": [],
+              "id": "checker-match-priming-06",
+              "key": "31375cce62d9db48ecc9ed7e10747138",
+              "legal_moves": 17,
+              "tier": "3T"
+            },
+            {
+              "decision_index": 16316,
+              "eval_level_counts": {
+                "1-ply": 58,
+                "2-ply": 5,
+                "Rollout": 5
+              },
+              "full_rollout_ranks": [
+                1,
+                2,
+                3,
+                4,
+                5
+              ],
+              "id": "checker-match-priming-07",
+              "key": "e28797ddc286f558313ecd348a8cdc2e",
+              "legal_moves": 68,
+              "tier": "rollout"
+            },
+            {
+              "decision_index": 3679,
+              "eval_level_counts": {
+                "1-ply": 8,
+                "2-ply": 1,
+                "Rollout": 5
+              },
+              "full_rollout_ranks": [
+                1,
+                2,
+                3,
+                4,
+                5
+              ],
+              "id": "checker-match-priming-08",
+              "key": "208e20d04a72e859755c0c3d1948911e",
+              "legal_moves": 14,
+              "tier": "rollout"
+            },
+            {
+              "decision_index": 17550,
+              "eval_level_counts": {
+                "1-ply": 6,
+                "Rollout": 4
+              },
+              "full_rollout_ranks": [
+                1,
+                2,
+                3,
+                4
+              ],
+              "id": "checker-match-priming-09",
+              "key": "5483887fe7905ee93f73e492e1e07c6f",
+              "legal_moves": 10,
+              "tier": "rollout"
+            },
+            {
+              "decision_index": 5582,
+              "eval_level_counts": {
+                "1-ply": 9,
+                "3-ply": 3
+              },
+              "full_rollout_ranks": [],
+              "id": "checker-match-priming-10",
+              "key": "74c5f84bc03377f16253a20f0f433203",
+              "legal_moves": 12,
+              "tier": "3P"
+            },
+            {
+              "decision_index": 729,
+              "eval_level_counts": {
+                "2-ply": 8,
+                "Rollout": 8
+              },
+              "full_rollout_ranks": [
+                1,
+                2,
+                4,
+                5,
+                6,
+                7,
+                11,
+                13
+              ],
+              "id": "checker-match-anchoring-01",
+              "key": "851aa55063443db66ebf17d7f17dd673",
+              "legal_moves": 16,
+              "tier": "rollout"
+            },
+            {
+              "decision_index": 11044,
+              "eval_level_counts": {
+                "1-ply": 5,
+                "2-ply": 5,
+                "Rollout": 5
+              },
+              "full_rollout_ranks": [
+                1,
+                2,
+                3,
+                4,
+                5
+              ],
+              "id": "checker-match-anchoring-02",
+              "key": "58b0a9ae053c278217b9e391799dad0c",
+              "legal_moves": 15,
+              "tier": "rollout"
+            },
+            {
+              "decision_index": 844,
+              "eval_level_counts": {
+                "2-ply": 1,
+                "Rollout": 3
+              },
+              "full_rollout_ranks": [
+                1,
+                2,
+                3
+              ],
+              "id": "checker-match-anchoring-03",
+              "key": "7c40778abe5422ab5976b5d117ca8e16",
+              "legal_moves": 4,
+              "tier": "rollout"
+            },
+            {
+              "decision_index": 4912,
+              "eval_level_counts": {
+                "1-ply": 2,
+                "2-ply": 4,
+                "Rollout": 4
+              },
+              "full_rollout_ranks": [],
+              "id": "checker-match-anchoring-04",
+              "key": "4628017f71ca34c869f3c8c98b344ab3",
+              "legal_moves": 10,
+              "tier": "3T"
+            },
+            {
+              "decision_index": 1337,
+              "eval_level_counts": {
+                "2-ply": 15,
+                "Rollout": 5
+              },
+              "full_rollout_ranks": [
+                1,
+                2,
+                3,
+                5,
+                6
+              ],
+              "id": "checker-match-anchoring-05",
+              "key": "fe97a4357d95d068dbcc116cdd372a4b",
+              "legal_moves": 20,
+              "tier": "rollout"
+            },
+            {
+              "decision_index": 17189,
+              "eval_level_counts": {
+                "1-ply": 2,
+                "2-ply": 6,
+                "Rollout": 7
+              },
+              "full_rollout_ranks": [
+                1,
+                3,
+                4,
+                5,
+                7,
+                8,
+                11
+              ],
+              "id": "checker-match-anchoring-06",
+              "key": "d693f1c1e2499e8b7ab044922ed65623",
+              "legal_moves": 15,
+              "tier": "rollout"
+            },
+            {
+              "decision_index": 5169,
+              "eval_level_counts": {
+                "1-ply": 22,
+                "3-ply": 4
+              },
+              "full_rollout_ranks": [],
+              "id": "checker-match-anchoring-07",
+              "key": "1a4ff4b08c7224a6f0d96e219e3bb6d4",
+              "legal_moves": 26,
+              "tier": "3P"
+            },
+            {
+              "decision_index": 11260,
+              "eval_level_counts": {
+                "1-ply": 25,
+                "2-ply": 8,
+                "Rollout": 2
+              },
+              "full_rollout_ranks": [],
+              "id": "checker-match-anchoring-08",
+              "key": "590f814018b4c82a3c723f8b51b19702",
+              "legal_moves": 35,
+              "tier": "3T"
+            },
+            {
+              "decision_index": 6602,
+              "eval_level_counts": {
+                "1-ply": 1,
+                "2-ply": 8,
+                "Rollout": 5
+              },
+              "full_rollout_ranks": [
+                1,
+                2,
+                3,
+                5,
+                7
+              ],
+              "id": "checker-match-anchoring-09",
+              "key": "e220f841604411a758953b70c31112db",
+              "legal_moves": 14,
+              "tier": "rollout"
+            },
+            {
+              "decision_index": 5416,
+              "eval_level_counts": {
+                "1-ply": 1,
+                "2-ply": 3,
+                "Rollout": 2
+              },
+              "full_rollout_ranks": [
+                1,
+                2
+              ],
+              "id": "checker-match-anchoring-10",
+              "key": "ce4e390210d15b46d0472752bdd72313",
+              "legal_moves": 6,
+              "tier": "rollout"
+            },
+            {
+              "decision_index": 3396,
+              "eval_level_counts": {
+                "3-ply": 2
+              },
+              "full_rollout_ranks": [],
+              "id": "checker-match-racing-01",
+              "key": "5f81523c7d1727457becd1cb313f54bf",
+              "legal_moves": 2,
+              "tier": "3P"
+            },
+            {
+              "decision_index": 1801,
+              "eval_level_counts": {
+                "1-ply": 32,
+                "3-ply": 2
+              },
+              "full_rollout_ranks": [],
+              "id": "checker-match-racing-02",
+              "key": "9e5c67ef48252d093eb2000e68abbea7",
+              "legal_moves": 34,
+              "tier": "3P"
+            },
+            {
+              "decision_index": 1145,
+              "eval_level_counts": {
+                "1-ply": 6,
+                "Rollout": 2
+              },
+              "full_rollout_ranks": [],
+              "id": "checker-match-racing-03",
+              "key": "260a29fd3cd41cb990138b21b9bc3e69",
+              "legal_moves": 8,
+              "tier": "3T"
+            },
+            {
+              "decision_index": 1965,
+              "eval_level_counts": {
+                "3-ply": 2
+              },
+              "full_rollout_ranks": [],
+              "id": "checker-match-racing-04",
+              "key": "eb4d8c65870faa5d0c6e7d49bc814351",
+              "legal_moves": 2,
+              "tier": "3P"
+            },
+            {
+              "decision_index": 16130,
+              "eval_level_counts": {
+                "1-ply": 3,
+                "3-ply": 2
+              },
+              "full_rollout_ranks": [],
+              "id": "checker-match-racing-05",
+              "key": "77ef97782adea68fa3ae4005904c6fae",
+              "legal_moves": 5,
+              "tier": "3P"
+            },
+            {
+              "decision_index": 15227,
+              "eval_level_counts": {
+                "1-ply": 8,
+                "3-ply": 2
+              },
+              "full_rollout_ranks": [],
+              "id": "checker-match-racing-06",
+              "key": "8995312d0989b84b037db6328fc070cf",
+              "legal_moves": 10,
+              "tier": "3P"
+            },
+            {
+              "decision_index": 16196,
+              "eval_level_counts": {
+                "1-ply": 2,
+                "2-ply": 1,
+                "Rollout": 2
+              },
+              "full_rollout_ranks": [
+                1,
+                2
+              ],
+              "id": "checker-match-racing-07",
+              "key": "ae9dd8910e3f62836723cdc751d6439e",
+              "legal_moves": 5,
+              "tier": "rollout"
+            },
+            {
+              "decision_index": 7637,
+              "eval_level_counts": {
+                "1-ply": 5,
+                "2-ply": 2,
+                "Rollout": 3
+              },
+              "full_rollout_ranks": [],
+              "id": "checker-match-racing-08",
+              "key": "68268d8065f6c643200eb00e46274ac4",
+              "legal_moves": 10,
+              "tier": "3T"
+            },
+            {
+              "decision_index": 16807,
+              "eval_level_counts": {
+                "1-ply": 5,
+                "3-ply": 2
+              },
+              "full_rollout_ranks": [],
+              "id": "checker-match-racing-09",
+              "key": "9aa9eec1f89aa5695f5e03f6dce9a4ba",
+              "legal_moves": 7,
+              "tier": "3P"
+            },
+            {
+              "decision_index": 4839,
+              "eval_level_counts": {
+                "1-ply": 2,
+                "2-ply": 7,
+                "Rollout": 5
+              },
+              "full_rollout_ranks": [
+                1,
+                2,
+                3,
+                4,
+                12
+              ],
+              "id": "checker-match-racing-10",
+              "key": "d548b1987b3cc2c98b583a295d432f37",
+              "legal_moves": 14,
+              "tier": "rollout"
+            },
+            {
+              "decision_index": 12329,
+              "eval_level_counts": {
+                "Rollout": 2
+              },
+              "full_rollout_ranks": [],
+              "id": "checker-match-purerace-01",
+              "key": "e615f3905798c59616eeb400ffd4d5e3",
+              "legal_moves": 2,
+              "tier": "3T"
+            },
+            {
+              "decision_index": 319,
+              "eval_level_counts": {
+                "Rollout": 4
+              },
+              "full_rollout_ranks": [
+                1,
+                2,
+                3,
+                4
+              ],
+              "id": "checker-match-purerace-02",
+              "key": "b3a3e0ad5a233d090149157556eddf0e",
+              "legal_moves": 4,
+              "tier": "rollout"
+            },
+            {
+              "decision_index": 7482,
+              "eval_level_counts": {
+                "2-ply": 9,
+                "Rollout": 7
+              },
+              "full_rollout_ranks": [
+                1,
+                2,
+                8,
+                11,
+                12,
+                15,
+                16
+              ],
+              "id": "checker-match-purerace-03",
+              "key": "a45b69c37d74976e2cf63733cf5b9934",
+              "legal_moves": 16,
+              "tier": "rollout"
+            },
+            {
+              "decision_index": 9238,
+              "eval_level_counts": {
+                "1-ply": 3,
+                "3-ply": 2
+              },
+              "full_rollout_ranks": [],
+              "id": "checker-match-purerace-04",
+              "key": "28b18818640b00f49aaa705599ce6475",
+              "legal_moves": 5,
+              "tier": "3P"
+            },
+            {
+              "decision_index": 7249,
+              "eval_level_counts": {
+                "2-ply": 1,
+                "Rollout": 2
+              },
+              "full_rollout_ranks": [],
+              "id": "checker-match-purerace-05",
+              "key": "de18bb494ee3a34fff4091dee6b51b0b",
+              "legal_moves": 3,
+              "tier": "3T"
+            },
+            {
+              "decision_index": 3667,
+              "eval_level_counts": {
+                "2-ply": 12,
+                "Rollout": 22
+              },
+              "full_rollout_ranks": [
+                1,
+                4,
+                5,
+                6,
+                7,
+                8,
+                9,
+                11,
+                14,
+                17,
+                20,
+                22,
+                23,
+                24,
+                25,
+                26,
+                27,
+                28,
+                29,
+                31,
+                32,
+                34
+              ],
+              "id": "checker-match-purerace-06",
+              "key": "5fa4c3f3d59ae20622230fa9a6449ffc",
+              "legal_moves": 34,
+              "tier": "rollout"
+            },
+            {
+              "decision_index": 15543,
+              "eval_level_counts": {
+                "1-ply": 1,
+                "2-ply": 14,
+                "Rollout": 5
+              },
+              "full_rollout_ranks": [],
+              "id": "checker-match-purerace-07",
+              "key": "bde82148c6f15f522a3edd782830802a",
+              "legal_moves": 20,
+              "tier": "3T"
+            },
+            {
+              "decision_index": 14208,
+              "eval_level_counts": {
+                "Rollout": 5
+              },
+              "full_rollout_ranks": [
+                1,
+                2,
+                3,
+                4,
+                5
+              ],
+              "id": "checker-match-purerace-08",
+              "key": "1ae476aebe83e52acf26d8e6c69dd981",
+              "legal_moves": 5,
+              "tier": "rollout"
+            },
+            {
+              "decision_index": 5388,
+              "eval_level_counts": {
+                "1-ply": 3,
+                "Rollout": 2
+              },
+              "full_rollout_ranks": [],
+              "id": "checker-match-purerace-09",
+              "key": "de9cf23cd3ce7bfe63b03f65ea277004",
+              "legal_moves": 5,
+              "tier": "3T"
+            },
+            {
+              "decision_index": 842,
+              "eval_level_counts": {
+                "1-ply": 3,
+                "2-ply": 1,
+                "Rollout": 5
+              },
+              "full_rollout_ranks": [
+                1,
+                2,
+                3,
+                4,
+                5
+              ],
+              "id": "checker-match-purerace-10",
+              "key": "a24e261ce97acf7c109c93e01d5b04fb",
+              "legal_moves": 9,
+              "tier": "rollout"
+            }
+          ]
+        },
+        "cube_action": {
+          "position_tiers": {
+            "3P": 37,
+            "3T": 9,
+            "rollout": 4
+          },
+          "positions": [
+            {
+              "decision_index": 8572,
+              "has_double_decision": true,
+              "has_take_decision": false,
+              "id": "cube-match-attacking-01",
+              "key": "a73f8ef243ca23a32a7de73aa566e9d2",
+              "optimal_action": "No Double",
+              "tier": "3P"
+            },
+            {
+              "decision_index": 7373,
+              "has_double_decision": true,
+              "has_take_decision": false,
+              "id": "cube-match-attacking-02",
+              "key": "a4a7a27f78f26915585cbc60c0969a2e",
+              "optimal_action": "No Double",
+              "tier": "3T"
+            },
+            {
+              "decision_index": 14999,
+              "has_double_decision": true,
+              "has_take_decision": false,
+              "id": "cube-match-attacking-03",
+              "key": "cb19ee6bda69a39c1c0ae85937de0d1f",
+              "optimal_action": "No Double",
+              "tier": "3P"
+            },
+            {
+              "decision_index": 17057,
+              "has_double_decision": true,
+              "has_take_decision": false,
+              "id": "cube-match-attacking-04",
+              "key": "66743298047538fe08b7d663be6625ac",
+              "optimal_action": "No Double",
+              "tier": "3P"
+            },
+            {
+              "decision_index": 2299,
+              "has_double_decision": true,
+              "has_take_decision": true,
+              "id": "cube-match-attacking-05",
+              "key": "6c9cc8a1f3dc9de7eb9c39e71e5d8872",
+              "optimal_action": "Double/Take",
+              "tier": "3T"
+            },
+            {
+              "decision_index": 8553,
+              "has_double_decision": true,
+              "has_take_decision": false,
+              "id": "cube-match-attacking-06",
+              "key": "6b84f606f74360381c27be2bd4c0fa9a",
+              "optimal_action": "No Double",
+              "tier": "3P"
+            },
+            {
+              "decision_index": 375,
+              "has_double_decision": false,
+              "has_take_decision": true,
+              "id": "cube-match-attacking-07",
+              "key": "5a641a9ee8caa0ae37fcb7877b715912",
+              "optimal_action": "Double/Take",
+              "tier": "3P"
+            },
+            {
+              "decision_index": 2177,
+              "has_double_decision": true,
+              "has_take_decision": false,
+              "id": "cube-match-attacking-08",
+              "key": "5c65c58fecaf32157a9244054b6c9b0f",
+              "optimal_action": "No Double",
+              "tier": "3P"
+            },
+            {
+              "decision_index": 5441,
+              "has_double_decision": true,
+              "has_take_decision": false,
+              "id": "cube-match-attacking-09",
+              "key": "f430558ed8edaed8464fba9ad52a745f",
+              "optimal_action": "No Double",
+              "tier": "3P"
+            },
+            {
+              "decision_index": 2198,
+              "has_double_decision": true,
+              "has_take_decision": false,
+              "id": "cube-match-attacking-10",
+              "key": "3dabcc4bf7bf872517a039b398ae238e",
+              "optimal_action": "No Double",
+              "tier": "3T"
+            },
+            {
+              "decision_index": 16877,
+              "has_double_decision": true,
+              "has_take_decision": false,
+              "id": "cube-match-priming-01",
+              "key": "1d8b5f84dfb9fdb699466d679800ad0e",
+              "optimal_action": "No Double",
+              "tier": "3P"
+            },
+            {
+              "decision_index": 2254,
+              "has_double_decision": true,
+              "has_take_decision": false,
+              "id": "cube-match-priming-02",
+              "key": "313da39736a061f1d2c35de59a2db689",
+              "optimal_action": "No Double",
+              "tier": "3P"
+            },
+            {
+              "decision_index": 16140,
+              "has_double_decision": true,
+              "has_take_decision": true,
+              "id": "cube-match-priming-03",
+              "key": "0a1e66373bce3eec8000e0a2e4a0ba1a",
+              "optimal_action": "Double/Pass",
+              "tier": "3P"
+            },
+            {
+              "decision_index": 11945,
+              "has_double_decision": true,
+              "has_take_decision": true,
+              "id": "cube-match-priming-04",
+              "key": "d52eae7ea0d55475243d298233d8fd59",
+              "optimal_action": "Double/Take",
+              "tier": "3T"
+            },
+            {
+              "decision_index": 3476,
+              "has_double_decision": true,
+              "has_take_decision": false,
+              "id": "cube-match-priming-05",
+              "key": "68ed33bc5d26112391489e94d455f019",
+              "optimal_action": "No Double",
+              "tier": "3P"
+            },
+            {
+              "decision_index": 812,
+              "has_double_decision": true,
+              "has_take_decision": false,
+              "id": "cube-match-priming-06",
+              "key": "cc52e66b56d5dfad291b5bde37084bc0",
+              "optimal_action": "No Double",
+              "tier": "3P"
+            },
+            {
+              "decision_index": 7178,
+              "has_double_decision": true,
+              "has_take_decision": false,
+              "id": "cube-match-priming-07",
+              "key": "c0ca323d27648fc3ae711adbcbd2ae41",
+              "optimal_action": "No Double",
+              "tier": "3T"
+            },
+            {
+              "decision_index": 17466,
+              "has_double_decision": true,
+              "has_take_decision": false,
+              "id": "cube-match-priming-08",
+              "key": "677ae361b58743c9e8cc357fe7fbb973",
+              "optimal_action": "No Double",
+              "tier": "3P"
+            },
+            {
+              "decision_index": 8911,
+              "has_double_decision": true,
+              "has_take_decision": true,
+              "id": "cube-match-priming-09",
+              "key": "dc4a6293b941ee96e0385402ccadcf29",
+              "optimal_action": "Double/Take",
+              "tier": "rollout"
+            },
+            {
+              "decision_index": 4152,
+              "has_double_decision": true,
+              "has_take_decision": false,
+              "id": "cube-match-priming-10",
+              "key": "7545d5f8caa1f8fbcaf03855d8b7aa5b",
+              "optimal_action": "No Double",
+              "tier": "3T"
+            },
+            {
+              "decision_index": 13640,
+              "has_double_decision": true,
+              "has_take_decision": false,
+              "id": "cube-match-anchoring-01",
+              "key": "3a57d536e37a454c783dc0743d64cd0e",
+              "optimal_action": "No Double",
+              "tier": "3P"
+            },
+            {
+              "decision_index": 4649,
+              "has_double_decision": true,
+              "has_take_decision": false,
+              "id": "cube-match-anchoring-02",
+              "key": "26cca455cb674712708146689090a806",
+              "optimal_action": "No Double",
+              "tier": "rollout"
+            },
+            {
+              "decision_index": 9118,
+              "has_double_decision": true,
+              "has_take_decision": false,
+              "id": "cube-match-anchoring-03",
+              "key": "7a847c509d0aa36f7baa71db66185091",
+              "optimal_action": "No Double",
+              "tier": "3P"
+            },
+            {
+              "decision_index": 14093,
+              "has_double_decision": false,
+              "has_take_decision": true,
+              "id": "cube-match-anchoring-04",
+              "key": "f95ef26c6e988b5d69f17c40e3b18fd0",
+              "optimal_action": "Double/Take",
+              "tier": "3P"
+            },
+            {
+              "decision_index": 13622,
+              "has_double_decision": true,
+              "has_take_decision": false,
+              "id": "cube-match-anchoring-05",
+              "key": "89f2c67c88bbd8d13bbd167ee3a41a48",
+              "optimal_action": "No Double",
+              "tier": "3P"
+            },
+            {
+              "decision_index": 699,
+              "has_double_decision": true,
+              "has_take_decision": false,
+              "id": "cube-match-anchoring-06",
+              "key": "4911a6dcece9675096ef643315d5308d",
+              "optimal_action": "No Double",
+              "tier": "3P"
+            },
+            {
+              "decision_index": 13018,
+              "has_double_decision": true,
+              "has_take_decision": false,
+              "id": "cube-match-anchoring-07",
+              "key": "508bedfa7815362417724e64abe35288",
+              "optimal_action": "No Double",
+              "tier": "3P"
+            },
+            {
+              "decision_index": 11311,
+              "has_double_decision": true,
+              "has_take_decision": false,
+              "id": "cube-match-anchoring-08",
+              "key": "de73fa776865f8e09eeac965f001bb09",
+              "optimal_action": "No Double",
+              "tier": "3P"
+            },
+            {
+              "decision_index": 5182,
+              "has_double_decision": true,
+              "has_take_decision": false,
+              "id": "cube-match-anchoring-09",
+              "key": "121c71d979107d43a6930e719a342229",
+              "optimal_action": "No Double",
+              "tier": "3P"
+            },
+            {
+              "decision_index": 13141,
+              "has_double_decision": true,
+              "has_take_decision": false,
+              "id": "cube-match-anchoring-10",
+              "key": "936c685c98cc16a098e6512377d88718",
+              "optimal_action": "No Double",
+              "tier": "3P"
+            },
+            {
+              "decision_index": 11300,
+              "has_double_decision": true,
+              "has_take_decision": false,
+              "id": "cube-match-racing-01",
+              "key": "e19660bee0597719c04d84d82e5e5cf1",
+              "optimal_action": "No Double",
+              "tier": "3P"
+            },
+            {
+              "decision_index": 7658,
+              "has_double_decision": true,
+              "has_take_decision": false,
+              "id": "cube-match-racing-02",
+              "key": "7a70daaa6045e44a0aaaf91e903c981a",
+              "optimal_action": "No Double",
+              "tier": "3P"
+            },
+            {
+              "decision_index": 6760,
+              "has_double_decision": true,
+              "has_take_decision": false,
+              "id": "cube-match-racing-03",
+              "key": "dbc684cf9b4f2fbec84f004d4c4cd4f8",
+              "optimal_action": "No Double",
+              "tier": "3P"
+            },
+            {
+              "decision_index": 2512,
+              "has_double_decision": true,
+              "has_take_decision": true,
+              "id": "cube-match-racing-04",
+              "key": "2c31da6629685f0952a1ee190054d29f",
+              "optimal_action": "Double/Pass",
+              "tier": "3P"
+            },
+            {
+              "decision_index": 13083,
+              "has_double_decision": true,
+              "has_take_decision": false,
+              "id": "cube-match-racing-05",
+              "key": "561337865a7a5675038f00afe1896340",
+              "optimal_action": "No Double",
+              "tier": "3P"
+            },
+            {
+              "decision_index": 6959,
+              "has_double_decision": true,
+              "has_take_decision": true,
+              "id": "cube-match-racing-06",
+              "key": "85d319bd9960144907fd4ed408b151c1",
+              "optimal_action": "Double/Take",
+              "tier": "rollout"
+            },
+            {
+              "decision_index": 4089,
+              "has_double_decision": true,
+              "has_take_decision": true,
+              "id": "cube-match-racing-07",
+              "key": "301303a5adeabf8077a222f47aad61b7",
+              "optimal_action": "No Double",
+              "tier": "3T"
+            },
+            {
+              "decision_index": 15606,
+              "has_double_decision": true,
+              "has_take_decision": false,
+              "id": "cube-match-racing-08",
+              "key": "5beb87cddeaf89951bdae04b10b83196",
+              "optimal_action": "No Double",
+              "tier": "3P"
+            },
+            {
+              "decision_index": 1840,
+              "has_double_decision": true,
+              "has_take_decision": false,
+              "id": "cube-match-racing-09",
+              "key": "44a194b500535a59b13a611f674c856f",
+              "optimal_action": "No Double",
+              "tier": "3P"
+            },
+            {
+              "decision_index": 14660,
+              "has_double_decision": true,
+              "has_take_decision": false,
+              "id": "cube-match-racing-10",
+              "key": "501f5d877aff617277a563114ef31226",
+              "optimal_action": "No Double",
+              "tier": "3P"
+            },
+            {
+              "decision_index": 7433,
+              "has_double_decision": true,
+              "has_take_decision": false,
+              "id": "cube-match-purerace-01",
+              "key": "77758cad2bf50cd38a08146c465cf491",
+              "optimal_action": "No Double",
+              "tier": "3P"
+            },
+            {
+              "decision_index": 10034,
+              "has_double_decision": true,
+              "has_take_decision": false,
+              "id": "cube-match-purerace-02",
+              "key": "f52fbe3bded7ef12fc3834af5730f8c8",
+              "optimal_action": "No Double",
+              "tier": "3P"
+            },
+            {
+              "decision_index": 12165,
+              "has_double_decision": true,
+              "has_take_decision": false,
+              "id": "cube-match-purerace-03",
+              "key": "6f4cf016292e25480284d6baaef67295",
+              "optimal_action": "No Double",
+              "tier": "3T"
+            },
+            {
+              "decision_index": 1623,
+              "has_double_decision": true,
+              "has_take_decision": false,
+              "id": "cube-match-purerace-04",
+              "key": "76545188c4148dc6a7361a40b8d4973c",
+              "optimal_action": "No Double",
+              "tier": "3P"
+            },
+            {
+              "decision_index": 14011,
+              "has_double_decision": true,
+              "has_take_decision": false,
+              "id": "cube-match-purerace-05",
+              "key": "e8fa8b39b639017a903124863f7cb5cb",
+              "optimal_action": "No Double",
+              "tier": "3P"
+            },
+            {
+              "decision_index": 14021,
+              "has_double_decision": true,
+              "has_take_decision": false,
+              "id": "cube-match-purerace-06",
+              "key": "2dd5b12c504731d6d6abbd6baf566667",
+              "optimal_action": "No Double",
+              "tier": "rollout"
+            },
+            {
+              "decision_index": 9400,
+              "has_double_decision": true,
+              "has_take_decision": false,
+              "id": "cube-match-purerace-07",
+              "key": "0015642281b24e4e46c2bb4ba3efc1ba",
+              "optimal_action": "No Double",
+              "tier": "3P"
+            },
+            {
+              "decision_index": 14261,
+              "has_double_decision": true,
+              "has_take_decision": false,
+              "id": "cube-match-purerace-08",
+              "key": "a476c2742a0ca0436e34646f8f299943",
+              "optimal_action": "No Double",
+              "tier": "3P"
+            },
+            {
+              "decision_index": 311,
+              "has_double_decision": true,
+              "has_take_decision": false,
+              "id": "cube-match-purerace-09",
+              "key": "e8318137b1778027eefb00f806502c36",
+              "optimal_action": "No Double",
+              "tier": "3T"
+            },
+            {
+              "decision_index": 6343,
+              "has_double_decision": true,
+              "has_take_decision": false,
+              "id": "cube-match-purerace-10",
+              "key": "4b71a6de0d1008cb41dbc3522606ecf2",
+              "optimal_action": "No Double",
+              "tier": "3P"
+            }
+          ]
+        }
+      },
+      "meta": {
+        "blunder_threshold": 0.08,
+        "match_length": 5,
+        "mode": "match",
+        "n_checker": 16117,
+        "n_cube_decisions": 2175,
+        "n_cube_double": 1765,
+        "n_cube_entries": 1775,
+        "n_cube_take": 410,
+        "n_decisions": 18292,
+        "n_matches": 130,
+        "n_positions": 17892,
+        "pr_multiplier": 500,
+        "rollout_gap": 0.02,
+        "rollout_n_trials": 1296,
+        "seed": 1,
+        "three_t_gap": 0.05,
+        "tier_counts": {
+          "3P": 7522,
+          "3T": 3460,
+          "rollout": 6910
+        },
+        "trivial_spread": 0.001
+      },
+      "path": "data/match_benchmark/5pt/benchmark.json.gz",
+      "sha256": "edee2128999f5ba6641f05df6944dfcd1637849d93b9c004cc8982e013940a27",
+      "whole_source_position_counts": [
+        {
+          "kind": "checker",
+          "plans": {
+            "anchoring": 1146,
+            "attacking": 2133,
+            "priming": 1230,
+            "purerace": 382,
+            "racing": 1368
+          },
+          "tier": "3P"
+        },
+        {
+          "kind": "checker",
+          "plans": {
+            "anchoring": 688,
+            "attacking": 982,
+            "priming": 552,
+            "purerace": 279,
+            "racing": 665
+          },
+          "tier": "3T"
+        },
+        {
+          "kind": "checker",
+          "plans": {
+            "anchoring": 1824,
+            "attacking": 1504,
+            "priming": 921,
+            "purerace": 1041,
+            "racing": 1402
+          },
+          "tier": "rollout"
+        },
+        {
+          "kind": "cube",
+          "plans": {
+            "anchoring": 131,
+            "attacking": 490,
+            "priming": 325,
+            "purerace": 74,
+            "racing": 243
+          },
+          "tier": "3P"
+        },
+        {
+          "kind": "cube",
+          "plans": {
+            "anchoring": 19,
+            "attacking": 111,
+            "priming": 85,
+            "purerace": 20,
+            "racing": 59
+          },
+          "tier": "3T"
+        },
+        {
+          "kind": "cube",
+          "plans": {
+            "anchoring": 12,
+            "attacking": 68,
+            "priming": 42,
+            "purerace": 53,
+            "racing": 43
+          },
+          "tier": "rollout"
+        }
+      ]
+    },
+    "money": {
+      "fixed": {
+        "checker_play": {
+          "full_rollout_coverage": {
+            "best_move_rolled": 19,
+            "none": 31,
+            "partial": 19
+          },
+          "move_eval_level_by_root_tier": {
+            "3P": {
+              "1-ply": 281,
+              "3-ply": 47
+            },
+            "3T": {
+              "1-ply": 44,
+              "2-ply": 61,
+              "Rollout": 26
+            },
+            "rollout": {
+              "1-ply": 177,
+              "2-ply": 190,
+              "Rollout": 122
+            }
+          },
+          "position_tiers": {
+            "3P": 22,
+            "3T": 9,
+            "rollout": 19
+          },
+          "positions": [
+            {
+              "decision_index": 8606,
+              "eval_level_counts": {
+                "1-ply": 18,
+                "3-ply": 2
+              },
+              "full_rollout_ranks": [],
+              "id": "checker-money-attacking-01",
+              "key": "1c91fcb08f9a48705b56f450b46e9b07",
+              "legal_moves": 20,
+              "tier": "3P"
+            },
+            {
+              "decision_index": 16598,
+              "eval_level_counts": {
+                "1-ply": 8,
+                "3-ply": 2
+              },
+              "full_rollout_ranks": [],
+              "id": "checker-money-attacking-02",
+              "key": "ea3e09cb33e1ade92c032b1fd81bfdfa",
+              "legal_moves": 10,
+              "tier": "3P"
+            },
+            {
+              "decision_index": 896,
+              "eval_level_counts": {
+                "1-ply": 41,
+                "2-ply": 4,
+                "Rollout": 4
+              },
+              "full_rollout_ranks": [
+                1,
+                2,
+                3,
+                4
+              ],
+              "id": "checker-money-attacking-03",
+              "key": "fa26ea03e05264b5ec7418b384f25242",
+              "legal_moves": 49,
+              "tier": "rollout"
+            },
+            {
+              "decision_index": 5333,
+              "eval_level_counts": {
+                "1-ply": 11,
+                "3-ply": 2
+              },
+              "full_rollout_ranks": [],
+              "id": "checker-money-attacking-04",
+              "key": "5a351c34537889d8e37badf8d44f22a1",
+              "legal_moves": 13,
+              "tier": "3P"
+            },
+            {
+              "decision_index": 4469,
+              "eval_level_counts": {
+                "2-ply": 49,
+                "Rollout": 2
+              },
+              "full_rollout_ranks": [],
+              "id": "checker-money-attacking-05",
+              "key": "3571034a20874ff57644076089bcedef",
+              "legal_moves": 51,
+              "tier": "3T"
+            },
+            {
+              "decision_index": 1734,
+              "eval_level_counts": {
+                "1-ply": 16,
+                "3-ply": 2
+              },
+              "full_rollout_ranks": [],
+              "id": "checker-money-attacking-06",
+              "key": "8f655e5c303a40d81588e3dc0ee93f11",
+              "legal_moves": 18,
+              "tier": "3P"
+            },
+            {
+              "decision_index": 6351,
+              "eval_level_counts": {
+                "1-ply": 14,
+                "3-ply": 3
+              },
+              "full_rollout_ranks": [],
+              "id": "checker-money-attacking-07",
+              "key": "837416318f35dab4848ef2d4d6879284",
+              "legal_moves": 17,
+              "tier": "3P"
+            },
+            {
+              "decision_index": 12446,
+              "eval_level_counts": {
+                "1-ply": 24,
+                "3-ply": 3
+              },
+              "full_rollout_ranks": [],
+              "id": "checker-money-attacking-08",
+              "key": "4d43c24b7402ff547ee72da33310a241",
+              "legal_moves": 27,
+              "tier": "3P"
+            },
+            {
+              "decision_index": 8055,
+              "eval_level_counts": {
+                "1-ply": 1,
+                "3-ply": 2
+              },
+              "full_rollout_ranks": [],
+              "id": "checker-money-attacking-09",
+              "key": "85a7597339bf231f761004c51855108e",
+              "legal_moves": 3,
+              "tier": "3P"
+            },
+            {
+              "decision_index": 130,
+              "eval_level_counts": {
+                "1-ply": 24,
+                "3-ply": 2
+              },
+              "full_rollout_ranks": [],
+              "id": "checker-money-attacking-10",
+              "key": "0ff90d1a61dc4c2f82f387cb6caa88da",
+              "legal_moves": 26,
+              "tier": "3P"
+            },
+            {
+              "decision_index": 12508,
+              "eval_level_counts": {
+                "1-ply": 21,
+                "2-ply": 1,
+                "Rollout": 2
+              },
+              "full_rollout_ranks": [],
+              "id": "checker-money-priming-01",
+              "key": "f17efcf3cb416eb215f727eb29ef2edf",
+              "legal_moves": 24,
+              "tier": "3T"
+            },
+            {
+              "decision_index": 7615,
+              "eval_level_counts": {
+                "1-ply": 40,
+                "2-ply": 2,
+                "Rollout": 3
+              },
+              "full_rollout_ranks": [
+                1,
+                2,
+                3
+              ],
+              "id": "checker-money-priming-02",
+              "key": "3530fdd36aa1d696c26e93d48e703e0f",
+              "legal_moves": 45,
+              "tier": "rollout"
+            },
+            {
+              "decision_index": 13046,
+              "eval_level_counts": {
+                "1-ply": 1,
+                "3-ply": 2
+              },
+              "full_rollout_ranks": [],
+              "id": "checker-money-priming-03",
+              "key": "50fea3077c87f64ac03453962e5c4ebc",
+              "legal_moves": 3,
+              "tier": "3P"
+            },
+            {
+              "decision_index": 4931,
+              "eval_level_counts": {
+                "1-ply": 24,
+                "3-ply": 2
+              },
+              "full_rollout_ranks": [],
+              "id": "checker-money-priming-04",
+              "key": "5fc66342c87f3804e7e9ccaef02b9afa",
+              "legal_moves": 26,
+              "tier": "3P"
+            },
+            {
+              "decision_index": 16328,
+              "eval_level_counts": {
+                "1-ply": 3,
+                "Rollout": 3
+              },
+              "full_rollout_ranks": [],
+              "id": "checker-money-priming-05",
+              "key": "bcef0fdf97b1879a8defc78129d7447d",
+              "legal_moves": 6,
+              "tier": "3T"
+            },
+            {
+              "decision_index": 12098,
+              "eval_level_counts": {
+                "1-ply": 1,
+                "Rollout": 2
+              },
+              "full_rollout_ranks": [],
+              "id": "checker-money-priming-06",
+              "key": "19ec2d1d79baa6f1366a4265b6c4d5fc",
+              "legal_moves": 3,
+              "tier": "3T"
+            },
+            {
+              "decision_index": 11915,
+              "eval_level_counts": {
+                "1-ply": 2,
+                "3-ply": 2
+              },
+              "full_rollout_ranks": [],
+              "id": "checker-money-priming-07",
+              "key": "8ee4d7c8b385832f5da6e07bc3c998fe",
+              "legal_moves": 4,
+              "tier": "3P"
+            },
+            {
+              "decision_index": 9271,
+              "eval_level_counts": {
+                "1-ply": 18,
+                "Rollout": 2
+              },
+              "full_rollout_ranks": [
+                1,
+                2
+              ],
+              "id": "checker-money-priming-08",
+              "key": "a9dfc105d90e6d1d422b3e11ccd20672",
+              "legal_moves": 20,
+              "tier": "rollout"
+            },
+            {
+              "decision_index": 9257,
+              "eval_level_counts": {
+                "1-ply": 12,
+                "3-ply": 2
+              },
+              "full_rollout_ranks": [],
+              "id": "checker-money-priming-09",
+              "key": "1579235068fa664567e13c63a4d93318",
+              "legal_moves": 14,
+              "tier": "3P"
+            },
+            {
+              "decision_index": 16401,
+              "eval_level_counts": {
+                "1-ply": 17,
+                "2-ply": 2,
+                "Rollout": 5
+              },
+              "full_rollout_ranks": [
+                1,
+                2,
+                3,
+                4,
+                5
+              ],
+              "id": "checker-money-priming-10",
+              "key": "c1244e07f567b5e1a9594eba4328dfee",
+              "legal_moves": 24,
+              "tier": "rollout"
+            },
+            {
+              "decision_index": 2000,
+              "eval_level_counts": {
+                "1-ply": 2,
+                "2-ply": 1,
+                "Rollout": 3
+              },
+              "full_rollout_ranks": [],
+              "id": "checker-money-anchoring-01",
+              "key": "dff966284a058b4fa4098cf8a2268ba3",
+              "legal_moves": 6,
+              "tier": "3T"
+            },
+            {
+              "decision_index": 12392,
+              "eval_level_counts": {
+                "1-ply": 7,
+                "2-ply": 15,
+                "Rollout": 19
+              },
+              "full_rollout_ranks": [
+                1,
+                2,
+                3,
+                4,
+                6,
+                10,
+                11,
+                13,
+                14,
+                15,
+                16,
+                18,
+                20,
+                21,
+                23,
+                24,
+                27,
+                28,
+                29
+              ],
+              "id": "checker-money-anchoring-02",
+              "key": "6b4bc853d74a2948f62ea251d3d7c0d6",
+              "legal_moves": 41,
+              "tier": "rollout"
+            },
+            {
+              "decision_index": 5375,
+              "eval_level_counts": {
+                "1-ply": 2,
+                "2-ply": 3,
+                "Rollout": 3
+              },
+              "full_rollout_ranks": [
+                1,
+                2,
+                3
+              ],
+              "id": "checker-money-anchoring-03",
+              "key": "04eaa2a95f7f1217621cd59017af76f9",
+              "legal_moves": 8,
+              "tier": "rollout"
+            },
+            {
+              "decision_index": 6109,
+              "eval_level_counts": {
+                "1-ply": 22,
+                "3-ply": 2
+              },
+              "full_rollout_ranks": [],
+              "id": "checker-money-anchoring-04",
+              "key": "948a18e79670b5dc5617249c7f8944b6",
+              "legal_moves": 24,
+              "tier": "3P"
+            },
+            {
+              "decision_index": 10795,
+              "eval_level_counts": {
+                "2-ply": 10,
+                "Rollout": 5
+              },
+              "full_rollout_ranks": [
+                1,
+                2,
+                6,
+                8,
+                10
+              ],
+              "id": "checker-money-anchoring-05",
+              "key": "82b264fae56ca794e4f92a909fcdbbf2",
+              "legal_moves": 15,
+              "tier": "rollout"
+            },
+            {
+              "decision_index": 7031,
+              "eval_level_counts": {
+                "1-ply": 21,
+                "3-ply": 2
+              },
+              "full_rollout_ranks": [],
+              "id": "checker-money-anchoring-06",
+              "key": "a46ef9fbf3aa0757fc900f8577a95f3e",
+              "legal_moves": 23,
+              "tier": "3P"
+            },
+            {
+              "decision_index": 14193,
+              "eval_level_counts": {
+                "1-ply": 15,
+                "2-ply": 15,
+                "Rollout": 4
+              },
+              "full_rollout_ranks": [
+                1,
+                2,
+                3,
+                5
+              ],
+              "id": "checker-money-anchoring-07",
+              "key": "5fb5a23535591ee84794a841f709753e",
+              "legal_moves": 34,
+              "tier": "rollout"
+            },
+            {
+              "decision_index": 9263,
+              "eval_level_counts": {
+                "1-ply": 3,
+                "3-ply": 2
+              },
+              "full_rollout_ranks": [],
+              "id": "checker-money-anchoring-08",
+              "key": "bef113588c8c964577e10c2e25f7a0e6",
+              "legal_moves": 5,
+              "tier": "3P"
+            },
+            {
+              "decision_index": 11238,
+              "eval_level_counts": {
+                "1-ply": 30,
+                "3-ply": 3
+              },
+              "full_rollout_ranks": [],
+              "id": "checker-money-anchoring-09",
+              "key": "b92d08cea49483eab8248d433fa6949d",
+              "legal_moves": 33,
+              "tier": "3P"
+            },
+            {
+              "decision_index": 7242,
+              "eval_level_counts": {
+                "1-ply": 2,
+                "3-ply": 2
+              },
+              "full_rollout_ranks": [],
+              "id": "checker-money-anchoring-10",
+              "key": "85b1ef01a8d6c4a041841eb5f0594b87",
+              "legal_moves": 4,
+              "tier": "3P"
+            },
+            {
+              "decision_index": 1413,
+              "eval_level_counts": {
+                "3-ply": 2
+              },
+              "full_rollout_ranks": [],
+              "id": "checker-money-racing-01",
+              "key": "34bd6fbce67115480b39a94ce1f5f9fd",
+              "legal_moves": 2,
+              "tier": "3P"
+            },
+            {
+              "decision_index": 4034,
+              "eval_level_counts": {
+                "1-ply": 12,
+                "2-ply": 5,
+                "Rollout": 5
+              },
+              "full_rollout_ranks": [
+                1,
+                2,
+                5,
+                6,
+                8
+              ],
+              "id": "checker-money-racing-02",
+              "key": "b21020a9a44509b22d8075591d1ada0e",
+              "legal_moves": 22,
+              "tier": "rollout"
+            },
+            {
+              "decision_index": 2277,
+              "eval_level_counts": {
+                "1-ply": 2,
+                "3-ply": 2
+              },
+              "full_rollout_ranks": [],
+              "id": "checker-money-racing-03",
+              "key": "807241027767c12258020a674fa45f4e",
+              "legal_moves": 4,
+              "tier": "3P"
+            },
+            {
+              "decision_index": 16162,
+              "eval_level_counts": {
+                "1-ply": 4,
+                "2-ply": 4,
+                "Rollout": 5
+              },
+              "full_rollout_ranks": [
+                1,
+                2,
+                3,
+                4,
+                5
+              ],
+              "id": "checker-money-racing-04",
+              "key": "482d142f04ed49e764119e6c30923a1a",
+              "legal_moves": 13,
+              "tier": "rollout"
+            },
+            {
+              "decision_index": 7100,
+              "eval_level_counts": {
+                "1-ply": 45,
+                "3-ply": 2
+              },
+              "full_rollout_ranks": [],
+              "id": "checker-money-racing-05",
+              "key": "d08821199754a326d65bdc61eca9be98",
+              "legal_moves": 47,
+              "tier": "3P"
+            },
+            {
+              "decision_index": 15738,
+              "eval_level_counts": {
+                "1-ply": 2,
+                "2-ply": 1,
+                "Rollout": 2
+              },
+              "full_rollout_ranks": [
+                1,
+                2
+              ],
+              "id": "checker-money-racing-06",
+              "key": "0a79e957fa853107868d5a1339fb48a8",
+              "legal_moves": 5,
+              "tier": "rollout"
+            },
+            {
+              "decision_index": 15578,
+              "eval_level_counts": {
+                "1-ply": 1,
+                "3-ply": 2
+              },
+              "full_rollout_ranks": [],
+              "id": "checker-money-racing-07",
+              "key": "6aea0f896f7e75d97c78686be449552d",
+              "legal_moves": 3,
+              "tier": "3P"
+            },
+            {
+              "decision_index": 437,
+              "eval_level_counts": {
+                "1-ply": 14,
+                "2-ply": 4,
+                "Rollout": 30
+              },
+              "full_rollout_ranks": [
+                1,
+                2,
+                3,
+                4,
+                5,
+                7,
+                8,
+                9,
+                10,
+                11,
+                13,
+                14,
+                15,
+                16,
+                17,
+                18,
+                19,
+                20,
+                21,
+                22,
+                23,
+                24,
+                25,
+                26,
+                29,
+                30,
+                31,
+                32,
+                33,
+                34
+              ],
+              "id": "checker-money-racing-08",
+              "key": "4a81f03ccff80e06b35da500299fbbb4",
+              "legal_moves": 48,
+              "tier": "rollout"
+            },
+            {
+              "decision_index": 12644,
+              "eval_level_counts": {
+                "1-ply": 7,
+                "2-ply": 6,
+                "Rollout": 5
+              },
+              "full_rollout_ranks": [],
+              "id": "checker-money-racing-09",
+              "key": "98ded2e5c4c69166e578922790bf3c10",
+              "legal_moves": 18,
+              "tier": "3T"
+            },
+            {
+              "decision_index": 6212,
+              "eval_level_counts": {
+                "1-ply": 3,
+                "Rollout": 3
+              },
+              "full_rollout_ranks": [],
+              "id": "checker-money-racing-10",
+              "key": "eef2b7f0fef120d6815b411349e72fe8",
+              "legal_moves": 6,
+              "tier": "3T"
+            },
+            {
+              "decision_index": 11665,
+              "eval_level_counts": {
+                "2-ply": 43,
+                "Rollout": 5
+              },
+              "full_rollout_ranks": [
+                1,
+                2,
+                3,
+                4,
+                5
+              ],
+              "id": "checker-money-purerace-01",
+              "key": "f5dae39dad4a2ca54743ed587108cd34",
+              "legal_moves": 48,
+              "tier": "rollout"
+            },
+            {
+              "decision_index": 9805,
+              "eval_level_counts": {
+                "3-ply": 2
+              },
+              "full_rollout_ranks": [],
+              "id": "checker-money-purerace-02",
+              "key": "7fb65d117590e4e23e4d1af57d5e26f3",
+              "legal_moves": 2,
+              "tier": "3P"
+            },
+            {
+              "decision_index": 15616,
+              "eval_level_counts": {
+                "2-ply": 12,
+                "Rollout": 5
+              },
+              "full_rollout_ranks": [
+                1,
+                2,
+                3,
+                4,
+                6
+              ],
+              "id": "checker-money-purerace-03",
+              "key": "078240031a3dadf82e0078e2cc0fd4de",
+              "legal_moves": 17,
+              "tier": "rollout"
+            },
+            {
+              "decision_index": 16340,
+              "eval_level_counts": {
+                "1-ply": 5,
+                "2-ply": 3,
+                "Rollout": 5
+              },
+              "full_rollout_ranks": [
+                1,
+                2,
+                3,
+                5,
+                6
+              ],
+              "id": "checker-money-purerace-04",
+              "key": "1f9b6280be4f4cfb268ffad25298ad32",
+              "legal_moves": 13,
+              "tier": "rollout"
+            },
+            {
+              "decision_index": 13423,
+              "eval_level_counts": {
+                "2-ply": 1,
+                "Rollout": 5
+              },
+              "full_rollout_ranks": [
+                1,
+                2,
+                3,
+                4,
+                5
+              ],
+              "id": "checker-money-purerace-05",
+              "key": "a67051f0e21c91b9c247b06bd1cbd485",
+              "legal_moves": 6,
+              "tier": "rollout"
+            },
+            {
+              "decision_index": 9755,
+              "eval_level_counts": {
+                "1-ply": 7,
+                "2-ply": 4,
+                "Rollout": 3
+              },
+              "full_rollout_ranks": [],
+              "id": "checker-money-purerace-06",
+              "key": "3f63f875e04591829ac0af3c102e496a",
+              "legal_moves": 14,
+              "tier": "3T"
+            },
+            {
+              "decision_index": 14809,
+              "eval_level_counts": {
+                "Rollout": 3
+              },
+              "full_rollout_ranks": [],
+              "id": "checker-money-purerace-07",
+              "key": "825ab560e59f0ce5871bbbe3c2ac1137",
+              "legal_moves": 3,
+              "tier": "3T"
+            },
+            {
+              "decision_index": 14180,
+              "eval_level_counts": {
+                "2-ply": 3,
+                "Rollout": 5
+              },
+              "full_rollout_ranks": [
+                1,
+                2,
+                3,
+                4,
+                5
+              ],
+              "id": "checker-money-purerace-08",
+              "key": "1fbcb1b12df10662f691c5a406e09432",
+              "legal_moves": 8,
+              "tier": "rollout"
+            },
+            {
+              "decision_index": 14182,
+              "eval_level_counts": {
+                "2-ply": 40,
+                "Rollout": 5
+              },
+              "full_rollout_ranks": [
+                1,
+                2,
+                3,
+                4,
+                5
+              ],
+              "id": "checker-money-purerace-09",
+              "key": "ec55008688e6c996b21655da7ea5277f",
+              "legal_moves": 45,
+              "tier": "rollout"
+            },
+            {
+              "decision_index": 3621,
+              "eval_level_counts": {
+                "2-ply": 23,
+                "Rollout": 5
+              },
+              "full_rollout_ranks": [
+                1,
+                2,
+                3,
+                9,
+                13
+              ],
+              "id": "checker-money-purerace-10",
+              "key": "8f86b1b19705ca4f02372ad9d8bea43e",
+              "legal_moves": 28,
+              "tier": "rollout"
+            }
+          ]
+        },
+        "cube_action": {
+          "position_tiers": {
+            "3P": 36,
+            "3T": 8,
+            "rollout": 6
+          },
+          "positions": [
+            {
+              "decision_index": 45,
+              "has_double_decision": true,
+              "has_take_decision": false,
+              "id": "cube-money-attacking-01",
+              "key": "01dd3cad4722043ef8507020d5cc1c1b",
+              "optimal_action": "No Double",
+              "tier": "3P"
+            },
+            {
+              "decision_index": 13066,
+              "has_double_decision": true,
+              "has_take_decision": false,
+              "id": "cube-money-attacking-02",
+              "key": "daae27999750dac3dca2db6f27440ace",
+              "optimal_action": "No Double",
+              "tier": "3P"
+            },
+            {
+              "decision_index": 11241,
+              "has_double_decision": true,
+              "has_take_decision": false,
+              "id": "cube-money-attacking-03",
+              "key": "06f40d18fb7f0d1e9ce441d6cda097a9",
+              "optimal_action": "Double/Take",
+              "tier": "3P"
+            },
+            {
+              "decision_index": 7090,
+              "has_double_decision": true,
+              "has_take_decision": false,
+              "id": "cube-money-attacking-04",
+              "key": "1b7ac46964f4854266b44a05ee5d26d3",
+              "optimal_action": "No Double",
+              "tier": "rollout"
+            },
+            {
+              "decision_index": 16108,
+              "has_double_decision": true,
+              "has_take_decision": false,
+              "id": "cube-money-attacking-05",
+              "key": "71b1095822b643091de0f2ff2394c702",
+              "optimal_action": "No Double",
+              "tier": "3P"
+            },
+            {
+              "decision_index": 3487,
+              "has_double_decision": true,
+              "has_take_decision": false,
+              "id": "cube-money-attacking-06",
+              "key": "087607a5d3422deb4bce02653aadb50c",
+              "optimal_action": "No Double",
+              "tier": "3T"
+            },
+            {
+              "decision_index": 11425,
+              "has_double_decision": true,
+              "has_take_decision": false,
+              "id": "cube-money-attacking-07",
+              "key": "4c2f003f21e704b4c02061a84bb9b5b1",
+              "optimal_action": "No Double",
+              "tier": "3P"
+            },
+            {
+              "decision_index": 5412,
+              "has_double_decision": true,
+              "has_take_decision": false,
+              "id": "cube-money-attacking-08",
+              "key": "b2459be2b188c3c7319fbdee00743266",
+              "optimal_action": "No Double",
+              "tier": "3P"
+            },
+            {
+              "decision_index": 10810,
+              "has_double_decision": true,
+              "has_take_decision": false,
+              "id": "cube-money-attacking-09",
+              "key": "4d740fe92d8dadf60a896ebffba54897",
+              "optimal_action": "No Double",
+              "tier": "3P"
+            },
+            {
+              "decision_index": 6205,
+              "has_double_decision": true,
+              "has_take_decision": true,
+              "id": "cube-money-attacking-10",
+              "key": "63a3ee4e1b411fab4116377233473d7f",
+              "optimal_action": "Double/Take",
+              "tier": "3T"
+            },
+            {
+              "decision_index": 1830,
+              "has_double_decision": true,
+              "has_take_decision": true,
+              "id": "cube-money-priming-01",
+              "key": "c27c206ae500bd1e911c4c38dab9abbc",
+              "optimal_action": "Double/Take",
+              "tier": "3P"
+            },
+            {
+              "decision_index": 12015,
+              "has_double_decision": true,
+              "has_take_decision": false,
+              "id": "cube-money-priming-02",
+              "key": "09b80ca190c40c43c9b3784c6e751318",
+              "optimal_action": "No Double",
+              "tier": "3P"
+            },
+            {
+              "decision_index": 15559,
+              "has_double_decision": true,
+              "has_take_decision": true,
+              "id": "cube-money-priming-03",
+              "key": "1b36108ace20fabc75e707935e999cd3",
+              "optimal_action": "Double/Take",
+              "tier": "3P"
+            },
+            {
+              "decision_index": 3330,
+              "has_double_decision": true,
+              "has_take_decision": false,
+              "id": "cube-money-priming-04",
+              "key": "69e723ef4551d6b66e9462172039469c",
+              "optimal_action": "No Double",
+              "tier": "3P"
+            },
+            {
+              "decision_index": 13331,
+              "has_double_decision": true,
+              "has_take_decision": false,
+              "id": "cube-money-priming-05",
+              "key": "0a054e200f70c2a2f2542d793550d274",
+              "optimal_action": "No Double",
+              "tier": "3P"
+            },
+            {
+              "decision_index": 10197,
+              "has_double_decision": true,
+              "has_take_decision": false,
+              "id": "cube-money-priming-06",
+              "key": "104e6d4dfd006428dcee182c011c117e",
+              "optimal_action": "No Double",
+              "tier": "3P"
+            },
+            {
+              "decision_index": 7311,
+              "has_double_decision": true,
+              "has_take_decision": false,
+              "id": "cube-money-priming-07",
+              "key": "5093cede0ec6298b5699caf47766d362",
+              "optimal_action": "No Double",
+              "tier": "3P"
+            },
+            {
+              "decision_index": 16380,
+              "has_double_decision": true,
+              "has_take_decision": false,
+              "id": "cube-money-priming-08",
+              "key": "eef3a304604b8982ca124834c2c1837a",
+              "optimal_action": "No Double",
+              "tier": "3P"
+            },
+            {
+              "decision_index": 12240,
+              "has_double_decision": true,
+              "has_take_decision": false,
+              "id": "cube-money-priming-09",
+              "key": "7ccbed37faab94bcfa9a457ada5b6108",
+              "optimal_action": "No Double",
+              "tier": "rollout"
+            },
+            {
+              "decision_index": 9886,
+              "has_double_decision": true,
+              "has_take_decision": false,
+              "id": "cube-money-priming-10",
+              "key": "613b0e13f6b6acb0acc12a3208bf8b77",
+              "optimal_action": "No Double",
+              "tier": "3P"
+            },
+            {
+              "decision_index": 199,
+              "has_double_decision": true,
+              "has_take_decision": false,
+              "id": "cube-money-anchoring-01",
+              "key": "0188605a86f238650cad86182e0dfa87",
+              "optimal_action": "No Double",
+              "tier": "3P"
+            },
+            {
+              "decision_index": 2050,
+              "has_double_decision": true,
+              "has_take_decision": false,
+              "id": "cube-money-anchoring-02",
+              "key": "911a2e447f5bc56a33893db4ea5b2944",
+              "optimal_action": "No Double",
+              "tier": "3P"
+            },
+            {
+              "decision_index": 1203,
+              "has_double_decision": true,
+              "has_take_decision": false,
+              "id": "cube-money-anchoring-03",
+              "key": "db01827b00546327a51ab89805f5b5f3",
+              "optimal_action": "No Double",
+              "tier": "3P"
+            },
+            {
+              "decision_index": 13375,
+              "has_double_decision": true,
+              "has_take_decision": false,
+              "id": "cube-money-anchoring-04",
+              "key": "d70d33555b1eb668429173cc22493fc1",
+              "optimal_action": "No Double",
+              "tier": "3P"
+            },
+            {
+              "decision_index": 202,
+              "has_double_decision": true,
+              "has_take_decision": false,
+              "id": "cube-money-anchoring-05",
+              "key": "80c427ac07424946505b5ef9a5bb0c13",
+              "optimal_action": "No Double",
+              "tier": "rollout"
+            },
+            {
+              "decision_index": 10830,
+              "has_double_decision": true,
+              "has_take_decision": true,
+              "id": "cube-money-anchoring-06",
+              "key": "cc1c495961e7b8060247d5040a765af1",
+              "optimal_action": "Double/Take",
+              "tier": "3T"
+            },
+            {
+              "decision_index": 3607,
+              "has_double_decision": true,
+              "has_take_decision": false,
+              "id": "cube-money-anchoring-07",
+              "key": "2899cfcb645cb3f042a004fbac621d24",
+              "optimal_action": "No Double",
+              "tier": "3P"
+            },
+            {
+              "decision_index": 3604,
+              "has_double_decision": true,
+              "has_take_decision": false,
+              "id": "cube-money-anchoring-08",
+              "key": "f8056eaa29f3ce20bc0126c2e63dddbe",
+              "optimal_action": "No Double",
+              "tier": "3P"
+            },
+            {
+              "decision_index": 16036,
+              "has_double_decision": true,
+              "has_take_decision": false,
+              "id": "cube-money-anchoring-09",
+              "key": "8c7dbeff7d384995ede231f146fc621c",
+              "optimal_action": "No Double",
+              "tier": "3P"
+            },
+            {
+              "decision_index": 7258,
+              "has_double_decision": true,
+              "has_take_decision": false,
+              "id": "cube-money-anchoring-10",
+              "key": "21ae0a877cee8b2f49391733d66eb046",
+              "optimal_action": "No Double",
+              "tier": "3P"
+            },
+            {
+              "decision_index": 16812,
+              "has_double_decision": true,
+              "has_take_decision": false,
+              "id": "cube-money-racing-01",
+              "key": "d8e8d357f9a2f7176407921625339f6d",
+              "optimal_action": "No Double",
+              "tier": "rollout"
+            },
+            {
+              "decision_index": 16806,
+              "has_double_decision": true,
+              "has_take_decision": false,
+              "id": "cube-money-racing-02",
+              "key": "06399b9d51f882f203642fb4b3f3f5ec",
+              "optimal_action": "No Double",
+              "tier": "3T"
+            },
+            {
+              "decision_index": 12525,
+              "has_double_decision": true,
+              "has_take_decision": false,
+              "id": "cube-money-racing-03",
+              "key": "a25d8bd6c8763ad5b7a73ee84ca32a15",
+              "optimal_action": "No Double",
+              "tier": "3P"
+            },
+            {
+              "decision_index": 7712,
+              "has_double_decision": true,
+              "has_take_decision": true,
+              "id": "cube-money-racing-04",
+              "key": "ed0988821d971930bd8493bda2a95336",
+              "optimal_action": "Double/Pass",
+              "tier": "3P"
+            },
+            {
+              "decision_index": 5961,
+              "has_double_decision": true,
+              "has_take_decision": false,
+              "id": "cube-money-racing-05",
+              "key": "002a968ba2954c619b630208e7e4ce54",
+              "optimal_action": "No Double",
+              "tier": "3P"
+            },
+            {
+              "decision_index": 1682,
+              "has_double_decision": true,
+              "has_take_decision": false,
+              "id": "cube-money-racing-06",
+              "key": "0f19ccae74236bb19eccba9007cbc2e2",
+              "optimal_action": "No Double",
+              "tier": "3P"
+            },
+            {
+              "decision_index": 8442,
+              "has_double_decision": true,
+              "has_take_decision": true,
+              "id": "cube-money-racing-07",
+              "key": "340e9532555b0c252e8c663e474189f1",
+              "optimal_action": "Double/Pass",
+              "tier": "rollout"
+            },
+            {
+              "decision_index": 3305,
+              "has_double_decision": true,
+              "has_take_decision": true,
+              "id": "cube-money-racing-08",
+              "key": "e7bbeb00bf3ac12a01205c51cbcd65de",
+              "optimal_action": "Double/Take",
+              "tier": "3T"
+            },
+            {
+              "decision_index": 88,
+              "has_double_decision": true,
+              "has_take_decision": false,
+              "id": "cube-money-racing-09",
+              "key": "6c99fab46772a1236962c78ccec1b783",
+              "optimal_action": "No Double",
+              "tier": "3P"
+            },
+            {
+              "decision_index": 15464,
+              "has_double_decision": true,
+              "has_take_decision": false,
+              "id": "cube-money-racing-10",
+              "key": "68c51c32a4d637ea54b878e965b0ec1d",
+              "optimal_action": "No Double",
+              "tier": "rollout"
+            },
+            {
+              "decision_index": 11879,
+              "has_double_decision": true,
+              "has_take_decision": false,
+              "id": "cube-money-purerace-01",
+              "key": "b3f234fd950bec42dba952e73e79126e",
+              "optimal_action": "No Double",
+              "tier": "3P"
+            },
+            {
+              "decision_index": 652,
+              "has_double_decision": true,
+              "has_take_decision": false,
+              "id": "cube-money-purerace-02",
+              "key": "05205599040445cb7259d0d4718a598f",
+              "optimal_action": "No Double",
+              "tier": "3P"
+            },
+            {
+              "decision_index": 5081,
+              "has_double_decision": true,
+              "has_take_decision": false,
+              "id": "cube-money-purerace-03",
+              "key": "8030f08ec82de8cb03657e0f7592804d",
+              "optimal_action": "No Double",
+              "tier": "3T"
+            },
+            {
+              "decision_index": 4401,
+              "has_double_decision": true,
+              "has_take_decision": false,
+              "id": "cube-money-purerace-04",
+              "key": "420ae2b8b2e456aeecbd381c959ef722",
+              "optimal_action": "No Double",
+              "tier": "3T"
+            },
+            {
+              "decision_index": 16299,
+              "has_double_decision": true,
+              "has_take_decision": true,
+              "id": "cube-money-purerace-05",
+              "key": "02bf946199f653b1ca32d61006b74e43",
+              "optimal_action": "Double/Take",
+              "tier": "3P"
+            },
+            {
+              "decision_index": 6921,
+              "has_double_decision": true,
+              "has_take_decision": false,
+              "id": "cube-money-purerace-06",
+              "key": "2f34431278b6d3fa578a8da8432c844c",
+              "optimal_action": "No Double",
+              "tier": "3P"
+            },
+            {
+              "decision_index": 32,
+              "has_double_decision": true,
+              "has_take_decision": false,
+              "id": "cube-money-purerace-07",
+              "key": "d5c3138f088a1f8beec005fbd117fcb4",
+              "optimal_action": "No Double",
+              "tier": "3P"
+            },
+            {
+              "decision_index": 14906,
+              "has_double_decision": true,
+              "has_take_decision": true,
+              "id": "cube-money-purerace-08",
+              "key": "4787dc2b1e22db7e486e65f84fa01edc",
+              "optimal_action": "Double/Take",
+              "tier": "3P"
+            },
+            {
+              "decision_index": 6295,
+              "has_double_decision": true,
+              "has_take_decision": true,
+              "id": "cube-money-purerace-09",
+              "key": "e1df5cb203909aa61d7bae385c232f60",
+              "optimal_action": "Double/Take",
+              "tier": "3T"
+            },
+            {
+              "decision_index": 11495,
+              "has_double_decision": true,
+              "has_take_decision": false,
+              "id": "cube-money-purerace-10",
+              "key": "44439d689a49c7e1fb920a76029b9cf8",
+              "optimal_action": "No Double",
+              "tier": "3P"
+            }
+          ]
+        }
+      },
+      "meta": {
+        "blunder_threshold": 0.08,
+        "n_checker": 14693,
+        "n_cube_decisions": 2842,
+        "n_cube_double": 2189,
+        "n_cube_entries": 2196,
+        "n_cube_take": 653,
+        "n_decisions": 17535,
+        "n_games": 500,
+        "n_positions": 16889,
+        "pr_multiplier": 500,
+        "rollout_gap": 0.02,
+        "rollout_n_trials": 1296,
+        "seed": 1,
+        "three_t_gap": 0.05,
+        "tier_counts": {
+          "3P": 7652,
+          "3T": 3260,
+          "rollout": 5977
+        },
+        "trivial_spread": 0.001
+      },
+      "path": "data/money_benchmark/benchmark.json.gz",
+      "sha256": "b3967d002d1ce99adf049d5da36e5fd8afc2936d0764d713eaaab47d858f1e64",
+      "whole_source_position_counts": [
+        {
+          "kind": "checker",
+          "plans": {
+            "anchoring": 1111,
+            "attacking": 2119,
+            "priming": 1233,
+            "purerace": 366,
+            "racing": 1327
+          },
+          "tier": "3P"
+        },
+        {
+          "kind": "checker",
+          "plans": {
+            "anchoring": 629,
+            "attacking": 871,
+            "priming": 481,
+            "purerace": 297,
+            "racing": 564
+          },
+          "tier": "3T"
+        },
+        {
+          "kind": "checker",
+          "plans": {
+            "anchoring": 1453,
+            "attacking": 1121,
+            "priming": 739,
+            "purerace": 1153,
+            "racing": 1229
+          },
+          "tier": "rollout"
+        },
+        {
+          "kind": "cube",
+          "plans": {
+            "anchoring": 55,
+            "attacking": 695,
+            "priming": 387,
+            "purerace": 66,
+            "racing": 293
+          },
+          "tier": "3P"
+        },
+        {
+          "kind": "cube",
+          "plans": {
+            "anchoring": 4,
+            "attacking": 212,
+            "priming": 113,
+            "purerace": 25,
+            "racing": 64
+          },
+          "tier": "3T"
+        },
+        {
+          "kind": "cube",
+          "plans": {
+            "anchoring": 3,
+            "attacking": 101,
+            "priming": 81,
+            "purerace": 27,
+            "racing": 70
+          },
+          "tier": "rollout"
+        }
+      ]
+    }
+  }
+}

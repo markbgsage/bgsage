@@ -1,0 +1,225 @@
+{
+  "threads": {
+    "2": {
+      "apis": {
+        "checker_play": {
+          "cases": 100,
+          "original_seconds": 20.00761047,
+          "final_seconds": 7.759958766999998,
+          "total_speedup": 2.5783140182502473,
+          "faster_cases": 100,
+          "median_per_case_speedup": 2.5449099480911963,
+          "all_fields_equal": 26,
+          "numeric_fields": 13672,
+          "different_numeric_fields": 2528,
+          "max_probability_change": 1.1920928955078125e-07,
+          "max_equity_change": 7.748603820800781e-07,
+          "material_probability_changes": 0,
+          "material_equity_changes": 0
+        },
+        "cube_action": {
+          "cases": 100,
+          "original_seconds": 12.540542691000004,
+          "final_seconds": 0.9919699609999998,
+          "total_speedup": 12.642058917144979,
+          "faster_cases": 100,
+          "median_per_case_speedup": 16.16316638705053,
+          "all_fields_equal": 46,
+          "numeric_fields": 1000,
+          "different_numeric_fields": 128,
+          "max_probability_change": 1.1920928955078125e-07,
+          "max_equity_change": 9.5367431640625e-07,
+          "material_probability_changes": 0,
+          "material_equity_changes": 0
+        },
+        "post_move_analytics": {
+          "cases": 100,
+          "original_seconds": 1.0511654880000003,
+          "final_seconds": 0.559170158,
+          "total_speedup": 1.879866929522373,
+          "faster_cases": 97,
+          "median_per_case_speedup": 1.6493710643250568,
+          "all_fields_equal": 52,
+          "numeric_fields": 700,
+          "different_numeric_fields": 124,
+          "max_probability_change": 5.960464477539063e-08,
+          "max_equity_change": 3.8743019104003906e-07,
+          "material_probability_changes": 0,
+          "material_equity_changes": 0
+        }
+      },
+      "checker_ranking": {
+        "order_changes": 0,
+        "picked_changes": 0,
+        "different_lists": 0
+      },
+      "cube_actions_changed": 0,
+      "other_fields_or_structure_changed": 0
+    },
+    "16": {
+      "apis": {
+        "checker_play": {
+          "cases": 100,
+          "original_seconds": 6.232249913,
+          "final_seconds": 2.684340657000001,
+          "total_speedup": 2.3217060385938932,
+          "faster_cases": 99,
+          "median_per_case_speedup": 2.2366738441647462,
+          "all_fields_equal": 26,
+          "numeric_fields": 13672,
+          "different_numeric_fields": 2528,
+          "max_probability_change": 1.1920928955078125e-07,
+          "max_equity_change": 7.748603820800781e-07,
+          "material_probability_changes": 0,
+          "material_equity_changes": 0
+        },
+        "cube_action": {
+          "cases": 100,
+          "original_seconds": 11.682735398000004,
+          "final_seconds": 0.49999911199999997,
+          "total_speedup": 23.36551229314984,
+          "faster_cases": 100,
+          "median_per_case_speedup": 26.810495673659915,
+          "all_fields_equal": 46,
+          "numeric_fields": 1000,
+          "different_numeric_fields": 128,
+          "max_probability_change": 1.1920928955078125e-07,
+          "max_equity_change": 9.5367431640625e-07,
+          "material_probability_changes": 0,
+          "material_equity_changes": 0
+        },
+        "post_move_analytics": {
+          "cases": 100,
+          "original_seconds": 0.430855056,
+          "final_seconds": 0.262572665,
+          "total_speedup": 1.6408983623638052,
+          "faster_cases": 93,
+          "median_per_case_speedup": 1.439000773789036,
+          "all_fields_equal": 52,
+          "numeric_fields": 700,
+          "different_numeric_fields": 124,
+          "max_probability_change": 5.960464477539063e-08,
+          "max_equity_change": 3.8743019104003906e-07,
+          "material_probability_changes": 0,
+          "material_equity_changes": 0
+        }
+      },
+      "checker_ranking": {
+        "order_changes": 0,
+        "picked_changes": 0,
+        "different_lists": 0
+      },
+      "cube_actions_changed": 0,
+      "other_fields_or_structure_changed": 0
+    }
+  },
+  "native": {
+    "features": {
+      "floats": 28812080,
+      "rows": 65482,
+      "differing": 62634,
+      "max_abs": 5.960464477539063e-08,
+      "by_column": {
+        "307": {
+          "n": 1503,
+          "worst": 2.9802322387695312e-08,
+          "example": [
+            54315,
+            0.2785494029521942,
+            0.2785493731498718
+          ]
+        },
+        "309": {
+          "n": 31727,
+          "worst": 5.960464477539063e-08,
+          "example": [
+            15,
+            0.6489198207855225,
+            0.6489197611808777
+          ]
+        },
+        "429": {
+          "n": 1508,
+          "worst": 2.9802322387695312e-08,
+          "example": [
+            2893,
+            0.444444477558136,
+            0.4444444477558136
+          ]
+        },
+        "431": {
+          "n": 27896,
+          "worst": 5.960464477539063e-08,
+          "example": [
+            0,
+            0.6489198207855225,
+            0.6489197611808777
+          ]
+        }
+      }
+    },
+    "nn": {
+      "floats": 9210,
+      "rows": 1842,
+      "differing": 440,
+      "max_abs": 2.384185791015625e-07,
+      "by_column": {
+        "0": {
+          "n": 70,
+          "worst": 2.384185791015625e-07,
+          "example": [
+            276,
+            0.5384122729301453,
+            0.5384125113487244
+          ]
+        },
+        "1": {
+          "n": 108,
+          "worst": 2.384185791015625e-07,
+          "example": [
+            48,
+            0.6077746748924255,
+            0.6077744364738464
+          ]
+        },
+        "2": {
+          "n": 68,
+          "worst": 1.1175870895385742e-08,
+          "example": [
+            82,
+            0.023526042699813843,
+            0.023526053875684738
+          ]
+        },
+        "3": {
+          "n": 95,
+          "worst": 2.384185791015625e-07,
+          "example": [
+            418,
+            0.6301484704017639,
+            0.6301482319831848
+          ]
+        },
+        "4": {
+          "n": 99,
+          "worst": 8.940696716308594e-08,
+          "example": [
+            102,
+            0.244765043258667,
+            0.24476495385169983
+          ]
+        }
+      }
+    },
+    "common_inputs": {
+      "real_sibling_outputs": 7110,
+      "output_sha256": "238f0993897e12e170849cbdbf064d58f3958d6de505b4f1412630247ac70b29",
+      "synthetic_shape_outputs": 2100,
+      "real_and_synthetic_bit_identical": true
+    }
+  },
+  "outputs_unchanged_between_thread_counts": {
+    "original": 300,
+    "final": 300
+  }
+}

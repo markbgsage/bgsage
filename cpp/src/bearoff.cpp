@@ -5,6 +5,7 @@
 #include "bgbot/cube.h"        // for cl2cf (cube-aware BearoffStrategy)
 #include "bgbot/moves.h"
 #include "bgbot/neural_net.h"
+#include <atomic>
 #include <fstream>
 #include <algorithm>
 #include <limits>
@@ -16,6 +17,11 @@
 #include <cassert>
 
 namespace bgbot {
+
+static uint64_t next_db_version() {
+    static std::atomic<uint64_t> version{1};
+    return version.fetch_add(1, std::memory_order_relaxed);
+}
 
 // --- Binomial coefficient table ---
 
@@ -556,6 +562,7 @@ void BearoffDB::generate() {
     generate_gammon_distributions();
 
     loaded_ = true;
+    cache_version_ = next_db_version();
 }
 
 void BearoffDB::generate_gammon_distributions() {
@@ -752,6 +759,7 @@ bool BearoffDB::load(const std::string& path) {
 
     if (!binom_initialized_) init_binom();
     loaded_ = in.good();
+    cache_version_ = loaded_ ? next_db_version() : 0;
     return loaded_;
 }
 
@@ -759,6 +767,18 @@ bool BearoffDB::load(const std::string& path) {
 
 BearoffStrategy::BearoffStrategy(std::shared_ptr<Strategy> base, const BearoffDB* db)
     : base_(std::move(base)), db_(db) {}
+
+uint64_t BearoffStrategy::eval_identity() const {
+    const uint64_t base_id = base_->eval_identity();
+    const uint64_t db_version = db_->cache_version();
+    if (!db_version) return base_id;
+    // Spread two small, sequential IDs across the 64-bit cache fingerprint.
+    // Applying the SplitMix64 finalizer at each layer also preserves DB order.
+    uint64_t h = base_id ^ (db_version * 0x9e3779b97f4a7c15ULL);
+    h = (h ^ (h >> 30)) * 0xbf58476d1ce4e5b9ULL;
+    h = (h ^ (h >> 27)) * 0x94d049bb133111ebULL;
+    return h ^ (h >> 31);
+}
 
 double BearoffStrategy::evaluate(const Board& board, bool pre_move_is_race) const {
     if (db_->is_bearoff(board)) {

@@ -52,24 +52,21 @@ struct RolloutConfig {
     int truncation_depth = 7;    // Half-moves before truncating (0 = play to completion)
     int decision_ply = 1;        // Default checker ply (backward compat, 1 = raw NN)
     int truncation_ply = -1;     // Ply for truncation evaluation (-1 = same as decision_ply)
-    bool enable_vr = true;       // Enable variance reduction (VR uses same ply as decision)
+    bool enable_vr = true;       // Use the 1-ply evaluator for the VR mean and actual
     bool parallelize_trials = false;  // Allow parallel trial dispatch for truncated N-ply rollouts
     MoveFilter filter = MoveFilters::TINY;  // Filter for candidate selection at top level
     int n_threads = 0;           // Threads for parallelizing trials (0 = auto)
     uint32_t seed = 42;
-    int late_ply = -1;           // Default late ply for both checker and cube (-1 = same as decision_ply)
-    int late_threshold = 20;     // Half-move index where we switch to late strategies
-    int ultra_late_threshold = 2; // Half-move where checker/cube drop to 1-ply (set high to disable)
+    int late_ply = -1;           // Default late checker ply (-1 = same as decision_ply)
+    int late_threshold = 20;     // First half-move using the late checker strategy
+    int ultra_late_threshold = 2; // First half-move using the 1-ply checker strategy
 
     // When true (default), trial-level checker move selection uses CUBEFUL
     // equity (cl2cf) against the branch's current cube state instead of
-    // cubeless equity. With a single active
-    // cube branch (e.g. cubeful_rollout_position), the chosen move maximizes
-    // cubeful equity for that branch's cube. With multiple branches
-    // (cubeful_cube_decision: ND + DT), the ND branch's cube state currently
-    // drives selection and all branches share the chosen move — see
-    // ROLLOUT.md "Cube-Aware Selection"; per-branch trial boards are a
-    // possible future extension.
+    // cubeless equity. A single active branch selects for its own cube state.
+    // The ND and DT branches share the chosen board, with ND driving selection
+    // while both are active. A post-move rollout uses this same two-branch
+    // decision from the opponent's perspective. See ROLLOUT.md.
     bool cubeful_trial_moves = true;
 
     // When cubeful_trial_moves is on, stop using cube-aware selection at
@@ -88,7 +85,7 @@ struct RolloutConfig {
     TrialEvalConfig checker;        // Checker play evaluation
     TrialEvalConfig checker_late;   // Late-game checker play
     TrialEvalConfig cube;           // Cube decision evaluation
-    TrialEvalConfig cube_late;      // Late-game cube decisions
+    TrialEvalConfig cube_late;      // Compatibility field. Take/pass uses cube throughout the trial.
 
     // Cancellation flag. When non-null and set to true, the rollout aborts
     // between trial chunks. Checked by run_trials_parallel() and
@@ -372,8 +369,11 @@ private:
     // once and shared across all trials with the same first roll. This avoids
     // (n_trials - 21) redundant N-ply evaluations at move 0.
     //
-    // Thread-safe: the first trial to encounter each dice combo computes the
-    // result (CAS state 0→1); others spin-wait briefly then read the cache.
+    // Parallel nonbatched cubeful rollouts reserve all scheduled move-0 and
+    // move-1 entries before dispatch. One prefill worker per first roll
+    // writes each entry and release-stores ready. Readers acquire-load the
+    // state and wait only for their required roll. Unreserved entries may
+    // be claimed on demand by a trial using compare_exchange.
     struct Move0Cache {
         static constexpr int N_ROLLS = 21;
         std::atomic<int> state[N_ROLLS];  // 0=empty, 1=computing, 2=ready

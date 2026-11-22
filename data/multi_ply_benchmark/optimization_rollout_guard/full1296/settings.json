@@ -1,0 +1,1 @@
+{"threads":4,"cpu_mask":65280,"profiles":["full"],"full_trials":1296,"repeats":2,"cases":["match-attacking-01","money-purerace-01"],"reference_manifest_sha256":"6da88accc991075ee93c5b75fa2a7a295bd5659011c3e95b32f6a200078297f0"}

@@ -2412,6 +2412,16 @@ RolloutStrategy::CubefulRolloutResult RolloutStrategy::cubeful_cube_decision(
         // Precompute move0 strategy selection (same for all rolls).
         const Strategy* m0_strat = checker_strat_.get();
 
+        // Reserve every scheduled entry before any worker can start a trial.
+        // Otherwise an early trial can claim an entry that a prefill worker
+        // is still writing and publish partially accumulated VR probabilities.
+        for (int r = 0; r < Move0Cache::N_ROLLS; ++r) {
+            move0_cache.state[r].store(1, std::memory_order_relaxed);
+            if (uses_move1_cache) {
+                move1_cache.state[r].store(1, std::memory_order_relaxed);
+            }
+        }
+
         // Use persistent thread pool — same rationale as cubeless path.
         multipy_parallel_run(n_threads, [&]() {
             // Clear thread-local N-ply cache (same as cubeless path).
@@ -2470,7 +2480,8 @@ RolloutStrategy::CubefulRolloutResult RolloutStrategy::cubeful_cube_decision(
                 }
             }
 
-            // No barrier: trials start immediately, cache entries computed on demand.
+            // Trials can start before all rolls finish. Each waits only for
+            // its own reserved entries to be published by the prefill worker.
 
             // Phase 3: Trials (work-stealing)
             int start;

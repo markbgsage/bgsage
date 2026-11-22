@@ -1,0 +1,9 @@
+# These inputs and reference records have published byte-level SHA-256 hashes.
+/checker_play.json text eol=lf
+/cube_action.json text eol=lf
+/baseline_stage11/results.jsonl text eol=lf
+/rollout_positions/*.json text eol=lf
+/rollout_positions/*.jsonl text eol=lf
+/rollout_3p_vr1296/*.json text eol=lf
+/rollout_3p_vr1296/*.jsonl text eol=lf
+/historical_rollouts/audit.json text eol=lf

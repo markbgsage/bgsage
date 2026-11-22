@@ -4,6 +4,10 @@
 #include "bgbot/board.h"
 #include <algorithm>
 #include <cmath>
+#include <limits>
+#ifdef _MSC_VER
+#include <intrin.h>
+#endif
 #include <cstring>
 #include <mutex>
 #include <numeric>
@@ -389,6 +393,23 @@ int hitting_shots(const Board& board) {
 
 // ======================== Double Hitting Shots ========================
 
+// Distances are bounded by the board. The same pair occurs repeatedly across
+// sibling moves, so compute its double and required steps at compile time.
+struct DoubleHitPath { unsigned char die, first_steps, second_steps; };
+static constexpr auto double_hit_paths = [] {
+    std::array<std::array<DoubleHitPath, 25>, 25> paths{};
+    for (int d1 = 1; d1 <= 24; ++d1) {
+        for (int d2 = 1; d2 <= 24; ++d2) {
+            int die = std::gcd(d1, d2);
+            int first = d1 / die, second = d2 / die;
+            if (die <= 6 && first + second <= 4)
+                paths[d1][d2] = {static_cast<unsigned char>(die),
+                                 static_cast<unsigned char>(first), static_cast<unsigned char>(second)};
+        }
+    }
+    return paths;
+}();
+
 int double_hitting_shots(const Board& board) {
     // Find all opponent blots and the distances from which player checkers can hit them
     struct BlotInfo {
@@ -440,10 +461,9 @@ int double_hitting_shots(const Board& board) {
 
                     // Check doubles: if gcd divides both distances evenly and
                     // total steps < 5, it's possible with a double
-                    int g = std::gcd(d1, d2);
-                    int n1 = d1 / g;
-                    int n2 = d2 / g;
-                    if (g < 7 && n1 + n2 < 5) {
+                    const auto path = double_hit_paths[d1][d2];
+                    if (path.die) {
+                        int g = path.die, n1 = path.first_steps, n2 = path.second_steps;
                         // Check intermediate points aren't blocked
                         bool blocked = false;
                         for (int m = 1; m < n1; ++m) {
@@ -1384,28 +1404,28 @@ static int timing_fast(const Board& board, int opp_back) {
     return t;
 }
 
-static float acontainment_fast(const int player_hb[25], int opp_back) {
+static float acontainment_fast(unsigned player_blocks, int opp_back) {
     int gnubg_nOppBack = opp_back > 0 ? opp_back - 1 : -1;
 
     int n = 36;
     int limit = (gnubg_nOppBack >= 0) ? 24 - gnubg_nOppBack : 24;
     for (int gnubg_i = 15; gnubg_i < limit; ++gnubg_i) {
-        int j = escapes(player_hb, gnubg_i);
+        int j = anEscapes[(player_blocks >> (24 - gnubg_i)) & 4095];
         if (j < n) n = j;
     }
-    return (36.0f - n) / 36.0f;
+    return 36.0f - n;
 }
 
-static float containment_fast(const int player_hb[25]) {
+static float containment_fast(unsigned player_blocks) {
     int n = 36;
     for (int gnubg_i = 15; gnubg_i < 24; ++gnubg_i) {
-        int j = escapes(player_hb, gnubg_i);
+        int j = anEscapes[(player_blocks >> (24 - gnubg_i)) & 4095];
         if (j < n) n = j;
     }
-    return (36.0f - n) / 36.0f;
+    return 36.0f - n;
 }
 
-static int mobility_fast(const Board& board, const int opp_hb[25]) {
+static int mobility_fast(const Board& board, unsigned opp_blocks) {
     int n = 0;
     for (int gnubg_i = 6; gnubg_i < 25; ++gnubg_i) {
         int our_pt = gnubg_i + 1;
@@ -1416,33 +1436,242 @@ static int mobility_fast(const Board& board, const int opp_hb[25]) {
             checkers = board[25];
         }
         if (checkers > 0) {
-            n += (gnubg_i - 5) * checkers * escapes(opp_hb, gnubg_i);
+            n += (gnubg_i - 5) * checkers * anEscapes[(opp_blocks >> (24 - gnubg_i)) & 4095];
         }
     }
     return n;
 }
 
-static int back_rescue_escapes_fast(const int player_hb[25], int opp_back) {
+static int back_rescue_escapes_fast(unsigned player_blocks, int opp_back) {
     int gnubg_nOppBack = opp_back > 0 ? opp_back - 1 : -1;
     if (gnubg_nOppBack < 0) return 36;
     int escape_point = 23 - gnubg_nOppBack;
     if (escape_point < 0) return 0;
-    return escapes1(player_hb, escape_point);
+    return anEscapes1[(player_blocks >> (24 - escape_point)) & 4095];
+}
+
+// Point 1 is bit 0. A shift to the right moves a source checker towards
+// home; all blots on a given roll can then be tested together.
+struct ContactPointMasks {
+    unsigned occupied = 0;
+    unsigned made = 0;
+    unsigned enemy_blots = 0;
+    unsigned enemy_blocks = 0;
+    unsigned pip_loss_sources = 0;
+    unsigned pip_loss_targets = 0;
+};
+
+static ContactPointMasks contact_point_masks(const Board& board) {
+    ContactPointMasks masks;
+    for (int i = 0; i < 24; ++i) {
+        const int checkers = board[i + 1];
+        masks.occupied |= static_cast<unsigned>(checkers > 0) << i;
+        masks.made |= static_cast<unsigned>(checkers >= 2) << i;
+        masks.enemy_blots |= static_cast<unsigned>(checkers == -1) << i;
+        masks.enemy_blocks |= static_cast<unsigned>(checkers <= -2) << i;
+    }
+    int occupied_home = 0;
+    unsigned two_checker_home_points = 0;
+    for (int i = 0; i < 6; ++i) {
+        occupied_home += board[i + 1] > 0;
+        two_checker_home_points |= static_cast<unsigned>(board[i + 1] == 2) << i;
+    }
+    // GNUbg's pip-loss feature preserves two-checker home points. With at
+    // most two occupied home points it also skips enemy blots on points 1–2.
+    masks.pip_loss_sources = masks.occupied & ~two_checker_home_points;
+    masks.pip_loss_targets = occupied_home > 2 ? masks.enemy_blots : masks.enemy_blots & ~3u;
+    return masks;
+}
+
+// One-based point number, with zero denoting the empty mask.
+static int highest_set_point(unsigned mask) {
+    if (mask == 0) return 0;
+#if defined(_MSC_VER)
+    unsigned long index;
+    _BitScanReverse(&index, mask);
+    return static_cast<int>(index) + 1;
+#elif defined(__GNUC__) || defined(__clang__)
+    return std::numeric_limits<unsigned>::digits - __builtin_clz(mask);
+#else
+    int point = 0;
+    for (; mask; mask >>= 1) ++point;
+    return point;
+#endif
+}
+
+static int forward_anchor_from_mask(unsigned made) {
+    const unsigned on_opponent_side = made >> 12;
+    if (on_opponent_side == 0) return 0;
+    // Lowest of points 13–24, expressed from the opponent's perspective.
+    return 13 - highest_set_point(on_opponent_side & (0u - on_opponent_side));
+}
+
+static float blocked_entry_probability(unsigned enemy_blocks) {
+    static constexpr auto point_counts = [] {
+        std::array<int, 64> counts{};
+        for (int i = 1; i < 64; ++i) counts[i] = counts[i >> 1] + (i & 1);
+        return counts;
+    }();
+    const int blocked = point_counts[(enemy_blocks >> 18) & 63];
+    return static_cast<float>(blocked * blocked) / 36.0f;
+}
+
+static float backbone_from_mask(const Board& board, unsigned made) {
+    made &= ~1u;  // The backbone feature excludes point 1.
+    int previous = 0;
+    int weighted_count = 0;
+    int checker_count = 0;
+    while (made) {
+        const int point = highest_set_point(made);
+        made ^= 1u << (point - 1);
+        if (previous) {
+            const int gap = previous - point;
+            const int weight = gap <= 6 ? 11 : (gap <= 11 ? 13 - gap : 0);
+            weighted_count += weight * board[previous];
+            checker_count += board[previous];
+        }
+        previous = point;
+    }
+    if (checker_count == 0) return 0.0f;
+    return 1.0f - static_cast<float>(weighted_count) / static_cast<float>(11 * checker_count);
+}
+
+// Each intermediate blocker mask has already been shifted to the target
+// point's coordinates. A path of length k needs k-1 open intermediate points.
+static unsigned double_roll_targets(unsigned sources, unsigned blots, int die,
+                                    unsigned block1, unsigned block2, unsigned block3) {
+    const unsigned from_two = sources >> (2 * die);
+    const unsigned from_three = sources >> (3 * die);
+    const unsigned from_four = sources >> (4 * die);
+    const unsigned indirect = ~block1 & (from_two | (~block2 & (from_three | (~block3 & from_four))));
+    return blots & ((sources >> die) | indirect);
+}
+
+static bool different_targets(unsigned first, unsigned second) {
+    const unsigned both = first | second;
+    return first && second && (both & (both - 1));
+}
+
+static bool two_hits_on_doubles(const ContactPointMasks& masks, unsigned sources,
+                                unsigned direct, int die, unsigned block1,
+                                unsigned block2, unsigned block3) {
+    const unsigned blots = masks.enemy_blots;
+    // Two different targets. The reference assigns the roll using the gcd
+    // of the two distances; their normalized step counts must add to <= 4.
+    // This gives (1,1), (1,2), or (1,3), in either order.
+    const unsigned after_two = blots & ~block1 & (sources >> (2 * die));
+    const unsigned after_three = blots & ~block1 & ~block2 & (sources >> (3 * die));
+    if (different_targets(direct, direct | after_two | after_three)) return true;
+
+    // After a direct hit (including entry from the bar) continue to a
+    // second blot one, two or three steps farther towards home.
+    const unsigned lower_one = blots << die;
+    const unsigned lower_two = blots << (2 * die);
+    const unsigned lower_three = blots << (3 * die);
+    const unsigned lower_targets = lower_one | (~(masks.enemy_blocks << die) &
+        (lower_two | (~(masks.enemy_blocks << (2 * die)) & lower_three)));
+    if (direct & lower_targets) return true;
+
+    // From the lower blot, look back for an on-board checker which crosses
+    // another blot. The trained feature tests the first two intermediate
+    // points for that other blot on a four-step path.
+    const unsigned higher_one = blots >> die;
+    const unsigned higher_two = blots >> (2 * die);
+    const unsigned from_two = masks.occupied >> (2 * die);
+    const unsigned from_three = masks.occupied >> (3 * die);
+    const unsigned from_four = masks.occupied >> (4 * die);
+    const unsigned via_blot = (higher_one & from_two) |
+        (~block2 & (higher_one | higher_two) & (from_three | (~block3 & from_four)));
+    return (blots & ~block1 & via_blot) != 0;
+}
+
+static bool two_hits_from_separate_checkers(unsigned high_targets, unsigned low_targets,
+                                           int high_die, int low_die, unsigned stacked) {
+    if (low_targets == 0) return false;
+    while (high_targets) {
+        const unsigned target = high_targets & (0u - high_targets);
+        const unsigned source = target << high_die;
+        // Hit a different blot; a single checker cannot make both direct hits.
+        const unsigned same_checker = (source & stacked) ? 0u : source >> low_die;
+        if (low_targets & ~(target | same_checker)) return true;
+        high_targets ^= target;
+    }
+    return false;
+}
+
+struct ShotFeatures {
+    int single_hits = 0;
+    int double_hits = 0;
+    int pip_loss = 0;
+};
+
+// The bar changes the GNUbg pip-loss calculation. Its no-bar case uses the
+// highest hittable target per roll; with checkers on the bar we call the
+// original entry-aware calculation. Both cases share the same shot features.
+template<bool OnBar>
+static ShotFeatures shot_features(const Board& board, const ContactPointMasks& masks) {
+    ShotFeatures counts;
+    const unsigned blots = masks.enemy_blots;
+    if (blots == 0) return counts;
+    const bool multiple_blots = (blots & (blots - 1)) != 0;
+    // The trained single-shot feature uses only on-board sources. The
+    // double-shot feature also considers entries, including a stacked bar.
+    const unsigned sources = masks.occupied | (OnBar ? 1u << 24 : 0u);
+    const unsigned stacked = masks.made | (static_cast<unsigned>(board[25] > 1) << 24);
+    unsigned direct[7]{}, direct_with_bar[7]{}, pip_direct[7]{};
+    for (int die = 1; die <= 6; ++die) {
+        const unsigned block1 = masks.enemy_blocks >> die;
+        const unsigned block2 = masks.enemy_blocks >> (2 * die);
+        const unsigned block3 = masks.enemy_blocks >> (3 * die);
+        direct[die] = blots & (masks.occupied >> die);
+        direct_with_bar[die] = blots & (sources >> die);
+        counts.single_hits += double_roll_targets(masks.occupied, blots, die, block1, block2, block3) != 0;
+        if (multiple_blots) {
+            counts.double_hits += two_hits_on_doubles(masks, sources, direct_with_bar[die],
+                                                     die, block1, block2, block3);
+        }
+        if constexpr (!OnBar) {
+            pip_direct[die] = masks.pip_loss_targets & (masks.pip_loss_sources >> die);
+            counts.pip_loss += highest_set_point(double_roll_targets(masks.pip_loss_sources,
+                masks.pip_loss_targets, die, block1, block2, block3));
+        }
+    }
+    for (int high = 2; high <= 6; ++high) {
+        for (int low = 1; low < high; ++low) {
+            // There are two orders for unlike dice. Either open intermediate
+            // permits a two-die path; hit counts weight the roll twice.
+            const unsigned open_path = ~((masks.enemy_blocks >> high) & (masks.enemy_blocks >> low));
+            const unsigned combined = blots & open_path & (masks.occupied >> (high + low));
+            counts.single_hits += 2 * ((direct[high] | direct[low] | combined) != 0);
+            if (multiple_blots) {
+                const bool step_through = (direct_with_bar[high] & (blots << low)) ||
+                                          (direct_with_bar[low] & (blots << high));
+                counts.double_hits += 2 * (step_through || two_hits_from_separate_checkers(
+                    direct_with_bar[high], direct_with_bar[low], high, low, stacked));
+            }
+            if constexpr (!OnBar) {
+                const unsigned pip_combined = masks.pip_loss_targets & open_path &
+                                              (masks.pip_loss_sources >> (high + low));
+                counts.pip_loss += 2 * highest_set_point(pip_direct[high] | pip_direct[low] | pip_combined);
+            }
+        }
+    }
+    if constexpr (OnBar) counts.pip_loss = compute_piploss(board);
+    return counts;
 }
 
 // Compute all extended features for one side (player) of the board.
 // `board` is from the player's perspective. `opp_back` is the highest point
-// with opponent checkers (from player's view). `player_hb` and `opp_hb` are
-// precomputed half-board arrays.
+// with opponent checkers (from player's view). The two bit masks mark blocked
+// points in each half-board's coordinates. Containment returns raw roll counts.
 static void compute_side_features(
     const Board& board,
     int opp_back,
-    const int player_hb[25],
-    const int opp_hb[25],
+    unsigned player_blocks,
+    unsigned opp_blocks,
     // Outputs:
     int& out_break_contact,
     int& out_free_pip,
-    int& out_piploss,
     float& out_acontain,
     float& out_contain,
     int& out_mobility,
@@ -1456,17 +1685,16 @@ static void compute_side_features(
 {
     out_break_contact = break_contact_fast(board, opp_back);
     out_free_pip = free_pip_fast(board, opp_back);
-    out_piploss = compute_piploss(board);
-    out_acontain = acontainment_fast(player_hb, opp_back);
-    out_contain = containment_fast(player_hb);
-    out_mobility = mobility_fast(board, opp_hb);
+    out_acontain = acontainment_fast(player_blocks, opp_back);
+    out_contain = containment_fast(player_blocks);
+    out_mobility = mobility_fast(board, opp_blocks);
     out_moment2_val = moment2(board);
     out_enter = enter_loss(board);
     out_timing_val = timing_fast(board, opp_back);
-    out_backbone_val = backbone(board);
+    out_backbone_val = backbone_from_mask(board, player_blocks);
     out_backg_val = backg(board);
     out_backg1_val = backg1(board);
-    out_backrescapes = back_rescue_escapes_fast(player_hb, opp_back);
+    out_backrescapes = back_rescue_escapes_fast(player_blocks, opp_back);
 }
 
 std::array<float, EXTENDED_CONTACT_INPUTS> compute_extended_contact_inputs(const Board& board) {
@@ -1495,32 +1723,11 @@ std::array<float, EXTENDED_CONTACT_INPUTS> compute_extended_contact_inputs(const
         inputs[p1 + 3] = m_feat[3];
     }
 
-    // Precompute shared data once
-    // Extract half-boards once (used by containment, acontainment, mobility, backrescapes).
-    int player_hb[25], opp_hb[25];
-    extract_player_half(board, player_hb);
-    extract_opponent_half(board, opp_hb);
-
-    // Flipped half-boards are a permutation of the same arrays:
-    // player of flipped == opponent half-board of original, and vice versa.
-    int flipped_player_hb[25], flipped_opp_hb[25];
-    std::copy(std::begin(opp_hb), std::end(opp_hb), std::begin(flipped_player_hb));
-    std::copy(std::begin(player_hb), std::end(player_hb), std::begin(flipped_opp_hb));
-
-    // Compute both back-checker values in one pass:
-    // p_opp_back: highest point with opponent checkers (board perspective).
-    // o_opp_back: highest point with opponent checkers in flipped board
-    //             => lowest positive point for the original player.
-    int p_opp_back = 0;
-    int o_opp_back = 0;
-    for (int i = 1; i <= 24; ++i) {
-        const int fwd_pt = i;
-        const int rev_pt = 25 - i;
-        if (p_opp_back == 0 && board[rev_pt] < 0) p_opp_back = rev_pt;
-        if (o_opp_back == 0 && board[fwd_pt] > 0) o_opp_back = 25 - fwd_pt;
-    }
-
     const Board flipped = flip(board);
+    const auto player = contact_point_masks(board);
+    const auto opponent = contact_point_masks(flipped);
+    const int p_opp_back = highest_set_point(player.enemy_blots | player.enemy_blocks);
+    const int o_opp_back = highest_set_point(opponent.enemy_blots | opponent.enemy_blocks);
 
     // Initialize escape tables once
     init_escape_tables();
@@ -1529,35 +1736,30 @@ std::array<float, EXTENDED_CONTACT_INPUTS> compute_extended_contact_inputs(const
     int player_off = player_borne_off(board);
     int opp_off = opponent_borne_off(board);
 
-    // Simple features (cheap)
-    auto exit_probs = prob_no_enter_from_bar(board);
-    auto fwd_anchors = forward_anchor_points(board);
-    int p_back_esc = back_escapes(board);
-    int o_back_esc = back_escapes(flipped);
-    int p_max_pt = max_point(board);
-    int o_max_pt = max_point(flipped);
-    int p_max_anch = max_anchor_point(board);
-    int o_max_anch = max_anchor_point(flipped);
-
-    // Hitting shots (expensive but no redundant computation to eliminate)
-    int p_shots = hitting_shots(board);
-    int o_shots = hitting_shots(flipped);
-    int p_dbl_shots = double_hitting_shots(board);
-    int o_dbl_shots = double_hitting_shots(flipped);
+    const int p_max_pt = highest_set_point(player.occupied);
+    const int o_max_pt = highest_set_point(opponent.occupied);
+    const int p_max_anch = highest_set_point(player.made);
+    const int o_max_anch = highest_set_point(opponent.made);
+    const int p_back_esc = p_max_pt < 19 ? 36 : back_escapes(board);
+    const int o_back_esc = o_max_pt < 19 ? 36 : back_escapes(flipped);
+    const int p_forward = forward_anchor_from_mask(player.made);
+    const int o_forward = forward_anchor_from_mask(opponent.made);
+    const auto p_shots = board[25] ? shot_features<true>(board, player) : shot_features<false>(board, player);
+    const auto o_shots = flipped[25] ? shot_features<true>(flipped, opponent) : shot_features<false>(flipped, opponent);
 
     // Compute all GNUbg features for player using precomputed data
-    int p_break_contact, p_free_pip, p_piploss, p_mobility_val, p_moment2_val, p_enter, p_timing_val, p_backrescapes;
+    int p_break_contact, p_free_pip, p_mobility_val, p_moment2_val, p_enter, p_timing_val, p_backrescapes;
     float p_acontain, p_contain, p_backbone_val, p_backg_val, p_backg1_val;
-    compute_side_features(board, p_opp_back, player_hb, opp_hb,
-        p_break_contact, p_free_pip, p_piploss, p_acontain, p_contain,
+    compute_side_features(board, p_opp_back, player.made, opponent.made,
+        p_break_contact, p_free_pip, p_acontain, p_contain,
         p_mobility_val, p_moment2_val, p_enter, p_timing_val,
         p_backbone_val, p_backg_val, p_backg1_val, p_backrescapes);
 
     // Compute all GNUbg features for opponent using precomputed data
-    int o_break_contact, o_free_pip, o_piploss, o_mobility_val, o_moment2_val, o_enter, o_timing_val, o_backrescapes;
+    int o_break_contact, o_free_pip, o_mobility_val, o_moment2_val, o_enter, o_timing_val, o_backrescapes;
     float o_acontain, o_contain, o_backbone_val, o_backg_val, o_backg1_val;
-    compute_side_features(flipped, o_opp_back, flipped_player_hb, flipped_opp_hb,
-        o_break_contact, o_free_pip, o_piploss, o_acontain, o_contain,
+    compute_side_features(flipped, o_opp_back, opponent.made, player.made,
+        o_break_contact, o_free_pip, o_acontain, o_contain,
         o_mobility_val, o_moment2_val, o_enter, o_timing_val,
         o_backbone_val, o_backg_val, o_backg1_val, o_backrescapes);
 
@@ -1566,20 +1768,22 @@ std::array<float, EXTENDED_CONTACT_INPUTS> compute_extended_contact_inputs(const
     inputs[97]  = player_off >= 5 ? 1.0f : player_off / 5.0f;
     inputs[98]  = player_off >= 10 ? 1.0f : (player_off <= 5 ? 0.0f : (player_off - 5) / 5.0f);
     inputs[99]  = player_off <= 10 ? 0.0f : (player_off - 10) / 5.0f;
-    inputs[100] = exit_probs.player;                                          // I_ENTER2
-    inputs[101] = fwd_anchors.player == 0 ? 2.0f : fwd_anchors.player / 6.0f; // I_FORWARD_ANCHOR
-    inputs[102] = p_shots / 36.0f;                                            // I_P1
-    inputs[103] = p_dbl_shots / 36.0f;                                        // I_P2
+    inputs[100] = blocked_entry_probability(player.enemy_blocks);                                          // I_ENTER2
+    inputs[101] = p_forward == 0 ? 2.0f : p_forward / 6.0f; // I_FORWARD_ANCHOR
+    inputs[102] = p_shots.single_hits / 36.0f;                                            // I_P1
+    inputs[103] = p_shots.double_hits / 36.0f;                                        // I_P2
     inputs[104] = p_back_esc / 36.0f;                                         // I_BACKESCAPES
     inputs[105] = p_max_pt / 24.0f;                                           // I_BACK_CHEQUER
     inputs[106] = p_max_anch / 24.0f;                                         // I_BACK_ANCHOR
     inputs[107] = p_break_contact / 167.0f;                                   // I_BREAK_CONTACT
     inputs[108] = p_free_pip / 100.0f;                                        // I_FREEPIP
-    inputs[109] = p_piploss / (12.0f * 36.0f);                                // I_PIPLOSS
-    inputs[110] = p_acontain;                                                  // I_ACONTAIN
-    inputs[111] = p_acontain * p_acontain;                                     // I_ACONTAIN2
-    inputs[112] = p_contain;                                                   // I_CONTAIN
-    inputs[113] = p_contain * p_contain;                                       // I_CONTAIN2
+    inputs[109] = p_shots.pip_loss / (12.0f * 36.0f);                                // I_PIPLOSS
+    // Square the raw count before normalizing. This preserves the original
+    // optimized engine's rounding for the squared containment inputs.
+    inputs[110] = p_acontain * (1.0f / 36.0f);                                 // I_ACONTAIN
+    inputs[111] = (p_acontain * p_acontain) * (1.0f / 1296.0f);                // I_ACONTAIN2
+    inputs[112] = p_contain * (1.0f / 36.0f);                                  // I_CONTAIN
+    inputs[113] = (p_contain * p_contain) * (1.0f / 1296.0f);                  // I_CONTAIN2
     inputs[114] = p_mobility_val / 3600.0f;                                    // I_MOBILITY
     inputs[115] = p_moment2_val / 400.0f;                                      // I_MOMENT2
     inputs[116] = p_enter / (36.0f * (49.0f / 6.0f));                          // I_ENTER
@@ -1594,20 +1798,20 @@ std::array<float, EXTENDED_CONTACT_INPUTS> compute_extended_contact_inputs(const
     inputs[P2_OFFSET + 97]  = opp_off >= 5 ? 1.0f : opp_off / 5.0f;
     inputs[P2_OFFSET + 98]  = opp_off >= 10 ? 1.0f : (opp_off <= 5 ? 0.0f : (opp_off - 5) / 5.0f);
     inputs[P2_OFFSET + 99]  = opp_off <= 10 ? 0.0f : (opp_off - 10) / 5.0f;
-    inputs[P2_OFFSET + 100] = exit_probs.opponent;
-    inputs[P2_OFFSET + 101] = fwd_anchors.opponent == 0 ? 2.0f : fwd_anchors.opponent / 6.0f;
-    inputs[P2_OFFSET + 102] = o_shots / 36.0f;
-    inputs[P2_OFFSET + 103] = o_dbl_shots / 36.0f;
+    inputs[P2_OFFSET + 100] = blocked_entry_probability(opponent.enemy_blocks);
+    inputs[P2_OFFSET + 101] = o_forward == 0 ? 2.0f : o_forward / 6.0f;
+    inputs[P2_OFFSET + 102] = o_shots.single_hits / 36.0f;
+    inputs[P2_OFFSET + 103] = o_shots.double_hits / 36.0f;
     inputs[P2_OFFSET + 104] = o_back_esc / 36.0f;
     inputs[P2_OFFSET + 105] = o_max_pt / 24.0f;
     inputs[P2_OFFSET + 106] = o_max_anch / 24.0f;
     inputs[P2_OFFSET + 107] = o_break_contact / 167.0f;
     inputs[P2_OFFSET + 108] = o_free_pip / 100.0f;
-    inputs[P2_OFFSET + 109] = o_piploss / (12.0f * 36.0f);
-    inputs[P2_OFFSET + 110] = o_acontain;
-    inputs[P2_OFFSET + 111] = o_acontain * o_acontain;
-    inputs[P2_OFFSET + 112] = o_contain;
-    inputs[P2_OFFSET + 113] = o_contain * o_contain;
+    inputs[P2_OFFSET + 109] = o_shots.pip_loss / (12.0f * 36.0f);
+    inputs[P2_OFFSET + 110] = o_acontain * (1.0f / 36.0f);
+    inputs[P2_OFFSET + 111] = (o_acontain * o_acontain) * (1.0f / 1296.0f);
+    inputs[P2_OFFSET + 112] = o_contain * (1.0f / 36.0f);
+    inputs[P2_OFFSET + 113] = (o_contain * o_contain) * (1.0f / 1296.0f);
     inputs[P2_OFFSET + 114] = o_mobility_val / 3600.0f;
     inputs[P2_OFFSET + 115] = o_moment2_val / 400.0f;
     inputs[P2_OFFSET + 116] = o_enter / (36.0f * (49.0f / 6.0f));

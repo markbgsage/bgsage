@@ -3,6 +3,11 @@
 Historical benchmark results for all trained models. When a new model stage is
 trained, append its results to the tables below.
 
+For CPU latency with a fixed Stage 11 model, the 3-ply search benchmark times
+checker play, cube action and post-move analytics on the same inputs before
+and after an engine change. It also measures error against full-game rollouts.
+[Search timings and accuracy](data/multi_ply_benchmark/experiments/README.md)
+
 ## Summary Table (1-ply)
 
 | Model | Contact ER | Race ER | vs PubEval | Self-Play (S/G/B%) |

@@ -258,13 +258,20 @@ void possible_boards(const Board& board, int die1, int die2,
 
 namespace {
 
-uint64_t board_hash64(const Board& b) {
-    uint64_t h = 0x9e3779b97f4a7c15ULL;
+uint32_t move_board_hash(const Board& b) {
+    // A dot product over points vectorizes. Board equality below still
+    // decides every collision; hashing never changes first-seen order.
+    static constexpr uint32_t coefficients[26] = {
+        767017, 541951, 709901, 987211, 774359, 690293, 936359, 539347,
+        930547, 913217, 869233, 795203, 960593, 580031, 642977, 544897,
+        686057, 787837, 998617, 982273, 609859, 849677, 600337, 791291,
+        544331, 855011
+    };
+    uint32_t h = 0;
     for (int i = 0; i < 26; ++i) {
-        h ^= static_cast<uint32_t>(b[i] + 32);
-        h *= 0x100000001b3ULL;
+        h += static_cast<uint32_t>(b[i]) * coefficients[i];
     }
-    return h;
+    return h ^ (h >> 16);
 }
 
 // Generation-stamped open-addressing table used to reject duplicate boards
@@ -275,6 +282,20 @@ struct MoveDedup {
     std::vector<int32_t> head = std::vector<int32_t>(TBL, -1);
     std::vector<uint32_t> stamp = std::vector<uint32_t>(TBL, 0);
     uint32_t gen = 0;
+    uint32_t mask = TBL - 1;
+
+    void grow(const std::vector<Board>& boards) {
+        const size_t size = head.size() * 2;
+        head.resize(size);
+        stamp.assign(size, 0u);
+        mask = static_cast<uint32_t>(size - 1);
+        for (size_t i = 0; i < boards.size(); ++i) {
+            uint32_t slot = move_board_hash(boards[i]) & mask;
+            while (stamp[slot] == gen) slot = (slot + 1) & mask;
+            stamp[slot] = gen;
+            head[slot] = static_cast<int32_t>(i);
+        }
+    }
 
     void begin() {
         ++gen;
@@ -287,7 +308,10 @@ struct MoveDedup {
     // Returns true if `b` is new; records `idx` (the board's position in the
     // output vector) as its slot value.
     bool insert(const Board& b, const std::vector<Board>& v, int idx) {
-        uint32_t slot = static_cast<uint32_t>(board_hash64(b)) & (TBL - 1);
+        // A legal double can have over 2,048 distinct results. Always
+        // leave an empty slot so probing terminates, including on a miss.
+        if (static_cast<uint32_t>(idx) >= mask - mask / 4) grow(v);
+        uint32_t slot = move_board_hash(b) & mask;
         for (;;) {
             if (stamp[slot] != gen) {
                 stamp[slot] = gen;
@@ -295,12 +319,41 @@ struct MoveDedup {
                 return true;
             }
             if (v[head[slot]] == b) return false;
-            slot = (slot + 1) & (TBL - 1);
+            slot = (slot + 1) & mask;
         }
     }
 };
 
 thread_local MoveDedup g_move_dedup;
+
+// Moving checkers in a different order can reach exactly the same board
+// after two or three dice of a double. From there the remaining dice are
+// identical, so the first visit emitted every reachable leaf. A hash
+// collision here can evict an entry and cost work, but cannot discard a play.
+struct DoublesPrefixes {
+    static constexpr int slots = 256;
+    uint32_t generation = 0;
+    uint32_t stamps[2][slots]{};
+    Board boards[2][slots];
+
+    void begin() {
+        if (++generation == 0) {
+            for (auto& row : stamps) std::fill_n(row, slots, 0u);
+            ++generation;
+        }
+    }
+
+    bool already_visited(const Board& board, int depth) {
+        const auto slot = move_board_hash(board) & (slots - 1);
+        auto& stamp = stamps[depth - 2][slot];
+        auto& previous = boards[depth - 2][slot];
+        if (stamp == generation && previous == board) return true;
+        stamp = generation;
+        previous = board;
+        return false;
+    }
+};
+thread_local DoublesPrefixes g_doubles_prefixes;
 
 // Strict generator: only emits boards where ALL n_dice are used (or the game
 // ended mid-sequence). Leaves are dedup-checked at insertion, so duplicate
@@ -311,6 +364,7 @@ void generate_strict_dedup(const Board& b, const int* dice, int n_dice,
                            MoveDedup& dedup,
                            int depth = 0)
 {
+    if (depth >= 2 && g_doubles_prefixes.already_visited(b, depth)) return;
     if (!has_checkers(b)) {
         if (dedup.insert(b, results, static_cast<int>(results.size()))) {
             results.push_back(b);
@@ -353,6 +407,7 @@ void possible_boards_unsorted(const Board& board, int die1, int die2,
     if (die1 == die2) {
         int dice[4] = {die1, die1, die1, die1};
         for (int n = 4; n >= 1; --n) {
+            g_doubles_prefixes.begin();
             generate_strict_dedup(board, dice, n, results,
                                   scratch_by_depth.data(), dedup);
             if (!results.empty()) break;

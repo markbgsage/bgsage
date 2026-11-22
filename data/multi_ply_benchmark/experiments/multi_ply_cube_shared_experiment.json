@@ -1,0 +1,181 @@
+{
+  "baseline": "multi_ply_reviewed",
+  "candidate": "multi_ply_cube_shared",
+  "timing_plan": "100 fixed public cube actions per fresh process in ABBA order. Two-thread run pinned to CPUs 8\u20139. Sixteen-thread run pinned to CPUs 8\u201311. Rollout reference workers continue throughout.",
+  "pairs": {
+    "2": [
+      {
+        "identical_complete_outputs": 100,
+        "changed_records": [],
+        "times": {
+          "all": {
+            "n": 100,
+            "baseline_seconds": 4.187606400082586,
+            "candidate_seconds": 3.6174360999139026,
+            "speedup": 1.1576172417205253
+          },
+          "attacking": {
+            "n": 20,
+            "baseline_seconds": 1.1222369999741204,
+            "candidate_seconds": 0.9248921999824233,
+            "speedup": 1.213370596049407
+          },
+          "priming": {
+            "n": 20,
+            "baseline_seconds": 1.1692733000672888,
+            "candidate_seconds": 0.9939878999721259,
+            "speedup": 1.176345607527092
+          },
+          "anchoring": {
+            "n": 20,
+            "baseline_seconds": 0.7834701999963727,
+            "candidate_seconds": 0.6329427999153268,
+            "speedup": 1.2378214905062244
+          },
+          "racing": {
+            "n": 20,
+            "baseline_seconds": 0.9217360999900848,
+            "candidate_seconds": 0.8541618000308517,
+            "speedup": 1.0791118263036257
+          },
+          "purerace": {
+            "n": 20,
+            "baseline_seconds": 0.19088980005471967,
+            "candidate_seconds": 0.21145140001317486,
+            "speedup": 0.9027596887172463
+          }
+        }
+      },
+      {
+        "identical_complete_outputs": 100,
+        "changed_records": [],
+        "times": {
+          "all": {
+            "n": 100,
+            "baseline_seconds": 4.413360200182069,
+            "candidate_seconds": 3.82662300002994,
+            "speedup": 1.1533302862987909
+          },
+          "attacking": {
+            "n": 20,
+            "baseline_seconds": 1.1552069000026677,
+            "candidate_seconds": 1.0645660000736825,
+            "speedup": 1.0851435232035511
+          },
+          "priming": {
+            "n": 20,
+            "baseline_seconds": 1.1266321000293829,
+            "candidate_seconds": 0.9827537999954075,
+            "speedup": 1.1464031988832277
+          },
+          "anchoring": {
+            "n": 20,
+            "baseline_seconds": 0.8419587000680622,
+            "candidate_seconds": 0.6752658999466803,
+            "speedup": 1.2468550538899479
+          },
+          "racing": {
+            "n": 20,
+            "baseline_seconds": 1.059950100054266,
+            "candidate_seconds": 0.9225568000401836,
+            "speedup": 1.1489266568823708
+          },
+          "purerace": {
+            "n": 20,
+            "baseline_seconds": 0.22961240002769046,
+            "candidate_seconds": 0.1814804999739863,
+            "speedup": 1.2652180265130604
+          }
+        }
+      }
+    ],
+    "16": [
+      {
+        "identical_complete_outputs": 100,
+        "changed_records": [],
+        "times": {
+          "all": {
+            "n": 100,
+            "baseline_seconds": 1.7709213002817705,
+            "candidate_seconds": 1.6325755000580102,
+            "speedup": 1.084740828353019
+          },
+          "attacking": {
+            "n": 20,
+            "baseline_seconds": 0.46592290003900416,
+            "candidate_seconds": 0.4077989000361413,
+            "speedup": 1.1425310367382346
+          },
+          "priming": {
+            "n": 20,
+            "baseline_seconds": 0.4038531000551302,
+            "candidate_seconds": 0.440241399948718,
+            "speedup": 0.917344666135837
+          },
+          "anchoring": {
+            "n": 20,
+            "baseline_seconds": 0.3508573001017794,
+            "candidate_seconds": 0.2645617000234779,
+            "speedup": 1.3261832686690607
+          },
+          "racing": {
+            "n": 20,
+            "baseline_seconds": 0.41184500002418645,
+            "candidate_seconds": 0.38222760005737655,
+            "speedup": 1.0774862934083358
+          },
+          "purerace": {
+            "n": 20,
+            "baseline_seconds": 0.13844300006167032,
+            "candidate_seconds": 0.13774589999229647,
+            "speedup": 1.0050607681928307
+          }
+        }
+      },
+      {
+        "identical_complete_outputs": 100,
+        "changed_records": [],
+        "times": {
+          "all": {
+            "n": 100,
+            "baseline_seconds": 1.8377714997914154,
+            "candidate_seconds": 1.478764600091381,
+            "speedup": 1.2427748809227983
+          },
+          "attacking": {
+            "n": 20,
+            "baseline_seconds": 0.43724059994565323,
+            "candidate_seconds": 0.3758104000298772,
+            "speedup": 1.1634606171380364
+          },
+          "priming": {
+            "n": 20,
+            "baseline_seconds": 0.4401806998939719,
+            "candidate_seconds": 0.3598353000415955,
+            "speedup": 1.2232838185778017
+          },
+          "anchoring": {
+            "n": 20,
+            "baseline_seconds": 0.3802498999866657,
+            "candidate_seconds": 0.2651901000062935,
+            "speedup": 1.4338766793241586
+          },
+          "racing": {
+            "n": 20,
+            "baseline_seconds": 0.45266489998903126,
+            "candidate_seconds": 0.35195820007356815,
+            "speedup": 1.2861325574866926
+          },
+          "purerace": {
+            "n": 20,
+            "baseline_seconds": 0.12743539997609332,
+            "candidate_seconds": 0.12597059994004667,
+            "speedup": 1.011628110342761
+          }
+        }
+      }
+    ]
+  },
+  "candidate_binary": "344248a7221c6eab98b2498b106575c1250b5b36981c6aaff53dddcbae499587",
+  "baseline_binary": "c36410f49e6ac00ed408c62ea3a531ec93002bb35acc829a44a577e7916bffed"
+}

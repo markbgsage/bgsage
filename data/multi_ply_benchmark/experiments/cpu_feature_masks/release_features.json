@@ -1,0 +1,31 @@
+{
+  "rows": 65504,
+  "explicit_cases": [
+    "two_on_bar",
+    "two_on_bar_flipped",
+    "bar_trapped_by_six_home_points",
+    "bar_trapped_by_six_home_points_flipped",
+    "all_on_bar",
+    "all_on_bar_flipped",
+    "high_stack",
+    "high_stack_flipped",
+    "backgame_anchors",
+    "backgame_anchors_flipped",
+    "bearing_off",
+    "bearing_off_flipped",
+    "one_borne_off_side",
+    "one_borne_off_side_flipped",
+    "terminal",
+    "terminal_flipped",
+    "long_doubles_sparse_block",
+    "long_doubles_sparse_block_flipped",
+    "shared_single_source",
+    "shared_single_source_flipped",
+    "shared_stacked_source",
+    "shared_stacked_source_flipped"
+  ],
+  "fields": {
+    "196": "cbea61284a54e9f34bf6fc0a3204e15706315b68fb708517ecd19e351e2f6939",
+    "244": "e6b07ca4d46e722245dc76b660ad93c4428562cdf385ce26516abf1b343c6226"
+  }
+}

@@ -1,0 +1,218 @@
+{
+  "compiler": "Ubuntu GCC 15.2.0-16ubuntu1",
+  "cmake": "4.2.3-2ubuntu2",
+  "pybind11": "3.1.0",
+  "python": "3.14.4",
+  "binutils": "2.46-3ubuntu2",
+  "glibc": "2.43-2ubuntu2",
+  "distribution": "Ubuntu 26.04 LTS x86_64",
+  "cpu": "AMD Ryzen 7 9700X, 8 cores / 16 logical processors",
+  "kernel": "6.18.33.2-microsoft-standard-WSL2",
+  "workload": "3-ply cubeful, Stage 11, 100 positions per API, timed around each public call",
+  "compiled_flags": [
+    "-O3",
+    "-ffast-math",
+    "-funroll-loops",
+    "-mavx2",
+    "-mfma"
+  ],
+  "ordering": {
+    "2": "original, final",
+    "16": "final, original"
+  },
+  "storage": "weights, bearoff assets and repository on the WSL /mnt/c filesystem",
+  "source": {
+    "commit": "139427d826dd67798226e7d23c003c90315306ba",
+    "verified_original_blobs": 73,
+    "changes_from_original": {
+      "cpp/include/bgbot/bearoff.h": {
+        "original_sha256": "f1470060bc7ffccb2dab956b9f4d77a52ccc3ca4b02c3279cdb514dce0cf1c3e",
+        "final_sha256": "6b9460cf37bb2a6f202a338294978abdd1d2af7382423a5f5d6223bd565e1775"
+      },
+      "cpp/include/bgbot/multipy.h": {
+        "original_sha256": "b181a791bbb8b92471d2810acff90e707a51f378bee6b3df9743397843385f38",
+        "final_sha256": "e62afb33ea87169bb68bfb280edecbde54574707a6d7a211f725724a7ba083ae"
+      },
+      "cpp/include/bgbot/strategy.h": {
+        "original_sha256": "2e77eadc31655464339d1a3d12dbccadbc5c41bf6758b8601597fb87a02510d0",
+        "final_sha256": "cd03fabfa7f005381869018411fda6fb6a8481ac06e7b574998930d5f5fb10b2"
+      },
+      "cpp/pybind/bindings.cpp": {
+        "original_sha256": "ec6277506144d708e8d159363d7d7b1e05fcf9775e89799953caa04d95465d3a",
+        "final_sha256": "f1be365e6e02f3475682b212b4c9848d0c0126e72d6a313b5f98515768c7e7ff"
+      },
+      "cpp/src/bearoff.cpp": {
+        "original_sha256": "d38aca5df9d9d7cc8c84d11edcbd3d14c63c3cc2b572517509f0fb8eb0af7dc9",
+        "final_sha256": "eb3150e0c303814025695fd9b2b3ab6ee7eb35ee576f0697bfa8fb823feac985"
+      },
+      "cpp/src/cube_eval.cpp": {
+        "original_sha256": "3524c5c135e7e76ed80af6cd15a8b75b47c694601994aec222b2fd7233e39c6e",
+        "final_sha256": "4494c51079ce1cd0483ed51dfc507d229b0931a3c974b80ccb7c4a1dc614485b"
+      },
+      "cpp/src/encoding.cpp": {
+        "original_sha256": "b2dcefdf3037e8cafea77c07961796bc5a6b6a03e9f332f35f7b92abd3c701b1",
+        "final_sha256": "b3839eeedec20d23bd4ff29af78f929eaac935b1cdf7b8ab8e9bf135eb7cf2e9"
+      },
+      "cpp/src/moves.cpp": {
+        "original_sha256": "ec9c39a3af18c0d1cacddcf6cd957e8db7713dc5438dfe29f309646714b498ce",
+        "final_sha256": "85276a46d81c5ba1f18931259f78acf0ecfef46180b4afb9bf8c99eb866ec9a4"
+      },
+      "cpp/src/multipy.cpp": {
+        "original_sha256": "1feb54ef82b363306a2a74bc64a387d4464876a3477a8f9e7f90752ee7be0a88",
+        "final_sha256": "3c3ae035f5b276d5ba8b212e345c59a77d2e32ff465fa93ce89df13a973821cd"
+      },
+      "cpp/src/neural_net.cpp": {
+        "original_sha256": "20d4d74d2f61871d0be81c8ffb1e667ac18be6afadbd1e7d903550b2cea8ca9f",
+        "final_sha256": "2099f73c6569a2e77f0ad7de70a5091495b05169f5aba45cc35ad55f90265725"
+      },
+      "python/bgsage/analyzer.py": {
+        "original_sha256": "9bc375c7d437459a58a29e03297674bde94ef4e10a27736c66f3fdb9afc1ca0a",
+        "final_sha256": "1a4f2529dcbba838d9b32bd2d6d5ee187eae770f8166a467688ae1839caa9041"
+      }
+    },
+    "fixtures_sha256": {
+      "build/cpu_feature_masks/all.bin": "674d1524eb05bc0603272c87a137c17779252ec729c22e0fc8d4a6921aae5110",
+      "build/nn_trials/corpus.txt": "5a13da54f7fb4db7a661bece3f6d0af4b8e112c81b40f086e64e8fadbc10ecce",
+      "data/multi_ply_benchmark/checker_play.json": "1e69cf43b3bb4ae29b4337e8008f5e30c76f7b8b8f6f1bf271e46d75d8beac0b",
+      "data/multi_ply_benchmark/cube_action.json": "31f56488ded1f2d0f3f280db754be4bce39e136b605bd5a7318952c2361830de",
+      "data/bearoff_1sided.db": "907bbe0042dadfa14840a9f470b6b5adac213d5b2c17dc0e41aec27b087e3fe6"
+    }
+  },
+  "package_archives": [
+    {
+      "package": "cpp-15-x86-64-linux-gnu",
+      "version": "15.2.0-16ubuntu1",
+      "filename": "pool/main/g/gcc-15/cpp-15-x86-64-linux-gnu_15.2.0-16ubuntu1_amd64.deb",
+      "sha256": "1649aa71c45b047feda5b9ca303c94799bdba5befa5c9de9735cbfc59c3ef93f",
+      "bytes": 12899858
+    },
+    {
+      "package": "gcc-15-x86-64-linux-gnu",
+      "version": "15.2.0-16ubuntu1",
+      "filename": "pool/main/g/gcc-15/gcc-15-x86-64-linux-gnu_15.2.0-16ubuntu1_amd64.deb",
+      "sha256": "df0e5375c9e981b18e396c2e9ec1e359f226576a9b94a311bf07603f3ca6023a",
+      "bytes": 25433044
+    },
+    {
+      "package": "g++-15-x86-64-linux-gnu",
+      "version": "15.2.0-16ubuntu1",
+      "filename": "pool/main/g/gcc-15/g++-15-x86-64-linux-gnu_15.2.0-16ubuntu1_amd64.deb",
+      "sha256": "8673a23519f570b4a5b4a663a9ce3b0e2f0be50c7250ce7fdae19eb064c3d6aa",
+      "bytes": 14444618
+    },
+    {
+      "package": "gcc-15-base",
+      "version": "15.2.0-16ubuntu1",
+      "filename": "pool/main/g/gcc-15/gcc-15-base_15.2.0-16ubuntu1_amd64.deb",
+      "sha256": "5a302d705d562fb7e150415b00651c00fed58b633faadff0b332eac1b73fadb3",
+      "bytes": 39040
+    },
+    {
+      "package": "libisl23",
+      "version": "0.27-1build1",
+      "filename": "pool/main/i/isl/libisl23_0.27-1build1_amd64.deb",
+      "sha256": "02ea5de2ab6ddba978606ad58647bf6371ea68c0ed63aa5d6d0d3b8c1fe77ea3",
+      "bytes": 690670
+    },
+    {
+      "package": "libmpc3",
+      "version": "1.3.1-3",
+      "filename": "pool/main/m/mpclib3/libmpc3_1.3.1-3_amd64.deb",
+      "sha256": "a95c75b486f26fe8b140a632fd9e2883b7e2efc21f7586e155d27d2d2ff0ddc0",
+      "bytes": 54628
+    },
+    {
+      "package": "libgcc-15-dev",
+      "version": "15.2.0-16ubuntu1",
+      "filename": "pool/main/g/gcc-15/libgcc-15-dev_15.2.0-16ubuntu1_amd64.deb",
+      "sha256": "32fa5bde1891f46fd4f422e466c863fb78e834b634e1aa08211c8eea68870af5",
+      "bytes": 2866236
+    },
+    {
+      "package": "libstdc++-15-dev",
+      "version": "15.2.0-16ubuntu1",
+      "filename": "pool/main/g/gcc-15/libstdc++-15-dev_15.2.0-16ubuntu1_amd64.deb",
+      "sha256": "9a400597b1db45cf51238c9eb556e211ec092d363cfb7ebebac627750ba56433",
+      "bytes": 2920128
+    },
+    {
+      "package": "libc6-dev",
+      "version": "2.43-2ubuntu2",
+      "filename": "pool/main/g/glibc/libc6-dev_2.43-2ubuntu2_amd64.deb",
+      "sha256": "6c8def1cafec89468fef8bd0d7a4eb66192a7850bf17c9decf7bca8fcf3dd5fa",
+      "bytes": 2295266
+    },
+    {
+      "package": "linux-libc-dev",
+      "version": "7.0.0-14.14",
+      "filename": "pool/main/l/linux/linux-libc-dev_7.0.0-14.14_amd64.deb",
+      "sha256": "14bf36d574df2cacf2e50fa8c1f28b4b6b574b63e9561924cc942e4c9186e57e",
+      "bytes": 1548426
+    },
+    {
+      "package": "libpython3.14-dev",
+      "version": "3.14.4-1",
+      "filename": "pool/main/p/python3.14/libpython3.14-dev_3.14.4-1_amd64.deb",
+      "sha256": "75bdc4cfef63482b1391503036c5b634ebb1ca0676ee7d3e5cc847c391c5647f",
+      "bytes": 5985654
+    },
+    {
+      "package": "make",
+      "version": "4.4.1-3",
+      "filename": "pool/main/m/make-dfsg/make_4.4.1-3_amd64.deb",
+      "sha256": "a86f39d57a32b7c919c0ad721fc2f17ab533a42fda348c8d81a4eea1577a014f",
+      "bytes": 196620
+    },
+    {
+      "package": "cmake",
+      "version": "4.2.3-2ubuntu2",
+      "filename": "pool/main/c/cmake/cmake_4.2.3-2ubuntu2_amd64.deb",
+      "sha256": "87c496f1e37b64bc0b4ad9c5fe0e75c09655f5399ed39695b876afba55becc61",
+      "bytes": 13742846
+    },
+    {
+      "package": "cmake-data",
+      "version": "4.2.3-2ubuntu2",
+      "filename": "pool/main/c/cmake/cmake-data_4.2.3-2ubuntu2_all.deb",
+      "sha256": "9f4cc6f77e7c09929f80fc5534b638b95d257a90d6bf43c59d2232514759eb9d",
+      "bytes": 2581178
+    },
+    {
+      "package": "libuv1t64",
+      "version": "1.51.0-2ubuntu1",
+      "filename": "pool/main/libu/libuv1/libuv1t64_1.51.0-2ubuntu1_amd64.deb",
+      "sha256": "5c9b857d7d6a0c22b30dae45d518b375452cf7c663fc9381e3f0760ba3fb8cce",
+      "bytes": 103390
+    },
+    {
+      "package": "libarchive13t64",
+      "version": "3.8.5-1ubuntu2",
+      "filename": "pool/main/liba/libarchive/libarchive13t64_3.8.5-1ubuntu2_amd64.deb",
+      "sha256": "b3102c29375ebd01f71243e93cf55525ab3a5b359d07fbf62e995971754596da",
+      "bytes": 396412
+    },
+    {
+      "package": "libjsoncpp26",
+      "version": "1.9.6-5",
+      "filename": "pool/main/libj/libjsoncpp/libjsoncpp26_1.9.6-5_amd64.deb",
+      "sha256": "2b42b79a81f9407d0ae9650541dca2e416b76b6ad9f7794737bac8c6d6f56823",
+      "bytes": 84026
+    },
+    {
+      "package": "librhash1",
+      "version": "1.4.6-1.1",
+      "filename": "pool/main/r/rhash/librhash1_1.4.6-1.1_amd64.deb",
+      "sha256": "cb935821161fdfdbd30afdbcb8ceeab736f9a4df84f02df883a41d911951e398",
+      "bytes": 132514
+    }
+  ],
+  "tool_sha256": {
+    "g++": "e6718f7e0c7d057c3ff77b550c603da9bc4030e3ede3c053705acce1293dbe4d",
+    "cc1plus": "6f2b2c0e3fd32042eb2acace19a57fdb0b229d9c24cdd5e2cc100639c77e9ff0",
+    "cmake": "6e1dccda39845415d68eabb934c598998949c99ec4668625d571aee1827b05c7"
+  },
+  "module_sha256": {
+    "original": "8b4ff1e79da111458d5c5796b56c243f7ca60bc83a07e67b736ca851a5322d15",
+    "final": "b1381b1c31642887f6eed45f4e70230f14a1965c7d1cebbb579be174cdfc53a3"
+  }
+}

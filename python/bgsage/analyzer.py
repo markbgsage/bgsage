@@ -419,6 +419,8 @@ class _MultiPlyAnalyzer(_CubelessBase):
             jacoby=jacoby, beaver=beaver, **_cube_limit_kwargs(max_cube_value),
             bearoff_db=self._bearoff_db,
             incl_2ply_details=incl_2ply_details,
+            **({"loaded_strategy": self._strategy_1ply}
+               if getattr(bgbot_cpp, "supports_loaded_cube_strategy", False) else {}),
         )
         result = self._format_cube_result(r, eval_level=f"{self._n_plies}-ply")
 
@@ -847,11 +849,20 @@ class _CubefulAnalyzer:
         inner = self._inner
         is_rollout = isinstance(inner, _RolloutAnalyzer)
 
-        results = inner.checker_play_analytics(
-            board, die1, die2, cube_value, cube_owner, progress_callback,
-            away1=away1, away2=away2, is_crawford=is_crawford, jacoby=jacoby, beaver=beaver, max_cube_value=max_cube_value,
-            force_boards=force_boards,
+        use_cube_aware_probs = (
+            isinstance(inner, _MultiPlyAnalyzer) and self._cubeful_ply > 1 and owner is not None
         )
+        if use_cube_aware_probs:
+            # The cube-aware traversal below computes both probabilities and
+            # equity for EVERY legal endpoint (including forced boards). Running
+            # the cubeless move filter/search first only produces discarded values.
+            results = [{"board": b} for b in bgbot_cpp.possible_moves(board, die1, die2)]
+        else:
+            results = inner.checker_play_analytics(
+                board, die1, die2, cube_value, cube_owner, progress_callback,
+                away1=away1, away2=away2, is_crawford=is_crawford, jacoby=jacoby,
+                beaver=beaver, max_cube_value=max_cube_value, force_boards=force_boards,
+            )
         if not results:
             return results
 
@@ -961,12 +972,6 @@ class _CubefulAnalyzer:
         # match equity). Otherwise the displayed probs are from MultiPlyStrategy's
         # cubeless tree, where the opponent picks gammon-greedy moves in match
         # play. The fix mirrors the post_move_analytics path.
-        use_cube_aware_probs = (
-            isinstance(inner, _MultiPlyAnalyzer)
-            and self._cubeful_ply > 1
-            and owner is not None
-        )
-
         if use_cube_aware_probs:
             total_threads = getattr(inner, "_parallel_threads", 1) or 1
             db = getattr(inner, "_bearoff_db", None)

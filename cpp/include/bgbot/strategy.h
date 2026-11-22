@@ -124,9 +124,8 @@ public:
 
     // Identity of the underlying evaluator, used to key shared evaluation
     // caches (the cubeful evaluation engine's per-thread cache). Wrappers
-    // that don't change evaluation results for non-intercepted positions
-    // (e.g. BearoffStrategy) forward to the wrapped strategy so equivalent
-    // evaluators share cache entries. The id is a process-unique monotonic
+    // that change results also include their configuration in the key.
+    // The base id is a process-unique monotonic
     // counter (NOT the object address — a freed strategy's address can be
     // reused by a different model's strategy, which would silently serve
     // the old model's cached values), so distinct strategy objects never

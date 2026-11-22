@@ -16,6 +16,7 @@
 namespace bgbot {
 
 class BearoffDB;  // forward declaration
+struct CubeDecision;
 
 // Lock-free shared position cache for cross-thread sharing during rollouts.
 // Multiple threads read/write concurrently using a per-entry state machine:
@@ -257,6 +258,12 @@ public:
                      bool full_depth_opponent = false,
                      bool parallel_evaluate = false,
                      int parallel_threads = 0);
+
+    // Compute a pre-roll cube decision and the independent cubeless probabilities.
+    // The two 3-ply policies can share identical ordered candidate NN evaluations.
+    CubeDecision cube_decision_with_cubeless_probs(
+        const Board& board, const CubeInfo& cube, const Strategy* cube_move_filter,
+        std::array<float, NUM_OUTPUTS>& pre_roll_probs) const;
 
     // Evaluate a post-move board at N-ply depth. Returns equity.
     double evaluate(const Board& board, bool pre_move_is_race) const override;

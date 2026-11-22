@@ -54,6 +54,8 @@ public:
 
     // Check if DB has been loaded/generated.
     bool is_loaded() const { return loaded_; }
+    // A successful load or generation changes which values this DB can serve.
+    uint64_t cache_version() const { return cache_version_; }
 
     // --- One-sided lookups ---
 
@@ -142,6 +144,7 @@ private:
     std::vector<std::array<uint16_t, MAX_ROLLS>> gammon_distributions_;
 
     bool loaded_ = false;
+    uint64_t cache_version_ = 0;
 
     // Generation helpers
     void generate_position(unsigned int index,
@@ -157,9 +160,7 @@ class BearoffStrategy : public Strategy {
 public:
     BearoffStrategy(std::shared_ptr<Strategy> base, const BearoffDB* db);
 
-    // Bearoff interception doesn't change which evaluator the cache entries
-    // belong to — share them with the wrapped strategy.
-    uint64_t eval_identity() const override { return base_->eval_identity(); }
+    uint64_t eval_identity() const override;
     int root_pin_for(const Board& root) const override { return base_->root_pin_for(root); }
 
     double evaluate(const Board& board, bool pre_move_is_race) const override;

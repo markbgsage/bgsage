@@ -1,0 +1,3987 @@
+{
+  "completed_calls": 600,
+  "p95_method": "nearest rank",
+  "game_plan_perspective": "Source player on roll, including post-move rows (previous mover is opposite)",
+  "value_statistics_note": "Descriptive aggregates, not an accuracy score or rollout comparison",
+  "groups": [
+    {
+      "api": "checker_play",
+      "level": "2ply",
+      "mode": null,
+      "source_game_plan": null,
+      "timing": {
+        "count": 100,
+        "total_seconds": 2.2069331,
+        "mean_seconds": 0.022069331,
+        "median_seconds": 0.01276475,
+        "p95_seconds": 0.0546167,
+        "min_seconds": 0.003892,
+        "max_seconds": 0.2507794,
+        "stdev_seconds": 0.02941932495979538
+      },
+      "values": {
+        "legal_moves": {
+          "mean": 17.09,
+          "min": 2,
+          "max": 68
+        },
+        "best_equity": {
+          "mean": 0.1207104289252311,
+          "min": -2.2913501262664795,
+          "max": 2.3003196716308594
+        },
+        "best_cubeless_equity": {
+          "mean": 0.11563310557990918,
+          "min": -2.0,
+          "max": 2.1570192873477936
+        }
+      },
+      "cube_actions": {}
+    },
+    {
+      "api": "checker_play",
+      "level": "2ply",
+      "mode": "money",
+      "source_game_plan": null,
+      "timing": {
+        "count": 50,
+        "total_seconds": 0.8966123,
+        "mean_seconds": 0.017932246,
+        "median_seconds": 0.00961515,
+        "p95_seconds": 0.0546167,
+        "min_seconds": 0.003892,
+        "max_seconds": 0.0763034,
+        "stdev_seconds": 0.016395692932997585
+      },
+      "values": {
+        "legal_moves": {
+          "mean": 18.96,
+          "min": 2,
+          "max": 51
+        },
+        "best_equity": {
+          "mean": 0.16042444908991457,
+          "min": -2.0,
+          "max": 2.0820136070251465
+        },
+        "best_cubeless_equity": {
+          "mean": 0.11931175938603701,
+          "min": -2.0,
+          "max": 2.089741438627243
+        }
+      },
+      "cube_actions": {}
+    },
+    {
+      "api": "checker_play",
+      "level": "2ply",
+      "mode": null,
+      "source_game_plan": "attacking",
+      "timing": {
+        "count": 20,
+        "total_seconds": 0.6565145,
+        "mean_seconds": 0.032825725,
+        "median_seconds": 0.026665750000000002,
+        "p95_seconds": 0.0610111,
+        "min_seconds": 0.0040929,
+        "max_seconds": 0.1046875,
+        "stdev_seconds": 0.023790797866222298
+      },
+      "values": {
+        "legal_moves": {
+          "mean": 21.85,
+          "min": 2,
+          "max": 51
+        },
+        "best_equity": {
+          "mean": 0.21315187457948923,
+          "min": -2.0,
+          "max": 1.3981784582138062
+        },
+        "best_cubeless_equity": {
+          "mean": 0.1687389357110078,
+          "min": -2.0,
+          "max": 1.4301044770982116
+        }
+      },
+      "cube_actions": {}
+    },
+    {
+      "api": "checker_play",
+      "level": "2ply",
+      "mode": "money",
+      "source_game_plan": "attacking",
+      "timing": {
+        "count": 10,
+        "total_seconds": 0.2551423,
+        "mean_seconds": 0.02551423,
+        "median_seconds": 0.026542,
+        "p95_seconds": 0.0546167,
+        "min_seconds": 0.0067321,
+        "max_seconds": 0.0546167,
+        "stdev_seconds": 0.0133984295761398
+      },
+      "values": {
+        "legal_moves": {
+          "mean": 23.4,
+          "min": 3,
+          "max": 51
+        },
+        "best_equity": {
+          "mean": 0.2551819283515215,
+          "min": -2.0,
+          "max": 1.3981784582138062
+        },
+        "best_cubeless_equity": {
+          "mean": 0.17786231373465852,
+          "min": -2.0,
+          "max": 1.4301044770982116
+        }
+      },
+      "cube_actions": {}
+    },
+    {
+      "api": "checker_play",
+      "level": "2ply",
+      "mode": null,
+      "source_game_plan": "priming",
+      "timing": {
+        "count": 20,
+        "total_seconds": 0.6615576,
+        "mean_seconds": 0.03307788,
+        "median_seconds": 0.02368235,
+        "p95_seconds": 0.0410236,
+        "min_seconds": 0.0048881,
+        "max_seconds": 0.2507794,
+        "stdev_seconds": 0.052778604349037216
+      },
+      "values": {
+        "legal_moves": {
+          "mean": 18.3,
+          "min": 3,
+          "max": 68
+        },
+        "best_equity": {
+          "mean": 0.31964441388845444,
+          "min": -0.34942910075187683,
+          "max": 1.0731011629104614
+        },
+        "best_cubeless_equity": {
+          "mean": 0.29672081612079637,
+          "min": -0.9149120074580424,
+          "max": 1.0896712745307013
+        }
+      },
+      "cube_actions": {}
+    },
+    {
+      "api": "checker_play",
+      "level": "2ply",
+      "mode": "money",
+      "source_game_plan": "priming",
+      "timing": {
+        "count": 10,
+        "total_seconds": 0.1669054,
+        "mean_seconds": 0.01669054,
+        "median_seconds": 0.01041775,
+        "p95_seconds": 0.0378163,
+        "min_seconds": 0.0048881,
+        "max_seconds": 0.0378163,
+        "stdev_seconds": 0.011828869987093253
+      },
+      "values": {
+        "legal_moves": {
+          "mean": 16.9,
+          "min": 3,
+          "max": 45
+        },
+        "best_equity": {
+          "mean": 0.4759091526269913,
+          "min": 0.2839445471763611,
+          "max": 0.8331080079078674
+        },
+        "best_cubeless_equity": {
+          "mean": 0.4158803272410296,
+          "min": 0.24551835982128978,
+          "max": 0.8773268624208868
+        }
+      },
+      "cube_actions": {}
+    },
+    {
+      "api": "checker_play",
+      "level": "2ply",
+      "mode": null,
+      "source_game_plan": "anchoring",
+      "timing": {
+        "count": 20,
+        "total_seconds": 0.4944169,
+        "mean_seconds": 0.024720844999999998,
+        "median_seconds": 0.015097949999999999,
+        "p95_seconds": 0.0695413,
+        "min_seconds": 0.0064161,
+        "max_seconds": 0.0763034,
+        "stdev_seconds": 0.021254146701698992
+      },
+      "values": {
+        "legal_moves": {
+          "mean": 17.7,
+          "min": 4,
+          "max": 41
+        },
+        "best_equity": {
+          "mean": -0.3794314573984593,
+          "min": -1.5457168817520142,
+          "max": 0.47108978033065796
+        },
+        "best_cubeless_equity": {
+          "mean": -0.41218539374676766,
+          "min": -1.5509638220537454,
+          "max": 0.30916122219059616
+        }
+      },
+      "cube_actions": {}
+    },
+    {
+      "api": "checker_play",
+      "level": "2ply",
+      "mode": "money",
+      "source_game_plan": "anchoring",
+      "timing": {
+        "count": 10,
+        "total_seconds": 0.2719431,
+        "mean_seconds": 0.02719431,
+        "median_seconds": 0.014825950000000001,
+        "p95_seconds": 0.0763034,
+        "min_seconds": 0.0064161,
+        "max_seconds": 0.0763034,
+        "stdev_seconds": 0.025904036865942556
+      },
+      "values": {
+        "legal_moves": {
+          "mean": 19.3,
+          "min": 4,
+          "max": 41
+        },
+        "best_equity": {
+          "mean": -0.4491573697887361,
+          "min": -1.5457168817520142,
+          "max": 0.47108978033065796
+        },
+        "best_cubeless_equity": {
+          "mean": -0.4732033108652104,
+          "min": -1.5509638220537454,
+          "max": 0.2590269376523793
+        }
+      },
+      "cube_actions": {}
+    },
+    {
+      "api": "checker_play",
+      "level": "2ply",
+      "mode": null,
+      "source_game_plan": "racing",
+      "timing": {
+        "count": 20,
+        "total_seconds": 0.2882376,
+        "mean_seconds": 0.01441188,
+        "median_seconds": 0.011432399999999999,
+        "p95_seconds": 0.0347394,
+        "min_seconds": 0.0044687,
+        "max_seconds": 0.0350865,
+        "stdev_seconds": 0.009531396563303164
+      },
+      "values": {
+        "legal_moves": {
+          "mean": 13.25,
+          "min": 2,
+          "max": 48
+        },
+        "best_equity": {
+          "mean": 0.4937879711389542,
+          "min": -0.783183217048645,
+          "max": 2.0820136070251465
+        },
+        "best_cubeless_equity": {
+          "mean": 0.565883823929471,
+          "min": -0.4355011482257396,
+          "max": 2.1570192873477936
+        }
+      },
+      "cube_actions": {}
+    },
+    {
+      "api": "checker_play",
+      "level": "2ply",
+      "mode": "money",
+      "source_game_plan": "racing",
+      "timing": {
+        "count": 10,
+        "total_seconds": 0.1487075,
+        "mean_seconds": 0.01487075,
+        "median_seconds": 0.01121405,
+        "p95_seconds": 0.0347394,
+        "min_seconds": 0.0044687,
+        "max_seconds": 0.0347394,
+        "stdev_seconds": 0.01117867153946399
+      },
+      "values": {
+        "legal_moves": {
+          "mean": 16.8,
+          "min": 2,
+          "max": 48
+        },
+        "best_equity": {
+          "mean": 0.6975784420967102,
+          "min": -0.3516530692577362,
+          "max": 2.0820136070251465
+        },
+        "best_cubeless_equity": {
+          "mean": 0.6518344798707403,
+          "min": -0.3994215607526712,
+          "max": 2.089741438627243
+        }
+      },
+      "cube_actions": {}
+    },
+    {
+      "api": "checker_play",
+      "level": "2ply",
+      "mode": null,
+      "source_game_plan": "purerace",
+      "timing": {
+        "count": 20,
+        "total_seconds": 0.1062065,
+        "mean_seconds": 0.005310325,
+        "median_seconds": 0.00498355,
+        "p95_seconds": 0.0070362,
+        "min_seconds": 0.003892,
+        "max_seconds": 0.0083526,
+        "stdev_seconds": 0.001182371404769157
+      },
+      "values": {
+        "legal_moves": {
+          "mean": 14.35,
+          "min": 2,
+          "max": 48
+        },
+        "best_equity": {
+          "mean": -0.04360065758228302,
+          "min": -2.2913501262664795,
+          "max": 2.3003196716308594
+        },
+        "best_cubeless_equity": {
+          "mean": -0.04099265411496163,
+          "min": -1.9856335520744324,
+          "max": 1.9924793243408203
+        }
+      },
+      "cube_actions": {}
+    },
+    {
+      "api": "checker_play",
+      "level": "2ply",
+      "mode": "money",
+      "source_game_plan": "purerace",
+      "timing": {
+        "count": 10,
+        "total_seconds": 0.053914,
+        "mean_seconds": 0.0053914,
+        "median_seconds": 0.0048124,
+        "p95_seconds": 0.0083526,
+        "min_seconds": 0.003892,
+        "max_seconds": 0.0083526,
+        "stdev_seconds": 0.001442384204479976
+      },
+      "values": {
+        "legal_moves": {
+          "mean": 18.4,
+          "min": 2,
+          "max": 48
+        },
+        "best_equity": {
+          "mean": -0.17738990783691405,
+          "min": -1.8010368347167969,
+          "max": 0.9533839821815491
+        },
+        "best_cubeless_equity": {
+          "mean": -0.17581501305103303,
+          "min": -1.801037073135376,
+          "max": 0.9594641923904419
+        }
+      },
+      "cube_actions": {}
+    },
+    {
+      "api": "checker_play",
+      "level": "2ply",
+      "mode": "match",
+      "source_game_plan": null,
+      "timing": {
+        "count": 50,
+        "total_seconds": 1.3103208,
+        "mean_seconds": 0.026206416,
+        "median_seconds": 0.0150976,
+        "p95_seconds": 0.0610111,
+        "min_seconds": 0.0039501,
+        "max_seconds": 0.2507794,
+        "stdev_seconds": 0.03801194914365401
+      },
+      "values": {
+        "legal_moves": {
+          "mean": 15.22,
+          "min": 2,
+          "max": 68
+        },
+        "best_equity": {
+          "mean": 0.08099640876054764,
+          "min": -2.2913501262664795,
+          "max": 2.3003196716308594
+        },
+        "best_cubeless_equity": {
+          "mean": 0.11195445177378133,
+          "min": -1.9856335520744324,
+          "max": 2.1570192873477936
+        }
+      },
+      "cube_actions": {}
+    },
+    {
+      "api": "checker_play",
+      "level": "2ply",
+      "mode": "match",
+      "source_game_plan": "attacking",
+      "timing": {
+        "count": 10,
+        "total_seconds": 0.4013722,
+        "mean_seconds": 0.04013722,
+        "median_seconds": 0.04085595,
+        "p95_seconds": 0.1046875,
+        "min_seconds": 0.0040929,
+        "max_seconds": 0.1046875,
+        "stdev_seconds": 0.02994294348415184
+      },
+      "values": {
+        "legal_moves": {
+          "mean": 20.3,
+          "min": 2,
+          "max": 35
+        },
+        "best_equity": {
+          "mean": 0.17112182080745697,
+          "min": -0.46527472138404846,
+          "max": 0.6756543517112732
+        },
+        "best_cubeless_equity": {
+          "mean": 0.15961555768735708,
+          "min": -0.3488226174376905,
+          "max": 0.6669162313919514
+        }
+      },
+      "cube_actions": {}
+    },
+    {
+      "api": "checker_play",
+      "level": "2ply",
+      "mode": "match",
+      "source_game_plan": "priming",
+      "timing": {
+        "count": 10,
+        "total_seconds": 0.4946522,
+        "mean_seconds": 0.04946522,
+        "median_seconds": 0.0322474,
+        "p95_seconds": 0.2507794,
+        "min_seconds": 0.0062911,
+        "max_seconds": 0.2507794,
+        "stdev_seconds": 0.07172156248805825
+      },
+      "values": {
+        "legal_moves": {
+          "mean": 19.7,
+          "min": 4,
+          "max": 68
+        },
+        "best_equity": {
+          "mean": 0.1633796751499176,
+          "min": -0.34942910075187683,
+          "max": 1.0731011629104614
+        },
+        "best_cubeless_equity": {
+          "mean": 0.17756130500056316,
+          "min": -0.9149120074580424,
+          "max": 1.0896712745307013
+        }
+      },
+      "cube_actions": {}
+    },
+    {
+      "api": "checker_play",
+      "level": "2ply",
+      "mode": "match",
+      "source_game_plan": "anchoring",
+      "timing": {
+        "count": 10,
+        "total_seconds": 0.2224738,
+        "mean_seconds": 0.02224738,
+        "median_seconds": 0.0163668,
+        "p95_seconds": 0.0527952,
+        "min_seconds": 0.0075855,
+        "max_seconds": 0.0527952,
+        "stdev_seconds": 0.016402925120694512
+      },
+      "values": {
+        "legal_moves": {
+          "mean": 16.1,
+          "min": 4,
+          "max": 35
+        },
+        "best_equity": {
+          "mean": -0.30970554500818254,
+          "min": -1.0004147291183472,
+          "max": 0.43996933102607727
+        },
+        "best_cubeless_equity": {
+          "mean": -0.3511674766283249,
+          "min": -1.0900712870061398,
+          "max": 0.30916122219059616
+        }
+      },
+      "cube_actions": {}
+    },
+    {
+      "api": "checker_play",
+      "level": "2ply",
+      "mode": "match",
+      "source_game_plan": "racing",
+      "timing": {
+        "count": 10,
+        "total_seconds": 0.1395301,
+        "mean_seconds": 0.01395301,
+        "median_seconds": 0.011432399999999999,
+        "p95_seconds": 0.0350865,
+        "min_seconds": 0.0076372,
+        "max_seconds": 0.0350865,
+        "stdev_seconds": 0.008146078664465907
+      },
+      "values": {
+        "legal_moves": {
+          "mean": 9.7,
+          "min": 2,
+          "max": 34
+        },
+        "best_equity": {
+          "mean": 0.28999750018119813,
+          "min": -0.783183217048645,
+          "max": 1.15384042263031
+        },
+        "best_cubeless_equity": {
+          "mean": 0.4799331679882016,
+          "min": -0.4355011482257396,
+          "max": 2.1570192873477936
+        }
+      },
+      "cube_actions": {}
+    },
+    {
+      "api": "checker_play",
+      "level": "2ply",
+      "mode": "match",
+      "source_game_plan": "purerace",
+      "timing": {
+        "count": 10,
+        "total_seconds": 0.0522925,
+        "mean_seconds": 0.00522925,
+        "median_seconds": 0.0050939,
+        "p95_seconds": 0.0070362,
+        "min_seconds": 0.0039501,
+        "max_seconds": 0.0070362,
+        "stdev_seconds": 0.0009253424462207371
+      },
+      "values": {
+        "legal_moves": {
+          "mean": 10.3,
+          "min": 2,
+          "max": 34
+        },
+        "best_equity": {
+          "mean": 0.09018859267234802,
+          "min": -2.2913501262664795,
+          "max": 2.3003196716308594
+        },
+        "best_cubeless_equity": {
+          "mean": 0.09382970482110978,
+          "min": -1.9856335520744324,
+          "max": 1.9924793243408203
+        }
+      },
+      "cube_actions": {}
+    },
+    {
+      "api": "cube_action",
+      "level": "2ply",
+      "mode": null,
+      "source_game_plan": null,
+      "timing": {
+        "count": 100,
+        "total_seconds": 2.6702644,
+        "mean_seconds": 0.026702644,
+        "median_seconds": 0.0265545,
+        "p95_seconds": 0.0310514,
+        "min_seconds": 0.021993,
+        "max_seconds": 0.03513,
+        "stdev_seconds": 0.0025803784902595083
+      },
+      "values": {
+        "equity_nd": {
+          "mean": 0.5360431401245296,
+          "min": -0.39548155665397644,
+          "max": 1.1822510957717896
+        },
+        "equity_dt": {
+          "mean": 0.6070543599501252,
+          "min": -0.5218015313148499,
+          "max": 2.9591012001037598
+        },
+        "equity_dp": {
+          "mean": 0.9999999898672104,
+          "min": 0.9999997615814209,
+          "max": 1.0000003576278687
+        },
+        "optimal_equity": {
+          "mean": 0.5638635644130409,
+          "min": -0.39548155665397644,
+          "max": 1.1822510957717896
+        },
+        "cubeless_equity": {
+          "mean": 0.4449631586670876,
+          "min": -0.7616859078407288,
+          "max": 1.9054652452468872
+        }
+      },
+      "cube_actions": {
+        "No Double": 66,
+        "Double/Take": 28,
+        "Double/Pass": 6
+      }
+    },
+    {
+      "api": "cube_action",
+      "level": "2ply",
+      "mode": "money",
+      "source_game_plan": null,
+      "timing": {
+        "count": 50,
+        "total_seconds": 1.3393591,
+        "mean_seconds": 0.026787182,
+        "median_seconds": 0.0267332,
+        "p95_seconds": 0.0315787,
+        "min_seconds": 0.022329,
+        "max_seconds": 0.03513,
+        "stdev_seconds": 0.0025250308150627245
+      },
+      "values": {
+        "equity_nd": {
+          "mean": 0.4829398381710053,
+          "min": 0.20566397905349731,
+          "max": 1.0298641920089722
+        },
+        "equity_dt": {
+          "mean": 0.5108243426680565,
+          "min": 0.014559343457221985,
+          "max": 2.057378053665161
+        },
+        "equity_dp": {
+          "mean": 1.0,
+          "min": 1.0,
+          "max": 1.0
+        },
+        "optimal_equity": {
+          "mean": 0.5220651841163635,
+          "min": 0.20566397905349731,
+          "max": 1.0298641920089722
+        },
+        "cubeless_equity": {
+          "mean": 0.3734382992982864,
+          "min": 0.15453477203845978,
+          "max": 1.0289291143417358
+        }
+      },
+      "cube_actions": {
+        "No Double": 30,
+        "Double/Take": 16,
+        "Double/Pass": 4
+      }
+    },
+    {
+      "api": "cube_action",
+      "level": "2ply",
+      "mode": null,
+      "source_game_plan": "attacking",
+      "timing": {
+        "count": 20,
+        "total_seconds": 0.5492568,
+        "mean_seconds": 0.02746284,
+        "median_seconds": 0.027060800000000003,
+        "p95_seconds": 0.0303817,
+        "min_seconds": 0.0249347,
+        "max_seconds": 0.0339123,
+        "stdev_seconds": 0.002142111054028122
+      },
+      "values": {
+        "equity_nd": {
+          "mean": 0.4463869511149824,
+          "min": -0.02696755714714527,
+          "max": 0.9423749446868896
+        },
+        "equity_dt": {
+          "mean": 0.42660015597939493,
+          "min": -0.15728865563869476,
+          "max": 1.0177453756332397
+        },
+        "equity_dp": {
+          "mean": 0.9999999970197677,
+          "min": 0.9999998211860657,
+          "max": 1.0000003576278687
+        },
+        "optimal_equity": {
+          "mean": 0.47968198945745827,
+          "min": -0.02696755714714527,
+          "max": 1.0
+        },
+        "cubeless_equity": {
+          "mean": 0.3849532274529338,
+          "min": -0.11936207115650177,
+          "max": 1.9054652452468872
+        }
+      },
+      "cube_actions": {
+        "No Double": 13,
+        "Double/Take": 6,
+        "Double/Pass": 1
+      }
+    },
+    {
+      "api": "cube_action",
+      "level": "2ply",
+      "mode": "money",
+      "source_game_plan": "attacking",
+      "timing": {
+        "count": 10,
+        "total_seconds": 0.2745975,
+        "mean_seconds": 0.02745975,
+        "median_seconds": 0.02725925,
+        "p95_seconds": 0.0303817,
+        "min_seconds": 0.0255629,
+        "max_seconds": 0.0303817,
+        "stdev_seconds": 0.0014272099637248742
+      },
+      "values": {
+        "equity_nd": {
+          "mean": 0.46606868505477905,
+          "min": 0.26577460765838623,
+          "max": 0.6643505096435547
+        },
+        "equity_dt": {
+          "mean": 0.4815633103251457,
+          "min": 0.15647158026695251,
+          "max": 1.0177453756332397
+        },
+        "equity_dp": {
+          "mean": 1.0,
+          "min": 1.0,
+          "max": 1.0
+        },
+        "optimal_equity": {
+          "mean": 0.5208882987499237,
+          "min": 0.26577460765838623,
+          "max": 1.0
+        },
+        "cubeless_equity": {
+          "mean": 0.37046858817338946,
+          "min": 0.21551142632961273,
+          "max": 0.6308373212814331
+        }
+      },
+      "cube_actions": {
+        "No Double": 5,
+        "Double/Take": 4,
+        "Double/Pass": 1
+      }
+    },
+    {
+      "api": "cube_action",
+      "level": "2ply",
+      "mode": null,
+      "source_game_plan": "priming",
+      "timing": {
+        "count": 20,
+        "total_seconds": 0.5729634,
+        "mean_seconds": 0.02864817,
+        "median_seconds": 0.02866895,
+        "p95_seconds": 0.0322554,
+        "min_seconds": 0.0251773,
+        "max_seconds": 0.03513,
+        "stdev_seconds": 0.00260633327616041
+      },
+      "values": {
+        "equity_nd": {
+          "mean": 0.5294631898403168,
+          "min": 0.20566397905349731,
+          "max": 1.1397395133972168
+        },
+        "equity_dt": {
+          "mean": 0.5486236330121755,
+          "min": 0.031648650765419006,
+          "max": 1.560327172279358
+        },
+        "equity_dp": {
+          "mean": 0.9999999910593033,
+          "min": 0.9999998211860657,
+          "max": 1.0000001192092896
+        },
+        "optimal_equity": {
+          "mean": 0.5628598019480705,
+          "min": 0.20566397905349731,
+          "max": 1.1397395133972168
+        },
+        "cubeless_equity": {
+          "mean": 0.4425565144047141,
+          "min": -0.004350665956735611,
+          "max": 1.4975855350494385
+        }
+      },
+      "cube_actions": {
+        "Double/Pass": 2,
+        "No Double": 12,
+        "Double/Take": 6
+      }
+    },
+    {
+      "api": "cube_action",
+      "level": "2ply",
+      "mode": "money",
+      "source_game_plan": "priming",
+      "timing": {
+        "count": 10,
+        "total_seconds": 0.2899442,
+        "mean_seconds": 0.02899442,
+        "median_seconds": 0.02870925,
+        "p95_seconds": 0.03513,
+        "min_seconds": 0.0251773,
+        "max_seconds": 0.03513,
+        "stdev_seconds": 0.003172723681213562
+      },
+      "values": {
+        "equity_nd": {
+          "mean": 0.42422506809234617,
+          "min": 0.20566397905349731,
+          "max": 0.831171452999115
+        },
+        "equity_dt": {
+          "mean": 0.38165337443351743,
+          "min": 0.031648650765419006,
+          "max": 1.0035990476608276
+        },
+        "equity_dp": {
+          "mean": 1.0,
+          "min": 1.0,
+          "max": 1.0
+        },
+        "optimal_equity": {
+          "mean": 0.46216006875038146,
+          "min": 0.20566397905349731,
+          "max": 1.0
+        },
+        "cubeless_equity": {
+          "mean": 0.3218310058116913,
+          "min": 0.16894206404685974,
+          "max": 0.6046087145805359
+        }
+      },
+      "cube_actions": {
+        "Double/Pass": 1,
+        "No Double": 7,
+        "Double/Take": 2
+      }
+    },
+    {
+      "api": "cube_action",
+      "level": "2ply",
+      "mode": null,
+      "source_game_plan": "anchoring",
+      "timing": {
+        "count": 20,
+        "total_seconds": 0.5565678000000001,
+        "mean_seconds": 0.02782839,
+        "median_seconds": 0.027347549999999998,
+        "p95_seconds": 0.0304463,
+        "min_seconds": 0.0251118,
+        "max_seconds": 0.0310514,
+        "stdev_seconds": 0.0016685192480002647
+      },
+      "values": {
+        "equity_nd": {
+          "mean": 0.25962685495615007,
+          "min": -0.39548155665397644,
+          "max": 0.7932072281837463
+        },
+        "equity_dt": {
+          "mean": 0.18793685603886842,
+          "min": -0.5218015313148499,
+          "max": 0.906414270401001
+        },
+        "equity_dp": {
+          "mean": 0.9999999910593033,
+          "min": 0.9999998211860657,
+          "max": 1.0000001192092896
+        },
+        "optimal_equity": {
+          "mean": 0.2757371447980404,
+          "min": -0.39548155665397644,
+          "max": 0.906414270401001
+        },
+        "cubeless_equity": {
+          "mean": 0.09321288578212261,
+          "min": -0.7616859078407288,
+          "max": 0.5457919836044312
+        }
+      },
+      "cube_actions": {
+        "No Double": 15,
+        "Double/Take": 5
+      }
+    },
+    {
+      "api": "cube_action",
+      "level": "2ply",
+      "mode": "money",
+      "source_game_plan": "anchoring",
+      "timing": {
+        "count": 10,
+        "total_seconds": 0.274178,
+        "mean_seconds": 0.0274178,
+        "median_seconds": 0.027347549999999998,
+        "p95_seconds": 0.029575,
+        "min_seconds": 0.0251118,
+        "max_seconds": 0.029575,
+        "stdev_seconds": 0.0014081476437741419
+      },
+      "values": {
+        "equity_nd": {
+          "mean": 0.38855683952569964,
+          "min": 0.21494607627391815,
+          "max": 0.7932072281837463
+        },
+        "equity_dt": {
+          "mean": 0.3189446501433849,
+          "min": 0.014559343457221985,
+          "max": 0.906414270401001
+        },
+        "equity_dp": {
+          "mean": 1.0,
+          "min": 1.0,
+          "max": 1.0
+        },
+        "optimal_equity": {
+          "mean": 0.40816286355257037,
+          "min": 0.21494607627391815,
+          "max": 0.906414270401001
+        },
+        "cubeless_equity": {
+          "mean": 0.2952108845114708,
+          "min": 0.15453477203845978,
+          "max": 0.5457919836044312
+        }
+      },
+      "cube_actions": {
+        "No Double": 8,
+        "Double/Take": 2
+      }
+    },
+    {
+      "api": "cube_action",
+      "level": "2ply",
+      "mode": null,
+      "source_game_plan": "racing",
+      "timing": {
+        "count": 20,
+        "total_seconds": 0.5215175,
+        "mean_seconds": 0.026075875,
+        "median_seconds": 0.026049299999999997,
+        "p95_seconds": 0.0289945,
+        "min_seconds": 0.0235879,
+        "max_seconds": 0.0294542,
+        "stdev_seconds": 0.0016304004454427757
+      },
+      "values": {
+        "equity_nd": {
+          "mean": 0.6852847263216972,
+          "min": 0.26020708680152893,
+          "max": 1.0962468385696411
+        },
+        "equity_dt": {
+          "mean": 0.8125595860183239,
+          "min": 0.06749849021434784,
+          "max": 1.897377371788025
+        },
+        "equity_dp": {
+          "mean": 0.9999999701976776,
+          "min": 0.9999997615814209,
+          "max": 1.0
+        },
+        "optimal_equity": {
+          "mean": 0.71311105042696,
+          "min": 0.26020708680152893,
+          "max": 1.0962468385696411
+        },
+        "cubeless_equity": {
+          "mean": 0.6227824553847313,
+          "min": 0.1993708312511444,
+          "max": 1.788506031036377
+        }
+      },
+      "cube_actions": {
+        "Double/Take": 6,
+        "No Double": 11,
+        "Double/Pass": 3
+      }
+    },
+    {
+      "api": "cube_action",
+      "level": "2ply",
+      "mode": "money",
+      "source_game_plan": "racing",
+      "timing": {
+        "count": 10,
+        "total_seconds": 0.2638319,
+        "mean_seconds": 0.02638319,
+        "median_seconds": 0.02656285,
+        "p95_seconds": 0.0289945,
+        "min_seconds": 0.0242568,
+        "max_seconds": 0.0289945,
+        "stdev_seconds": 0.0015752371225028672
+      },
+      "values": {
+        "equity_nd": {
+          "mean": 0.5667164325714111,
+          "min": 0.26020708680152893,
+          "max": 0.9977430701255798
+        },
+        "equity_dt": {
+          "mean": 0.6840839982032776,
+          "min": 0.18096394836902618,
+          "max": 1.8927388191223145
+        },
+        "equity_dp": {
+          "mean": 1.0,
+          "min": 1.0,
+          "max": 1.0
+        },
+        "optimal_equity": {
+          "mean": 0.5956957876682282,
+          "min": 0.26020708680152893,
+          "max": 1.0
+        },
+        "cubeless_equity": {
+          "mean": 0.4434025138616562,
+          "min": 0.24410822987556458,
+          "max": 0.9580079317092896
+        }
+      },
+      "cube_actions": {
+        "Double/Take": 4,
+        "No Double": 4,
+        "Double/Pass": 2
+      }
+    },
+    {
+      "api": "cube_action",
+      "level": "2ply",
+      "mode": null,
+      "source_game_plan": "purerace",
+      "timing": {
+        "count": 20,
+        "total_seconds": 0.4699589,
+        "mean_seconds": 0.023497945,
+        "median_seconds": 0.0233698,
+        "p95_seconds": 0.0247617,
+        "min_seconds": 0.021993,
+        "max_seconds": 0.025388,
+        "stdev_seconds": 0.000847940761631874
+      },
+      "values": {
+        "equity_nd": {
+          "mean": 0.7594539783895016,
+          "min": 0.23287136852741241,
+          "max": 1.1822510957717896
+        },
+        "equity_dt": {
+          "mean": 1.0595515687018633,
+          "min": 0.07766012102365494,
+          "max": 2.9591012001037598
+        },
+        "equity_dp": {
+          "mean": 1.0,
+          "min": 0.9999998211860657,
+          "max": 1.0000001192092896
+        },
+        "optimal_equity": {
+          "mean": 0.7879278354346753,
+          "min": 0.23287136852741241,
+          "max": 1.1822510957717896
+        },
+        "cubeless_equity": {
+          "mean": 0.6813107103109359,
+          "min": 0.17116785049438477,
+          "max": 1.1995134353637695
+        }
+      },
+      "cube_actions": {
+        "No Double": 15,
+        "Double/Take": 5
+      }
+    },
+    {
+      "api": "cube_action",
+      "level": "2ply",
+      "mode": "money",
+      "source_game_plan": "purerace",
+      "timing": {
+        "count": 10,
+        "total_seconds": 0.2368075,
+        "mean_seconds": 0.02368075,
+        "median_seconds": 0.02361845,
+        "p95_seconds": 0.025388,
+        "min_seconds": 0.022329,
+        "max_seconds": 0.025388,
+        "stdev_seconds": 0.0009402418698871527
+      },
+      "values": {
+        "equity_nd": {
+          "mean": 0.5691321656107903,
+          "min": 0.23287136852741241,
+          "max": 1.0298641920089722
+        },
+        "equity_dt": {
+          "mean": 0.6878763802349568,
+          "min": 0.07766012102365494,
+          "max": 2.057378053665161
+        },
+        "equity_dp": {
+          "mean": 1.0,
+          "min": 1.0,
+          "max": 1.0
+        },
+        "optimal_equity": {
+          "mean": 0.6234189018607139,
+          "min": 0.23287136852741241,
+          "max": 1.0298641920089722
+        },
+        "cubeless_equity": {
+          "mean": 0.4362785041332245,
+          "min": 0.17116785049438477,
+          "max": 1.0289291143417358
+        }
+      },
+      "cube_actions": {
+        "No Double": 6,
+        "Double/Take": 4
+      }
+    },
+    {
+      "api": "cube_action",
+      "level": "2ply",
+      "mode": "match",
+      "source_game_plan": null,
+      "timing": {
+        "count": 50,
+        "total_seconds": 1.3309053,
+        "mean_seconds": 0.026618106,
+        "median_seconds": 0.02650485,
+        "p95_seconds": 0.0310514,
+        "min_seconds": 0.021993,
+        "max_seconds": 0.0339123,
+        "stdev_seconds": 0.0026574847881692606
+      },
+      "values": {
+        "equity_nd": {
+          "mean": 0.589146442078054,
+          "min": -0.39548155665397644,
+          "max": 1.1822510957717896
+        },
+        "equity_dt": {
+          "mean": 0.703284377232194,
+          "min": -0.5218015313148499,
+          "max": 2.9591012001037598
+        },
+        "equity_dp": {
+          "mean": 0.9999999797344208,
+          "min": 0.9999997615814209,
+          "max": 1.0000003576278687
+        },
+        "optimal_equity": {
+          "mean": 0.6056619447097182,
+          "min": -0.39548155665397644,
+          "max": 1.1822510957717896
+        },
+        "cubeless_equity": {
+          "mean": 0.5164880180358886,
+          "min": -0.7616859078407288,
+          "max": 1.9054652452468872
+        }
+      },
+      "cube_actions": {
+        "No Double": 36,
+        "Double/Take": 12,
+        "Double/Pass": 2
+      }
+    },
+    {
+      "api": "cube_action",
+      "level": "2ply",
+      "mode": "match",
+      "source_game_plan": "attacking",
+      "timing": {
+        "count": 10,
+        "total_seconds": 0.2746593,
+        "mean_seconds": 0.02746593,
+        "median_seconds": 0.0264508,
+        "p95_seconds": 0.0339123,
+        "min_seconds": 0.0249347,
+        "max_seconds": 0.0339123,
+        "stdev_seconds": 0.00276589567773463
+      },
+      "values": {
+        "equity_nd": {
+          "mean": 0.42670521717518567,
+          "min": -0.02696755714714527,
+          "max": 0.9423749446868896
+        },
+        "equity_dt": {
+          "mean": 0.3716370016336441,
+          "min": -0.15728865563869476,
+          "max": 0.8868227005004883
+        },
+        "equity_dp": {
+          "mean": 0.9999999940395355,
+          "min": 0.9999998211860657,
+          "max": 1.0000003576278687
+        },
+        "optimal_equity": {
+          "mean": 0.43847568016499283,
+          "min": -0.02696755714714527,
+          "max": 0.9423749446868896
+        },
+        "cubeless_equity": {
+          "mean": 0.39943786673247816,
+          "min": -0.11936207115650177,
+          "max": 1.9054652452468872
+        }
+      },
+      "cube_actions": {
+        "No Double": 8,
+        "Double/Take": 2
+      }
+    },
+    {
+      "api": "cube_action",
+      "level": "2ply",
+      "mode": "match",
+      "source_game_plan": "priming",
+      "timing": {
+        "count": 10,
+        "total_seconds": 0.2830192,
+        "mean_seconds": 0.02830192,
+        "median_seconds": 0.0282385,
+        "p95_seconds": 0.031314,
+        "min_seconds": 0.0256237,
+        "max_seconds": 0.031314,
+        "stdev_seconds": 0.0020020303171197655
+      },
+      "values": {
+        "equity_nd": {
+          "mean": 0.6347013115882874,
+          "min": 0.26956379413604736,
+          "max": 1.1397395133972168
+        },
+        "equity_dt": {
+          "mean": 0.7155938915908336,
+          "min": 0.10710027068853378,
+          "max": 1.560327172279358
+        },
+        "equity_dp": {
+          "mean": 0.9999999821186065,
+          "min": 0.9999998211860657,
+          "max": 1.0000001192092896
+        },
+        "optimal_equity": {
+          "mean": 0.6635595351457596,
+          "min": 0.26956379413604736,
+          "max": 1.1397395133972168
+        },
+        "cubeless_equity": {
+          "mean": 0.5632820229977369,
+          "min": -0.004350665956735611,
+          "max": 1.4975855350494385
+        }
+      },
+      "cube_actions": {
+        "No Double": 5,
+        "Double/Pass": 1,
+        "Double/Take": 4
+      }
+    },
+    {
+      "api": "cube_action",
+      "level": "2ply",
+      "mode": "match",
+      "source_game_plan": "anchoring",
+      "timing": {
+        "count": 10,
+        "total_seconds": 0.2823898,
+        "mean_seconds": 0.02823898,
+        "median_seconds": 0.027450799999999997,
+        "p95_seconds": 0.0310514,
+        "min_seconds": 0.0260562,
+        "max_seconds": 0.0310514,
+        "stdev_seconds": 0.0018760944093752022
+      },
+      "values": {
+        "equity_nd": {
+          "mean": 0.1306968703866005,
+          "min": -0.39548155665397644,
+          "max": 0.6563935279846191
+        },
+        "equity_dt": {
+          "mean": 0.05692906193435192,
+          "min": -0.5218015313148499,
+          "max": 0.7121275663375854
+        },
+        "equity_dp": {
+          "mean": 0.9999999821186065,
+          "min": 0.9999998211860657,
+          "max": 1.0000001192092896
+        },
+        "optimal_equity": {
+          "mean": 0.14331142604351044,
+          "min": -0.39548155665397644,
+          "max": 0.7121275663375854
+        },
+        "cubeless_equity": {
+          "mean": -0.10878511294722557,
+          "min": -0.7616859078407288,
+          "max": 0.4317113161087036
+        }
+      },
+      "cube_actions": {
+        "No Double": 7,
+        "Double/Take": 3
+      }
+    },
+    {
+      "api": "cube_action",
+      "level": "2ply",
+      "mode": "match",
+      "source_game_plan": "racing",
+      "timing": {
+        "count": 10,
+        "total_seconds": 0.2576856,
+        "mean_seconds": 0.02576856,
+        "median_seconds": 0.0256578,
+        "p95_seconds": 0.0294542,
+        "min_seconds": 0.0235879,
+        "max_seconds": 0.0294542,
+        "stdev_seconds": 0.0017089538230547175
+      },
+      "values": {
+        "equity_nd": {
+          "mean": 0.8038530200719833,
+          "min": 0.27834030985832214,
+          "max": 1.0962468385696411
+        },
+        "equity_dt": {
+          "mean": 0.9410351738333702,
+          "min": 0.06749849021434784,
+          "max": 1.897377371788025
+        },
+        "equity_dp": {
+          "mean": 0.9999999403953552,
+          "min": 0.9999997615814209,
+          "max": 1.0
+        },
+        "optimal_equity": {
+          "mean": 0.8305263131856918,
+          "min": 0.27834030985832214,
+          "max": 1.0962468385696411
+        },
+        "cubeless_equity": {
+          "mean": 0.8021623969078064,
+          "min": 0.1993708312511444,
+          "max": 1.788506031036377
+        }
+      },
+      "cube_actions": {
+        "No Double": 7,
+        "Double/Pass": 1,
+        "Double/Take": 2
+      }
+    },
+    {
+      "api": "cube_action",
+      "level": "2ply",
+      "mode": "match",
+      "source_game_plan": "purerace",
+      "timing": {
+        "count": 10,
+        "total_seconds": 0.2331514,
+        "mean_seconds": 0.023315139999999998,
+        "median_seconds": 0.0233166,
+        "p95_seconds": 0.0246453,
+        "min_seconds": 0.021993,
+        "max_seconds": 0.0246453,
+        "stdev_seconds": 0.0007480508630954033
+      },
+      "values": {
+        "equity_nd": {
+          "mean": 0.9497757911682129,
+          "min": 0.49202603101730347,
+          "max": 1.1822510957717896
+        },
+        "equity_dt": {
+          "mean": 1.4312267571687698,
+          "min": 0.44193562865257263,
+          "max": 2.9591012001037598
+        },
+        "equity_dp": {
+          "mean": 1.0,
+          "min": 0.9999998211860657,
+          "max": 1.0000001192092896
+        },
+        "optimal_equity": {
+          "mean": 0.9524367690086365,
+          "min": 0.49202603101730347,
+          "max": 1.1822510957717896
+        },
+        "cubeless_equity": {
+          "mean": 0.9263429164886474,
+          "min": 0.4131375551223755,
+          "max": 1.1995134353637695
+        }
+      },
+      "cube_actions": {
+        "No Double": 9,
+        "Double/Take": 1
+      }
+    },
+    {
+      "api": "post_move_analytics",
+      "level": "2ply",
+      "mode": null,
+      "source_game_plan": null,
+      "timing": {
+        "count": 100,
+        "total_seconds": 0.2463748,
+        "mean_seconds": 0.002463748,
+        "median_seconds": 0.00192705,
+        "p95_seconds": 0.0060807,
+        "min_seconds": 0.0006376,
+        "max_seconds": 0.0086934,
+        "stdev_seconds": 0.0016788168253345159
+      },
+      "values": {
+        "cubeless_equity": {
+          "mean": -0.4440320746452107,
+          "min": -1.9051664003054611,
+          "max": 0.7619821907719597
+        },
+        "cubeful_equity": {
+          "mean": -0.5429686554893851,
+          "min": -1.1822510957717896,
+          "max": 0.3953434228897095
+        }
+      },
+      "cube_actions": {}
+    },
+    {
+      "api": "post_move_analytics",
+      "level": "2ply",
+      "mode": "money",
+      "source_game_plan": null,
+      "timing": {
+        "count": 50,
+        "total_seconds": 0.1258923,
+        "mean_seconds": 0.002517846,
+        "median_seconds": 0.0019251,
+        "p95_seconds": 0.0071628,
+        "min_seconds": 0.0006376,
+        "max_seconds": 0.0086934,
+        "stdev_seconds": 0.0018065226350937656
+      },
+      "values": {
+        "cubeless_equity": {
+          "mean": -0.37314822042439116,
+          "min": -1.028929153457284,
+          "max": -0.15380139253102243
+        },
+        "cubeful_equity": {
+          "mean": -0.4928684151172638,
+          "min": -1.0298385620117188,
+          "max": -0.20825892686843872
+        }
+      },
+      "cube_actions": {}
+    },
+    {
+      "api": "post_move_analytics",
+      "level": "2ply",
+      "mode": null,
+      "source_game_plan": "attacking",
+      "timing": {
+        "count": 20,
+        "total_seconds": 0.0629177,
+        "mean_seconds": 0.003145885,
+        "median_seconds": 0.00236715,
+        "p95_seconds": 0.0068458,
+        "min_seconds": 0.0015751,
+        "max_seconds": 0.0071647,
+        "stdev_seconds": 0.0015755215468218771
+      },
+      "values": {
+        "cubeless_equity": {
+          "mean": -0.3846245433902368,
+          "min": -1.9051664003054611,
+          "max": 0.11936206836253405
+        },
+        "cubeful_equity": {
+          "mean": -0.45455976370722057,
+          "min": -0.9423750042915344,
+          "max": 0.027430590242147446
+        }
+      },
+      "cube_actions": {}
+    },
+    {
+      "api": "post_move_analytics",
+      "level": "2ply",
+      "mode": "money",
+      "source_game_plan": "attacking",
+      "timing": {
+        "count": 10,
+        "total_seconds": 0.0322236,
+        "mean_seconds": 0.00322236,
+        "median_seconds": 0.0026153,
+        "p95_seconds": 0.0071647,
+        "min_seconds": 0.0015751,
+        "max_seconds": 0.0071647,
+        "stdev_seconds": 0.0016536480945002915
+      },
+      "values": {
+        "cubeless_equity": {
+          "mean": -0.37004633418400773,
+          "min": -0.6305813398212194,
+          "max": -0.21551143319811672
+        },
+        "cubeful_equity": {
+          "mean": -0.4782234251499176,
+          "min": -0.7322148680686951,
+          "max": -0.2657749056816101
+        }
+      },
+      "cube_actions": {}
+    },
+    {
+      "api": "post_move_analytics",
+      "level": "2ply",
+      "mode": null,
+      "source_game_plan": "priming",
+      "timing": {
+        "count": 20,
+        "total_seconds": 0.0741028,
+        "mean_seconds": 0.00370514,
+        "median_seconds": 0.0034491,
+        "p95_seconds": 0.0071628,
+        "min_seconds": 0.0012206,
+        "max_seconds": 0.0086934,
+        "stdev_seconds": 0.0020812577129681645
+      },
+      "values": {
+        "cubeless_equity": {
+          "mean": -0.440361561773534,
+          "min": -1.4919867580756545,
+          "max": 0.004350666655227542
+        },
+        "cubeful_equity": {
+          "mean": -0.5328934460878372,
+          "min": -1.1381371021270752,
+          "max": -0.20825892686843872
+        }
+      },
+      "cube_actions": {}
+    },
+    {
+      "api": "post_move_analytics",
+      "level": "2ply",
+      "mode": "money",
+      "source_game_plan": "priming",
+      "timing": {
+        "count": 10,
+        "total_seconds": 0.0383013,
+        "mean_seconds": 0.00383013,
+        "median_seconds": 0.0033281,
+        "p95_seconds": 0.0086934,
+        "min_seconds": 0.0017431,
+        "max_seconds": 0.0086934,
+        "stdev_seconds": 0.002363124415330969
+      },
+      "values": {
+        "cubeless_equity": {
+          "mean": -0.3211045811745862,
+          "min": -0.604608757654205,
+          "max": -0.16859708074480295
+        },
+        "cubeful_equity": {
+          "mean": -0.4286465734243393,
+          "min": -0.8467093110084534,
+          "max": -0.20825892686843872
+        }
+      },
+      "cube_actions": {}
+    },
+    {
+      "api": "post_move_analytics",
+      "level": "2ply",
+      "mode": null,
+      "source_game_plan": "anchoring",
+      "timing": {
+        "count": 20,
+        "total_seconds": 0.0603878,
+        "mean_seconds": 0.00301939,
+        "median_seconds": 0.00278065,
+        "p95_seconds": 0.0054026,
+        "min_seconds": 0.0011289,
+        "max_seconds": 0.0055337,
+        "stdev_seconds": 0.0011989118618673834
+      },
+      "values": {
+        "cubeless_equity": {
+          "mean": -0.0924344561957696,
+          "min": -0.5457919552427484,
+          "max": 0.7619821907719597
+        },
+        "cubeful_equity": {
+          "mean": -0.26429614908993243,
+          "min": -0.7944949269294739,
+          "max": 0.3953434228897095
+        }
+      },
+      "cube_actions": {}
+    },
+    {
+      "api": "post_move_analytics",
+      "level": "2ply",
+      "mode": "money",
+      "source_game_plan": "anchoring",
+      "timing": {
+        "count": 10,
+        "total_seconds": 0.0329888,
+        "mean_seconds": 0.00329888,
+        "median_seconds": 0.0028551,
+        "p95_seconds": 0.0055337,
+        "min_seconds": 0.0013534,
+        "max_seconds": 0.0055337,
+        "stdev_seconds": 0.0012922396224299027
+      },
+      "values": {
+        "cubeless_equity": {
+          "mean": -0.2950404246206745,
+          "min": -0.5457919552427484,
+          "max": -0.15380139253102243
+        },
+        "cubeful_equity": {
+          "mean": -0.39531374275684356,
+          "min": -0.7944949269294739,
+          "max": -0.2149464637041092
+        }
+      },
+      "cube_actions": {}
+    },
+    {
+      "api": "post_move_analytics",
+      "level": "2ply",
+      "mode": null,
+      "source_game_plan": "racing",
+      "timing": {
+        "count": 20,
+        "total_seconds": 0.0313016,
+        "mean_seconds": 0.00156508,
+        "median_seconds": 0.0014447499999999999,
+        "p95_seconds": 0.0018789,
+        "min_seconds": 0.000731,
+        "max_seconds": 0.0041634,
+        "stdev_seconds": 0.0006668025223328671
+      },
+      "values": {
+        "cubeless_equity": {
+          "mean": -0.621397988574563,
+          "min": -1.7769349045920535,
+          "max": -0.19937083668992273
+        },
+        "cubeful_equity": {
+          "mean": -0.6915409594774247,
+          "min": -1.09425950050354,
+          "max": -0.2602073550224304
+        }
+      },
+      "cube_actions": {}
+    },
+    {
+      "api": "post_move_analytics",
+      "level": "2ply",
+      "mode": "money",
+      "source_game_plan": "racing",
+      "timing": {
+        "count": 10,
+        "total_seconds": 0.014177799999999999,
+        "mean_seconds": 0.00141778,
+        "median_seconds": 0.0014369,
+        "p95_seconds": 0.0018421,
+        "min_seconds": 0.0010111,
+        "max_seconds": 0.0018421,
+        "stdev_seconds": 0.00023560381905978424
+      },
+      "values": {
+        "cubeless_equity": {
+          "mean": -0.44325133495394764,
+          "min": -0.956990946674523,
+          "max": -0.2439013991970569
+        },
+        "cubeful_equity": {
+          "mean": -0.5742843866348266,
+          "min": -0.9978355765342712,
+          "max": -0.2602073550224304
+        }
+      },
+      "cube_actions": {}
+    },
+    {
+      "api": "post_move_analytics",
+      "level": "2ply",
+      "mode": null,
+      "source_game_plan": "purerace",
+      "timing": {
+        "count": 20,
+        "total_seconds": 0.0176649,
+        "mean_seconds": 0.000883245,
+        "median_seconds": 0.00080075,
+        "p95_seconds": 0.0012876,
+        "min_seconds": 0.0006376,
+        "max_seconds": 0.0017586,
+        "stdev_seconds": 0.0002702634766589623
+      },
+      "values": {
+        "cubeless_equity": {
+          "mean": -0.6813418232919503,
+          "min": -1.199513465166092,
+          "max": -0.17116785049438477
+        },
+        "cubeful_equity": {
+          "mean": -0.7715529590845108,
+          "min": -1.1822510957717896,
+          "max": -0.24455609917640686
+        }
+      },
+      "cube_actions": {}
+    },
+    {
+      "api": "post_move_analytics",
+      "level": "2ply",
+      "mode": "money",
+      "source_game_plan": "purerace",
+      "timing": {
+        "count": 10,
+        "total_seconds": 0.0082008,
+        "mean_seconds": 0.00082008,
+        "median_seconds": 0.00079275,
+        "p95_seconds": 0.0012876,
+        "min_seconds": 0.0006376,
+        "max_seconds": 0.0012876,
+        "stdev_seconds": 0.000183782763065528
+      },
+      "values": {
+        "cubeless_equity": {
+          "mean": -0.4362984271887399,
+          "min": -1.028929153457284,
+          "max": -0.17116785049438477
+        },
+        "cubeful_equity": {
+          "mean": -0.5878739476203918,
+          "min": -1.0298385620117188,
+          "max": -0.24455609917640686
+        }
+      },
+      "cube_actions": {}
+    },
+    {
+      "api": "post_move_analytics",
+      "level": "2ply",
+      "mode": "match",
+      "source_game_plan": null,
+      "timing": {
+        "count": 50,
+        "total_seconds": 0.1204825,
+        "mean_seconds": 0.00240965,
+        "median_seconds": 0.00192825,
+        "p95_seconds": 0.0060807,
+        "min_seconds": 0.000657,
+        "max_seconds": 0.0068458,
+        "stdev_seconds": 0.0015572007229418473
+      },
+      "values": {
+        "cubeless_equity": {
+          "mean": -0.5149159288660303,
+          "min": -1.9051664003054611,
+          "max": 0.7619821907719597
+        },
+        "cubeful_equity": {
+          "mean": -0.5930688958615065,
+          "min": -1.1822510957717896,
+          "max": 0.3953434228897095
+        }
+      },
+      "cube_actions": {}
+    },
+    {
+      "api": "post_move_analytics",
+      "level": "2ply",
+      "mode": "match",
+      "source_game_plan": "attacking",
+      "timing": {
+        "count": 10,
+        "total_seconds": 0.0306941,
+        "mean_seconds": 0.00306941,
+        "median_seconds": 0.00232745,
+        "p95_seconds": 0.0068458,
+        "min_seconds": 0.00162,
+        "max_seconds": 0.0068458,
+        "stdev_seconds": 0.0015788588723434965
+      },
+      "values": {
+        "cubeless_equity": {
+          "mean": -0.39920275259646587,
+          "min": -1.9051664003054611,
+          "max": 0.11936206836253405
+        },
+        "cubeful_equity": {
+          "mean": -0.4308961022645235,
+          "min": -0.9423750042915344,
+          "max": 0.027430590242147446
+        }
+      },
+      "cube_actions": {}
+    },
+    {
+      "api": "post_move_analytics",
+      "level": "2ply",
+      "mode": "match",
+      "source_game_plan": "priming",
+      "timing": {
+        "count": 10,
+        "total_seconds": 0.0358015,
+        "mean_seconds": 0.00358015,
+        "median_seconds": 0.0035712499999999998,
+        "p95_seconds": 0.0063527,
+        "min_seconds": 0.0012206,
+        "max_seconds": 0.0063527,
+        "stdev_seconds": 0.0018776278374883321
+      },
+      "values": {
+        "cubeless_equity": {
+          "mean": -0.5596185423724819,
+          "min": -1.4919867580756545,
+          "max": 0.004350666655227542
+        },
+        "cubeful_equity": {
+          "mean": -0.6371403187513351,
+          "min": -1.1381371021270752,
+          "max": -0.2724626958370209
+        }
+      },
+      "cube_actions": {}
+    },
+    {
+      "api": "post_move_analytics",
+      "level": "2ply",
+      "mode": "match",
+      "source_game_plan": "anchoring",
+      "timing": {
+        "count": 10,
+        "total_seconds": 0.027399,
+        "mean_seconds": 0.0027399,
+        "median_seconds": 0.00240135,
+        "p95_seconds": 0.004321,
+        "min_seconds": 0.0011289,
+        "max_seconds": 0.004321,
+        "stdev_seconds": 0.0010913376613638473
+      },
+      "values": {
+        "cubeless_equity": {
+          "mean": 0.11017151222913527,
+          "min": -0.4318496463820338,
+          "max": 0.7619821907719597
+        },
+        "cubeful_equity": {
+          "mean": -0.1332785554230213,
+          "min": -0.6658533811569214,
+          "max": 0.3953434228897095
+        }
+      },
+      "cube_actions": {}
+    },
+    {
+      "api": "post_move_analytics",
+      "level": "2ply",
+      "mode": "match",
+      "source_game_plan": "racing",
+      "timing": {
+        "count": 10,
+        "total_seconds": 0.0171238,
+        "mean_seconds": 0.0017123800000000001,
+        "median_seconds": 0.0014967000000000001,
+        "p95_seconds": 0.0041634,
+        "min_seconds": 0.000731,
+        "max_seconds": 0.0041634,
+        "stdev_seconds": 0.0009137443257765757
+      },
+      "values": {
+        "cubeless_equity": {
+          "mean": -0.7995446421951783,
+          "min": -1.7769349045920535,
+          "max": -0.19937083668992273
+        },
+        "cubeful_equity": {
+          "mean": -0.8087975323200226,
+          "min": -1.09425950050354,
+          "max": -0.27978068590164185
+        }
+      },
+      "cube_actions": {}
+    },
+    {
+      "api": "post_move_analytics",
+      "level": "2ply",
+      "mode": "match",
+      "source_game_plan": "purerace",
+      "timing": {
+        "count": 10,
+        "total_seconds": 0.0094641,
+        "mean_seconds": 0.00094641,
+        "median_seconds": 0.0008817,
+        "p95_seconds": 0.0017586,
+        "min_seconds": 0.000657,
+        "max_seconds": 0.0017586,
+        "stdev_seconds": 0.00033400321172773835
+      },
+      "values": {
+        "cubeless_equity": {
+          "mean": -0.9263852193951607,
+          "min": -1.199513465166092,
+          "max": -0.41313958168029785
+        },
+        "cubeful_equity": {
+          "mean": -0.9552319705486297,
+          "min": -1.1822510957717896,
+          "max": -0.521481454372406
+        }
+      },
+      "cube_actions": {}
+    },
+    {
+      "api": "checker_play",
+      "level": "3ply",
+      "mode": null,
+      "source_game_plan": null,
+      "timing": {
+        "count": 100,
+        "total_seconds": 21.7279037,
+        "mean_seconds": 0.217279037,
+        "median_seconds": 0.10878275000000001,
+        "p95_seconds": 0.7894055,
+        "min_seconds": 0.004153,
+        "max_seconds": 1.52632,
+        "stdev_seconds": 0.28911345518346837
+      },
+      "values": {
+        "legal_moves": {
+          "mean": 17.09,
+          "min": 2,
+          "max": 68
+        },
+        "best_equity": {
+          "mean": 0.1268172352714464,
+          "min": -2.29291033744812,
+          "max": 2.3022122383117676
+        },
+        "best_cubeless_equity": {
+          "mean": 0.1246204352199635,
+          "min": -2.0,
+          "max": 2.185576468706131
+        }
+      },
+      "cube_actions": {}
+    },
+    {
+      "api": "checker_play",
+      "level": "3ply",
+      "mode": "money",
+      "source_game_plan": null,
+      "timing": {
+        "count": 50,
+        "total_seconds": 11.0118288,
+        "mean_seconds": 0.220236576,
+        "median_seconds": 0.12314919999999999,
+        "p95_seconds": 1.0359194,
+        "min_seconds": 0.004153,
+        "max_seconds": 1.199146,
+        "stdev_seconds": 0.2917474777324191
+      },
+      "values": {
+        "legal_moves": {
+          "mean": 18.96,
+          "min": 2,
+          "max": 51
+        },
+        "best_equity": {
+          "mean": 0.1674047861713916,
+          "min": -2.0,
+          "max": 2.0778775215148926
+        },
+        "best_cubeless_equity": {
+          "mean": 0.1276867015674327,
+          "min": -2.0,
+          "max": 2.0868768841028214
+        }
+      },
+      "cube_actions": {}
+    },
+    {
+      "api": "checker_play",
+      "level": "3ply",
+      "mode": null,
+      "source_game_plan": "attacking",
+      "timing": {
+        "count": 20,
+        "total_seconds": 6.0663148,
+        "mean_seconds": 0.30331574,
+        "median_seconds": 0.23617015000000002,
+        "p95_seconds": 0.7894055,
+        "min_seconds": 0.006965,
+        "max_seconds": 0.949095,
+        "stdev_seconds": 0.26211035778716407
+      },
+      "values": {
+        "legal_moves": {
+          "mean": 21.85,
+          "min": 2,
+          "max": 51
+        },
+        "best_equity": {
+          "mean": 0.21651712586171926,
+          "min": -2.0,
+          "max": 1.3947280645370483
+        },
+        "best_cubeless_equity": {
+          "mean": 0.17467093110517454,
+          "min": -2.0,
+          "max": 1.424590817419812
+        }
+      },
+      "cube_actions": {}
+    },
+    {
+      "api": "checker_play",
+      "level": "3ply",
+      "mode": "money",
+      "source_game_plan": "attacking",
+      "timing": {
+        "count": 10,
+        "total_seconds": 2.134025,
+        "mean_seconds": 0.2134025,
+        "median_seconds": 0.18208705,
+        "p95_seconds": 0.5109766,
+        "min_seconds": 0.0328282,
+        "max_seconds": 0.5109766,
+        "stdev_seconds": 0.1375064168991154
+      },
+      "values": {
+        "legal_moves": {
+          "mean": 23.4,
+          "min": 3,
+          "max": 51
+        },
+        "best_equity": {
+          "mean": 0.26565593108534813,
+          "min": -2.0,
+          "max": 1.3947280645370483
+        },
+        "best_cubeless_equity": {
+          "mean": 0.18718914674063852,
+          "min": -2.0,
+          "max": 1.424590817419812
+        }
+      },
+      "cube_actions": {}
+    },
+    {
+      "api": "checker_play",
+      "level": "3ply",
+      "mode": null,
+      "source_game_plan": "priming",
+      "timing": {
+        "count": 20,
+        "total_seconds": 6.1719589,
+        "mean_seconds": 0.308597945,
+        "median_seconds": 0.16375345,
+        "p95_seconds": 1.0359194,
+        "min_seconds": 0.0076891,
+        "max_seconds": 1.52632,
+        "stdev_seconds": 0.37463722457238335
+      },
+      "values": {
+        "legal_moves": {
+          "mean": 18.3,
+          "min": 3,
+          "max": 68
+        },
+        "best_equity": {
+          "mean": 0.3288350887596607,
+          "min": -0.35297727584838867,
+          "max": 1.100681185722351
+        },
+        "best_cubeless_equity": {
+          "mean": 0.3091985892988305,
+          "min": -0.8610137216746807,
+          "max": 1.1199254956300138
+        }
+      },
+      "cube_actions": {}
+    },
+    {
+      "api": "checker_play",
+      "level": "3ply",
+      "mode": "money",
+      "source_game_plan": "priming",
+      "timing": {
+        "count": 10,
+        "total_seconds": 2.5766492,
+        "mean_seconds": 0.25766492,
+        "median_seconds": 0.12561594999999998,
+        "p95_seconds": 1.0359194,
+        "min_seconds": 0.0076891,
+        "max_seconds": 1.0359194,
+        "stdev_seconds": 0.30799157207386846
+      },
+      "values": {
+        "legal_moves": {
+          "mean": 16.9,
+          "min": 3,
+          "max": 45
+        },
+        "best_equity": {
+          "mean": 0.4823623329401016,
+          "min": 0.2986811697483063,
+          "max": 0.8217543363571167
+        },
+        "best_cubeless_equity": {
+          "mean": 0.42318315207012347,
+          "min": 0.23560882033780217,
+          "max": 0.8656955021433532
+        }
+      },
+      "cube_actions": {}
+    },
+    {
+      "api": "checker_play",
+      "level": "3ply",
+      "mode": null,
+      "source_game_plan": "anchoring",
+      "timing": {
+        "count": 20,
+        "total_seconds": 5.5332207,
+        "mean_seconds": 0.276661035,
+        "median_seconds": 0.18543195,
+        "p95_seconds": 0.6494031,
+        "min_seconds": 0.0416558,
+        "max_seconds": 1.185376,
+        "stdev_seconds": 0.2678070527349323
+      },
+      "values": {
+        "legal_moves": {
+          "mean": 17.7,
+          "min": 4,
+          "max": 41
+        },
+        "best_equity": {
+          "mean": -0.37841361134778706,
+          "min": -1.5125329494476318,
+          "max": 0.4853311777114868
+        },
+        "best_cubeless_equity": {
+          "mean": -0.4029517758019665,
+          "min": -1.5171668715775013,
+          "max": 0.30548167671076953
+        }
+      },
+      "cube_actions": {}
+    },
+    {
+      "api": "checker_play",
+      "level": "3ply",
+      "mode": "money",
+      "source_game_plan": "anchoring",
+      "timing": {
+        "count": 10,
+        "total_seconds": 3.4798581,
+        "mean_seconds": 0.34798581,
+        "median_seconds": 0.21518975,
+        "p95_seconds": 1.185376,
+        "min_seconds": 0.0416558,
+        "max_seconds": 1.185376,
+        "stdev_seconds": 0.3497301476406772
+      },
+      "values": {
+        "legal_moves": {
+          "mean": 19.3,
+          "min": 4,
+          "max": 41
+        },
+        "best_equity": {
+          "mean": -0.4458299861755222,
+          "min": -1.5125329494476318,
+          "max": 0.4853311777114868
+        },
+        "best_cubeless_equity": {
+          "mean": -0.4622716785874218,
+          "min": -1.5171668715775013,
+          "max": 0.2712578307837248
+        }
+      },
+      "cube_actions": {}
+    },
+    {
+      "api": "checker_play",
+      "level": "3ply",
+      "mode": null,
+      "source_game_plan": "racing",
+      "timing": {
+        "count": 20,
+        "total_seconds": 3.4253077000000003,
+        "mean_seconds": 0.171265385,
+        "median_seconds": 0.0463587,
+        "p95_seconds": 0.7661757,
+        "min_seconds": 0.0063242,
+        "max_seconds": 1.199146,
+        "stdev_seconds": 0.30372243939967414
+      },
+      "values": {
+        "legal_moves": {
+          "mean": 13.25,
+          "min": 2,
+          "max": 48
+        },
+        "best_equity": {
+          "mean": 0.5061277844011783,
+          "min": -0.741137683391571,
+          "max": 2.0778775215148926
+        },
+        "best_cubeless_equity": {
+          "mean": 0.5784162748076482,
+          "min": -0.4044865055475384,
+          "max": 2.185576468706131
+        }
+      },
+      "cube_actions": {}
+    },
+    {
+      "api": "checker_play",
+      "level": "3ply",
+      "mode": "money",
+      "source_game_plan": "racing",
+      "timing": {
+        "count": 10,
+        "total_seconds": 2.5408649,
+        "mean_seconds": 0.25408649,
+        "median_seconds": 0.071075,
+        "p95_seconds": 1.199146,
+        "min_seconds": 0.0063242,
+        "max_seconds": 1.199146,
+        "stdev_seconds": 0.40461415753301305
+      },
+      "values": {
+        "legal_moves": {
+          "mean": 16.8,
+          "min": 2,
+          "max": 48
+        },
+        "best_equity": {
+          "mean": 0.7069451972842217,
+          "min": -0.3108727037906647,
+          "max": 2.0778775215148926
+        },
+        "best_cubeless_equity": {
+          "mean": 0.6609443055079283,
+          "min": -0.3909511940437369,
+          "max": 2.0868768841028214
+        }
+      },
+      "cube_actions": {}
+    },
+    {
+      "api": "checker_play",
+      "level": "3ply",
+      "mode": null,
+      "source_game_plan": "purerace",
+      "timing": {
+        "count": 20,
+        "total_seconds": 0.5311016,
+        "mean_seconds": 0.02655508,
+        "median_seconds": 0.0074506,
+        "p95_seconds": 0.1356598,
+        "min_seconds": 0.004153,
+        "max_seconds": 0.1479075,
+        "stdev_seconds": 0.04131230828867501
+      },
+      "values": {
+        "legal_moves": {
+          "mean": 14.35,
+          "min": 2,
+          "max": 48
+        },
+        "best_equity": {
+          "mean": -0.03898021131753922,
+          "min": -2.29291033744812,
+          "max": 2.3022122383117676
+        },
+        "best_cubeless_equity": {
+          "mean": -0.036231843309869304,
+          "min": -1.9868241548538208,
+          "max": 1.9939243793487549
+        }
+      },
+      "cube_actions": {}
+    },
+    {
+      "api": "checker_play",
+      "level": "3ply",
+      "mode": "money",
+      "source_game_plan": "purerace",
+      "timing": {
+        "count": 10,
+        "total_seconds": 0.2804316,
+        "mean_seconds": 0.02804316,
+        "median_seconds": 0.01472015,
+        "p95_seconds": 0.1356598,
+        "min_seconds": 0.004153,
+        "max_seconds": 0.1356598,
+        "stdev_seconds": 0.03955533914828692
+      },
+      "values": {
+        "legal_moves": {
+          "mean": 18.4,
+          "min": 2,
+          "max": 48
+        },
+        "best_equity": {
+          "mean": -0.17210954427719116,
+          "min": -1.780274510383606,
+          "max": 0.9534335732460022
+        },
+        "best_cubeless_equity": {
+          "mean": -0.170611417894105,
+          "min": -1.7802743627253221,
+          "max": 0.9595074653625488
+        }
+      },
+      "cube_actions": {}
+    },
+    {
+      "api": "checker_play",
+      "level": "3ply",
+      "mode": "match",
+      "source_game_plan": null,
+      "timing": {
+        "count": 50,
+        "total_seconds": 10.7160749,
+        "mean_seconds": 0.214321498,
+        "median_seconds": 0.1061453,
+        "p95_seconds": 0.7894055,
+        "min_seconds": 0.00545,
+        "max_seconds": 1.52632,
+        "stdev_seconds": 0.2893865699235007
+      },
+      "values": {
+        "legal_moves": {
+          "mean": 15.22,
+          "min": 2,
+          "max": 68
+        },
+        "best_equity": {
+          "mean": 0.0862296843715012,
+          "min": -2.29291033744812,
+          "max": 2.3022122383117676
+        },
+        "best_cubeless_equity": {
+          "mean": 0.1215541688724943,
+          "min": -1.9868241548538208,
+          "max": 2.185576468706131
+        }
+      },
+      "cube_actions": {}
+    },
+    {
+      "api": "checker_play",
+      "level": "3ply",
+      "mode": "match",
+      "source_game_plan": "attacking",
+      "timing": {
+        "count": 10,
+        "total_seconds": 3.9322898,
+        "mean_seconds": 0.39322898,
+        "median_seconds": 0.37317245,
+        "p95_seconds": 0.949095,
+        "min_seconds": 0.006965,
+        "max_seconds": 0.949095,
+        "stdev_seconds": 0.3288827901286306
+      },
+      "values": {
+        "legal_moves": {
+          "mean": 20.3,
+          "min": 2,
+          "max": 35
+        },
+        "best_equity": {
+          "mean": 0.16737832063809038,
+          "min": -0.496603399515152,
+          "max": 0.6817924976348877
+        },
+        "best_cubeless_equity": {
+          "mean": 0.16215271546971052,
+          "min": -0.3471771366894245,
+          "max": 0.6416778094135225
+        }
+      },
+      "cube_actions": {}
+    },
+    {
+      "api": "checker_play",
+      "level": "3ply",
+      "mode": "match",
+      "source_game_plan": "priming",
+      "timing": {
+        "count": 10,
+        "total_seconds": 3.5953097,
+        "mean_seconds": 0.35953097,
+        "median_seconds": 0.2194244,
+        "p95_seconds": 1.52632,
+        "min_seconds": 0.0515413,
+        "max_seconds": 1.52632,
+        "stdev_seconds": 0.4423542087187673
+      },
+      "values": {
+        "legal_moves": {
+          "mean": 19.7,
+          "min": 4,
+          "max": 68
+        },
+        "best_equity": {
+          "mean": 0.17530784457921983,
+          "min": -0.35297727584838867,
+          "max": 1.100681185722351
+        },
+        "best_cubeless_equity": {
+          "mean": 0.1952140265275375,
+          "min": -0.8610137216746807,
+          "max": 1.1199254956300138
+        }
+      },
+      "cube_actions": {}
+    },
+    {
+      "api": "checker_play",
+      "level": "3ply",
+      "mode": "match",
+      "source_game_plan": "anchoring",
+      "timing": {
+        "count": 10,
+        "total_seconds": 2.0533626,
+        "mean_seconds": 0.20533626,
+        "median_seconds": 0.17225535,
+        "p95_seconds": 0.5122535,
+        "min_seconds": 0.0687917,
+        "max_seconds": 0.5122535,
+        "stdev_seconds": 0.13339443445907329
+      },
+      "values": {
+        "legal_moves": {
+          "mean": 16.1,
+          "min": 4,
+          "max": 35
+        },
+        "best_equity": {
+          "mean": -0.31099723652005196,
+          "min": -0.9830681681632996,
+          "max": 0.4331373870372772
+        },
+        "best_cubeless_equity": {
+          "mean": -0.3436318730165112,
+          "min": -1.089767573546851,
+          "max": 0.30548167671076953
+        }
+      },
+      "cube_actions": {}
+    },
+    {
+      "api": "checker_play",
+      "level": "3ply",
+      "mode": "match",
+      "source_game_plan": "racing",
+      "timing": {
+        "count": 10,
+        "total_seconds": 0.8844428,
+        "mean_seconds": 0.08844428,
+        "median_seconds": 0.0319711,
+        "p95_seconds": 0.4256745,
+        "min_seconds": 0.0111492,
+        "max_seconds": 0.4256745,
+        "stdev_seconds": 0.12565332676725896
+      },
+      "values": {
+        "legal_moves": {
+          "mean": 9.7,
+          "min": 2,
+          "max": 34
+        },
+        "best_equity": {
+          "mean": 0.30531037151813506,
+          "min": -0.741137683391571,
+          "max": 1.1776162385940552
+        },
+        "best_cubeless_equity": {
+          "mean": 0.4958882441073683,
+          "min": -0.4044865055475384,
+          "max": 2.185576468706131
+        }
+      },
+      "cube_actions": {}
+    },
+    {
+      "api": "checker_play",
+      "level": "3ply",
+      "mode": "match",
+      "source_game_plan": "purerace",
+      "timing": {
+        "count": 10,
+        "total_seconds": 0.25067,
+        "mean_seconds": 0.025067,
+        "median_seconds": 0.006927849999999999,
+        "p95_seconds": 0.1479075,
+        "min_seconds": 0.00545,
+        "max_seconds": 0.1479075,
+        "stdev_seconds": 0.045094367927072915
+      },
+      "values": {
+        "legal_moves": {
+          "mean": 10.3,
+          "min": 2,
+          "max": 34
+        },
+        "best_equity": {
+          "mean": 0.09414912164211273,
+          "min": -2.29291033744812,
+          "max": 2.3022122383117676
+        },
+        "best_cubeless_equity": {
+          "mean": 0.09814773127436638,
+          "min": -1.9868241548538208,
+          "max": 1.9939243793487549
+        }
+      },
+      "cube_actions": {}
+    },
+    {
+      "api": "cube_action",
+      "level": "3ply",
+      "mode": null,
+      "source_game_plan": null,
+      "timing": {
+        "count": 100,
+        "total_seconds": 3.9666114,
+        "mean_seconds": 0.039666114,
+        "median_seconds": 0.03575265,
+        "p95_seconds": 0.0647143,
+        "min_seconds": 0.0232977,
+        "max_seconds": 0.0793879,
+        "stdev_seconds": 0.013070755988817018
+      },
+      "values": {
+        "equity_nd": {
+          "mean": 0.5549399110209197,
+          "min": -0.4066646099090576,
+          "max": 1.1539312601089478
+        },
+        "equity_dt": {
+          "mean": 0.5889627862349153,
+          "min": -0.5482176542282104,
+          "max": 2.8416075706481934
+        },
+        "equity_dp": {
+          "mean": 0.9999999898672104,
+          "min": 0.9999997615814209,
+          "max": 1.0000003576278687
+        },
+        "optimal_equity": {
+          "mean": 0.5673040906619281,
+          "min": -0.4066646099090576,
+          "max": 1.1539312601089478
+        },
+        "cubeless_equity": {
+          "mean": 0.43650079015642407,
+          "min": -0.7690868377685547,
+          "max": 1.8893427848815918
+        }
+      },
+      "cube_actions": {
+        "No Double": 80,
+        "Double/Take": 15,
+        "Double/Pass": 5
+      }
+    },
+    {
+      "api": "cube_action",
+      "level": "3ply",
+      "mode": "money",
+      "source_game_plan": null,
+      "timing": {
+        "count": 50,
+        "total_seconds": 2.0416812,
+        "mean_seconds": 0.040833624,
+        "median_seconds": 0.0392038,
+        "p95_seconds": 0.0642091,
+        "min_seconds": 0.0239694,
+        "max_seconds": 0.074613,
+        "stdev_seconds": 0.012100610469969806
+      },
+      "values": {
+        "equity_nd": {
+          "mean": 0.5125950962305069,
+          "min": 0.2186926156282425,
+          "max": 1.03066885471344
+        },
+        "equity_dt": {
+          "mean": 0.49855063065886496,
+          "min": 0.03217034414410591,
+          "max": 2.055436372756958
+        },
+        "equity_dp": {
+          "mean": 1.0,
+          "min": 1.0,
+          "max": 1.0
+        },
+        "optimal_equity": {
+          "mean": 0.5319971245527267,
+          "min": 0.2186926156282425,
+          "max": 1.03066885471344
+        },
+        "cubeless_equity": {
+          "mean": 0.36556672036647797,
+          "min": 0.15180325508117676,
+          "max": 1.0281449556350708
+        }
+      },
+      "cube_actions": {
+        "No Double": 39,
+        "Double/Take": 9,
+        "Double/Pass": 2
+      }
+    },
+    {
+      "api": "cube_action",
+      "level": "3ply",
+      "mode": null,
+      "source_game_plan": "attacking",
+      "timing": {
+        "count": 20,
+        "total_seconds": 0.9041219,
+        "mean_seconds": 0.045206095,
+        "median_seconds": 0.0431809,
+        "p95_seconds": 0.0688882,
+        "min_seconds": 0.026681,
+        "max_seconds": 0.0724273,
+        "stdev_seconds": 0.012358122312385016
+      },
+      "values": {
+        "equity_nd": {
+          "mean": 0.4714644273277372,
+          "min": -0.011193816550076008,
+          "max": 0.9350886344909668
+        },
+        "equity_dt": {
+          "mean": 0.42136886771768334,
+          "min": -0.1458462029695511,
+          "max": 0.9999258518218994
+        },
+        "equity_dp": {
+          "mean": 0.9999999970197677,
+          "min": 0.9999998211860657,
+          "max": 1.0000003576278687
+        },
+        "optimal_equity": {
+          "mean": 0.493385993456468,
+          "min": -0.011193816550076008,
+          "max": 0.9999258518218994
+        },
+        "cubeless_equity": {
+          "mean": 0.3817866645753384,
+          "min": -0.1125844344496727,
+          "max": 1.8893427848815918
+        }
+      },
+      "cube_actions": {
+        "No Double": 16,
+        "Double/Take": 4
+      }
+    },
+    {
+      "api": "cube_action",
+      "level": "3ply",
+      "mode": "money",
+      "source_game_plan": "attacking",
+      "timing": {
+        "count": 10,
+        "total_seconds": 0.4581317,
+        "mean_seconds": 0.04581317,
+        "median_seconds": 0.046368,
+        "p95_seconds": 0.0578743,
+        "min_seconds": 0.0303904,
+        "max_seconds": 0.0578743,
+        "stdev_seconds": 0.009381293232699258
+      },
+      "values": {
+        "equity_nd": {
+          "mean": 0.4974801778793335,
+          "min": 0.29388847947120667,
+          "max": 0.7001132369041443
+        },
+        "equity_dt": {
+          "mean": 0.46641486287117007,
+          "min": 0.13748672604560852,
+          "max": 0.9999258518218994
+        },
+        "equity_dp": {
+          "mean": 1.0,
+          "min": 1.0,
+          "max": 1.0
+        },
+        "optimal_equity": {
+          "mean": 0.5368528604507447,
+          "min": 0.29388847947120667,
+          "max": 0.9999258518218994
+        },
+        "cubeless_equity": {
+          "mean": 0.36307372003793714,
+          "min": 0.20616532862186432,
+          "max": 0.6183485984802246
+        }
+      },
+      "cube_actions": {
+        "No Double": 8,
+        "Double/Take": 2
+      }
+    },
+    {
+      "api": "cube_action",
+      "level": "3ply",
+      "mode": null,
+      "source_game_plan": "priming",
+      "timing": {
+        "count": 20,
+        "total_seconds": 0.9137438,
+        "mean_seconds": 0.04568719,
+        "median_seconds": 0.04687645,
+        "p95_seconds": 0.0618765,
+        "min_seconds": 0.0282823,
+        "max_seconds": 0.068295,
+        "stdev_seconds": 0.011384753046851279
+      },
+      "values": {
+        "equity_nd": {
+          "mean": 0.5550897471606732,
+          "min": 0.22712762653827667,
+          "max": 1.1197787523269653
+        },
+        "equity_dt": {
+          "mean": 0.5391916539520025,
+          "min": 0.03791306912899017,
+          "max": 1.5745303630828857
+        },
+        "equity_dp": {
+          "mean": 0.9999999910593033,
+          "min": 0.9999998211860657,
+          "max": 1.0000001192092896
+        },
+        "optimal_equity": {
+          "mean": 0.5684724621474743,
+          "min": 0.22712762653827667,
+          "max": 1.1197787523269653
+        },
+        "cubeless_equity": {
+          "mean": 0.4343828381970525,
+          "min": -0.014042165130376816,
+          "max": 1.478980302810669
+        }
+      },
+      "cube_actions": {
+        "Double/Take": 4,
+        "No Double": 15,
+        "Double/Pass": 1
+      }
+    },
+    {
+      "api": "cube_action",
+      "level": "3ply",
+      "mode": "money",
+      "source_game_plan": "priming",
+      "timing": {
+        "count": 10,
+        "total_seconds": 0.49761,
+        "mean_seconds": 0.049761,
+        "median_seconds": 0.047063049999999995,
+        "p95_seconds": 0.0618765,
+        "min_seconds": 0.0433169,
+        "max_seconds": 0.0618765,
+        "stdev_seconds": 0.005751799725303377
+      },
+      "values": {
+        "equity_nd": {
+          "mean": 0.45647638887166975,
+          "min": 0.22712762653827667,
+          "max": 0.8427080512046814
+        },
+        "equity_dt": {
+          "mean": 0.36704144552350043,
+          "min": 0.03791306912899017,
+          "max": 0.9290026426315308
+        },
+        "equity_dp": {
+          "mean": 1.0,
+          "min": 1.0,
+          "max": 1.0
+        },
+        "optimal_equity": {
+          "mean": 0.4711901232600212,
+          "min": 0.22712762653827667,
+          "max": 0.9290026426315308
+        },
+        "cubeless_equity": {
+          "mean": 0.3124131321907043,
+          "min": 0.1716991364955902,
+          "max": 0.5636670589447021
+        }
+      },
+      "cube_actions": {
+        "Double/Take": 2,
+        "No Double": 8
+      }
+    },
+    {
+      "api": "cube_action",
+      "level": "3ply",
+      "mode": null,
+      "source_game_plan": "anchoring",
+      "timing": {
+        "count": 20,
+        "total_seconds": 0.7822872,
+        "mean_seconds": 0.03911436,
+        "median_seconds": 0.035984050000000004,
+        "p95_seconds": 0.0489635,
+        "min_seconds": 0.0283599,
+        "max_seconds": 0.0793879,
+        "stdev_seconds": 0.011409804592145623
+      },
+      "values": {
+        "equity_nd": {
+          "mean": 0.2709116883575916,
+          "min": -0.4066646099090576,
+          "max": 0.859932541847229
+        },
+        "equity_dt": {
+          "mean": 0.16656759511679411,
+          "min": -0.5482176542282104,
+          "max": 0.887937068939209
+        },
+        "equity_dp": {
+          "mean": 0.9999999910593033,
+          "min": 0.9999998211860657,
+          "max": 1.0000001192092896
+        },
+        "optimal_equity": {
+          "mean": 0.2723187878727913,
+          "min": -0.4066646099090576,
+          "max": 0.887937068939209
+        },
+        "cubeless_equity": {
+          "mean": 0.08407114446163177,
+          "min": -0.7690868377685547,
+          "max": 0.5356406569480896
+        }
+      },
+      "cube_actions": {
+        "No Double": 18,
+        "Double/Take": 2
+      }
+    },
+    {
+      "api": "cube_action",
+      "level": "3ply",
+      "mode": "money",
+      "source_game_plan": "anchoring",
+      "timing": {
+        "count": 10,
+        "total_seconds": 0.3568788,
+        "mean_seconds": 0.03568788,
+        "median_seconds": 0.0346616,
+        "p95_seconds": 0.0466081,
+        "min_seconds": 0.0295096,
+        "max_seconds": 0.0466081,
+        "stdev_seconds": 0.005061799009970006
+      },
+      "values": {
+        "equity_nd": {
+          "mean": 0.41762528419494627,
+          "min": 0.2291993349790573,
+          "max": 0.859932541847229
+        },
+        "equity_dt": {
+          "mean": 0.3089991319924593,
+          "min": 0.03217034414410591,
+          "max": 0.887937068939209
+        },
+        "equity_dp": {
+          "mean": 1.0,
+          "min": 1.0,
+          "max": 1.0
+        },
+        "optimal_equity": {
+          "mean": 0.4204257369041443,
+          "min": 0.2291993349790573,
+          "max": 0.887937068939209
+        },
+        "cubeless_equity": {
+          "mean": 0.29029272496700287,
+          "min": 0.1632377803325653,
+          "max": 0.5356406569480896
+        }
+      },
+      "cube_actions": {
+        "No Double": 9,
+        "Double/Take": 1
+      }
+    },
+    {
+      "api": "cube_action",
+      "level": "3ply",
+      "mode": null,
+      "source_game_plan": "racing",
+      "timing": {
+        "count": 20,
+        "total_seconds": 0.8242573,
+        "mean_seconds": 0.041212865,
+        "median_seconds": 0.03575265,
+        "p95_seconds": 0.0647143,
+        "min_seconds": 0.0251937,
+        "max_seconds": 0.074613,
+        "stdev_seconds": 0.015056868392872718
+      },
+      "values": {
+        "equity_nd": {
+          "mean": 0.7002680167555809,
+          "min": 0.30579933524131775,
+          "max": 1.0919368267059326
+        },
+        "equity_dt": {
+          "mean": 0.7778898563235999,
+          "min": 0.12172160297632217,
+          "max": 1.8918453454971313
+        },
+        "equity_dp": {
+          "mean": 0.9999999701976776,
+          "min": 0.9999997615814209,
+          "max": 1.0
+        },
+        "optimal_equity": {
+          "mean": 0.7125196859240532,
+          "min": 0.30579933524131775,
+          "max": 1.0919368267059326
+        },
+        "cubeless_equity": {
+          "mean": 0.6114619739353657,
+          "min": 0.21718209981918335,
+          "max": 1.7890043258666992
+        }
+      },
+      "cube_actions": {
+        "No Double": 14,
+        "Double/Pass": 4,
+        "Double/Take": 2
+      }
+    },
+    {
+      "api": "cube_action",
+      "level": "3ply",
+      "mode": "money",
+      "source_game_plan": "racing",
+      "timing": {
+        "count": 10,
+        "total_seconds": 0.44980380000000003,
+        "mean_seconds": 0.04498038,
+        "median_seconds": 0.04116705,
+        "p95_seconds": 0.074613,
+        "min_seconds": 0.0262317,
+        "max_seconds": 0.074613,
+        "stdev_seconds": 0.017102762596778856
+      },
+      "values": {
+        "equity_nd": {
+          "mean": 0.5918823033571243,
+          "min": 0.30579933524131775,
+          "max": 0.9929163455963135
+        },
+        "equity_dt": {
+          "mean": 0.6754168823361397,
+          "min": 0.2022428810596466,
+          "max": 1.8918453454971313
+        },
+        "equity_dp": {
+          "mean": 1.0,
+          "min": 1.0,
+          "max": 1.0
+        },
+        "optimal_equity": {
+          "mean": 0.606289878487587,
+          "min": 0.30579933524131775,
+          "max": 1.0
+        },
+        "cubeless_equity": {
+          "mean": 0.4383694872260094,
+          "min": 0.23839591443538666,
+          "max": 0.9588284492492676
+        }
+      },
+      "cube_actions": {
+        "No Double": 7,
+        "Double/Pass": 2,
+        "Double/Take": 1
+      }
+    },
+    {
+      "api": "cube_action",
+      "level": "3ply",
+      "mode": null,
+      "source_game_plan": "purerace",
+      "timing": {
+        "count": 20,
+        "total_seconds": 0.5422012,
+        "mean_seconds": 0.02711006,
+        "median_seconds": 0.02588255,
+        "p95_seconds": 0.0319455,
+        "min_seconds": 0.0232977,
+        "max_seconds": 0.0349737,
+        "stdev_seconds": 0.003420939968457423
+      },
+      "values": {
+        "equity_nd": {
+          "mean": 0.7769656755030155,
+          "min": 0.2186926156282425,
+          "max": 1.1539312601089478
+        },
+        "equity_dt": {
+          "mean": 1.0397959580644964,
+          "min": 0.03579853102564812,
+          "max": 2.8416075706481934
+        },
+        "equity_dp": {
+          "mean": 1.0,
+          "min": 0.9999998211860657,
+          "max": 1.0000001192092896
+        },
+        "optimal_equity": {
+          "mean": 0.7898235239088536,
+          "min": 0.2186926156282425,
+          "max": 1.1539312601089478
+        },
+        "cubeless_equity": {
+          "mean": 0.670801329612732,
+          "min": 0.15180325508117676,
+          "max": 1.1710675954818726
+        }
+      },
+      "cube_actions": {
+        "No Double": 17,
+        "Double/Take": 3
+      }
+    },
+    {
+      "api": "cube_action",
+      "level": "3ply",
+      "mode": "money",
+      "source_game_plan": "purerace",
+      "timing": {
+        "count": 10,
+        "total_seconds": 0.2792569,
+        "mean_seconds": 0.02792569,
+        "median_seconds": 0.027755349999999998,
+        "p95_seconds": 0.0319455,
+        "min_seconds": 0.0239694,
+        "max_seconds": 0.0319455,
+        "stdev_seconds": 0.002867848505781139
+      },
+      "values": {
+        "equity_nd": {
+          "mean": 0.5995113268494606,
+          "min": 0.2186926156282425,
+          "max": 1.03066885471344
+        },
+        "equity_dt": {
+          "mean": 0.6748808305710554,
+          "min": 0.03579853102564812,
+          "max": 2.055436372756958
+        },
+        "equity_dp": {
+          "mean": 1.0,
+          "min": 1.0,
+          "max": 1.0
+        },
+        "optimal_equity": {
+          "mean": 0.6252270236611366,
+          "min": 0.2186926156282425,
+          "max": 1.03066885471344
+        },
+        "cubeless_equity": {
+          "mean": 0.4236845374107361,
+          "min": 0.15180325508117676,
+          "max": 1.0281449556350708
+        }
+      },
+      "cube_actions": {
+        "No Double": 7,
+        "Double/Take": 3
+      }
+    },
+    {
+      "api": "cube_action",
+      "level": "3ply",
+      "mode": "match",
+      "source_game_plan": null,
+      "timing": {
+        "count": 50,
+        "total_seconds": 1.9249302,
+        "mean_seconds": 0.038498604,
+        "median_seconds": 0.033689300000000005,
+        "p95_seconds": 0.0688882,
+        "min_seconds": 0.0232977,
+        "max_seconds": 0.0793879,
+        "stdev_seconds": 0.013998906426851304
+      },
+      "values": {
+        "equity_nd": {
+          "mean": 0.5972847258113325,
+          "min": -0.4066646099090576,
+          "max": 1.1539312601089478
+        },
+        "equity_dt": {
+          "mean": 0.6793749418109656,
+          "min": -0.5482176542282104,
+          "max": 2.8416075706481934
+        },
+        "equity_dp": {
+          "mean": 0.9999999797344208,
+          "min": 0.9999997615814209,
+          "max": 1.0000003576278687
+        },
+        "optimal_equity": {
+          "mean": 0.6026110567711294,
+          "min": -0.4066646099090576,
+          "max": 1.1539312601089478
+        },
+        "cubeless_equity": {
+          "mean": 0.5074348599463702,
+          "min": -0.7690868377685547,
+          "max": 1.8893427848815918
+        }
+      },
+      "cube_actions": {
+        "No Double": 41,
+        "Double/Take": 6,
+        "Double/Pass": 3
+      }
+    },
+    {
+      "api": "cube_action",
+      "level": "3ply",
+      "mode": "match",
+      "source_game_plan": "attacking",
+      "timing": {
+        "count": 10,
+        "total_seconds": 0.4459902,
+        "mean_seconds": 0.04459902,
+        "median_seconds": 0.0405857,
+        "p95_seconds": 0.0724273,
+        "min_seconds": 0.026681,
+        "max_seconds": 0.0724273,
+        "stdev_seconds": 0.015283585200018424
+      },
+      "values": {
+        "equity_nd": {
+          "mean": 0.4454486767761409,
+          "min": -0.011193816550076008,
+          "max": 0.9350886344909668
+        },
+        "equity_dt": {
+          "mean": 0.3763228725641966,
+          "min": -0.1458462029695511,
+          "max": 0.874962329864502
+        },
+        "equity_dp": {
+          "mean": 0.9999999940395355,
+          "min": 0.9999998211860657,
+          "max": 1.0000003576278687
+        },
+        "optimal_equity": {
+          "mean": 0.44991912646219134,
+          "min": -0.011193816550076008,
+          "max": 0.9350886344909668
+        },
+        "cubeless_equity": {
+          "mean": 0.4004996091127396,
+          "min": -0.1125844344496727,
+          "max": 1.8893427848815918
+        }
+      },
+      "cube_actions": {
+        "No Double": 8,
+        "Double/Take": 2
+      }
+    },
+    {
+      "api": "cube_action",
+      "level": "3ply",
+      "mode": "match",
+      "source_game_plan": "priming",
+      "timing": {
+        "count": 10,
+        "total_seconds": 0.4161338,
+        "mean_seconds": 0.04161338,
+        "median_seconds": 0.03768795,
+        "p95_seconds": 0.068295,
+        "min_seconds": 0.0282823,
+        "max_seconds": 0.068295,
+        "stdev_seconds": 0.014271074388332972
+      },
+      "values": {
+        "equity_nd": {
+          "mean": 0.6537031054496765,
+          "min": 0.26626288890838623,
+          "max": 1.1197787523269653
+        },
+        "equity_dt": {
+          "mean": 0.7113418623805046,
+          "min": 0.09007301926612854,
+          "max": 1.5745303630828857
+        },
+        "equity_dp": {
+          "mean": 0.9999999821186065,
+          "min": 0.9999998211860657,
+          "max": 1.0000001192092896
+        },
+        "optimal_equity": {
+          "mean": 0.6657548010349273,
+          "min": 0.26626288890838623,
+          "max": 1.1197787523269653
+        },
+        "cubeless_equity": {
+          "mean": 0.5563525442034006,
+          "min": -0.014042165130376816,
+          "max": 1.478980302810669
+        }
+      },
+      "cube_actions": {
+        "No Double": 7,
+        "Double/Pass": 1,
+        "Double/Take": 2
+      }
+    },
+    {
+      "api": "cube_action",
+      "level": "3ply",
+      "mode": "match",
+      "source_game_plan": "anchoring",
+      "timing": {
+        "count": 10,
+        "total_seconds": 0.4254084,
+        "mean_seconds": 0.04254084,
+        "median_seconds": 0.038905800000000004,
+        "p95_seconds": 0.0793879,
+        "min_seconds": 0.0283599,
+        "max_seconds": 0.0793879,
+        "stdev_seconds": 0.014937192912785781
+      },
+      "values": {
+        "equity_nd": {
+          "mean": 0.12419809252023697,
+          "min": -0.4066646099090576,
+          "max": 0.6482236981391907
+        },
+        "equity_dt": {
+          "mean": 0.02413605824112892,
+          "min": -0.5482176542282104,
+          "max": 0.5984470248222351
+        },
+        "equity_dp": {
+          "mean": 0.9999999821186065,
+          "min": 0.9999998211860657,
+          "max": 1.0000001192092896
+        },
+        "optimal_equity": {
+          "mean": 0.1242118388414383,
+          "min": -0.4066646099090576,
+          "max": 0.6482236981391907
+        },
+        "cubeless_equity": {
+          "mean": -0.12215043604373932,
+          "min": -0.7690868377685547,
+          "max": 0.37958794832229614
+        }
+      },
+      "cube_actions": {
+        "No Double": 9,
+        "Double/Take": 1
+      }
+    },
+    {
+      "api": "cube_action",
+      "level": "3ply",
+      "mode": "match",
+      "source_game_plan": "racing",
+      "timing": {
+        "count": 10,
+        "total_seconds": 0.3744535,
+        "mean_seconds": 0.03744535,
+        "median_seconds": 0.034158999999999995,
+        "p95_seconds": 0.0632107,
+        "min_seconds": 0.0251937,
+        "max_seconds": 0.0632107,
+        "stdev_seconds": 0.012432272737270884
+      },
+      "values": {
+        "equity_nd": {
+          "mean": 0.8086537301540375,
+          "min": 0.3143983483314514,
+          "max": 1.0919368267059326
+        },
+        "equity_dt": {
+          "mean": 0.88036283031106,
+          "min": 0.12172160297632217,
+          "max": 1.8704358339309692
+        },
+        "equity_dp": {
+          "mean": 0.9999999403953552,
+          "min": 0.9999997615814209,
+          "max": 1.0
+        },
+        "optimal_equity": {
+          "mean": 0.8187494933605194,
+          "min": 0.3143983483314514,
+          "max": 1.0919368267059326
+        },
+        "cubeless_equity": {
+          "mean": 0.784554460644722,
+          "min": 0.21718209981918335,
+          "max": 1.7890043258666992
+        }
+      },
+      "cube_actions": {
+        "No Double": 7,
+        "Double/Pass": 2,
+        "Double/Take": 1
+      }
+    },
+    {
+      "api": "cube_action",
+      "level": "3ply",
+      "mode": "match",
+      "source_game_plan": "purerace",
+      "timing": {
+        "count": 10,
+        "total_seconds": 0.2629443,
+        "mean_seconds": 0.02629443,
+        "median_seconds": 0.02434535,
+        "p95_seconds": 0.0349737,
+        "min_seconds": 0.0232977,
+        "max_seconds": 0.0349737,
+        "stdev_seconds": 0.0038733811483135914
+      },
+      "values": {
+        "equity_nd": {
+          "mean": 0.9544200241565705,
+          "min": 0.5478417277336121,
+          "max": 1.1539312601089478
+        },
+        "equity_dt": {
+          "mean": 1.4047110855579377,
+          "min": 0.44193732738494873,
+          "max": 2.8416075706481934
+        },
+        "equity_dp": {
+          "mean": 1.0,
+          "min": 0.9999998211860657,
+          "max": 1.0000001192092896
+        },
+        "optimal_equity": {
+          "mean": 0.9544200241565705,
+          "min": 0.5478417277336121,
+          "max": 1.1539312601089478
+        },
+        "cubeless_equity": {
+          "mean": 0.9179181218147278,
+          "min": 0.4131375551223755,
+          "max": 1.1710675954818726
+        }
+      },
+      "cube_actions": {
+        "No Double": 10
+      }
+    },
+    {
+      "api": "post_move_analytics",
+      "level": "3ply",
+      "mode": null,
+      "source_game_plan": null,
+      "timing": {
+        "count": 100,
+        "total_seconds": 1.0860195,
+        "mean_seconds": 0.010860195,
+        "median_seconds": 0.00820265,
+        "p95_seconds": 0.0303219,
+        "min_seconds": 0.000678,
+        "max_seconds": 0.041627,
+        "stdev_seconds": 0.009233615565551719
+      },
+      "values": {
+        "cubeless_equity": {
+          "mean": -0.4358426198690381,
+          "min": -1.8897275710478425,
+          "max": 0.7692873735795729
+        },
+        "cubeful_equity": {
+          "mean": -0.5323894619941711,
+          "min": -1.153926968574524,
+          "max": 0.41102129220962524
+        }
+      },
+      "cube_actions": {}
+    },
+    {
+      "api": "post_move_analytics",
+      "level": "3ply",
+      "mode": "money",
+      "source_game_plan": null,
+      "timing": {
+        "count": 50,
+        "total_seconds": 0.5672817,
+        "mean_seconds": 0.011345634,
+        "median_seconds": 0.0097576,
+        "p95_seconds": 0.0268591,
+        "min_seconds": 0.0008967,
+        "max_seconds": 0.0393678,
+        "stdev_seconds": 0.008559737522692611
+      },
+      "values": {
+        "cubeless_equity": {
+          "mean": -0.3657168375384845,
+          "min": -1.0282552542048506,
+          "max": -0.15180230140686035
+        },
+        "cubeful_equity": {
+          "mean": -0.4824110597372055,
+          "min": -1.0303081274032593,
+          "max": -0.21273232996463776
+        }
+      },
+      "cube_actions": {}
+    },
+    {
+      "api": "post_move_analytics",
+      "level": "3ply",
+      "mode": null,
+      "source_game_plan": "attacking",
+      "timing": {
+        "count": 20,
+        "total_seconds": 0.2817838,
+        "mean_seconds": 0.01408919,
+        "median_seconds": 0.0115104,
+        "p95_seconds": 0.0332499,
+        "min_seconds": 0.0020273,
+        "max_seconds": 0.0355354,
+        "stdev_seconds": 0.009288222519655286
+      },
+      "values": {
+        "cubeless_equity": {
+          "mean": -0.38150840310845524,
+          "min": -1.8897275710478425,
+          "max": 0.11213319143280387
+        },
+        "cubeful_equity": {
+          "mean": -0.4509337846189737,
+          "min": -0.9350886344909668,
+          "max": 0.0175890251994133
+        }
+      },
+      "cube_actions": {}
+    },
+    {
+      "api": "post_move_analytics",
+      "level": "3ply",
+      "mode": "money",
+      "source_game_plan": "attacking",
+      "timing": {
+        "count": 10,
+        "total_seconds": 0.1427322,
+        "mean_seconds": 0.01427322,
+        "median_seconds": 0.01410125,
+        "p95_seconds": 0.0267583,
+        "min_seconds": 0.0036137,
+        "max_seconds": 0.0267583,
+        "stdev_seconds": 0.007075603851388076
+      },
+      "values": {
+        "cubeless_equity": {
+          "mean": -0.36303581463289447,
+          "min": -0.620274652261287,
+          "max": -0.20629382226616144
+        },
+        "cubeful_equity": {
+          "mean": -0.4687095135450363,
+          "min": -0.7188807129859924,
+          "max": -0.2610924541950226
+        }
+      },
+      "cube_actions": {}
+    },
+    {
+      "api": "post_move_analytics",
+      "level": "3ply",
+      "mode": null,
+      "source_game_plan": "priming",
+      "timing": {
+        "count": 20,
+        "total_seconds": 0.2936057,
+        "mean_seconds": 0.014680285,
+        "median_seconds": 0.01499835,
+        "p95_seconds": 0.0247731,
+        "min_seconds": 0.0034634,
+        "max_seconds": 0.0308098,
+        "stdev_seconds": 0.0073858663547897874
+      },
+      "values": {
+        "cubeless_equity": {
+          "mean": -0.4335910703683908,
+          "min": -1.4768598491791636,
+          "max": 0.014009904814884067
+        },
+        "cubeful_equity": {
+          "mean": -0.5248401701450348,
+          "min": -1.1279098987579346,
+          "max": -0.21273232996463776
+        }
+      },
+      "cube_actions": {}
+    },
+    {
+      "api": "post_move_analytics",
+      "level": "3ply",
+      "mode": "money",
+      "source_game_plan": "priming",
+      "timing": {
+        "count": 10,
+        "total_seconds": 0.1709541,
+        "mean_seconds": 0.01709541,
+        "median_seconds": 0.015251250000000001,
+        "p95_seconds": 0.0247731,
+        "min_seconds": 0.0137939,
+        "max_seconds": 0.0247731,
+        "stdev_seconds": 0.0036097982201071695
+      },
+      "values": {
+        "cubeless_equity": {
+          "mean": -0.31348459936323253,
+          "min": -0.5637032452505082,
+          "max": -0.1709243282675743
+        },
+        "cubeful_equity": {
+          "mean": -0.41833684146404265,
+          "min": -0.8005794286727905,
+          "max": -0.21273232996463776
+        }
+      },
+      "cube_actions": {}
+    },
+    {
+      "api": "post_move_analytics",
+      "level": "3ply",
+      "mode": null,
+      "source_game_plan": "anchoring",
+      "timing": {
+        "count": 20,
+        "total_seconds": 0.2034667,
+        "mean_seconds": 0.010173335,
+        "median_seconds": 0.0077097,
+        "p95_seconds": 0.0178295,
+        "min_seconds": 0.0028709,
+        "max_seconds": 0.041627,
+        "stdev_seconds": 0.008358962126413528
+      },
+      "values": {
+        "cubeless_equity": {
+          "mean": -0.0834529137428035,
+          "min": -0.535644479241455,
+          "max": 0.7692873735795729
+        },
+        "cubeful_equity": {
+          "mean": -0.24900842495262623,
+          "min": -0.7827048897743225,
+          "max": 0.41102129220962524
+        }
+      },
+      "cube_actions": {}
+    },
+    {
+      "api": "post_move_analytics",
+      "level": "3ply",
+      "mode": "money",
+      "source_game_plan": "anchoring",
+      "timing": {
+        "count": 10,
+        "total_seconds": 0.0764647,
+        "mean_seconds": 0.00764647,
+        "median_seconds": 0.0071424999999999995,
+        "p95_seconds": 0.0146225,
+        "min_seconds": 0.0036101,
+        "max_seconds": 0.0146225,
+        "stdev_seconds": 0.003040086835766373
+      },
+      "values": {
+        "cubeless_equity": {
+          "mean": -0.2900897323997924,
+          "min": -0.535644479241455,
+          "max": -0.16044836433138698
+        },
+        "cubeful_equity": {
+          "mean": -0.3868598535656929,
+          "min": -0.7827048897743225,
+          "max": -0.22145973145961761
+        }
+      },
+      "cube_actions": {}
+    },
+    {
+      "api": "post_move_analytics",
+      "level": "3ply",
+      "mode": null,
+      "source_game_plan": "racing",
+      "timing": {
+        "count": 20,
+        "total_seconds": 0.251863,
+        "mean_seconds": 0.01259315,
+        "median_seconds": 0.00938635,
+        "p95_seconds": 0.0303219,
+        "min_seconds": 0.0015615,
+        "max_seconds": 0.0393678,
+        "stdev_seconds": 0.011417846709681712
+      },
+      "values": {
+        "cubeless_equity": {
+          "mean": -0.609851874869787,
+          "min": -1.768762401152344,
+          "max": -0.21740981678340177
+        },
+        "cubeful_equity": {
+          "mean": -0.6789342284202575,
+          "min": -1.0799989700317383,
+          "max": -0.2745409607887268
+        }
+      },
+      "cube_actions": {}
+    },
+    {
+      "api": "post_move_analytics",
+      "level": "3ply",
+      "mode": "money",
+      "source_game_plan": "racing",
+      "timing": {
+        "count": 10,
+        "total_seconds": 0.1457792,
+        "mean_seconds": 0.01457792,
+        "median_seconds": 0.0118122,
+        "p95_seconds": 0.0393678,
+        "min_seconds": 0.0015615,
+        "max_seconds": 0.0393678,
+        "stdev_seconds": 0.013268837557039845
+      },
+      "values": {
+        "cubeless_equity": {
+          "mean": -0.43825864952393656,
+          "min": -0.9566936707487912,
+          "max": -0.23879435984417796
+        },
+        "cubeful_equity": {
+          "mean": -0.5680329084396363,
+          "min": -0.9985096454620361,
+          "max": -0.2745409607887268
+        }
+      },
+      "cube_actions": {}
+    },
+    {
+      "api": "post_move_analytics",
+      "level": "3ply",
+      "mode": null,
+      "source_game_plan": "purerace",
+      "timing": {
+        "count": 20,
+        "total_seconds": 0.055300300000000004,
+        "mean_seconds": 0.002765015,
+        "median_seconds": 0.0022646000000000003,
+        "p95_seconds": 0.0059426,
+        "min_seconds": 0.000678,
+        "max_seconds": 0.0077599,
+        "stdev_seconds": 0.002052075158230399
+      },
+      "values": {
+        "cubeless_equity": {
+          "mean": -0.670808837255754,
+          "min": -1.171068408730207,
+          "max": -0.15180230140686035
+        },
+        "cubeful_equity": {
+          "mean": -0.7582307018339633,
+          "min": -1.153926968574524,
+          "max": -0.21688757836818695
+        }
+      },
+      "cube_actions": {}
+    },
+    {
+      "api": "post_move_analytics",
+      "level": "3ply",
+      "mode": "money",
+      "source_game_plan": "purerace",
+      "timing": {
+        "count": 10,
+        "total_seconds": 0.0313515,
+        "mean_seconds": 0.00313515,
+        "median_seconds": 0.0029696,
+        "p95_seconds": 0.0059426,
+        "min_seconds": 0.0008967,
+        "max_seconds": 0.0059426,
+        "stdev_seconds": 0.0015934976144388237
+      },
+      "values": {
+        "cubeless_equity": {
+          "mean": -0.42371539177256634,
+          "min": -1.0282552542048506,
+          "max": -0.15180230140686035
+        },
+        "cubeful_equity": {
+          "mean": -0.5701161816716194,
+          "min": -1.0303081274032593,
+          "max": -0.21688757836818695
+        }
+      },
+      "cube_actions": {}
+    },
+    {
+      "api": "post_move_analytics",
+      "level": "3ply",
+      "mode": "match",
+      "source_game_plan": null,
+      "timing": {
+        "count": 50,
+        "total_seconds": 0.5187378,
+        "mean_seconds": 0.010374756,
+        "median_seconds": 0.007416900000000001,
+        "p95_seconds": 0.0332499,
+        "min_seconds": 0.000678,
+        "max_seconds": 0.041627,
+        "stdev_seconds": 0.009925184073904202
+      },
+      "values": {
+        "cubeless_equity": {
+          "mean": -0.5059684021995917,
+          "min": -1.8897275710478425,
+          "max": 0.7692873735795729
+        },
+        "cubeful_equity": {
+          "mean": -0.5823678642511367,
+          "min": -1.153926968574524,
+          "max": 0.41102129220962524
+        }
+      },
+      "cube_actions": {}
+    },
+    {
+      "api": "post_move_analytics",
+      "level": "3ply",
+      "mode": "match",
+      "source_game_plan": "attacking",
+      "timing": {
+        "count": 10,
+        "total_seconds": 0.1390516,
+        "mean_seconds": 0.01390516,
+        "median_seconds": 0.00959925,
+        "p95_seconds": 0.0355354,
+        "min_seconds": 0.0020273,
+        "max_seconds": 0.0355354,
+        "stdev_seconds": 0.011488620477788735
+      },
+      "values": {
+        "cubeless_equity": {
+          "mean": -0.399980991584016,
+          "min": -1.8897275710478425,
+          "max": 0.11213319143280387
+        },
+        "cubeful_equity": {
+          "mean": -0.43315805569291116,
+          "min": -0.9350886344909668,
+          "max": 0.0175890251994133
+        }
+      },
+      "cube_actions": {}
+    },
+    {
+      "api": "post_move_analytics",
+      "level": "3ply",
+      "mode": "match",
+      "source_game_plan": "priming",
+      "timing": {
+        "count": 10,
+        "total_seconds": 0.1226516,
+        "mean_seconds": 0.01226516,
+        "median_seconds": 0.00935135,
+        "p95_seconds": 0.0308098,
+        "min_seconds": 0.0034634,
+        "max_seconds": 0.0308098,
+        "stdev_seconds": 0.00944302829477917
+      },
+      "values": {
+        "cubeless_equity": {
+          "mean": -0.553697541373549,
+          "min": -1.4768598491791636,
+          "max": 0.014009904814884067
+        },
+        "cubeful_equity": {
+          "mean": -0.6313434988260269,
+          "min": -1.1279098987579346,
+          "max": -0.2610991299152374
+        }
+      },
+      "cube_actions": {}
+    },
+    {
+      "api": "post_move_analytics",
+      "level": "3ply",
+      "mode": "match",
+      "source_game_plan": "anchoring",
+      "timing": {
+        "count": 10,
+        "total_seconds": 0.127002,
+        "mean_seconds": 0.0127002,
+        "median_seconds": 0.009888500000000001,
+        "p95_seconds": 0.041627,
+        "min_seconds": 0.0028709,
+        "max_seconds": 0.041627,
+        "stdev_seconds": 0.011138983708380021
+      },
+      "values": {
+        "cubeless_equity": {
+          "mean": 0.1231839049141854,
+          "min": -0.3801856031641364,
+          "max": 0.7692873735795729
+        },
+        "cubeful_equity": {
+          "mean": -0.11115699633955956,
+          "min": -0.5922942161560059,
+          "max": 0.41102129220962524
+        }
+      },
+      "cube_actions": {}
+    },
+    {
+      "api": "post_move_analytics",
+      "level": "3ply",
+      "mode": "match",
+      "source_game_plan": "racing",
+      "timing": {
+        "count": 10,
+        "total_seconds": 0.10608379999999999,
+        "mean_seconds": 0.01060838,
+        "median_seconds": 0.007591799999999999,
+        "p95_seconds": 0.0282564,
+        "min_seconds": 0.0015817,
+        "max_seconds": 0.0282564,
+        "stdev_seconds": 0.009508081686041852
+      },
+      "values": {
+        "cubeless_equity": {
+          "mean": -0.7814451002156375,
+          "min": -1.768762401152344,
+          "max": -0.21740981678340177
+        },
+        "cubeful_equity": {
+          "mean": -0.7898355484008789,
+          "min": -1.0799989700317383,
+          "max": -0.30469369888305664
+        }
+      },
+      "cube_actions": {}
+    },
+    {
+      "api": "post_move_analytics",
+      "level": "3ply",
+      "mode": "match",
+      "source_game_plan": "purerace",
+      "timing": {
+        "count": 10,
+        "total_seconds": 0.0239488,
+        "mean_seconds": 0.00239488,
+        "median_seconds": 0.0010788500000000001,
+        "p95_seconds": 0.0077599,
+        "min_seconds": 0.000678,
+        "max_seconds": 0.0077599,
+        "stdev_seconds": 0.002458909569888427
+      },
+      "values": {
+        "cubeless_equity": {
+          "mean": -0.9179022827389417,
+          "min": -1.171068408730207,
+          "max": -0.4131404161453247
+        },
+        "cubeful_equity": {
+          "mean": -0.9463452219963073,
+          "min": -1.153926968574524,
+          "max": -0.5214821696281433
+        }
+      },
+      "cube_actions": {}
+    }
+  ],
+  "status": "complete"
+}

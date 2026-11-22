@@ -1,0 +1,846 @@
+{
+  "selection": "100 paired public cube_action calls at Stage 11, 3-ply, two native threads, process CPUs 8-9. Fresh native processes per arm ABBA order, no repeated positions in each arm; production bearoff DB active. 1,296-game 3-ply/VR rollout targets.",
+  "unchanged_other_fields": [
+    "equity_nd",
+    "equity_dt",
+    "equity_dp",
+    "should_double",
+    "should_take",
+    "optimal_equity",
+    "optimal_action",
+    "eval_level",
+    "is_beaver",
+    "cubeless_se",
+    "equity_nd_se",
+    "equity_dt_se",
+    "details"
+  ],
+  "exact_whole_calls": 12,
+  "totals": {
+    "n": 100,
+    "timings": [
+      {
+        "baseline_s": 4.198000899836188,
+        "candidate_s": 1.6194584997720085,
+        "speedup": 2.592225055737577
+      },
+      {
+        "baseline_s": 4.645254300121451,
+        "candidate_s": 1.70130140017136,
+        "speedup": 2.7304123182720987
+      }
+    ],
+    "geometric_speedup": 2.6604216252164727,
+    "fields": {
+      "win": {
+        "n": 100,
+        "baseline_mae": 0.008883858025074005,
+        "candidate_mae": 0.008508041203022003,
+        "materially_closer": 9,
+        "materially_farther": 0,
+        "mean_output_shift": 0.00086259126663208,
+        "max_increase_in_absolute_error": 0.0023488402366638184
+      },
+      "gammon_win": {
+        "n": 100,
+        "baseline_mae": 0.008058298714996298,
+        "candidate_mae": 0.008151518251352928,
+        "materially_closer": 6,
+        "materially_farther": 9,
+        "mean_output_shift": 0.001560644186101854,
+        "max_increase_in_absolute_error": 0.015210568904876709
+      },
+      "backgammon_win": {
+        "n": 100,
+        "baseline_mae": 0.005327550638135392,
+        "candidate_mae": 0.005297733156185416,
+        "materially_closer": 1,
+        "materially_farther": 1,
+        "mean_output_shift": 0.0002459498660391546,
+        "max_increase_in_absolute_error": 0.007285319268703461
+      },
+      "gammon_loss": {
+        "n": 100,
+        "baseline_mae": 0.006069064899937544,
+        "candidate_mae": 0.005769002132882193,
+        "materially_closer": 6,
+        "materially_farther": 1,
+        "mean_output_shift": 0.0008063067522016354,
+        "max_increase_in_absolute_error": 0.003354322165250778
+      },
+      "backgammon_loss": {
+        "n": 100,
+        "baseline_mae": 0.005047361346047694,
+        "candidate_mae": 0.005004546943535217,
+        "materially_closer": 0,
+        "materially_farther": 0,
+        "mean_output_shift": 8.304172239036234e-05,
+        "max_increase_in_absolute_error": 0.00029765674844384193
+      },
+      "cubeless_equity": {
+        "n": 100,
+        "baseline_mae": 0.028269666954874994,
+        "candidate_mae": 0.028183433040976525,
+        "materially_closer": 4,
+        "materially_farther": 2,
+        "mean_output_shift": 0.0019422223418951035,
+        "max_increase_in_absolute_error": 0.021778523921966553
+      }
+    }
+  },
+  "modes": {
+    "match": {
+      "n": 50,
+      "timings": [
+        {
+          "baseline_s": 2.055617899808567,
+          "candidate_s": 0.7027923999121413,
+          "speedup": 2.924929040304858
+        },
+        {
+          "baseline_s": 2.1774630000873003,
+          "candidate_s": 0.7472201999917161,
+          "speedup": 2.9140847639175713
+        }
+      ],
+      "geometric_speedup": 2.919501867081511,
+      "fields": {
+        "win": {
+          "n": 50,
+          "baseline_mae": 0.007515731453895569,
+          "candidate_mae": 0.00713746964931488,
+          "materially_closer": 5,
+          "materially_farther": 0,
+          "mean_output_shift": 0.0008141410350799561,
+          "max_increase_in_absolute_error": 0.0023488402366638184
+        },
+        "gammon_win": {
+          "n": 50,
+          "baseline_mae": 0.00942153502779547,
+          "candidate_mae": 0.009366769004263914,
+          "materially_closer": 5,
+          "materially_farther": 4,
+          "mean_output_shift": 0.001917209168896079,
+          "max_increase_in_absolute_error": 0.015210568904876709
+        },
+        "backgammon_win": {
+          "n": 50,
+          "baseline_mae": 0.00990711941796235,
+          "candidate_mae": 0.009867276675927315,
+          "materially_closer": 1,
+          "materially_farther": 1,
+          "mean_output_shift": 0.00038918569254747126,
+          "max_increase_in_absolute_error": 0.007285319268703461
+        },
+        "gammon_loss": {
+          "n": 50,
+          "baseline_mae": 0.009460759808644071,
+          "candidate_mae": 0.008844498314647353,
+          "materially_closer": 4,
+          "materially_farther": 1,
+          "mean_output_shift": 0.001173206568346359,
+          "max_increase_in_absolute_error": 0.003354322165250778
+        },
+        "backgammon_loss": {
+          "n": 50,
+          "baseline_mae": 0.009715472953600965,
+          "candidate_mae": 0.009634665426226548,
+          "materially_closer": 0,
+          "materially_farther": 0,
+          "mean_output_shift": 0.00012621027974091704,
+          "max_increase_in_absolute_error": 0.00029765674844384193
+        },
+        "cubeless_equity": {
+          "n": 50,
+          "baseline_mae": 0.029635247439146042,
+          "candidate_mae": 0.030425095409154893,
+          "materially_closer": 1,
+          "materially_farther": 2,
+          "mean_output_shift": 0.001892961710691452,
+          "max_increase_in_absolute_error": 0.021778523921966553
+        }
+      }
+    },
+    "money": {
+      "n": 50,
+      "timings": [
+        {
+          "baseline_s": 2.142383000027621,
+          "candidate_s": 0.9166660998598672,
+          "speedup": 2.3371465360780026
+        },
+        {
+          "baseline_s": 2.4677913000341505,
+          "candidate_s": 0.9540812001796439,
+          "speedup": 2.5865631767710022
+        }
+      ],
+      "geometric_speedup": 2.458694199964132,
+      "fields": {
+        "win": {
+          "n": 50,
+          "baseline_mae": 0.010251984596252442,
+          "candidate_mae": 0.009878612756729126,
+          "materially_closer": 4,
+          "materially_farther": 0,
+          "mean_output_shift": 0.0009110414981842041,
+          "max_increase_in_absolute_error": 0.0018343925476074219
+        },
+        "gammon_win": {
+          "n": 50,
+          "baseline_mae": 0.006695062402197127,
+          "candidate_mae": 0.006936267498441939,
+          "materially_closer": 1,
+          "materially_farther": 5,
+          "mean_output_shift": 0.0012040792033076286,
+          "max_increase_in_absolute_error": 0.005792438983917236
+        },
+        "backgammon_win": {
+          "n": 50,
+          "baseline_mae": 0.0007479818583084352,
+          "candidate_mae": 0.000728189636443517,
+          "materially_closer": 0,
+          "materially_farther": 0,
+          "mean_output_shift": 0.0001027140395308379,
+          "max_increase_in_absolute_error": 0.00014409562572836876
+        },
+        "gammon_loss": {
+          "n": 50,
+          "baseline_mae": 0.002677369991231018,
+          "candidate_mae": 0.0026935059511170325,
+          "materially_closer": 2,
+          "materially_farther": 0,
+          "mean_output_shift": 0.00043940693605691193,
+          "max_increase_in_absolute_error": 0.0021268799901008606
+        },
+        "backgammon_loss": {
+          "n": 50,
+          "baseline_mae": 0.0003792497384944227,
+          "candidate_mae": 0.00037442846084388747,
+          "materially_closer": 0,
+          "materially_farther": 0,
+          "mean_output_shift": 3.987316503980764e-05,
+          "max_increase_in_absolute_error": 0.00014455709606409073
+        },
+        "cubeless_equity": {
+          "n": 50,
+          "baseline_mae": 0.026904086470603942,
+          "candidate_mae": 0.025941770672798157,
+          "materially_closer": 3,
+          "materially_farther": 0,
+          "mean_output_shift": 0.001991482973098755,
+          "max_increase_in_absolute_error": 0.004882782697677612
+        }
+      }
+    }
+  },
+  "plans": {
+    "anchoring": {
+      "n": 20,
+      "timings": [
+        {
+          "baseline_s": 0.8449152999965008,
+          "candidate_s": 0.35578409998561256,
+          "speedup": 2.3747978058341226
+        },
+        {
+          "baseline_s": 0.9143562999670394,
+          "candidate_s": 0.3532485000905581,
+          "speedup": 2.588422313846023
+        }
+      ],
+      "geometric_speedup": 2.4793103136746755,
+      "fields": {
+        "win": {
+          "n": 20,
+          "baseline_mae": 0.014697778224945068,
+          "candidate_mae": 0.014352110028266907,
+          "materially_closer": 2,
+          "materially_farther": 0,
+          "mean_output_shift": 0.0008353024721145629,
+          "max_increase_in_absolute_error": 0.0013312697410583496
+        },
+        "gammon_win": {
+          "n": 20,
+          "baseline_mae": 0.0119705056771636,
+          "candidate_mae": 0.011890653148293495,
+          "materially_closer": 2,
+          "materially_farther": 1,
+          "mean_output_shift": 0.0009530531242489815,
+          "max_increase_in_absolute_error": 0.003926485776901245
+        },
+        "backgammon_win": {
+          "n": 20,
+          "baseline_mae": 0.0036060192083823494,
+          "candidate_mae": 0.0036081666861718987,
+          "materially_closer": 0,
+          "materially_farther": 0,
+          "mean_output_shift": 0.00010474199589225464,
+          "max_increase_in_absolute_error": 0.00020299479365348816
+        },
+        "gammon_loss": {
+          "n": 20,
+          "baseline_mae": 0.014050473272800446,
+          "candidate_mae": 0.01242471905425191,
+          "materially_closer": 4,
+          "materially_farther": 0,
+          "mean_output_shift": 0.002173029538244009,
+          "max_increase_in_absolute_error": 0.0008986629545688629
+        },
+        "backgammon_loss": {
+          "n": 20,
+          "baseline_mae": 0.014635474564420293,
+          "candidate_mae": 0.014441203121532454,
+          "materially_closer": 0,
+          "materially_farther": 0,
+          "mean_output_shift": 0.00023942991538206115,
+          "max_increase_in_absolute_error": 0.0001567639410495758
+        },
+        "cubeless_equity": {
+          "n": 20,
+          "baseline_mae": 0.044797830283641815,
+          "candidate_mae": 0.04431409537792206,
+          "materially_closer": 1,
+          "materially_farther": 0,
+          "mean_output_shift": 0.0018708787858486176,
+          "max_increase_in_absolute_error": 0.004312068223953247
+        }
+      }
+    },
+    "attacking": {
+      "n": 20,
+      "timings": [
+        {
+          "baseline_s": 1.0251537998847198,
+          "candidate_s": 0.4323102998896502,
+          "speedup": 2.3713379027665926
+        },
+        {
+          "baseline_s": 1.2380475000245497,
+          "candidate_s": 0.4611041999887675,
+          "speedup": 2.6849625313642957
+        }
+      ],
+      "geometric_speedup": 2.5232822707997395,
+      "fields": {
+        "win": {
+          "n": 20,
+          "baseline_mae": 0.0078214630484581,
+          "candidate_mae": 0.008040018379688263,
+          "materially_closer": 0,
+          "materially_farther": 0,
+          "mean_output_shift": 0.0005236297845840454,
+          "max_increase_in_absolute_error": 0.0023488402366638184
+        },
+        "gammon_win": {
+          "n": 20,
+          "baseline_mae": 0.006536057591438294,
+          "candidate_mae": 0.006909829378128052,
+          "materially_closer": 0,
+          "materially_farther": 2,
+          "mean_output_shift": 0.0010523051023483276,
+          "max_increase_in_absolute_error": 0.0032857730984687805
+        },
+        "backgammon_win": {
+          "n": 20,
+          "baseline_mae": 0.0028018477722071113,
+          "candidate_mae": 0.0027903066686121745,
+          "materially_closer": 0,
+          "materially_farther": 0,
+          "mean_output_shift": 0.00010837290610652417,
+          "max_increase_in_absolute_error": 0.00039624422788619995
+        },
+        "gammon_loss": {
+          "n": 20,
+          "baseline_mae": 0.006123719782408443,
+          "candidate_mae": 0.006179777211582404,
+          "materially_closer": 0,
+          "materially_farther": 0,
+          "mean_output_shift": 0.0006601812376175076,
+          "max_increase_in_absolute_error": 0.0021268799901008606
+        },
+        "backgammon_loss": {
+          "n": 20,
+          "baseline_mae": 0.0032610505400953115,
+          "candidate_mae": 0.0032367374533350812,
+          "materially_closer": 0,
+          "materially_farther": 0,
+          "mean_output_shift": 7.595736242365092e-05,
+          "max_increase_in_absolute_error": 0.00014455709606409073
+        },
+        "cubeless_equity": {
+          "n": 20,
+          "baseline_mae": 0.021250207908451557,
+          "candidate_mae": 0.02112673968076706,
+          "materially_closer": 0,
+          "materially_farther": 0,
+          "mean_output_shift": 0.0011968540027737617,
+          "max_increase_in_absolute_error": 0.004882782697677612
+        }
+      }
+    },
+    "priming": {
+      "n": 20,
+      "timings": [
+        {
+          "baseline_s": 1.1677700000291225,
+          "candidate_s": 0.37612060000537895,
+          "speedup": 3.1047754364223126
+        },
+        {
+          "baseline_s": 1.0767303000902757,
+          "candidate_s": 0.4713168000453152,
+          "speedup": 2.284515001346764
+        }
+      ],
+      "geometric_speedup": 2.663251032163457,
+      "fields": {
+        "win": {
+          "n": 20,
+          "baseline_mae": 0.011646059155464173,
+          "candidate_mae": 0.0111769437789917,
+          "materially_closer": 4,
+          "materially_farther": 0,
+          "mean_output_shift": 0.0010401517152786254,
+          "max_increase_in_absolute_error": 0.0018343925476074219
+        },
+        "gammon_win": {
+          "n": 20,
+          "baseline_mae": 0.010295881796628237,
+          "candidate_mae": 0.010142517788335682,
+          "materially_closer": 2,
+          "materially_farther": 3,
+          "mean_output_shift": 0.0033886668737977744,
+          "max_increase_in_absolute_error": 0.005792438983917236
+        },
+        "backgammon_win": {
+          "n": 20,
+          "baseline_mae": 0.016902521887823242,
+          "candidate_mae": 0.016585884342930513,
+          "materially_closer": 1,
+          "materially_farther": 0,
+          "mean_output_shift": 0.00043946404475718736,
+          "max_increase_in_absolute_error": 0.00012721773236989975
+        },
+        "gammon_loss": {
+          "n": 20,
+          "baseline_mae": 0.00748251574113965,
+          "candidate_mae": 0.0073317514266818765,
+          "materially_closer": 2,
+          "materially_farther": 0,
+          "mean_output_shift": 0.0007754585240036249,
+          "max_increase_in_absolute_error": 0.001661151647567749
+        },
+        "backgammon_loss": {
+          "n": 20,
+          "baseline_mae": 0.006969858736556489,
+          "candidate_mae": 0.0069764220364959325,
+          "materially_closer": 0,
+          "materially_farther": 0,
+          "mean_output_shift": 8.648357270431006e-05,
+          "max_increase_in_absolute_error": 0.00029765674844384193
+        },
+        "cubeless_equity": {
+          "n": 20,
+          "baseline_mae": 0.04972482491284609,
+          "candidate_mae": 0.05029182694852352,
+          "materially_closer": 1,
+          "materially_farther": 1,
+          "mean_output_shift": 0.002652258612215519,
+          "max_increase_in_absolute_error": 0.021778523921966553
+        }
+      }
+    },
+    "purerace": {
+      "n": 20,
+      "timings": [
+        {
+          "baseline_s": 0.1925477999029681,
+          "candidate_s": 0.08779939994565211,
+          "speedup": 2.1930423217260633
+        },
+        {
+          "baseline_s": 0.2587464999232907,
+          "candidate_s": 0.10342410005978309,
+          "speedup": 2.501800835334562
+        }
+      ],
+      "geometric_speedup": 2.3423396663204747,
+      "fields": {
+        "win": {
+          "n": 20,
+          "baseline_mae": 0.0021974027156829836,
+          "candidate_mae": 0.001372683048248291,
+          "materially_closer": 2,
+          "materially_farther": 0,
+          "mean_output_shift": 0.0009707450866699219,
+          "max_increase_in_absolute_error": 2.4437904357910156e-06
+        },
+        "gammon_win": {
+          "n": 20,
+          "baseline_mae": 0.002747035807764542,
+          "candidate_mae": 0.002755311540162575,
+          "materially_closer": 0,
+          "materially_farther": 0,
+          "mean_output_shift": 8.439645171165466e-06,
+          "max_increase_in_absolute_error": 0.0001671314239501953
+        },
+        "backgammon_win": {
+          "n": 20,
+          "baseline_mae": 2.5165631917900555e-05,
+          "candidate_mae": 2.1427294372244886e-05,
+          "materially_closer": 0,
+          "materially_farther": 0,
+          "mean_output_shift": 3.738337545655668e-06,
+          "max_increase_in_absolute_error": 0.0
+        },
+        "gammon_loss": {
+          "n": 20,
+          "baseline_mae": 2.2032547875028287e-08,
+          "candidate_mae": 2.2032547875028287e-08,
+          "materially_closer": 0,
+          "materially_farther": 0,
+          "mean_output_shift": 0.0,
+          "max_increase_in_absolute_error": 0.0
+        },
+        "backgammon_loss": {
+          "n": 20,
+          "baseline_mae": 1.8249029665184936e-08,
+          "candidate_mae": 1.8249029665184936e-08,
+          "materially_closer": 0,
+          "materially_farther": 0,
+          "mean_output_shift": 0.0,
+          "max_increase_in_absolute_error": 0.0
+        },
+        "cubeless_equity": {
+          "n": 20,
+          "baseline_mae": 0.0071138225495815275,
+          "candidate_mae": 0.005476453155279159,
+          "materially_closer": 2,
+          "materially_farther": 0,
+          "mean_output_shift": 0.001929318904876709,
+          "max_increase_in_absolute_error": 4.887580871582031e-06
+        }
+      }
+    },
+    "racing": {
+      "n": 20,
+      "timings": [
+        {
+          "baseline_s": 0.967614000022877,
+          "candidate_s": 0.3674440999457147,
+          "speedup": 2.633363823683194
+        },
+        {
+          "baseline_s": 1.1573737001162954,
+          "candidate_s": 0.31220779998693615,
+          "speedup": 3.7070620918654944
+        }
+      ],
+      "geometric_speedup": 3.124426860220277,
+      "fields": {
+        "win": {
+          "n": 20,
+          "baseline_mae": 0.008056586980819702,
+          "candidate_mae": 0.007598450779914856,
+          "materially_closer": 1,
+          "materially_farther": 0,
+          "mean_output_shift": 0.0009431272745132446,
+          "max_increase_in_absolute_error": 0.002004861831665039
+        },
+        "gammon_win": {
+          "n": 20,
+          "baseline_mae": 0.008742012701986823,
+          "candidate_mae": 0.009059279401844833,
+          "materially_closer": 2,
+          "materially_farther": 3,
+          "mean_output_shift": 0.0024007561849430205,
+          "max_increase_in_absolute_error": 0.015210568904876709
+        },
+        "backgammon_win": {
+          "n": 20,
+          "baseline_mae": 0.0033021986903463583,
+          "candidate_mae": 0.003482880788840248,
+          "materially_closer": 0,
+          "materially_farther": 1,
+          "mean_output_shift": 0.0005734320458941511,
+          "max_increase_in_absolute_error": 0.007285319268703461
+        },
+        "gammon_loss": {
+          "n": 20,
+          "baseline_mae": 0.002688593670791306,
+          "candidate_mae": 0.002908740939346899,
+          "materially_closer": 0,
+          "materially_farther": 1,
+          "mean_output_shift": 0.00042286446114303544,
+          "max_increase_in_absolute_error": 0.003354322165250778
+        },
+        "backgammon_loss": {
+          "n": 20,
+          "baseline_mae": 0.00037040464013671226,
+          "candidate_mae": 0.0003683538572829548,
+          "materially_closer": 0,
+          "materially_farther": 0,
+          "mean_output_shift": 1.3337761441789552e-05,
+          "max_increase_in_absolute_error": 2.2171996533870697e-05
+        },
+        "cubeless_equity": {
+          "n": 20,
+          "baseline_mae": 0.018461649119853974,
+          "candidate_mae": 0.019708050042390825,
+          "materially_closer": 0,
+          "materially_farther": 1,
+          "mean_output_shift": 0.00206180140376091,
+          "max_increase_in_absolute_error": 0.02022373676300049
+        }
+      }
+    }
+  },
+  "db": {
+    "False": {
+      "n": 92,
+      "timings": [
+        {
+          "baseline_s": 4.180898799852002,
+          "candidate_s": 1.6074932997871656,
+          "speedup": 2.600881011700366
+        },
+        {
+          "baseline_s": 4.628557100193575,
+          "candidate_s": 1.6889945001748856,
+          "speedup": 2.7404216530689203
+        }
+      ],
+      "geometric_speedup": 2.6697398078313705,
+      "fields": {
+        "win": {
+          "n": 92,
+          "baseline_mae": 0.00965636547492898,
+          "candidate_mae": 0.009247868929220282,
+          "materially_closer": 9,
+          "materially_farther": 0,
+          "mean_output_shift": 0.0009375992028609566,
+          "max_increase_in_absolute_error": 0.0023488402366638184
+        },
+        "gammon_win": {
+          "n": 92,
+          "baseline_mae": 0.008759020342387281,
+          "candidate_mae": 0.008860345925383617,
+          "materially_closer": 6,
+          "materially_farther": 9,
+          "mean_output_shift": 0.0016963523761976671,
+          "max_increase_in_absolute_error": 0.015210568904876709
+        },
+        "backgammon_win": {
+          "n": 92,
+          "baseline_mae": 0.00579081591101673,
+          "candidate_mae": 0.005758405604549365,
+          "materially_closer": 1,
+          "materially_farther": 1,
+          "mean_output_shift": 0.0002673368109121246,
+          "max_increase_in_absolute_error": 0.007285319268703461
+        },
+        "gammon_loss": {
+          "n": 92,
+          "baseline_mae": 0.006596809673845156,
+          "candidate_mae": 0.006270654492263253,
+          "materially_closer": 6,
+          "materially_farther": 1,
+          "mean_output_shift": 0.0008764203828278645,
+          "max_increase_in_absolute_error": 0.003354322165250778
+        },
+        "backgammon_loss": {
+          "n": 92,
+          "baseline_mae": 0.005486262332660537,
+          "candidate_mae": 0.0054397249386252365,
+          "materially_closer": 0,
+          "materially_farther": 0,
+          "mean_output_shift": 9.026274172865472e-05,
+          "max_increase_in_absolute_error": 0.00029765674844384193
+        },
+        "cubeless_equity": {
+          "n": 92,
+          "baseline_mae": 0.030727894976735115,
+          "candidate_mae": 0.030634162461628086,
+          "materially_closer": 4,
+          "materially_farther": 2,
+          "mean_output_shift": 0.00211111124119033,
+          "max_increase_in_absolute_error": 0.021778523921966553
+        }
+      }
+    },
+    "True": {
+      "n": 8,
+      "timings": [
+        {
+          "baseline_s": 0.01710209998418577,
+          "candidate_s": 0.011965199984842911,
+          "speedup": 1.4293200285703624
+        },
+        {
+          "baseline_s": 0.016697199927875772,
+          "candidate_s": 0.012306899996474385,
+          "speedup": 1.3567348343335117
+        }
+      ],
+      "geometric_speedup": 1.392554584988316,
+      "fields": {
+        "win": {
+          "n": 8,
+          "baseline_mae": 2.2351741790771484e-08,
+          "candidate_mae": 2.2351741790771484e-08,
+          "materially_closer": 0,
+          "materially_farther": 0,
+          "mean_output_shift": 0.0,
+          "max_increase_in_absolute_error": 0.0
+        },
+        "gammon_win": {
+          "n": 8,
+          "baseline_mae": 0.0,
+          "candidate_mae": 0.0,
+          "materially_closer": 0,
+          "materially_farther": 0,
+          "mean_output_shift": 0.0,
+          "max_increase_in_absolute_error": 0.0
+        },
+        "backgammon_win": {
+          "n": 8,
+          "baseline_mae": 0.0,
+          "candidate_mae": 0.0,
+          "materially_closer": 0,
+          "materially_farther": 0,
+          "mean_output_shift": 0.0,
+          "max_increase_in_absolute_error": 0.0
+        },
+        "gammon_loss": {
+          "n": 8,
+          "baseline_mae": 0.0,
+          "candidate_mae": 0.0,
+          "materially_closer": 0,
+          "materially_farther": 0,
+          "mean_output_shift": 0.0,
+          "max_increase_in_absolute_error": 0.0
+        },
+        "backgammon_loss": {
+          "n": 8,
+          "baseline_mae": 0.0,
+          "candidate_mae": 0.0,
+          "materially_closer": 0,
+          "materially_farther": 0,
+          "mean_output_shift": 0.0,
+          "max_increase_in_absolute_error": 0.0
+        },
+        "cubeless_equity": {
+          "n": 8,
+          "baseline_mae": 4.470348358154297e-08,
+          "candidate_mae": 4.470348358154297e-08,
+          "materially_closer": 0,
+          "materially_farther": 0,
+          "mean_output_shift": 0.0,
+          "max_increase_in_absolute_error": 0.0
+        }
+      }
+    }
+  },
+  "worst": {
+    "win": [
+      {
+        "id": "cube-match-attacking-02",
+        "baseline": 0.5402640104293823,
+        "candidate": 0.5379151701927185,
+        "reference": 0.5409013628959656,
+        "increase_in_absolute_error": 0.0023488402366638184
+      },
+      {
+        "id": "cube-match-racing-08",
+        "baseline": 0.938683807849884,
+        "candidate": 0.936678946018219,
+        "reference": 0.9452978372573853,
+        "increase_in_absolute_error": 0.002004861831665039
+      }
+    ],
+    "gammon_win": [
+      {
+        "id": "cube-match-racing-08",
+        "baseline": 0.8900136947631836,
+        "candidate": 0.8748031258583069,
+        "reference": 0.9101182818412781,
+        "increase_in_absolute_error": 0.015210568904876709
+      },
+      {
+        "id": "cube-money-priming-01",
+        "baseline": 0.21234823763370514,
+        "candidate": 0.22191186249256134,
+        "reference": 0.21423383057117462,
+        "increase_in_absolute_error": 0.005792438983917236
+      }
+    ],
+    "backgammon_win": [
+      {
+        "id": "cube-match-racing-01",
+        "baseline": 0.07563505321741104,
+        "candidate": 0.06834973394870758,
+        "reference": 0.1015782281756401,
+        "increase_in_absolute_error": 0.007285319268703461
+      },
+      {
+        "id": "cube-match-attacking-05",
+        "baseline": 0.012746182270348072,
+        "candidate": 0.013142426498234272,
+        "reference": 0.011973243206739426,
+        "increase_in_absolute_error": 0.00039624422788619995
+      }
+    ],
+    "gammon_loss": [
+      {
+        "id": "cube-match-racing-07",
+        "baseline": 0.04136175662279129,
+        "candidate": 0.04471607878804207,
+        "reference": 0.0396660678088665,
+        "increase_in_absolute_error": 0.003354322165250778
+      },
+      {
+        "id": "cube-money-attacking-03",
+        "baseline": 0.09166938066482544,
+        "candidate": 0.08954250067472458,
+        "reference": 0.09174396842718124,
+        "increase_in_absolute_error": 0.0021268799901008606
+      }
+    ],
+    "backgammon_loss": [
+      {
+        "id": "cube-match-priming-02",
+        "baseline": 0.003097943030297756,
+        "candidate": 0.003395599778741598,
+        "reference": 0.0026265871711075306,
+        "increase_in_absolute_error": 0.00029765674844384193
+      },
+      {
+        "id": "cube-match-priming-07",
+        "baseline": 0.04809146001935005,
+        "candidate": 0.04791313037276268,
+        "reference": 0.1454344093799591,
+        "increase_in_absolute_error": 0.00017832964658737183
+      }
+    ],
+    "cubeless_equity": [
+      {
+        "id": "cube-match-priming-01",
+        "baseline": 1.0111130475997925,
+        "candidate": 0.9893345236778259,
+        "reference": 1.0729368925094604,
+        "increase_in_absolute_error": 0.021778523921966553
+      },
+      {
+        "id": "cube-match-racing-08",
+        "baseline": 1.7890043258666992,
+        "candidate": 1.7687805891036987,
+        "reference": 1.8191472291946411,
+        "increase_in_absolute_error": 0.02022373676300049
+      }
+    ]
+  },
+  "baseline_binary": "c36410f49e6ac00ed408c62ea3a531ec93002bb35acc829a44a577e7916bffed",
+  "candidate_binary": "b9b1e2b97d939759104c2160dd641d33aee135b6772e343fe2b293ca6ab52785",
+  "cube_references_sha256": "1725b7eeb0f79ce0d9d669020604e885c8a015b2815f5df9f765b07d6757026f"
+}

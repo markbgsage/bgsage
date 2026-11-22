@@ -1,0 +1,182 @@
+{
+  "python_version": "3.14.6 (tags/v3.14.6:c63aec6, Jun 10 2026, 10:26:10) [MSC v.1944 64 bit (AMD64)]",
+  "pytest_version": "9.1.1",
+  "working_directory": "bgsage",
+  "driver_argv": [
+    "logs/truncated_benchmark_fixed_16t/run_targeted_pytest.py",
+    "--extension",
+    "build/multi_ply_cpu_fixed/bgbot_cpp.cp314-win_amd64.pyd",
+    "--sha256",
+    "b8dddb53f7064bee9b98367019e1568e235486389740ea0b4f4db44dcfa468de"
+  ],
+  "pytest_argv": [
+    "-p",
+    "no:cacheprovider",
+    "-vv",
+    "--tb=short",
+    "-rA",
+    "--junitxml",
+    "logs\\truncated_benchmark_fixed_16t\\targeted-pytest.xml",
+    "tests/test_rollout_prefill.py",
+    "tests/test_cube_candidate_batch_reuse.py",
+    "tests/test_multi_ply_bearoff_cache.py",
+    "tests/test_2ply_details.py"
+  ],
+  "native": {
+    "path": "build/multi_ply_cpu_fixed/bgbot_cpp.cp314-win_amd64.pyd",
+    "sha256": "b8dddb53f7064bee9b98367019e1568e235486389740ea0b4f4db44dcfa468de",
+    "bytes": 4992000
+  },
+  "python_analyzer": {
+    "path": "python/bgsage/analyzer.py",
+    "sha256": "d893e7c00f28e5945f97b1067f4a3fcc59f0e3613a4026de75bd0dc3727b732b",
+    "bytes": 79954
+  },
+  "test_sources": [
+    {
+      "path": "tests/test_rollout_prefill.py",
+      "sha256": "db75dc4a49b7eed10afc6039a3ddcaf55495d50db3b0a8c24c207b49311011a7",
+      "bytes": 1429
+    },
+    {
+      "path": "tests/test_cube_candidate_batch_reuse.py",
+      "sha256": "17b885bc00461b04b4707dff5afc9912a05c822a78070c67fa10dbca2752a7d8",
+      "bytes": 2011
+    },
+    {
+      "path": "tests/test_multi_ply_bearoff_cache.py",
+      "sha256": "c1a73f7942850528a16d233f585c50b911b16218f0ee79774684b9d9f772579e",
+      "bytes": 3548
+    },
+    {
+      "path": "tests/test_2ply_details.py",
+      "sha256": "456b3274c263dc458902c1cea28ee512d52d2805d503687c004de4c5aee5a07d",
+      "bytes": 21711
+    }
+  ],
+  "pytest_exit_code": 0,
+  "elapsed_seconds": 17.992048399988562,
+  "tests": [
+    {
+      "class": "tests.test_rollout_prefill",
+      "name": "test_parallel_prefill_matches_serial[truncated1-cube_action-cube-money-anchoring-07-3972021868-8]",
+      "status": "passed",
+      "seconds": 0.627
+    },
+    {
+      "class": "tests.test_rollout_prefill",
+      "name": "test_parallel_prefill_matches_serial[truncated2-checker_play-checker-money-priming-10-2570830711-3]",
+      "status": "passed",
+      "seconds": 4.39
+    },
+    {
+      "class": "tests.test_cube_candidate_batch_reuse",
+      "name": "test_cube_probabilities_match_independent_cubeless_tree[board0-options0]",
+      "status": "passed",
+      "seconds": 0.058
+    },
+    {
+      "class": "tests.test_cube_candidate_batch_reuse",
+      "name": "test_cube_probabilities_match_independent_cubeless_tree[board1-options1]",
+      "status": "passed",
+      "seconds": 0.069
+    },
+    {
+      "class": "tests.test_cube_candidate_batch_reuse",
+      "name": "test_concurrent_cube_calls_keep_ordered_batches_local",
+      "status": "passed",
+      "seconds": 0.093
+    },
+    {
+      "class": "tests.test_multi_ply_bearoff_cache",
+      "name": "test_loaded_model_honors_bearoff_database",
+      "status": "passed",
+      "seconds": 0.045
+    },
+    {
+      "class": "tests.test_multi_ply_bearoff_cache",
+      "name": "test_warm_cache_distinguishes_nn_and_database",
+      "status": "passed",
+      "seconds": 0.002
+    },
+    {
+      "class": "tests.test_multi_ply_bearoff_cache",
+      "name": "test_loaded_model_distinguishes_automatic_and_explicit_cube_efficiency",
+      "status": "passed",
+      "seconds": 0.142
+    },
+    {
+      "class": "tests.test_multi_ply_bearoff_cache",
+      "name": "test_nested_native_wrapper_keeps_inner_database_alive",
+      "status": "passed",
+      "seconds": 0.001
+    },
+    {
+      "class": "tests.test_2ply_details.TestTwoPlyDetailsND",
+      "name": "test_2ply_nd",
+      "status": "passed",
+      "seconds": 0.544
+    },
+    {
+      "class": "tests.test_2ply_details.TestTwoPlyDetailsND",
+      "name": "test_3ply_nd",
+      "status": "passed",
+      "seconds": 9.138
+    },
+    {
+      "class": "tests.test_2ply_details.TestTwoPlyDetailsND",
+      "name": "test_4ply_nd",
+      "status": "passed",
+      "seconds": 1.343
+    },
+    {
+      "class": "tests.test_2ply_details.TestTwoPlyDetailsDT",
+      "name": "test_2ply_dt",
+      "status": "passed",
+      "seconds": 0.517
+    },
+    {
+      "class": "tests.test_2ply_details.TestTwoPlyDetailsDT",
+      "name": "test_3ply_dt",
+      "status": "passed",
+      "seconds": 0.202
+    },
+    {
+      "class": "tests.test_2ply_details.TestTwoPlyDetailsDT",
+      "name": "test_4ply_dt",
+      "status": "passed",
+      "seconds": 0.325
+    },
+    {
+      "class": "tests.test_2ply_details.TestDetailsHeadlineMatchesPlain",
+      "name": "test_2ply_headline",
+      "status": "passed",
+      "seconds": 0.052
+    },
+    {
+      "class": "tests.test_2ply_details.TestDetailsHeadlineMatchesPlain",
+      "name": "test_2ply_headline_dancing",
+      "status": "passed",
+      "seconds": 0.043
+    },
+    {
+      "class": "tests.test_2ply_details.TestDetailsHeadlineMatchesPlain",
+      "name": "test_3ply_headline",
+      "status": "passed",
+      "seconds": 0.056
+    },
+    {
+      "class": "tests.test_2ply_details.TestTwoPlyDetailsErrors",
+      "name": "test_2ply_details_allowed",
+      "status": "passed",
+      "seconds": 0.053
+    },
+    {
+      "class": "tests.test_2ply_details.TestTwoPlyDetailsErrors",
+      "name": "test_error_below_2ply",
+      "status": "passed",
+      "seconds": 0.027
+    }
+  ],
+  "junit_sha256": "003c9ce58fb5e3dd9d9904670729ee252f6d5660114dbb0afdd196eaa1b64e67"
+}

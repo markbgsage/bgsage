@@ -1,0 +1,261 @@
+{
+  "binary_sha256": "7476f24d8d5dcf69eb62ca05bc714ac0c6872cfd3204ba8d8b06923982170633",
+  "python": "3.14.6 (tags/v3.14.6:c63aec6, Jun 10 2026, 10:26:10) [MSC v.1944 64 bit (AMD64)]",
+  "pytest": "9.1.1",
+  "affinity": [
+    0,
+    1,
+    2,
+    3
+  ],
+  "full_engine_pytest": {
+    "passed": 258,
+    "skipped": 20
+  },
+  "pytest_collection_deselected": [
+    "tests/test_gnubg.py::TestGnubgEndgame::test_non_terminal_race",
+    "tests/test_gnubg.py::TestGnubgEndgame::test_near_race",
+    "tests/test_gnubg.py::TestGnubgVsStage4::test_top100_comparison"
+  ],
+  "full_suite_elapsed_seconds_including_scheduled_pause": 922.8764395713806,
+  "optional_dll_search_path": "The test host lacks the optional CUDA Toolkit DLL directory. The harness filters registration of that absent path by the bearoff test.",
+  "pytest_failures": [],
+  "module_outcomes": {
+    "tests.test_2ply_details.TestTwoPlyDetailsND": {
+      "passed": 3
+    },
+    "tests.test_2ply_details.TestTwoPlyDetailsDT": {
+      "passed": 3
+    },
+    "tests.test_2ply_details.TestDetailsHeadlineMatchesPlain": {
+      "passed": 3
+    },
+    "tests.test_2ply_details.TestTwoPlyDetailsErrors": {
+      "passed": 2
+    },
+    "tests.test_backgame_category.TestBackgameCategory": {
+      "passed": 4
+    },
+    "tests.test_backgame_category.TestStage11Selection": {
+      "passed": 7
+    },
+    "tests.test_batch.TestBatchEvaluate": {
+      "skipped": 3
+    },
+    "tests.test_batch_checker_play.TestBatchCheckerPlay": {
+      "skipped": 6
+    },
+    "tests.test_bearoff": {
+      "passed": 9
+    },
+    "tests.test_checker_cube_symmetry": {
+      "passed": 11
+    },
+    "tests.test_cube_candidate_batch_reuse": {
+      "passed": 3
+    },
+    "tests.test_cube_points.TestMatchPlayReferenceValues": {
+      "passed": 4
+    },
+    "tests.test_cube_points.TestMatchPlayOwnership": {
+      "passed": 4
+    },
+    "tests.test_cube_points.TestMatchPlayCollapses": {
+      "passed": 3
+    },
+    "tests.test_cube_points.TestMoneyGame": {
+      "passed": 3
+    },
+    "tests.test_cube_points.TestPostCrawford": {
+      "passed": 1
+    },
+    "tests.test_cube_points.TestNoGammonsToggle": {
+      "passed": 3
+    },
+    "tests.test_cube_points.TestJanowskiExactAtIntermediateX": {
+      "passed": 5
+    },
+    "tests.test_extended_inputs.TestMaxPoint": {
+      "passed": 6
+    },
+    "tests.test_extended_inputs.TestMaxAnchorPoint": {
+      "passed": 5
+    },
+    "tests.test_extended_inputs.TestProbNoEnterFromBar": {
+      "passed": 7
+    },
+    "tests.test_extended_inputs.TestForwardAnchorPoints": {
+      "passed": 7
+    },
+    "tests.test_extended_inputs.TestHittingShots": {
+      "passed": 5
+    },
+    "tests.test_extended_inputs.TestDoubleHittingShots": {
+      "passed": 3
+    },
+    "tests.test_extended_inputs.TestBackEscapes": {
+      "passed": 4
+    },
+    "tests.test_extended_inputs.TestHittingShotsEdgeCases": {
+      "passed": 2
+    },
+    "tests.test_extended_inputs.TestCrossValidation": {
+      "passed": 5
+    },
+    "tests.test_extended_inputs.TestTesauroEncoding": {
+      "passed": 5
+    },
+    "tests.test_extended_inputs.TestBorneOffBuckets": {
+      "passed": 6
+    },
+    "tests.test_extended_inputs.TestExtendedFeatureNormalization": {
+      "passed": 1
+    },
+    "tests.test_extended_inputs_v2.TestBreakContact": {
+      "passed": 4
+    },
+    "tests.test_extended_inputs_v2.TestFreePip": {
+      "passed": 3
+    },
+    "tests.test_extended_inputs_v2.TestTiming": {
+      "passed": 3
+    },
+    "tests.test_extended_inputs_v2.TestBackbone": {
+      "passed": 4
+    },
+    "tests.test_extended_inputs_v2.TestBackg": {
+      "passed": 4
+    },
+    "tests.test_extended_inputs_v2.TestBackg1": {
+      "passed": 3
+    },
+    "tests.test_extended_inputs_v2.TestEnterLoss": {
+      "passed": 3
+    },
+    "tests.test_extended_inputs_v2.TestContainment": {
+      "passed": 2
+    },
+    "tests.test_extended_inputs_v2.TestMobility": {
+      "passed": 1
+    },
+    "tests.test_extended_inputs_v2.TestMoment2": {
+      "passed": 2
+    },
+    "tests.test_extended_inputs_v2.TestPiploss": {
+      "passed": 2
+    },
+    "tests.test_extended_inputs_v2.TestBackRescueEscapes": {
+      "passed": 2
+    },
+    "tests.test_extended_inputs_v2.TestFullEncoding244": {
+      "passed": 6
+    },
+    "tests.test_gnubg.TestGnubgEndgame": {
+      "passed": 3
+    },
+    "tests.test_move_arrays": {
+      "passed": 18
+    },
+    "tests.test_move_notation": {
+      "passed": 6
+    },
+    "tests.test_multi_ply_bearoff_cache": {
+      "passed": 4
+    },
+    "tests.test_rollout_progress_callback": {
+      "passed": 2
+    },
+    "tests.test_simulation": {
+      "passed": 21
+    },
+    "tests.test_vr_and_dead_cube": {
+      "passed": 33
+    },
+    "tests.test_xg_batch": {
+      "passed": 8,
+      "skipped": 1
+    },
+    "tests.test_xg_file": {
+      "skipped": 10
+    }
+  },
+  "skip_reasons": {
+    "contact.bm not found at BGSAGE\\data\\contact.bm": 9,
+    "money benchmark XG data not present": 11
+  },
+  "local_contact_fixture": {
+    "inputs": "80 non-race positions from checker_play.json",
+    "counts": {
+      "passed": 9
+    },
+    "unittest_subtests_passed": 280
+  },
+  "extra_mixed_fixture": {
+    "inputs": "100 positions from checker_play.json, including pure race",
+    "counts": {
+      "passed": 8,
+      "failure": 1
+    },
+    "failed_subtest": [
+      {
+        "test": "tests.test_batch_checker_play.TestBatchCheckerPlay.test_1ply_batch_matches_serial",
+        "status": "failure",
+        "message": "AssertionError: 0.9692985415458679 != 0.9702200293540955 within 4 places (0.0009214878082275391 difference) : pos 8: best equity mismatch"
+      }
+    ],
+    "original_and_final_reproduce_identically": true,
+    "position": "checker-money-purerace-02",
+    "batch_equity": 0.9692985415458679,
+    "serial_equity": 0.9702200293540955
+  },
+  "supplemental_legacy_scripts": {
+    "frozen_original": {
+      "test_match_equity": {
+        "sha256": "23396e8a5ed986e2560d859d47f9eac5a44b2ff96b34b73e1a496c3281bf36c1",
+        "error": null,
+        "exit_code": 1,
+        "passed": 28,
+        "failed": 2
+      },
+      "test_match_cube_stage6": {
+        "sha256": "23396e8a5ed986e2560d859d47f9eac5a44b2ff96b34b73e1a496c3281bf36c1",
+        "error": null,
+        "exit_code": 1,
+        "passed": 29,
+        "failed": 1
+      },
+      "test_match_cube_stage11": {
+        "sha256": "23396e8a5ed986e2560d859d47f9eac5a44b2ff96b34b73e1a496c3281bf36c1",
+        "error": "TypeError: evaluate_cube_decision(): incompatible function arguments. The following argument types are supported:",
+        "exit_code": 1,
+        "passed": 0,
+        "failed": 0
+      }
+    },
+    "final": {
+      "test_match_equity": {
+        "sha256": "7476f24d8d5dcf69eb62ca05bc714ac0c6872cfd3204ba8d8b06923982170633",
+        "error": null,
+        "exit_code": 1,
+        "passed": 28,
+        "failed": 2
+      },
+      "test_match_cube_stage6": {
+        "sha256": "7476f24d8d5dcf69eb62ca05bc714ac0c6872cfd3204ba8d8b06923982170633",
+        "error": null,
+        "exit_code": 1,
+        "passed": 29,
+        "failed": 1
+      },
+      "test_match_cube_stage11": {
+        "sha256": "7476f24d8d5dcf69eb62ca05bc714ac0c6872cfd3204ba8d8b06923982170633",
+        "error": "TypeError: evaluate_cube_decision(): incompatible function arguments. The following argument types are supported:",
+        "exit_code": 1,
+        "passed": 0,
+        "failed": 0
+      }
+    },
+    "outcomes_match": true
+  },
+  "archive_sha256": "39bca5fb6afb95e1cbec497156f398571bef05dbb1673518da56303e6c02bda4"
+}

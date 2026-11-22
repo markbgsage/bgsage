@@ -1,0 +1,472 @@
+{
+  "positions": 100,
+  "exact_seconds": 48.47771129984176,
+  "screened_seconds": 12.19726669989177,
+  "speedup": 3.97447333838096,
+  "median_paired_seconds_ratio": 0.33502461481852996,
+  "counts": {
+    "moves": 1709,
+    "best_changed": 0,
+    "top_two_set_changed": 3,
+    "promotions": 3,
+    "shallow_moves": 1135,
+    "exact_best_not_deep": 0,
+    "changed_by_threshold_win": 731,
+    "changed_by_threshold_gammon_win": 460,
+    "changed_by_threshold_backgammon_win": 3,
+    "changed_by_threshold_gammon_loss": 745,
+    "changed_by_threshold_backgammon_loss": 260,
+    "changed_by_threshold_equity": 880,
+    "changed_by_threshold_cubeless_equity": 872
+  },
+  "rollout_manifest_sha256": "6da88accc991075ee93c5b75fa2a7a295bd5659011c3e95b32f6a200078297f0",
+  "error_vs_rollout": {
+    "position_benchmark": {
+      "deep": {
+        "win": {
+          "compared": 374,
+          "error_change_sum": 0.0,
+          "materially_worse": 0,
+          "materially_better": 0
+        },
+        "gammon_win": {
+          "compared": 374,
+          "error_change_sum": 0.0,
+          "materially_worse": 0,
+          "materially_better": 0
+        },
+        "backgammon_win": {
+          "compared": 374,
+          "error_change_sum": 0.0,
+          "materially_worse": 0,
+          "materially_better": 0
+        },
+        "gammon_loss": {
+          "compared": 374,
+          "error_change_sum": 0.0,
+          "materially_worse": 0,
+          "materially_better": 0
+        },
+        "backgammon_loss": {
+          "compared": 374,
+          "error_change_sum": 0.0,
+          "materially_worse": 0,
+          "materially_better": 0
+        },
+        "equity": {
+          "compared": 374,
+          "error_change_sum": 0.0,
+          "materially_worse": 0,
+          "materially_better": 0
+        },
+        "cubeless_equity": {
+          "compared": 374,
+          "error_change_sum": 0.0,
+          "materially_worse": 0,
+          "materially_better": 0
+        }
+      },
+      "shallow": {
+        "win": {
+          "compared": 4,
+          "error_change_sum": -0.012164771556854248,
+          "materially_worse": 1,
+          "materially_better": 2
+        },
+        "gammon_win": {
+          "compared": 4,
+          "error_change_sum": -0.007513801567256451,
+          "materially_worse": 0,
+          "materially_better": 1
+        },
+        "backgammon_win": {
+          "compared": 4,
+          "error_change_sum": 0.0008509665749443229,
+          "materially_worse": 0,
+          "materially_better": 0
+        },
+        "gammon_loss": {
+          "compared": 4,
+          "error_change_sum": 0.0046225134283304214,
+          "materially_worse": 1,
+          "materially_better": 0
+        },
+        "backgammon_loss": {
+          "compared": 4,
+          "error_change_sum": -7.776395068503916e-05,
+          "materially_worse": 0,
+          "materially_better": 0
+        },
+        "equity": {
+          "compared": 4,
+          "error_change_sum": 0.0888689998537302,
+          "materially_worse": 4,
+          "materially_better": 0
+        },
+        "cubeless_equity": {
+          "compared": 4,
+          "error_change_sum": -0.009967157635401236,
+          "materially_worse": 1,
+          "materially_better": 2
+        }
+      }
+    },
+    "fixed_1296": {
+      "deep": {
+        "win": {
+          "compared": 331,
+          "error_change_sum": 0.0,
+          "materially_worse": 0,
+          "materially_better": 0
+        },
+        "gammon_win": {
+          "compared": 331,
+          "error_change_sum": 0.0,
+          "materially_worse": 0,
+          "materially_better": 0
+        },
+        "backgammon_win": {
+          "compared": 331,
+          "error_change_sum": 0.0,
+          "materially_worse": 0,
+          "materially_better": 0
+        },
+        "gammon_loss": {
+          "compared": 331,
+          "error_change_sum": 0.0,
+          "materially_worse": 0,
+          "materially_better": 0
+        },
+        "backgammon_loss": {
+          "compared": 331,
+          "error_change_sum": 0.0,
+          "materially_worse": 0,
+          "materially_better": 0
+        },
+        "equity": {
+          "compared": 331,
+          "error_change_sum": 0.0,
+          "materially_worse": 0,
+          "materially_better": 0
+        },
+        "cubeless_equity": {
+          "compared": 331,
+          "error_change_sum": 0.0,
+          "materially_worse": 0,
+          "materially_better": 0
+        }
+      },
+      "shallow": {
+        "win": {
+          "compared": 176,
+          "error_change_sum": 0.39743953943252563,
+          "materially_worse": 65,
+          "materially_better": 38
+        },
+        "gammon_win": {
+          "compared": 176,
+          "error_change_sum": 0.23211614578031003,
+          "materially_worse": 50,
+          "materially_better": 18
+        },
+        "backgammon_win": {
+          "compared": 176,
+          "error_change_sum": 0.04205701617365776,
+          "materially_worse": 1,
+          "materially_better": 0
+        },
+        "gammon_loss": {
+          "compared": 176,
+          "error_change_sum": 0.26467243710067123,
+          "materially_worse": 55,
+          "materially_better": 38
+        },
+        "backgammon_loss": {
+          "compared": 176,
+          "error_change_sum": -0.016023688032873906,
+          "materially_worse": 7,
+          "materially_better": 4
+        },
+        "equity": {
+          "compared": 176,
+          "error_change_sum": 1.3955365849105874,
+          "materially_worse": 84,
+          "materially_better": 59
+        },
+        "cubeless_equity": {
+          "compared": 176,
+          "error_change_sum": 0.7453589500187263,
+          "materially_worse": 70,
+          "materially_better": 50
+        }
+      }
+    },
+    "historical_source_rollout_finalists": {
+      "deep": {
+        "win": {
+          "compared": 221,
+          "error_change_sum": 0.0,
+          "materially_worse": 0,
+          "materially_better": 0
+        },
+        "gammon_win": {
+          "compared": 221,
+          "error_change_sum": 0.0,
+          "materially_worse": 0,
+          "materially_better": 0
+        },
+        "backgammon_win": {
+          "compared": 221,
+          "error_change_sum": 0.0,
+          "materially_worse": 0,
+          "materially_better": 0
+        },
+        "gammon_loss": {
+          "compared": 221,
+          "error_change_sum": 0.0,
+          "materially_worse": 0,
+          "materially_better": 0
+        },
+        "backgammon_loss": {
+          "compared": 221,
+          "error_change_sum": 0.0,
+          "materially_worse": 0,
+          "materially_better": 0
+        },
+        "equity": {
+          "compared": 221,
+          "error_change_sum": 0.0,
+          "materially_worse": 0,
+          "materially_better": 0
+        },
+        "cubeless_equity": {
+          "compared": 221,
+          "error_change_sum": 0.0,
+          "materially_worse": 0,
+          "materially_better": 0
+        }
+      },
+      "shallow": {
+        "win": {
+          "compared": 3,
+          "error_change_sum": -0.018811523914337158,
+          "materially_worse": 0,
+          "materially_better": 2
+        },
+        "gammon_win": {
+          "compared": 3,
+          "error_change_sum": -0.0020588813349604607,
+          "materially_worse": 0,
+          "materially_better": 0
+        },
+        "backgammon_win": {
+          "compared": 3,
+          "error_change_sum": -0.00020061390023329295,
+          "materially_worse": 0,
+          "materially_better": 0
+        },
+        "gammon_loss": {
+          "compared": 3,
+          "error_change_sum": -0.0033049043267965317,
+          "materially_worse": 0,
+          "materially_better": 0
+        },
+        "backgammon_loss": {
+          "compared": 3,
+          "error_change_sum": -0.0007988872530404478,
+          "materially_worse": 0,
+          "materially_better": 0
+        },
+        "equity": {
+          "compared": 3,
+          "error_change_sum": 0.08137888461351395,
+          "materially_worse": 3,
+          "materially_better": 0
+        },
+        "cubeless_equity": {
+          "compared": 3,
+          "error_change_sum": -0.04014991999792983,
+          "materially_worse": 0,
+          "materially_better": 2
+        }
+      }
+    }
+  },
+  "largest_fixed_equity_regressions": [
+    {
+      "position_id": "checker-money-attacking-02",
+      "board": [
+        0,
+        -1,
+        0,
+        0,
+        4,
+        1,
+        4,
+        0,
+        4,
+        0,
+        1,
+        1,
+        -2,
+        0,
+        0,
+        0,
+        -1,
+        -2,
+        0,
+        -3,
+        -2,
+        -2,
+        -2,
+        0,
+        0,
+        0
+      ],
+      "full_3ply": -0.07220517843961716,
+      "screened": -0.31321707367897034,
+      "rollout": -0.10706543177366257,
+      "increase_in_absolute_error": 0.17129138857126236
+    },
+    {
+      "position_id": "checker-money-attacking-02",
+      "board": [
+        0,
+        -1,
+        1,
+        1,
+        3,
+        0,
+        4,
+        0,
+        3,
+        0,
+        0,
+        3,
+        -2,
+        0,
+        0,
+        0,
+        -1,
+        -2,
+        0,
+        -3,
+        -2,
+        -2,
+        -2,
+        0,
+        0,
+        0
+      ],
+      "full_3ply": -0.35434022545814514,
+      "screened": -0.4710523188114166,
+      "rollout": -0.30383920669555664,
+      "increase_in_absolute_error": 0.11671209335327148
+    },
+    {
+      "position_id": "checker-money-priming-02",
+      "board": [
+        0,
+        -1,
+        0,
+        0,
+        2,
+        2,
+        3,
+        2,
+        2,
+        1,
+        1,
+        1,
+        -4,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        -3,
+        -2,
+        -1,
+        -2,
+        -2,
+        0,
+        0
+      ],
+      "full_3ply": 0.34354090690612793,
+      "screened": 0.2575243413448334,
+      "rollout": 0.38542792201042175,
+      "increase_in_absolute_error": 0.08601656556129456
+    },
+    {
+      "position_id": "checker-money-priming-08",
+      "board": [
+        2,
+        2,
+        0,
+        2,
+        0,
+        2,
+        2,
+        0,
+        2,
+        0,
+        0,
+        0,
+        -2,
+        2,
+        -2,
+        0,
+        0,
+        -2,
+        0,
+        -2,
+        -2,
+        -2,
+        0,
+        3,
+        -1,
+        0
+      ],
+      "full_3ply": 0.3089260458946228,
+      "screened": 0.22958742082118988,
+      "rollout": 0.42145681381225586,
+      "increase_in_absolute_error": 0.07933862507343292
+    },
+    {
+      "position_id": "checker-match-racing-05",
+      "board": [
+        0,
+        2,
+        3,
+        3,
+        -2,
+        -2,
+        5,
+        0,
+        0,
+        1,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        -3,
+        -4,
+        0,
+        -2,
+        -2,
+        0,
+        0
+      ],
+      "full_3ply": -0.6847931146621704,
+      "screened": -0.6112854480743408,
+      "rollout": -0.805258572101593,
+      "increase_in_absolute_error": 0.07350766658782959
+    }
+  ]
+}
