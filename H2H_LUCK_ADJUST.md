@@ -274,7 +274,8 @@ a current native build by putting its directory and `python/` on `PYTHONPATH`.
 Run the harness in that environment:
 
 ```sh
-python -m bgsage.h2h --a 1P --b 2P --games 100 --seed 42 > h2h.json
+mkdir -p logs
+python -m bgsage.h2h --a 1P --b 2P --games 100 --seed 42 > logs/h2h.json
 ```
 
 Both players accept `1P`–`4P`, `1T`–`3T` and `R` for full rollout. By default,
@@ -300,6 +301,9 @@ native binary hash, rules, reference, $\beta$ and per-game raw and adjusted
 points for verification. `summary` includes the two edge estimates, SEs,
 approximate intervals, luck statistics, the SE reduction and the variance
 ratio. A ratio with a zero denominator is reported as `null`.
+Keep generated reports, game records and checkpoints in the Git-ignored
+`logs/` directory. Record durable benchmark summaries and run configuration
+in the documentation.
 
 The report's equal-SE speedup uses the summed CPU time for game play and
 luck scoring. Overall wall time includes process startup and loading the
@@ -442,9 +446,8 @@ Sage 2P luck reference. Results are in points per game for Sage.
 | Luck-adjusted | −0.00105 | 0.01060 | [−0.02182, +0.01972] |
 
 The estimated SE fell by 87.4% on the same games. The run took 26m 33s with
-80 game streams, 12 Sage compute workers and one XG session at a time. The
-[full report](data/h2h_benchmark/sage_3p_vs_xg_3ply_1000_20261123.json)
-records the native build hash, XG profile, seed and all 1,000 game outcomes.
+80 game streams, 12 Sage compute workers and one XG session at a time. It
+used Stage 11 on native build `309a5011`.
 With the Windows XG setup above and Sage available to Python, run
 `python scripts/benchmark_h2h_sage3p_xg3p.py` from the repo root to replay the
 cohort. It checkpoints completed seeds under `logs/sage-3p-vs-xg-3p-1000-replay/`.
@@ -463,15 +466,13 @@ for Sage.
 | Paskogammon | Luck-adjusted | −0.01714 | 0.00723 | [−0.03132, −0.00297] |
 
 The standard cohort completed 1,000 games in 43m 24s on 2026-11-23. It used
-seed `2026112343` and reduced SE by 86.8%. The archive contains the game
-records, engine identity and original Windows run driver.
-[Standard cohort archive](data/h2h_benchmark/sage_1t_vs_xg_roller_1000_20261123.zip)
+seed `2026112343` and reduced SE by 86.8%.
+[Standard Windows run driver](data/h2h_benchmark/sage_1t_vs_xg_roller_1000_20261123.zip)
 
 The Paskogammon cohort completed 5,000 games in 3h 13m 10s on 2026-11-24.
 It used seed `2026112344` and reduced SE by 83.7%. The scattered side was on
 roll from the same asymmetric start in every game. The engines alternated
 that seat, with 2,500 starts each. There were 876 opening doubles. Compute
 the overall SE as half the square root of the sum of the squared SEs from
-the two opener groups. The archive includes the game records, starting
-position, original Windows run driver and local verification script.
-[Paskogammon cohort archive](data/h2h_benchmark/paskogammon_sage_1t_vs_xg_roller_5000_20261124.zip)
+the two opener groups.
+[Paskogammon Windows run driver and verifier](data/h2h_benchmark/paskogammon_sage_1t_vs_xg_roller_5000_20261124.zip)

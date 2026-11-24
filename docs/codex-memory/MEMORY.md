@@ -1,5 +1,11 @@
 # Engine project notes
 
+- **2026-11-24, head-to-head experiment retention.** Keep generated game
+  records, full reports and checkpoints under the Git-ignored `logs/`
+  directory. Preserve run sources, configuration and aggregate estimates in
+  Git. Verified the three previously tracked reports against their copies in
+  `logs/` when removing the generated data from the tracked tree.
+
 - **2026-11-24, Paskogammon Sage 1T vs XG Roller.** The head-to-head variant
   always starts the scattered side on roll. Sage 1T's pre-roll no-double
   values were −0.03618 for that orientation and +0.41667 for the other on
@@ -11,8 +17,8 @@
   95% CI [−0.03132, −0.00297]). The run took 3h 13m 10s with 256 game streams
   and 20 Sage compute workers. Three failed XG batches were replayed before
   their answers could affect play. Verified the original XG settings after
-  exit. The cohort archive contains the report, run driver and independent
-  verification script. [Archived Roller benchmarks](../../H2H_LUCK_ADJUST.md#sage-1t-vs-xg-roller)
+  exit. The benchmark archive contains the run driver and independent
+  verification script. [Roller benchmark results](../../H2H_LUCK_ADJUST.md#sage-1t-vs-xg-roller)
 
 - **2026-11-23, head-to-head luck adjustment.** Use the sampled entry of the
   same reference dice table that supplies the weighted mean. Substituting
@@ -106,7 +112,7 @@
   flight with 12 Sage compute threads, and commit each seed before counting
   it as complete. Rechecked all 1,000 seeds, the game records, reported
   statistics and restored XG settings.
-  [Report and replay](../../H2H_LUCK_ADJUST.md#sage-3p-vs-xg-3-ply)
+  [Summary and replay](../../H2H_LUCK_ADJUST.md#sage-3p-vs-xg-3-ply)
 
 - **2026-11-23, 1,000-game Sage 1T vs XG Roller cohort.** Seed `2026112343`
   used the same native build `309a5011`, cube cap 64, Jacoby and Sage 2P luck
@@ -118,8 +124,8 @@
   alter that RNG stream. Native Roller uses code `1000` on checker and cube
   records. Snapshot the existing profile before borrowing an inactive slot
   and verify the profile and analysis settings are restored at exit. All
-  1,000 records and statistics were verified. The report and run driver are
-  preserved in the [standard cohort archive](../../data/h2h_benchmark/sage_1t_vs_xg_roller_1000_20261123.zip).
+  1,000 records and statistics were verified. The source archive retains the
+  [standard run driver](../../data/h2h_benchmark/sage_1t_vs_xg_roller_1000_20261123.zip).
 
 - **2026-11-22, full-game CPU scheduling.** Give workers individual paths
   at full depth. Keep callback spacing independent of the claim size so
