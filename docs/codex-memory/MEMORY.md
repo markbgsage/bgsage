@@ -1,5 +1,99 @@
 # Engine project notes
 
+- **2026-11-23, head-to-head luck adjustment.** Use the sampled entry of the
+  same reference dice table that supplies the weighted mean. Substituting
+  the played move only for the sampled entry can bias the edge. Score the
+  standard opening across both potential openers and subsequent rolls at the
+  checker-time cube after any take, always in one bot's points. The simulation
+  transcript supplies those fields. `python -m bgsage.h2h` uses a complete
+  2P ND table and reports SE and scoring CPU cost. On native build `309a5011`,
+  512 Stage 11 1P-vs-2P games (run seed 20261123) lowered SE from 0.15053 to
+  0.02426 points per game. Another 512 1P self-play games (seed 20261124)
+  lowered it from 0.13914 to 0.01911. All 29 focused tests passed, and 24
+  game records matched between one and six workers apart from timing fields.
+  [Math and CLI](../../H2H_LUCK_ADJUST.md).
+
+- **2026-11-23, parallel streams and repeated self-play.** The H2H CLI defaults
+  to one game process per available logical CPU, caps by game count and the
+  Windows pool limit, and keeps at most twice the worker count in flight. Sage now
+  honors the one-thread limit for multi-ply search and rollout prefilters. With
+  32 workers and 64 disjoint seed batches of 256 1P self-play games, the raw
+  and adjusted batch-mean SDs were 0.17566 and 0.03170 points per game. The
+  observed reduction was 82.0% (paired batch bootstrap 76.9%–86.0%). Check
+  for duplicate derived seeds between batches even when the run seeds differ.
+  [Repeated-batch result](../../H2H_LUCK_ADJUST.md#repeated-sage-1p-self-play-batches)
+
+- **2026-11-23, paired 1P-vs-3P mean-shift test.** On native build `309a5011`,
+  8,192 distinct games after a separate 256-game pilot gave adjusted-minus-raw
+  −0.04422 points per game, paired SE 0.03339 and 95% CI [−0.10965, +0.02122].
+  The run had roughly 80% power at a 0.094-point shift. Compare paired
+  differences even when adjusted and raw have very different SEs. Exhaustive
+  enumeration across 593 visited ordinary roll states and the joint opening
+  found centering residuals below $4\times10^{-16}$ points. Sage 3P workers
+  used about 708 MiB of private memory each on this Windows run. Native
+  `multipy_parallel_run` obtains the hardware-sized pool before the serial
+  fast path, giving each observed worker 33 threads. The 32-worker startup
+  hit a memory limit. The measured run used 16 workers, plus 10 on the final
+  two disjoint waves after memory freed up. The evaluator build stayed fixed.
+  [Paired test results](../../H2H_LUCK_ADJUST.md#sage-1p-vs-3p-paired-mean-shift-check)
+
+- **2026-11-23, external GNUbg H2H.** GNU Backgammon 1.08.003 is separately
+  installed at `C:\Program Files (x86)\gnubg\gnubg-cli.exe`, the Windows path
+  used by the legacy `sageapi` adapter. The H2H policy in `python/bgsage/gnubg.py`
+  sends temporary command files to the executable and uses GNUbg's own ranked
+  checker and cube hints. Set GNUbg's turn before sending an asymmetric simple
+  board and verify the raw board echo, including the sign of the opponent's
+  bar. The harness labels `1P`–`4P` map to native `0`–`3` ply. At a reached
+  cube cap, disabling the GNUbg cube resets its value and ownership, so disable
+  Jacoby there to preserve gammons on the already-turned cube. GNUbg subprocess
+  cost is represented by elapsed worker time. The focused suite passed 43
+  tests, all four native depths were probed, and 32 complete games exercised
+  both seats and a cube cap of 2. Four seeded replays matched across one and
+  four workers. [GNUbg usage](../../H2H_LUCK_ADJUST.md#run-sage-vs-gnubg)
+
+- **2026-11-23, Sage 1P vs GNUbg native 0-ply timing.** Use Sage for luck
+  scoring for both seats regardless of which bots play. The same 100 game
+  seeds (`2026112331`) produced identical payoffs and luck values in serial
+  and in 20 concurrent five-game streams. Elapsed time was 706.69 s serial
+  and 77.14 s parallel during the overlapping runs. Sage's adjusted edge was
+  −0.05023 points per game with SE 0.04286, versus raw −0.37000 with SE 0.28768.
+  Serial luck scoring took 3.14 s. Reports are under `logs/` and the replay
+  contributes one 100-game sample to inference.
+
+- **2026-11-23, 1,000-game Sage 1P vs GNUbg native 0-ply cohort.** The fresh
+  seed (`2026112332`) gave Sage +0.02873 points per game after adjustment,
+  SE 0.01409 and 95% CI [+0.00112, +0.05634]. Raw mean was +0.03600 with
+  SE 0.09182. The run retained 481 completed games from 30 streams and
+  redistributed the remaining 519 across two 40-worker pools because of the
+  Windows per-pool limit. File checks verified all 1,000 seeds and no overlap
+  with the 100-game pilot. Observed throughput rose from 1.41 to 1.62 games per
+  second across the two phases. A checkpoint showed 80 workers and 79 GNUbg
+  subprocesses active. The phase timing uses different games and includes
+  startup. Details are under `logs/sage-1p-vs-gnubg-1p-1000-20261123/`.
+
+- **2026-11-23, external XG H2H.** `python -m bgsage.h2h` uses Windows Batch
+  Analyze to play one XG seat against Sage under the standard simulator. Select
+  a custom profile by the requested checker and cube depth, keep the opening
+  book enabled, and check a known full-depth checker decision, cube decision
+  and book move in each batch. Eagerly launching the desktop app minimized
+  swallowed the Batch Analyze command on this installation. The two-stream
+  native 1P replay matched both payoffs and Sage 2P luck values and took 116.3 s
+  across 44 batches including calibration. Native 3P, staged 4P and Roller+
+  calibrations verified both decision depths and restoration of the prior
+  profile and book settings. The XG executable and a local complete `.xg`
+  template are runtime inputs. [XG setup and rules](../../H2H_LUCK_ADJUST.md#run-sage-vs-xg)
+
+- **2026-11-23, 1,000-game Sage 3P vs XG 3-ply cohort.** Seed `2026112342`
+  used standard unlimited play, Jacoby on, cube cap 64, XG opening book on,
+  and Sage 2P luck for both seats. Sage's adjusted edge was −0.00105 points
+  per game, SE 0.01060 and 95% CI [−0.02182, +0.01972]. Raw edge was −0.11000
+  with SE 0.08415. The run took 26m 33s across 584 XG decision batches and
+  four planned XG restarts. Use separate pools to keep 80 game streams in
+  flight with 12 Sage compute threads, and commit each seed before counting
+  it as complete. Rechecked all 1,000 seeds, the game records, reported
+  statistics and restored XG settings.
+  [Report and replay](../../H2H_LUCK_ADJUST.md#sage-3p-vs-xg-3-ply)
+
 - **2026-11-22, full-game CPU scheduling.** Give workers individual paths
   at full depth. Keep callback spacing independent of the claim size so
   short fixed and target-SE jobs retain their reporting cadence. A 37-path

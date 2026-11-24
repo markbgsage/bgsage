@@ -332,12 +332,7 @@ class _MultiPlyAnalyzer(_CubelessBase):
         super().__init__(weights)
         self._n_plies = n_plies
         self._parallel_evaluate = parallel_evaluate
-        requested_threads = parallel_threads
-        if parallel_threads <= 0 and n_plies > 1:
-            requested_threads = _default_parallel_threads()
-        elif n_plies > 1:
-            requested_threads = max(2, parallel_threads)
-        self._parallel_threads = requested_threads
+        self._parallel_threads = parallel_threads if parallel_threads > 0 else _default_parallel_threads()
         self._strategy_nply = bgbot_cpp.create_multipy(
             weights.strategy_type, weights.weight_paths_list, weights.hidden_sizes_list,
             n_plies=n_plies,
@@ -476,6 +471,7 @@ class _RolloutAnalyzer(_CubelessBase):
         # at 2-ply on stage 1's survivors. Survivors of stage 2 are rolled
         # out. When 0, the legacy single-stage 1-ply TINY filter is used.
         self._prefilter_threshold = float(prefilter_threshold)
+        self._parallel_threads = max(1, n_threads if n_threads > 0 else _default_parallel_threads())
         self._strategy_2ply = None
         if self._prefilter_threshold > 0:
             self._strategy_2ply = bgbot_cpp.create_multipy(
@@ -484,14 +480,8 @@ class _RolloutAnalyzer(_CubelessBase):
                 weights.hidden_sizes_list,
                 n_plies=2,
                 parallel_evaluate=True,
-                parallel_threads=max(2, _default_parallel_threads()),
+                parallel_threads=self._parallel_threads,
             )
-        requested_threads = n_threads
-        if n_threads <= 0:
-            requested_threads = _default_parallel_threads()
-        elif n_threads < 1:
-            requested_threads = 1
-        self._parallel_threads = max(1, requested_threads)
         self._parallelize_trials = bool(parallelize_trials)
         self._rollout_config = {
             "n_trials": n_trials,
@@ -981,12 +971,12 @@ class _CubefulAnalyzer:
                 is_crawford=is_crawford, jacoby=jacoby, beaver=beaver, **_cube_limit_kwargs(max_cube_value),
             )
 
-        if self._cubeful_ply == 1:
+        workers = getattr(inner, "_parallel_threads", 1)
+        if self._cubeful_ply == 1 or workers == 1:
             converted = [convert_move(move) for move in results]
         else:
-            workers = getattr(inner, "_parallel_threads", 0)
-            if not isinstance(workers, int) or workers <= 1:
-                workers = max(2, os.cpu_count() or 2)
+            if workers <= 0:
+                workers = _default_parallel_threads() or (os.cpu_count() or 1)
             with ThreadPoolExecutor(max_workers=workers) as pool:
                 converted = list(pool.map(convert_move, results))
 

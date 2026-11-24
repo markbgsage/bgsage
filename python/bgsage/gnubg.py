@@ -15,9 +15,12 @@ Provides:
 """
 
 import os
+from pathlib import Path
 import re
+import shutil
 import subprocess
 import tempfile
+from types import SimpleNamespace
 
 from .types import (
     CheckerPlayResult,
@@ -30,7 +33,36 @@ from .types import (
 
 GNUBG_CLI = r'C:\Program Files (x86)\gnubg\gnubg-cli.exe'
 
-_EVAL_LEVELS = {'1ply': 0, '2ply': 1, '3ply': 2, '4ply': 3}
+GNUBG_PLIES_BY_LEVEL = {'1ply': 0, '2ply': 1, '3ply': 2, '4ply': 3}
+
+
+def resolve_gnubg_cli(executable=None):
+    """Find an independently installed GNU Backgammon command-line program."""
+    requested = executable or os.environ.get('GNUBG_CLI')
+    if requested:
+        path = shutil.which(requested)
+        if path:
+            return str(Path(path).resolve())
+        raise FileNotFoundError(f"GNUbg executable not found: {requested}")
+
+    names = ('gnubg-cli.exe', GNUBG_CLI) if os.name == 'nt' else (
+        'gnubg', '/usr/games/gnubg', GNUBG_CLI)
+    for name in names:
+        path = shutil.which(name)
+        if path:
+            return str(Path(path).resolve())
+    raise FileNotFoundError("GNU Backgammon CLI not found. Set GNUBG_CLI or pass --gnubg-cli.")
+
+
+def gnubg_version(executable):
+    result = subprocess.run(
+        [executable, '--version'], capture_output=True, encoding='utf-8', errors='replace',
+        timeout=15, creationflags=subprocess.CREATE_NO_WINDOW if os.name == 'nt' else 0,
+    )
+    version = re.search(r'^GNU Backgammon \S.*$', result.stdout, re.MULTILINE)
+    if result.returncode != 0 or not version:
+        raise ValueError(f"Could not identify the GNU Backgammon CLI at {executable}")
+    return version.group().strip()
 
 
 # ---------------------------------------------------------------------------
@@ -47,16 +79,18 @@ def _flip_board(checkers):
     return flipped
 
 
-def _run_gnubg(cmd, timeout=60):
+def _run_gnubg(cmd, timeout=60, *, executable=None):
     """Run gnubg-cli with the given command and return stdout."""
+    executable = executable or resolve_gnubg_cli()
     with tempfile.NamedTemporaryFile(mode='w', suffix='.txt', delete=False) as f:
         f.write(cmd)
         cmd_file = f.name
 
     try:
         result = subprocess.run(
-            [GNUBG_CLI, '-q', '-t', '--no-rc', '-c', cmd_file],
-            capture_output=True, text=True, timeout=timeout
+            [executable, '-l', 'C', '-q', '-t', '--no-rc', '-c', cmd_file],
+            capture_output=True, encoding='utf-8', errors='replace', timeout=timeout,
+            creationflags=subprocess.CREATE_NO_WINDOW if os.name == 'nt' else 0,
         )
         if result.returncode != 0:
             raise RuntimeError(
@@ -64,6 +98,8 @@ def _run_gnubg(cmd, timeout=60):
                 f"stderr: {result.stderr}\nstdout: {result.stdout}\n"
                 f"command:\n{cmd}")
         return result.stdout
+    except subprocess.TimeoutExpired as exc:
+        raise RuntimeError(f"GNUbg did not finish its evaluation within {timeout} seconds") from exc
     finally:
         os.remove(cmd_file)
 
@@ -75,6 +111,123 @@ def _board_simple_str(checkers):
         parts.append(str(n))
     parts.append(str(checkers[0]))
     return ' '.join(parts)
+
+
+_BEST_HINT = re.compile(r'^\s*1\.\s+Cube(?:ful|less)\s+\d+-ply\s+(.+?)\s+Eq\.:', re.MULTILINE)
+_CUBE_HINT = re.compile(
+    r'^Proper cube action: (no |too good to |optional )?(?:re)?double, (take|pass)\b',
+    re.MULTILINE | re.IGNORECASE,
+)
+_MOVE_CHAIN = re.compile(r'(bar|[1-9]\d?)((?:/(?:off|[1-9]\d?\*?))+)(?:\(([2-4])\))?')
+
+
+def _hint_board(board, move):
+    """Map GNUbg's move notation to an endpoint in the mover's perspective."""
+    result = list(board)
+    hits = set()
+    for token in move.split():
+        chain = _MOVE_CHAIN.fullmatch(token)
+        if not chain:
+            raise ValueError(f"Unrecognized GNUbg checker move: {move!r}")
+        origin, path, count = chain.groups()
+        source = 25 if origin == 'bar' else int(origin)
+        steps = path[1:].split('/')
+        destination = steps[-1].rstrip('*')
+        if (not 1 <= source <= 25 or any(step.rstrip('*') == 'off' for step in steps[:-1])
+                or any(not 1 <= int(step.rstrip('*')) <= 24 for step in steps if step != 'off')):
+            raise ValueError(f"Invalid points in GNUbg checker move: {move!r}")
+        number = int(count or 1)
+        result[source] -= number
+        if destination != 'off':
+            result[int(destination)] += number
+        hits.update(int(step[:-1]) for step in steps if step.endswith('*'))
+    for point in hits:
+        if board[point] != -1:
+            raise ValueError(f"GNUbg reported a hit on a point without a blot: {move!r}")
+        result[point] += 1
+        result[0] += 1
+    return result
+
+
+class GnuBgPolicy:
+    """Choose plays using an external GNUbg CLI and its own hints."""
+
+    def __init__(self, eval_level, executable=None, *, timeout=120):
+        if eval_level not in GNUBG_PLIES_BY_LEVEL:
+            raise ValueError("GNUbg requires an evaluation level from 1P to 4P")
+        self.native_plies = GNUBG_PLIES_BY_LEVEL[eval_level]
+        self.executable = resolve_gnubg_cli(executable)
+        self.timeout = timeout
+
+    def _hint(self, board, cube_value, cube_owner, dice=(0, 0), *, away1=0, away2=0,
+              is_crawford=False, jacoby=True, beaver=False, max_cube_value=0):
+        if away1 or away2 or is_crawford or beaver:
+            raise ValueError("GNUbg head-to-head supports unlimited games without beavers")
+        command = [
+            'set player 0 human', 'set player 1 human', 'set seed 2',
+            'set automatic roll off', 'set automatic move off', 'set automatic bearoff off',
+            'set automatic doubles 0', 'set output rawboard on', 'new session',
+            'set beavers 0', f'set jacoby {"on" if jacoby else "off"}',
+            'set evaluation sameasanalysis off',
+        ]
+        for kind in ('chequerplay', 'cubedecision'):
+            command.extend((f'set evaluation {kind} eval plies {self.native_plies}',
+                            f'set evaluation {kind} eval cubeful on',
+                            f'set evaluation {kind} eval noise 0'))
+        # The simple board is relative to the player currently on turn.
+        command.extend(('set turn 1', f'set board simple {_board_simple_str(board)}'))
+        if max_cube_value and cube_value >= max_cube_value:
+            # GNUbg resets a disabled cube to centered at 1. In the actual
+            # game the cube has turned, so gammons must still count.
+            command.extend(('set cube use off', 'set jacoby off'))
+            cube_value, cube_owner = 1, 'centered'
+        else:
+            command.append(f'set cube value {cube_value}')
+            if cube_owner != 'centered':
+                command.append(f'set cube owner {1 if cube_owner == "player" else 0}')
+        if dice != (0, 0):
+            command.append(f'set dice {dice[0]} {dice[1]}')
+        command.extend(('show board', 'hint 1' if dice != (0, 0) else 'hint'))
+        output = _run_gnubg('\n'.join(command) + '\n', timeout=self.timeout, executable=self.executable)
+        echo = next((line for line in reversed(output.splitlines()) if line.startswith('board:')), None)
+        if echo is None:
+            raise ValueError(f"GNUbg did not return a board for the requested position:\n{output}")
+        fields = echo.split(':')
+        try:
+            points = list(map(int, fields[6:32]))
+            turn, die1, die2, _, _, value, can_double, opp_can_double = map(int, fields[32:40])
+        except ValueError as exc:
+            raise ValueError(f"GNUbg returned an invalid board record: {echo}") from exc
+        points[0] = -points[0]  # FIBS uses a negative count on the opponent's bar.
+        owners = {'centered': (1, 1), 'player': (1, 0), 'opponent': (0, 1)}
+        if (points != list(board) or turn != 1 or sorted((die1, die2)) != sorted(dice)
+                or value != cube_value or (can_double, opp_can_double) != owners[cube_owner]):
+            raise ValueError(f"GNUbg did not accept the requested board, turn, dice or cube: {echo}")
+        return output
+
+    def checker_play(self, board, die1, die2, cube_value=1, cube_owner='centered', **rules):
+        from .board import possible_moves
+
+        legal = possible_moves(board, die1, die2)
+        if len(legal) == 1:
+            chosen = legal[0]
+        else:
+            output = self._hint(board, cube_value, cube_owner, (die1, die2), **rules)
+            match = _BEST_HINT.search(output)
+            if not match:
+                raise ValueError(f"GNUbg did not recommend a checker move:\n{output}")
+            chosen = _hint_board(board, match.group(1))
+            if chosen not in legal:
+                raise ValueError(f"GNUbg recommended an illegal checker move: {match.group(1)!r}")
+        return SimpleNamespace(moves=[SimpleNamespace(board=chosen)])
+
+    def cube_action(self, board, cube_value=1, cube_owner='centered', **rules):
+        output = self._hint(board, cube_value, cube_owner, **rules)
+        match = _CUBE_HINT.search(output)
+        if not match:
+            raise ValueError(f"GNUbg did not recommend a cube action:\n{output}")
+        qualifier, response = match.groups()
+        return SimpleNamespace(should_double=qualifier is None, should_take=response.lower() == 'take')
 
 
 def _build_cube_analytics_command(checkers, n_plies=0, jacoby=True):
@@ -409,10 +562,10 @@ class GnuBgAnalyzer:
     """
 
     def __init__(self, eval_level="1ply", timeout=120, jacoby=True):
-        if eval_level not in _EVAL_LEVELS:
+        if eval_level not in GNUBG_PLIES_BY_LEVEL:
             raise ValueError(
-                f"eval_level must be one of {list(_EVAL_LEVELS)}, got {eval_level!r}")
-        self.n_plies = _EVAL_LEVELS[eval_level]
+                f"eval_level must be one of {list(GNUBG_PLIES_BY_LEVEL)}, got {eval_level!r}")
+        self.n_plies = GNUBG_PLIES_BY_LEVEL[eval_level]
         # Display label uses our XG convention (1-ply = raw NN)
         self.eval_level_str = f"{self.n_plies + 1}-ply"
         self.timeout = timeout

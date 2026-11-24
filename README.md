@@ -11,6 +11,18 @@ Complete, seeded game and match simulation is available through
 positions, dice, cube actions and scores for custom research. See
 [SIMULATION.md](SIMULATION.md) for examples, policy customization and rules.
 
+Run Sage against Sage at independently chosen evaluation levels with
+`python -m bgsage.h2h --a 1P --b 2P --games 100`. The runner reports
+raw and dice-luck-adjusted points per game and standard errors on the same
+games. See [H2H_LUCK_ADJUST.md](H2H_LUCK_ADJUST.md#run-sage-vs-sage) for setup
+and report details.
+
+An independently installed GNU Backgammon CLI can play either side. Add, for
+example, `--bot-b gnubg --b 2P` to select GNUbg's native 1-ply search.
+
+On Windows, an independently installed eXtreme Gammon 2 can also play either
+side through Batch Analyze. [XG setup and example](H2H_LUCK_ADJUST.md#run-sage-vs-xg)
+
 It is a joint Python/C++ library that includes:
 
 * A neural network-based backgammon bot.

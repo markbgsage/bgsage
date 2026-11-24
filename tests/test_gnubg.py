@@ -4,7 +4,7 @@
 Tests for the gnubg interface.
 
 Run with:
-    python python/tests/test_gnubg.py
+    python -m pytest tests/test_gnubg.py
 
 Tests:
 1. Endgame: both players have 2 on their 1-point -> player on roll wins (equity +1)
@@ -20,7 +20,7 @@ import unittest
 
 # Setup paths
 script_dir = os.path.dirname(os.path.abspath(__file__))
-project_dir = os.path.dirname(os.path.dirname(script_dir))
+project_dir = os.path.dirname(script_dir)
 build_dir = os.path.join(project_dir, 'build')
 
 if sys.platform == 'win32':
@@ -30,7 +30,8 @@ if sys.platform == 'win32':
     if os.path.isdir(build_dir):
         os.add_dll_directory(build_dir)
 
-sys.path.insert(0, build_dir)
+# Prefer an explicitly selected native build on PYTHONPATH.
+sys.path.append(build_dir)
 sys.path.insert(0, os.path.join(project_dir, 'python'))
 
 from bgsage.gnubg import post_move_analytics, post_move_analytics_many
