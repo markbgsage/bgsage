@@ -81,12 +81,15 @@ class _LuckScorer:
         return {event: value - baseline for event, value in values.items()}
 
     def score(self, game: dict) -> float:
-        if self.opening is None:
-            self.opening = self._opening_table()
-        opening_turn, *rest = game["turns"]
-        opening_roll = tuple(sorted(opening_turn["dice"]))
-        deltas = [self.opening[(opening_turn["player"], opening_roll)]]
-        for turn in rest:
+        turns = iter(game["turns"])
+        deltas = []
+        if self.config.start_board is None:
+            if self.opening is None:
+                self.opening = self._opening_table()
+            opening_turn = next(turns)
+            opening_roll = tuple(sorted(opening_turn["dice"]))
+            deltas.append(self.opening[(opening_turn["player"], opening_roll)])
+        for turn in turns:
             if turn["dice"] is None:  # A cube pass occurs before the roll.
                 break
             cube = turn["checker_cube_value"]

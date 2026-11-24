@@ -1,5 +1,19 @@
 # Engine project notes
 
+- **2026-11-24, Paskogammon Sage 1T vs XG Roller.** The head-to-head variant
+  always starts the scattered side on roll. Sage 1T's pre-roll no-double
+  values were −0.03618 for that orientation and +0.41667 for the other on
+  build `309a5011`. Assign the engines to the scattered seat by game index,
+  and use all 36 dice outcomes and the checker-time cube for first-roll luck.
+  With seed `2026112344`, all 5,000 games verified as 2,500 starts per bot
+  and 876 opening doubles. Within-opener SEs gave Sage a raw edge of −0.12080
+  points per game (SE 0.04440) and adjusted edge of −0.01714 (SE 0.00723,
+  95% CI [−0.03132, −0.00297]). The run took 3h 13m 10s with 256 game streams
+  and 20 Sage compute workers. Three failed XG batches were replayed before
+  their answers could affect play. Verified the original XG settings after
+  exit. The cohort archive contains the report, run driver and independent
+  verification script. [Archived Roller benchmarks](../../H2H_LUCK_ADJUST.md#sage-1t-vs-xg-roller)
+
 - **2026-11-23, head-to-head luck adjustment.** Use the sampled entry of the
   same reference dice table that supplies the weighted mean. Substituting
   the played move only for the sampled entry can bias the edge. Score the
@@ -93,6 +107,19 @@
   it as complete. Rechecked all 1,000 seeds, the game records, reported
   statistics and restored XG settings.
   [Report and replay](../../H2H_LUCK_ADJUST.md#sage-3p-vs-xg-3-ply)
+
+- **2026-11-23, 1,000-game Sage 1T vs XG Roller cohort.** Seed `2026112343`
+  used the same native build `309a5011`, cube cap 64, Jacoby and Sage 2P luck
+  reference as the 3P cohort, with a disjoint seed list. Sage's adjusted edge
+  was +0.00171 points per game, SE 0.01211 and 95% CI [−0.02203, +0.02545].
+  Raw edge was +0.14600 with SE 0.09177. The 43m 24s run used 80 game streams
+  and 16 Sage compute workers. Seed Sage's internal 1T rollout separately
+  for each decision from the game's seed so worker scheduling does not
+  alter that RNG stream. Native Roller uses code `1000` on checker and cube
+  records. Snapshot the existing profile before borrowing an inactive slot
+  and verify the profile and analysis settings are restored at exit. All
+  1,000 records and statistics were verified. The report and run driver are
+  preserved in the [standard cohort archive](../../data/h2h_benchmark/sage_1t_vs_xg_roller_1000_20261123.zip).
 
 - **2026-11-22, full-game CPU scheduling.** Give workers individual paths
   at full depth. Keep callback spacing independent of the claim size so

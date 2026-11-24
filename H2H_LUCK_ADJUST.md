@@ -81,6 +81,13 @@ uncorrected. The proposed default is the joint opening correction so the
 control can account for both parts of opening luck. If a future dice schedule
 changes the sampling law, its centering and inference must follow that design.
 
+For a fixed start with a designated first player, as in Paskogammon, the
+first roll uses the ordinary 36-outcome baseline, including doubles. Resolve
+any legal cube offer first and apply the same checker-time cube scaling as on
+later rolls. When first-player assignments are fixed by design, estimate the
+standard error from the separate opener groups and weight their means equally
+for a balanced edge.
+
 ## Choose the score for a roll
 
 For the first harness, use a fixed, inexpensive cubeful reference policy and
@@ -441,3 +448,30 @@ records the native build hash, XG profile, seed and all 1,000 game outcomes.
 With the Windows XG setup above and Sage available to Python, run
 `python scripts/benchmark_h2h_sage3p_xg3p.py` from the repo root to replay the
 cohort. It checkpoints completed seeds under `logs/sage-3p-vs-xg-3p-1000-replay/`.
+
+### Sage 1T vs XG Roller
+
+Both runs used Sage 2P to score luck, XG Roller for checker and cube play,
+XG's opening book, Jacoby and a cube cap of 64. Results are in points per game
+for Sage.
+
+| Starting position | Estimate | Edge | SE | 95% interval |
+| --- | --- | ---: | ---: | ---: |
+| Standard | Raw | +0.14600 | 0.09177 | [−0.03386, +0.32586] |
+| Standard | Luck-adjusted | +0.00171 | 0.01211 | [−0.02203, +0.02545] |
+| Paskogammon | Raw | −0.12080 | 0.04440 | [−0.20782, −0.03378] |
+| Paskogammon | Luck-adjusted | −0.01714 | 0.00723 | [−0.03132, −0.00297] |
+
+The standard cohort completed 1,000 games in 43m 24s on 2026-11-23. It used
+seed `2026112343` and reduced SE by 86.8%. The archive contains the game
+records, engine identity and original Windows run driver.
+[Standard cohort archive](data/h2h_benchmark/sage_1t_vs_xg_roller_1000_20261123.zip)
+
+The Paskogammon cohort completed 5,000 games in 3h 13m 10s on 2026-11-24.
+It used seed `2026112344` and reduced SE by 83.7%. The scattered side was on
+roll from the same asymmetric start in every game. The engines alternated
+that seat, with 2,500 starts each. There were 876 opening doubles. Compute
+the overall SE as half the square root of the sum of the squared SEs from
+the two opener groups. The archive includes the game records, starting
+position, original Windows run driver and local verification script.
+[Paskogammon cohort archive](data/h2h_benchmark/paskogammon_sage_1t_vs_xg_roller_5000_20261124.zip)

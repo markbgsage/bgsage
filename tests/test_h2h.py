@@ -53,6 +53,24 @@ def test_uses_post_take_cube_and_reference_roll_and_skips_cube_pass():
                                       incl_2ply_details=True)
 
 
+def test_custom_start_centers_all_first_rolls_after_cube_decision():
+    reference = Reference()
+    board = [0, -2, -2, 0, 0, -1, 5, -1, 3, 0, 0, 0, -2,
+             5, 0, 0, 0, -2, -1, -3, -1, 0, 0, 0, 2, 0]
+    config = GameConfig(start_board=tuple(board), player_on_roll=2)
+    scorer = h2h._LuckScorer(reference, config)
+    turn = {"player": 2, "board": board, "cube_action": "double/take",
+            "checker_cube_value": 2, "checker_cube_owner": "opponent"}
+    values = [scorer.score({"turns": [dict(turn, dice=[a, b])]})
+              for a in range(1, 7) for b in range(1, 7)]
+    assert values[-1] == pytest.approx(-1.0)
+    assert fsum(values) == pytest.approx(0)
+    assert scorer.score({"turns": [dict(turn, dice=None, cube_action="double/pass")]}) == 0
+    assert len(reference.calls) == 36
+    assert all(call["cube_value"] == 2 and call["cube_owner"] == "opponent"
+               for call in reference.calls)
+
+
 def test_rejects_duplicate_meant_to_replace_a_roll():
     class IncompleteReference(Reference):
         def cube_action(self, board, **kwargs):
